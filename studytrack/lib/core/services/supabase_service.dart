@@ -5,12 +5,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../models/module_model.dart';
 import '../../models/topic_model.dart';
-import '../constants/app_constants.dart';
 
 class SupabaseService {
-  SupabaseService._internal() {
-    _initializeSupabase();
-  }
+  SupabaseService._internal();
 
   static final SupabaseService _instance = SupabaseService._internal();
 
@@ -19,20 +16,6 @@ class SupabaseService {
   RealtimeChannel? _messagesChannel;
 
   SupabaseClient get client => Supabase.instance.client;
-
-  void _initializeSupabase() {
-    try {
-      if (AppConstants.supabaseUrl != 'YOUR_SUPABASE_URL' &&
-          AppConstants.supabaseAnonKey != 'YOUR_SUPABASE_ANON_KEY') {
-        Supabase.initialize(
-          url: AppConstants.supabaseUrl,
-          anonKey: AppConstants.supabaseAnonKey,
-        );
-      }
-    } catch (error) {
-      debugPrint('Supabase init error: $error');
-    }
-  }
 
   // ---------------------------------------------------------------------------
   // AUTH
