@@ -1,0 +1,95 @@
+class AppConstants {
+  // App metadata
+  static const String appName = 'StudyTrack';
+  static const String appVersion = '1.0.0';
+
+  // Environment placeholders
+  static const String supabaseUrl = 'YOUR_SUPABASE_URL';
+  static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+  static const String geminiApiKey = 'YOUR_GEMINI_API_KEY';
+
+  // Sections
+  static const String timetableSection = 'Timetable';
+  static const String modulesSection = 'Modules';
+  static const String progressSection = 'Progress';
+  static const String groupsSection = 'Group';
+
+  // Auth strings
+  static const String signIn = 'Sign In';
+  static const String signUp = 'Sign Up';
+  static const String signOut = 'Sign Out';
+  static const String email = 'Email';
+  static const String password = 'Password';
+  static const String forgotPassword = 'Forgot Password?';
+
+  // Onboarding strings
+  static const String onboardingTitle = 'Build your perfect study rhythm';
+  static const String onboardingSubtitle =
+      'Personalize StudyTrack in less than 2 minutes.';
+  static const String next = 'Next';
+  static const String back = 'Back';
+  static const String finish = 'Finish';
+  static const String skip = 'Skip';
+
+  // Modules and topics
+  static const String addModule = 'Add Module';
+  static const String addTopic = 'Add Topic';
+  static const String moduleName = 'Module Name';
+  static const String topicName = 'Topic Name';
+  static const String topicRating = 'Topic Rating';
+  static const String weakTopics = 'Weak Topics';
+
+  // Study session
+  static const String startSession = 'Start Session';
+  static const String pauseSession = 'Pause Session';
+  static const String resumeSession = 'Resume Session';
+  static const String endSession = 'End Session';
+  static const String pomodoro = 'Pomodoro';
+
+  // AI tools
+  static const String aiTutor = 'AI Tutor';
+  static const String aiExplainer = 'Topic Explainer';
+  static const String aiQuiz = 'Quiz Generator';
+  static const String aiMnemonic = 'Mnemonic Generator';
+  static const String aiSummary = 'Summary Generator';
+
+  // Upload and storage
+  static const String uploadNotes = 'Upload Notes';
+  static const String uploadPdf = 'Upload PDF';
+  static const String uploadPpt = 'Upload PPT';
+  static const String chooseFile = 'Choose File';
+  static const String noFileSelected = 'No file selected';
+
+  // Progress and reports
+  static const String weeklyWrapped = 'Weekly Wrapped';
+  static const String shareCard = 'Share Card';
+  static const String exportPdf = 'Export PDF';
+  static const String streak = 'Study Streak';
+  static const String achievements = 'Achievements';
+
+  // Groups
+  static const String createGroup = 'Create Group';
+  static const String joinGroup = 'Join Group';
+  static const String groupChat = 'Group Chat';
+  static const String sharedNotes = 'Shared Notes';
+
+  // Notifications
+  static const String notifications = 'Notifications';
+  static const String dailyBriefing = 'Morning Briefing';
+  static const String weeklyReport = 'Sunday Weekly Report';
+  static const String spacedRepetition = 'Spaced Repetition';
+
+  // Generic actions
+  static const String save = 'Save';
+  static const String cancel = 'Cancel';
+  static const String delete = 'Delete';
+  static const String edit = 'Edit';
+  static const String retry = 'Retry';
+  static const String done = 'Done';
+
+  // Generic states
+  static const String loading = 'Loading...';
+  static const String emptyState = 'Nothing here yet';
+  static const String errorGeneric = 'Something went wrong. Please try again.';
+  static const String successSaved = 'Saved successfully';
+}

@@ -1,0 +1,34 @@
+{
+  "name": "StudyTrack Dev Container",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+  "features": {
+    "ghcr.io/devcontainers/features/python:1": {
+      "version": "3.11"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dart-code.dart-code",
+        "dart-code.flutter",
+        "ms-python.python",
+        "github.copilot",
+        "github.copilotchat",
+        "esbenp.prettier-vscode",
+        "eamodio.gitlens"
+      ]
+    }
+  },
+  "containerEnv": {
+    "FLUTTER_HOME": "/usr/local/flutter"
+  },
+  "remoteEnv": {
+    "FLUTTER_HOME": "/usr/local/flutter",
+    "PATH": "/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:${containerEnv:PATH}"
+  },
+  "forwardPorts": [8000, 54321],
+  "postCreateCommand": "bash -lc 'set -euo pipefail; sudo apt-get update; sudo apt-get install -y --no-install-recommends curl ca-certificates gnupg software-properties-common apt-transport-https git unzip xz-utils zip libglu1-mesa; if ! command -v supabase >/dev/null 2>&1; then sudo install -d -m 0755 /etc/apt/keyrings; curl -fsSL https://apt.supabase.com/gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/supabase.gpg; echo \"deb [signed-by=/etc/apt/keyrings/supabase.gpg] https://apt.supabase.com stable main\" | sudo tee /etc/apt/sources.list.d/supabase.list >/dev/null; sudo apt-get update; sudo apt-get install -y supabase; fi; if ! command -v az >/dev/null 2>&1; then curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash; fi; if [ ! -d /usr/local/flutter ]; then sudo git clone https://github.com/flutter/flutter.git -b stable /usr/local/flutter; fi; sudo chown -R $(id -u):$(id -g) /usr/local/flutter; export FLUTTER_HOME=/usr/local/flutter; export PATH=/usr/local/flutter/bin:/usr/local/flutter/bin/cache/dart-sdk/bin:$PATH; flutter config --no-analytics; flutter doctor -v'"
+}
