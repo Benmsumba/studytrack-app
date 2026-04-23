@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+
+import '../core/constants/app_colors.dart';
+
 class TopicModel {
   const TopicModel({
     required this.id,
@@ -24,6 +28,22 @@ class TopicModel {
   final DateTime? nextReviewAt;
   final String? notes;
   final DateTime createdAt;
+
+  String get masteryLevel {
+    final rating = currentRating ?? 0;
+    if (rating <= 2) return 'Needs Work';
+    if (rating <= 4) return 'Learning';
+    if (rating <= 7) return 'Good';
+    return 'Mastered';
+  }
+
+  Color get ratingColor {
+    final rating = currentRating ?? 0;
+    if (rating <= 2) return AppColors.danger;
+    if (rating <= 4) return AppColors.warning;
+    if (rating <= 7) return AppColors.accent;
+    return AppColors.success;
+  }
 
   factory TopicModel.fromJson(Map<String, dynamic> json) {
     return TopicModel(
@@ -59,5 +79,33 @@ class TopicModel {
       'notes': notes,
       'created_at': createdAt.toIso8601String(),
     };
+  }
+
+  TopicModel copyWith({
+    String? id,
+    String? moduleId,
+    String? userId,
+    String? name,
+    bool? isStudied,
+    int? currentRating,
+    int? studyCount,
+    DateTime? lastStudiedAt,
+    DateTime? nextReviewAt,
+    String? notes,
+    DateTime? createdAt,
+  }) {
+    return TopicModel(
+      id: id ?? this.id,
+      moduleId: moduleId ?? this.moduleId,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      isStudied: isStudied ?? this.isStudied,
+      currentRating: currentRating ?? this.currentRating,
+      studyCount: studyCount ?? this.studyCount,
+      lastStudiedAt: lastStudiedAt ?? this.lastStudiedAt,
+      nextReviewAt: nextReviewAt ?? this.nextReviewAt,
+      notes: notes ?? this.notes,
+      createdAt: createdAt ?? this.createdAt,
+    );
   }
 }

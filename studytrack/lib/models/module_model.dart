@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+
+import '../core/constants/app_colors.dart';
+
 class ModuleModel {
   const ModuleModel({
     required this.id,
@@ -16,6 +20,11 @@ class ModuleModel {
   final String? semester;
   final bool isActive;
   final DateTime createdAt;
+
+  Color get subjectColor {
+    final key = name.trim();
+    return AppColors.subjectColors[key] ?? AppColors.subjectColors['Default']!;
+  }
 
   factory ModuleModel.fromJson(Map<String, dynamic> json) {
     return ModuleModel(
@@ -39,5 +48,25 @@ class ModuleModel {
       'is_active': isActive,
       'created_at': createdAt.toIso8601String(),
     };
+  }
+
+  ModuleModel copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    String? color,
+    String? semester,
+    bool? isActive,
+    DateTime? createdAt,
+  }) {
+    return ModuleModel(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      color: color ?? this.color,
+      semester: semester ?? this.semester,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+    );
   }
 }
