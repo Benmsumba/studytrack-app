@@ -1,7 +1,8 @@
 fastapi
-uvicorn[standard]
+uvicorn
 python-multipart
-azure-storage-blob
-pypdf
+pymupdf
 python-pptx
-google-generativeai
+supabase
+python-dotenv
+httpx

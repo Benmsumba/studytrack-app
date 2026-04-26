@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../core/constants/app_constants.dart';
 import '../../../core/services/supabase_service.dart';
 
 class AuthController extends ChangeNotifier {
   AuthController({SupabaseService? supabaseService})
-      : _supabaseService = supabaseService ?? SupabaseService();
+    : _supabaseService = supabaseService ?? SupabaseService();
 
   final SupabaseService _supabaseService;
 
@@ -29,7 +30,9 @@ class AuthController extends ChangeNotifier {
     try {
       final user = await _supabaseService.signInWithEmail(email, password);
       if (user == null) {
-        _errorMessage = 'Unable to login. Please check your credentials.';
+        _errorMessage =
+            _supabaseService.lastAuthError ??
+            'Unable to login. Please check your credentials.';
         return false;
       }
       return true;
@@ -46,6 +49,13 @@ class AuthController extends ChangeNotifier {
     required String email,
     required String password,
   }) async {
+    if (!AppConstants.isSupabaseConfigured) {
+      _errorMessage =
+          'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY first.';
+      notifyListeners();
+      return false;
+    }
+
     _setLoading(true);
     _errorMessage = null;
 
@@ -62,7 +72,9 @@ class AuthController extends ChangeNotifier {
       );
 
       if (user == null) {
-        _errorMessage = 'Unable to create account. Please try again.';
+        _errorMessage =
+            _supabaseService.lastAuthError ??
+            'Unable to create account. Please try again.';
         return false;
       }
 

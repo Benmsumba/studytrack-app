@@ -5,8 +5,26 @@ class AppConstants {
 
   // Environment placeholders
   static const String supabaseUrl = 'YOUR_SUPABASE_URL';
-  static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
+  static const String supabaseAnonKey =
+      'YOUR_SUPABASE_ANON_KEY';
   static const String geminiApiKey = 'YOUR_GEMINI_API_KEY';
+
+  static String get resolvedSupabaseUrl {
+    const fromEnv = String.fromEnvironment('SUPABASE_URL');
+    return fromEnv.isNotEmpty ? fromEnv : supabaseUrl;
+  }
+
+  static String get resolvedSupabaseAnonKey {
+    const fromEnv = String.fromEnvironment('SUPABASE_ANON_KEY');
+    return fromEnv.isNotEmpty ? fromEnv : supabaseAnonKey;
+  }
+
+  static bool get isSupabaseConfigured {
+    return resolvedSupabaseUrl.isNotEmpty &&
+        resolvedSupabaseAnonKey.isNotEmpty &&
+        resolvedSupabaseUrl != 'YOUR_SUPABASE_URL' &&
+        resolvedSupabaseAnonKey != 'YOUR_SUPABASE_ANON_KEY';
+  }
 
   // Sections
   static const String timetableSection = 'Timetable';

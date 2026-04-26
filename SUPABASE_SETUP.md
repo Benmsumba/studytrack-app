@@ -1,0 +1,59 @@
+# Supabase Setup Guide for StudyTrack
+
+## Step 1: Get Your Supabase Credentials
+
+1. Go to [app.supabase.com](https://app.supabase.com)
+2. Sign in or create a free account
+3. Select your StudyTrack project (or create one)
+4. Navigate to **Settings → API**
+5. Copy these two values:
+   - **Project URL** (looks like: `https://xxxxxxxxxxxx.supabase.co`)
+   - **anon public** key (a long encoded string starting with `eyJ...`)
+
+## Step 2: Apply Credentials to the App
+
+### Option A: Update app_constants.dart (Permanent)
+Edit `/workspaces/studytrack-app/studytrack/lib/core/constants/app_constants.dart`:
+
+```dart
+static const String supabaseUrl = 'https://YOUR_PROJECT.supabase.co';
+static const String supabaseAnonKey = 'YOUR_ANON_KEY_HERE';
+```
+
+Replace `YOUR_PROJECT` and `YOUR_ANON_KEY_HERE` with your actual values.
+
+Then run:
+```bash
+cd /workspaces/studytrack-app/studytrack
+flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080
+```
+
+### Option B: Use dart-define (For Testing - No File Changes)
+```bash
+cd /workspaces/studytrack-app/studytrack
+flutter run -d web-server \
+  --web-hostname 0.0.0.0 \
+  --web-port 8080 \
+  --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY_HERE
+```
+
+## Step 3: Verify Setup
+
+1. Navigate to: `https://stunning-acorn-4qr6j5q7774fqr7w-8080.app.github.dev/signup`
+2. Try creating an account
+3. If successful → onboarding screen appears ✅
+4. If error → check that Supabase credentials are correct
+
+## Troubleshooting
+
+- **"Supabase is not configured"**: Your credentials are still placeholder values. Update them using Option A or B above.
+- **"Unable to create account"**: Check that Email provider is enabled in Supabase:
+  - Go to **Authentication → Providers → Email → Enable**
+- **Network error**: Verify your Supabase project is active and not paused.
+
+## Notes for Production
+
+- **Never commit real credentials** to git (use `.gitignore`)
+- Store secrets in GitHub Actions secrets or environment variables
+- The app supports reading from `--dart-define` for CI/CD pipelines

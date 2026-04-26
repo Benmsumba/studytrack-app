@@ -14,8 +14,10 @@ class SupabaseService {
   factory SupabaseService() => _instance;
 
   RealtimeChannel? _messagesChannel;
+  String? _lastAuthError;
 
   SupabaseClient get client => Supabase.instance.client;
+  String? get lastAuthError => _lastAuthError;
 
   // ---------------------------------------------------------------------------
   // AUTH
@@ -31,54 +33,98 @@ class SupabaseService {
     int studyHoursPerDay,
     String studyPreference,
   ) async {
-    try {
-      final response = await client.auth.signUp(
-        email: email,
-        password: password,
-        data: {
-          'name': name,
-          'course': course,
-          'year_level': yearLevel,
-          'prime_study_time': primeStudyTime,
-          'study_hours_per_day': studyHoursPerDay,
-          'study_preference': studyPreference,
-        },
-      );
+    _lastAuthError = null;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final response = await client.auth.signUp(
+          email: email,
+          password: password,
+          emailRedirectTo: _buildEmailRedirectTo(),
+          data: {
+            'name': name,
+            'course': course,
+            'year_level': yearLevel,
+            'prime_study_time': primeStudyTime,
+            'study_hours_per_day': studyHoursPerDay,
+            'study_preference': studyPreference,
+          },
+        );
 
-      final user = response.user;
-      if (user != null) {
-        await client.from('profiles').upsert({
-          'id': user.id,
-          'name': name,
-          'course': course,
-          'year_level': yearLevel,
-          'prime_study_time': primeStudyTime,
-          'study_hours_per_day': studyHoursPerDay,
-          'study_preference': studyPreference,
-          'streak_count': 0,
-          'created_at': DateTime.now().toIso8601String(),
-          'updated_at': DateTime.now().toIso8601String(),
-        });
+        final user = response.user;
+        final session = response.session;
+        if (user == null) {
+          _lastAuthError = 'Unable to create account. Please try again.';
+          return null;
+        }
+
+        // Only write profile when there is an authenticated session.
+        // When email confirmation is required, no session is issued yet and RLS
+        // would block direct profile writes from the client.
+        if (session != null) {
+          try {
+            await _upsertProfile(
+              userId: user.id,
+              data: {
+                'name': name,
+                'course': course,
+                'year_level': yearLevel,
+                'prime_study_time': primeStudyTime,
+                'study_hours_per_day': studyHoursPerDay,
+                'study_preference': studyPreference,
+              },
+            );
+          } catch (error) {
+            // Account creation already succeeded in Auth. A profile can be
+            // created/updated later during onboarding or on next login.
+            debugPrint('signUpWithEmail profile upsert error: $error');
+          }
+        }
+
+        return user;
+      } catch (error) {
+        final errorMessage = error.toString();
+        if (_isRetryableAuthErrorMessage(errorMessage) && attempt < 2) {
+          await Future<void>.delayed(const Duration(seconds: 2));
+          continue;
+        }
+        _lastAuthError = _mapAuthErrorText(errorMessage);
+        debugPrint('signUpWithEmail auth error: $errorMessage');
+        return null;
       }
-
-      return user;
-    } catch (error) {
-      debugPrint('signUpWithEmail error: $error');
-      return null;
     }
+
+    _lastAuthError = 'Unable to create account. Please try again.';
+    return null;
   }
 
   Future<User?> signInWithEmail(String email, String password) async {
-    try {
-      final response = await client.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
-      return response.user;
-    } catch (error) {
-      debugPrint('signInWithEmail error: $error');
-      return null;
+    _lastAuthError = null;
+    for (var attempt = 0; attempt < 3; attempt++) {
+      try {
+        final response = await client.auth.signInWithPassword(
+          email: email,
+          password: password,
+        );
+
+        if (response.user != null) {
+          await _ensureProfileExists(response.user!);
+        }
+
+        return response.user;
+      } catch (error) {
+        final errorMessage = error.toString();
+        if (_isRetryableAuthErrorMessage(errorMessage) && attempt < 2) {
+          await Future<void>.delayed(const Duration(seconds: 2));
+          continue;
+        }
+        _lastAuthError = _mapAuthErrorText(errorMessage);
+        debugPrint('signInWithEmail auth error: $errorMessage');
+        return null;
+      }
     }
+
+    _lastAuthError = 'Unable to login. Please try again.';
+    return null;
   }
 
   Future<bool?> signOut() async {
@@ -132,20 +178,104 @@ class SupabaseService {
     Map<String, dynamic> data,
   ) async {
     try {
-      final response = await client
-          .from('profiles')
-          .update({
-            ...data,
-            'updated_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', userId)
-          .select()
-          .maybeSingle();
+      final response = await _upsertProfile(userId: userId, data: data);
       return response;
     } catch (error) {
       debugPrint('updateProfile error: $error');
       return null;
     }
+  }
+
+  Future<Map<String, dynamic>?> _upsertProfile({
+    required String userId,
+    required Map<String, dynamic> data,
+  }) async {
+    return await client
+        .from('profiles')
+        .upsert({
+          'id': userId,
+          ...data,
+          'updated_at': DateTime.now().toIso8601String(),
+        }, onConflict: 'id')
+        .select()
+        .maybeSingle();
+  }
+
+  Future<void> _ensureProfileExists(User user) async {
+    final metadata = user.userMetadata ?? <String, dynamic>{};
+    final name = (metadata['name'] as String?)?.trim();
+
+    try {
+      await _upsertProfile(
+        userId: user.id,
+        data: {
+          if (name != null && name.isNotEmpty) 'name': name,
+          'streak_count': 0,
+        },
+      );
+    } catch (error) {
+      // Non-fatal: user can still proceed and retry profile updates later.
+      debugPrint('ensureProfileExists error: $error');
+    }
+  }
+
+  String _mapAuthErrorText(String message) {
+    final lowerMessage = message.toLowerCase();
+
+    if (_isRetryableAuthErrorMessage(message)) {
+      return 'Network timeout from auth server. Please retry in a few seconds.';
+    }
+
+    if (lowerMessage.contains('over_email_send_rate_limit')) {
+      return 'Email rate limit exceeded. Wait a moment before trying again.';
+    }
+
+    if (lowerMessage.contains('unexpected_failure')) {
+      if (lowerMessage.contains('email') ||
+          lowerMessage.contains('verification')) {
+        return 'Email verification service is temporarily unavailable. Please try again in a minute.';
+      }
+      return 'Auth service is temporarily unavailable. Please retry shortly.';
+    }
+
+    if (lowerMessage.contains('user already exists') ||
+        lowerMessage.contains('email_address_already_in_use')) {
+      return 'This email is already registered. Try logging in.';
+    }
+
+    if (lowerMessage.contains('invalid_credentials')) {
+      return 'Invalid email or password.';
+    }
+
+    return message.isNotEmpty
+        ? message
+        : 'Authentication failed. Please try again.';
+  }
+
+  bool _isRetryableAuthErrorMessage(String message) {
+    final lowerMessage = message.toLowerCase();
+    return lowerMessage.contains('upstream request timeout') ||
+        lowerMessage.contains('statuscode: 504') ||
+        lowerMessage.contains('statuscode: 503') ||
+        lowerMessage.contains('statuscode: 502') ||
+        lowerMessage.contains('gateway timeout') ||
+        lowerMessage.contains('unexpected_failure') ||
+        lowerMessage.contains('authretryablefetchexception') ||
+        lowerMessage.contains('socketexception') ||
+        lowerMessage.contains('timeout');
+  }
+
+  String? _buildEmailRedirectTo() {
+    if (!kIsWeb) {
+      return null;
+    }
+
+    final origin = Uri.base.origin;
+    if (origin.isEmpty) {
+      return null;
+    }
+
+    return '$origin/#/login';
   }
 
   Future<Map<String, dynamic>?> updateStreak(String userId) async {
@@ -163,12 +293,14 @@ class SupabaseService {
           : DateTime.parse(lastStudyDate.toString());
 
       final yesterday = todayDate.subtract(const Duration(days: 1));
-      final isConsecutiveDay = previousDate != null &&
+      final isConsecutiveDay =
+          previousDate != null &&
           previousDate.year == yesterday.year &&
           previousDate.month == yesterday.month &&
           previousDate.day == yesterday.day;
 
-      final isSameDay = previousDate != null &&
+      final isSameDay =
+          previousDate != null &&
           previousDate.year == todayDate.year &&
           previousDate.month == todayDate.month &&
           previousDate.day == todayDate.day;
@@ -177,8 +309,8 @@ class SupabaseService {
       final nextStreak = isSameDay
           ? currentStreak
           : isConsecutiveDay
-              ? currentStreak + 1
-              : 1;
+          ? currentStreak + 1
+          : 1;
 
       return await updateProfile(userId, {
         'streak_count': nextStreak,
@@ -206,6 +338,25 @@ class SupabaseService {
           .toList();
     } catch (error) {
       debugPrint('getModules error: $error');
+      return null;
+    }
+  }
+
+  Future<ModuleModel?> getModuleById(String moduleId) async {
+    try {
+      final response = await client
+          .from('modules')
+          .select()
+          .eq('id', moduleId)
+          .maybeSingle();
+
+      if (response == null) {
+        return null;
+      }
+
+      return ModuleModel.fromJson(response);
+    } catch (error) {
+      debugPrint('getModuleById error: $error');
       return null;
     }
   }
@@ -277,6 +428,48 @@ class SupabaseService {
           .toList();
     } catch (error) {
       debugPrint('getTopics error: $error');
+      return null;
+    }
+  }
+
+  Future<TopicModel?> getTopicById(String topicId) async {
+    try {
+      final response = await client
+          .from('topics')
+          .select()
+          .eq('id', topicId)
+          .maybeSingle();
+
+      if (response == null) {
+        return null;
+      }
+
+      return TopicModel.fromJson(response);
+    } catch (error) {
+      debugPrint('getTopicById error: $error');
+      return null;
+    }
+  }
+
+  Future<List<Map<String, dynamic>>?> getTopicRatingHistory(
+    String topicId, {
+    int limit = 5,
+  }) async {
+    try {
+      final response = await client
+          .from('topic_ratings_history')
+          .select()
+          .eq('topic_id', topicId)
+          .order('rated_at', ascending: false)
+          .limit(limit);
+
+      final values = (response as List<dynamic>)
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+
+      return values.reversed.toList();
+    } catch (error) {
+      debugPrint('getTopicRatingHistory error: $error');
       return null;
     }
   }
@@ -452,10 +645,7 @@ class SupabaseService {
     try {
       final response = await client
           .from('class_timetable')
-          .insert({
-            ...data,
-            'created_at': DateTime.now().toIso8601String(),
-          })
+          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
           .select()
           .maybeSingle();
       return response;
@@ -520,10 +710,7 @@ class SupabaseService {
     try {
       final response = await client
           .from('study_sessions')
-          .insert({
-            ...data,
-            'created_at': DateTime.now().toIso8601String(),
-          })
+          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
           .select()
           .maybeSingle();
       return response;
@@ -541,10 +728,7 @@ class SupabaseService {
     try {
       final response = await client
           .from('study_sessions')
-          .update({
-            'status': status,
-            'actual_duration_minutes': actualDuration,
-          })
+          .update({'status': status, 'actual_duration_minutes': actualDuration})
           .eq('id', sessionId)
           .select()
           .maybeSingle();
@@ -579,10 +763,7 @@ class SupabaseService {
     try {
       final response = await client
           .from('exams')
-          .insert({
-            ...data,
-            'created_at': DateTime.now().toIso8601String(),
-          })
+          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
           .select()
           .maybeSingle();
       return response;
@@ -724,10 +905,7 @@ class SupabaseService {
             .eq('id', membership['group_id'])
             .maybeSingle();
 
-        results.add({
-          ...membership,
-          'study_groups': group,
-        });
+        results.add({...membership, 'study_groups': group});
       }
 
       return results;
@@ -787,14 +965,27 @@ class SupabaseService {
     }
   }
 
+  Future<List<Map<String, dynamic>>?> getGroupMessages(String groupId) async {
+    try {
+      final response = await client
+          .from('group_messages')
+          .select()
+          .eq('group_id', groupId)
+          .order('created_at');
+      return (response as List<dynamic>)
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+    } catch (error) {
+      debugPrint('getGroupMessages error: $error');
+      return null;
+    }
+  }
+
   Future<Map<String, dynamic>?> sendMessage(Map<String, dynamic> data) async {
     try {
       final response = await client
           .from('group_messages')
-          .insert({
-            ...data,
-            'created_at': DateTime.now().toIso8601String(),
-          })
+          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
           .select()
           .maybeSingle();
       return response;
@@ -838,6 +1029,40 @@ class SupabaseService {
     }
   }
 
+  Future<RealtimeChannel?> subscribeToGroupMessages(
+    String groupId,
+    void Function(Map<String, dynamic> message) onMessage,
+  ) async {
+    try {
+      unsubscribeFromMessages();
+
+      _messagesChannel = client.channel('group_messages_$groupId');
+      _messagesChannel!
+          .onPostgresChanges(
+            event: PostgresChangeEvent.insert,
+            schema: 'public',
+            table: 'group_messages',
+            filter: PostgresChangeFilter(
+              type: PostgresChangeFilterType.eq,
+              column: 'group_id',
+              value: groupId,
+            ),
+            callback: (payload) {
+              final newRecord = payload.newRecord;
+              if (newRecord.isNotEmpty) {
+                onMessage(newRecord);
+              }
+            },
+          )
+          .subscribe();
+
+      return _messagesChannel;
+    } catch (error) {
+      debugPrint('subscribeToGroupMessages error: $error');
+      return null;
+    }
+  }
+
   Future<void> unsubscribeFromMessages() async {
     try {
       if (_messagesChannel != null) {
@@ -859,10 +1084,7 @@ class SupabaseService {
     try {
       final response = await client
           .from('weekly_reports')
-          .insert({
-            ...data,
-            'created_at': DateTime.now().toIso8601String(),
-          })
+          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
           .select()
           .maybeSingle();
       return response;
@@ -918,10 +1140,7 @@ class SupabaseService {
     try {
       final response = await client
           .from('uploaded_notes')
-          .insert({
-            ...data,
-            'created_at': DateTime.now().toIso8601String(),
-          })
+          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
           .select()
           .maybeSingle();
       return response;
@@ -961,6 +1180,34 @@ class SupabaseService {
       return response;
     } catch (error) {
       debugPrint('updateNoteProcessingStatus error: $error');
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>?> updateUploadedNoteSharing(
+    String noteId,
+    bool isShared,
+  ) async {
+    try {
+      final response = await client
+          .from('uploaded_notes')
+          .update({'is_shared_with_group': isShared})
+          .eq('id', noteId)
+          .select()
+          .maybeSingle();
+      return response;
+    } catch (error) {
+      debugPrint('updateUploadedNoteSharing error: $error');
+      return null;
+    }
+  }
+
+  Future<bool?> deleteUploadedNote(String noteId) async {
+    try {
+      await client.from('uploaded_notes').delete().eq('id', noteId);
+      return true;
+    } catch (error) {
+      debugPrint('deleteUploadedNote error: $error');
       return null;
     }
   }
