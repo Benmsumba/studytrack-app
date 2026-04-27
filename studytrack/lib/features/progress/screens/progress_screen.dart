@@ -22,199 +22,234 @@ class _ProgressScreenState extends State<ProgressScreen> {
   List<ModuleModel> _modules = [];
   List<TopicModel> _topics = [];
   TopicModel? _selectedTopic;
-  Map<int, int> _weeklySessionCounts = {};
-  Map<String, int> _heatmapCounts = {};
 
-  int _mastered = 0;
-  int _streak = 0;
-  int _weekSessions = 0;
+  int _topicsMastered = 0;
+  int _currentStreak = 0;
+  int _weeklySessions = 0;
   double _averageRating = 0;
+
+  final Map<int, int> _weeklyTopicCounts = {};
+  final Map<String, int> _heatmapCounts = {};
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _loadProgress();
   }
 
-  Future<void> _load() async {
-    try {
-      final user = _service.getCurrentUser();
-      if (user == null) {
-        if (mounted) {
-          setState(() => _isLoading = false);
-        }
-        return;
-      }
-
-      final modules = await _service.getModules(user.id) ?? [];
-
-      final allTopics = <TopicModel>[];
-      for (final module in modules) {
-        final topics = await _service.getTopics(module.id) ?? [];
-        allTopics.addAll(topics);
-      }
-
-      final ratedTopics = allTopics.where((t) => t.currentRating != null).toList();
-      final mastered = allTopics.where((t) => (t.currentRating ?? 0) >= 7).length;
-      final avg = ratedTopics.isEmpty
-          ? 0.0
-          : ratedTopics.fold<double>(0, (sum, t) => sum + (t.currentRating ?? 0)) /
-              ratedTopics.length;
-
-      final profile = await _service.getProfile(user.id);
-      final streak = (profile?['streak_count'] as num?)?.toInt() ?? 0;
-
-      final now = DateTime.now();
-      final weekStart = now.subtract(Duration(days: now.weekday - 1));
-      final weekly = <int, int>{};
-      var weekSessions = 0;
-
-      for (var i = 0; i < 7; i++) {
-        final day = weekStart.add(Duration(days: i));
-        final sessions = await _service.getStudySessions(user.id, day) ?? [];
-        weekly[i] = sessions.length;
-        weekSessions += sessions.length;
-      }
-
-      final heat = <String, int>{};
-      for (var dayOffset = 0; dayOffset < 84; dayOffset++) {
-        final date = now.subtract(Duration(days: dayOffset));
-        final sessions = await _service.getStudySessions(user.id, date) ?? [];
-        final key = _dateKey(date);
-        heat[key] = sessions.length;
-      }
-
+  Future<void> _loadProgress() async {
+    final user = _service.getCurrentUser();
+    if (user == null) {
       if (!mounted) return;
-      setState(() {
-        _modules = modules;
-        _topics = allTopics;
-        _selectedTopic = allTopics.isNotEmpty ? allTopics.first : null;
-        _mastered = mastered;
-        _averageRating = double.parse(avg.toStringAsFixed(1));
-        _streak = streak;
-        _weeklySessionCounts = weekly;
-        _weekSessions = weekSessions;
-        _heatmapCounts = heat;
-        _isLoading = false;
-      });
-    } catch (error) {
-      debugPrint('Progress load error: $error');
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      setState(() => _isLoading = false);
+      return;
     }
+
+    setState(() => _isLoading = true);
+
+    final modules = await _service.getModules(user.id) ?? [];
+    final allTopics = <TopicModel>[];
+    for (final module in modules) {
+      final topics = await _service.getTopics(module.id) ?? [];
+      allTopics.addAll(topics);
+    }
+
+    final ratings = allTopics
+        .where((topic) => topic.currentRating != null)
+        .map((topic) => topic.currentRating!)
+        .toList();
+
+    final topicsMastered = allTopics
+        .where((topic) => (topic.currentRating ?? 0) >= 7)
+        .length;
+    final averageRating = ratings.isEmpty
+        ? 0.0
+        : (ratings.reduce((a, b) => a + b) / ratings.length).toDouble();
+
+    final profile = await _service.getProfile(user.id);
+    final currentStreak = (profile?['streak_count'] as num?)?.toInt() ?? 0;
+
+    final now = DateTime.now();
+    final weekStart = _startOfWeek(now);
+    final weeklyTopicCounts = <int, int>{};
+    var weeklySessions = 0;
+
+    for (var dayIndex = 0; dayIndex < 7; dayIndex++) {
+      final date = weekStart.add(Duration(days: dayIndex));
+      final sessions = await _service.getStudySessions(user.id, date) ?? [];
+      final topicIds = sessions
+          .map((session) => session['topic_id']?.toString() ?? '')
+          .where((topicId) => topicId.isNotEmpty)
+          .toSet();
+
+      weeklyTopicCounts[dayIndex] = topicIds.length;
+      weeklySessions += sessions.length;
+    }
+
+    final heatmapCounts = <String, int>{};
+    final heatmapStart = now.subtract(const Duration(days: 83));
+    for (var offset = 0; offset < 84; offset++) {
+      final date = heatmapStart.add(Duration(days: offset));
+      final sessions = await _service.getStudySessions(user.id, date) ?? [];
+      heatmapCounts[_dateKey(date)] = sessions.length;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _modules = modules;
+      _topics = allTopics;
+      _selectedTopic = allTopics.isEmpty
+          ? null
+          : (_selectedTopic ?? allTopics.first);
+      _topicsMastered = topicsMastered;
+      _currentStreak = currentStreak;
+      _weeklySessions = weeklySessions;
+      _averageRating = averageRating;
+      _weeklyTopicCounts
+        ..clear()
+        ..addAll(weeklyTopicCounts);
+      _heatmapCounts
+        ..clear()
+        ..addAll(heatmapCounts);
+      _isLoading = false;
+    });
+  }
+
+  DateTime _startOfWeek(DateTime date) {
+    final normalized = DateTime(date.year, date.month, date.day);
+    return normalized.subtract(Duration(days: normalized.weekday - 1));
   }
 
   String _dateKey(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+    final year = date.year.toString().padLeft(4, '0');
+    final month = date.month.toString().padLeft(2, '0');
+    final day = date.day.toString().padLeft(2, '0');
+    return '$year-$month-$day';
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 80, 16, 100),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Progress & Analytics',
-                  style: GoogleFonts.outfit(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () => context.push('/weekly-wrapped'),
-                  icon: const Icon(Icons.auto_graph, color: Colors.white),
-                  label: Text(
-                    'See Wrapped',
-                    style: GoogleFonts.outfit(color: Colors.white),
-                  ),
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildQuickStats(),
-            const SizedBox(height: 24),
-            _buildSectionCard(
-              title: 'Weekly Performance',
-              height: 220,
-              child: _WeeklyBarChart(counts: _weeklySessionCounts),
-            ),
-            const SizedBox(height: 20),
-            _buildSectionCard(
-              title: 'Subject Radar',
-              height: 260,
-              child: _SubjectRadarChart(modules: _modules, topics: _topics),
-            ),
-            const SizedBox(height: 20),
-            _buildSectionCard(
-              title: 'Study Consistency Heatmap',
-              height: 190,
-              child: _StudyHeatmap(counts: _heatmapCounts),
-            ),
-            const SizedBox(height: 20),
-            _buildTopicTrendSection(),
-            const SizedBox(height: 20),
-            _buildModuleDonuts(),
-          ],
+    return Scaffold(
+      backgroundColor: AppColors.backgroundDark,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'Analytics',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
         ),
+        actions: [
+          TextButton.icon(
+            onPressed: () => context.push('/weekly-wrapped'),
+            icon: const Icon(
+              Icons.auto_awesome,
+              size: 16,
+              color: AppColors.cyan,
+            ),
+            label: const Text(
+              'See Wrapped',
+              style: TextStyle(color: AppColors.cyan),
+            ),
+          ),
+        ],
       ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              onRefresh: _loadProgress,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                children: [
+                  _buildQuickStats(),
+                  const SizedBox(height: 16),
+                  _buildWeeklyBarChart(),
+                  const SizedBox(height: 16),
+                  _buildRadarChart(),
+                  const SizedBox(height: 16),
+                  _buildHeatmap(),
+                  const SizedBox(height: 16),
+                  _buildTopicRatingHistory(),
+                  const SizedBox(height: 16),
+                  _buildModuleDonuts(),
+                ],
+              ),
+            ),
     );
   }
 
   Widget _buildQuickStats() {
-    return Column(
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.5,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(label: 'Topics Mastered', value: '$_mastered', icon: '🏆'),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(label: 'Current Streak', value: '$_streak', icon: '🔥'),
-            ),
-          ],
+        _statCard('Topics Mastered', '$_topicsMastered', Icons.school_rounded),
+        _statCard(
+          'Current Streak',
+          '$_currentStreak',
+          Icons.local_fire_department,
         ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _StatCard(label: "This Week's Sessions", value: '$_weekSessions', icon: '📚'),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _StatCard(label: 'Average Rating', value: '$_averageRating', icon: '⭐'),
-            ),
-          ],
+        _statCard(
+          "This Week's Sessions",
+          '$_weeklySessions',
+          Icons.menu_book_rounded,
+        ),
+        _statCard(
+          'Average Rating',
+          _averageRating.toStringAsFixed(1),
+          Icons.star_rounded,
         ),
       ],
     );
   }
 
-  Widget _buildSectionCard({
-    required String title,
-    required double height,
-    required Widget child,
-  }) {
+  Widget _statCard(String label, String value, IconData icon) {
     return Container(
-      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.cardDark,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: AppColors.accent, size: 16),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    color: AppColors.textSecondary,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionShell(String title, Widget child, {double? fixedHeight}) {
+    return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.cardDark,
@@ -227,343 +262,385 @@ class _ProgressScreenState extends State<ProgressScreen> {
           Text(
             title,
             style: GoogleFonts.outfit(
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: Colors.white,
             ),
           ),
           const SizedBox(height: 12),
-          SizedBox(height: height, child: child),
+          if (fixedHeight != null)
+            SizedBox(height: fixedHeight, child: child)
+          else
+            child,
         ],
       ),
     );
   }
 
-  Widget _buildTopicTrendSection() {
-    if (_topics.isEmpty) {
-      return _buildSectionCard(
-        title: 'Topic Rating History',
-        height: 120,
-        child: Center(
-          child: Text(
-            'Add topics to unlock history charts.',
-            style: GoogleFonts.inter(color: AppColors.textSecondary),
-          ),
-        ),
-      );
-    }
+  Widget _buildWeeklyBarChart() {
+    final maxValue = _weeklyTopicCounts.values.fold<int>(
+      0,
+      (a, b) => a > b ? a : b,
+    );
 
-    return _buildSectionCard(
-      title: 'Topic Rating History',
-      height: 260,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: AppColors.surfaceDark,
-              borderRadius: BorderRadius.circular(10),
+    return _buildSectionShell(
+      'Weekly Performance (Topics Studied)',
+      BarChart(
+        BarChartData(
+          maxY: (maxValue + 1).toDouble(),
+          borderData: FlBorderData(show: false),
+          gridData: const FlGridData(drawVerticalLine: false),
+          barTouchData: BarTouchData(
+            enabled: true,
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                return BarTooltipItem(
+                  '${rod.toY.toInt()} topics',
+                  GoogleFonts.inter(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                );
+              },
             ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<TopicModel>(
-                value: _selectedTopic,
-                isExpanded: true,
-                dropdownColor: AppColors.surfaceDark,
-                style: GoogleFonts.inter(color: Colors.white),
-                items: _topics
-                    .map(
-                      (topic) => DropdownMenuItem<TopicModel>(
-                        value: topic,
-                        child: Text(topic.name),
+          ),
+          barGroups: List.generate(7, (index) {
+            final value = (_weeklyTopicCounts[index] ?? 0).toDouble();
+            final color =
+                Color.lerp(AppColors.deepViolet, AppColors.cyan, index / 6) ??
+                AppColors.deepViolet;
+            return BarChartGroupData(
+              x: index,
+              barRods: [
+                BarChartRodData(
+                  toY: value,
+                  width: 16,
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(8),
+                  ),
+                  color: color,
+                ),
+              ],
+            );
+          }),
+          titlesData: FlTitlesData(
+            topTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            rightTitles: const AxisTitles(
+              sideTitles: SideTitles(showTitles: false),
+            ),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 26,
+                getTitlesWidget: (value, meta) {
+                  return Text(
+                    value.toInt().toString(),
+                    style: GoogleFonts.inter(
+                      fontSize: 10,
+                      color: AppColors.textMuted,
+                    ),
+                  );
+                },
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  const labels = [
+                    'Mon',
+                    'Tue',
+                    'Wed',
+                    'Thu',
+                    'Fri',
+                    'Sat',
+                    'Sun',
+                  ];
+                  final index = value.toInt();
+                  if (index < 0 || index >= labels.length) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      labels[index],
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        color: AppColors.textSecondary,
                       ),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  if (value == null) return;
-                  setState(() => _selectedTopic = value);
+                    ),
+                  );
                 },
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: _selectedTopic == null
-                ? const SizedBox.shrink()
-                : _TopicTrendChart(topic: _selectedTopic!, service: _service),
+        ),
+      ),
+      fixedHeight: 220,
+    );
+  }
+
+  Widget _buildRadarChart() {
+    if (_modules.isEmpty) {
+      return _buildSectionShell(
+        'Subject Radar Chart',
+        Center(
+          child: Text(
+            'Add modules to view your radar chart.',
+            style: GoogleFonts.inter(color: AppColors.textSecondary),
+          ),
+        ),
+        fixedHeight: 180,
+      );
+    }
+
+    final radarModules = _modules.take(6).toList();
+    final entries = radarModules.map((module) {
+      final moduleTopics = _topics
+          .where(
+            (topic) =>
+                topic.moduleId == module.id && topic.currentRating != null,
+          )
+          .toList();
+      if (moduleTopics.isEmpty) {
+        return const RadarEntry(value: 0.0);
+      }
+      final avg =
+          moduleTopics
+              .map((topic) => topic.currentRating!.toDouble())
+              .reduce((a, b) => a + b) /
+          moduleTopics.length;
+      return RadarEntry(value: avg);
+    }).toList();
+
+    return _buildSectionShell(
+      'Subject Radar Chart',
+      RadarChart(
+        RadarChartData(
+          dataSets: [
+            RadarDataSet(
+              fillColor: AppColors.deepViolet.withValues(alpha: 0.35),
+              borderColor: AppColors.cyan,
+              borderWidth: 2,
+              entryRadius: 3,
+              dataEntries: entries,
+            ),
+          ],
+          radarShape: RadarShape.polygon,
+          ticksTextStyle: GoogleFonts.inter(
+            color: AppColors.textMuted,
+            fontSize: 10,
+          ),
+          tickCount: 5,
+          titlePositionPercentageOffset: 0.2,
+          tickBorderData: BorderSide(
+            color: AppColors.border.withValues(alpha: 0.55),
+          ),
+          gridBorderData: BorderSide(
+            color: AppColors.border.withValues(alpha: 0.7),
+          ),
+          getTitle: (index, angle) {
+            if (index < 0 || index >= radarModules.length) {
+              return const RadarChartTitle(text: '');
+            }
+            return RadarChartTitle(
+              text: radarModules[index].name,
+              angle: angle,
+            );
+          },
+        ),
+      ),
+      fixedHeight: 260,
+    );
+  }
+
+  Widget _buildHeatmap() {
+    final now = DateTime.now();
+    final startDate = now.subtract(const Duration(days: 83));
+    final monthLabels = <String>[];
+    var lastMonth = -1;
+
+    for (var week = 0; week < 12; week++) {
+      final date = startDate.add(Duration(days: week * 7));
+      if (date.month != lastMonth) {
+        monthLabels.add(_monthShort(date.month));
+        lastMonth = date.month;
+      } else {
+        monthLabels.add('');
+      }
+    }
+
+    return _buildSectionShell(
+      'Study Consistency (12 Weeks)',
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: List.generate(12, (index) {
+              return Expanded(
+                child: Text(
+                  monthLabels[index],
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              );
+            }),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List.generate(12, (weekIndex) {
+              final weekStart = startDate.add(Duration(days: weekIndex * 7));
+              return Expanded(
+                child: Column(
+                  children: List.generate(7, (dayIndex) {
+                    final date = weekStart.add(Duration(days: dayIndex));
+                    final count = _heatmapCounts[_dateKey(date)] ?? 0;
+                    return Container(
+                      margin: const EdgeInsets.all(1.5),
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: _heatmapColor(count),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    );
+                  }),
+                ),
+              );
+            }),
           ),
         ],
       ),
+    );
+  }
+
+  Color _heatmapColor(int count) {
+    if (count <= 0) return Colors.grey.withValues(alpha: 0.25);
+    if (count == 1) return AppColors.deepViolet.withValues(alpha: 0.45);
+    return AppColors.deepViolet;
+  }
+
+  String _monthShort(int month) {
+    const labels = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return labels[month - 1];
+  }
+
+  Widget _buildTopicRatingHistory() {
+    return _buildSectionShell(
+      'Topic Rating History',
+      _topics.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Text(
+                'Add topics to unlock rating trends.',
+                style: GoogleFonts.inter(color: AppColors.textSecondary),
+              ),
+            )
+          : Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceDark,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<TopicModel>(
+                      value: _selectedTopic,
+                      dropdownColor: AppColors.surfaceDark,
+                      isExpanded: true,
+                      style: GoogleFonts.inter(color: Colors.white),
+                      items: _topics
+                          .map(
+                            (topic) => DropdownMenuItem<TopicModel>(
+                              value: topic,
+                              child: Text(topic.name),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (next) {
+                        if (next == null) return;
+                        setState(() => _selectedTopic = next);
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  height: 220,
+                  child: _selectedTopic == null
+                      ? const SizedBox.shrink()
+                      : _TopicLineChart(
+                          topic: _selectedTopic!,
+                          service: _service,
+                        ),
+                ),
+              ],
+            ),
     );
   }
 
   Widget _buildModuleDonuts() {
-    return _buildSectionCard(
-      title: 'Module Progress Donuts',
-      height: 155,
-      child: _modules.isEmpty
-          ? Center(
+    return _buildSectionShell(
+      'Module Progress Donut Charts',
+      _modules.isEmpty
+          ? Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Text(
-                'No modules yet.',
+                'Create modules to view progress donuts.',
                 style: GoogleFonts.inter(color: AppColors.textSecondary),
               ),
             )
-          : ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _modules.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 16),
-              itemBuilder: (context, index) {
-                final module = _modules[index];
-                final moduleTopics = _topics.where((t) => t.moduleId == module.id).toList();
-                final mastered = moduleTopics.where((t) => (t.currentRating ?? 0) >= 7).length;
-                final pct = moduleTopics.isEmpty ? 0.0 : mastered * 100 / moduleTopics.length;
-                return _ModuleDonut(module: module, percentage: pct);
-              },
-            ),
-    );
-  }
-}
+          : SizedBox(
+              height: 160,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: _modules.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 14),
+                itemBuilder: (context, index) {
+                  final module = _modules[index];
+                  final moduleTopics = _topics
+                      .where((topic) => topic.moduleId == module.id)
+                      .toList();
+                  final masteredCount = moduleTopics
+                      .where((topic) => (topic.currentRating ?? 0) >= 7)
+                      .length;
+                  final percentage = moduleTopics.isEmpty
+                      ? 0.0
+                      : masteredCount * 100 / moduleTopics.length;
 
-class _StatCard extends StatelessWidget {
-  const _StatCard({required this.label, required this.value, required this.icon});
-
-  final String label;
-  final String value;
-  final String icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
-                ),
-              ),
-              Text(icon),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _WeeklyBarChart extends StatelessWidget {
-  const _WeeklyBarChart({required this.counts});
-
-  final Map<int, int> counts;
-
-  @override
-  Widget build(BuildContext context) {
-    final maxY = counts.values.fold<int>(1, (max, value) => value > max ? value : max).toDouble() + 1;
-
-    return BarChart(
-      BarChartData(
-        maxY: maxY,
-        barTouchData: BarTouchData(
-          enabled: true,
-          touchTooltipData: BarTouchTooltipData(
-            getTooltipItem: (group, groupIndex, rod, rodIndex) => BarTooltipItem(
-              '${rod.toY.toInt()} sessions',
-              GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w600),
-            ),
-          ),
-        ),
-        gridData: FlGridData(show: true, drawVerticalLine: false),
-        borderData: FlBorderData(show: false),
-        barGroups: List.generate(7, (index) {
-          final value = (counts[index] ?? 0).toDouble();
-          return BarChartGroupData(
-            x: index,
-            barRods: [
-              BarChartRodData(
-                toY: value,
-                color: Color.lerp(AppColors.primary, AppColors.accent, index / 6),
-                width: 14,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-              ),
-            ],
-          );
-        }),
-        titlesData: FlTitlesData(
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 28,
-              getTitlesWidget: (value, _) => Text(
-                '${value.toInt()}',
-                style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 10),
+                  return _ModuleDonutCard(
+                    moduleName: module.name,
+                    color: module.subjectColor,
+                    percentage: percentage,
+                  );
+                },
               ),
             ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              getTitlesWidget: (value, _) {
-                const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                final i = value.toInt();
-                if (i < 0 || i > 6) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.only(top: 6),
-                  child: Text(
-                    labels[i],
-                    style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 10),
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
-      ),
     );
   }
 }
 
-class _SubjectRadarChart extends StatelessWidget {
-  const _SubjectRadarChart({required this.modules, required this.topics});
-
-  final List<ModuleModel> modules;
-  final List<TopicModel> topics;
-
-  @override
-  Widget build(BuildContext context) {
-    if (modules.isEmpty) {
-      return Center(
-        child: Text(
-          'Add modules to see your radar chart.',
-          style: GoogleFonts.inter(color: AppColors.textSecondary),
-        ),
-      );
-    }
-
-    final trimmedModules = modules.take(6).toList();
-    final entries = trimmedModules.map((module) {
-      final moduleTopics = topics.where((t) => t.moduleId == module.id && t.currentRating != null).toList();
-      final avg = moduleTopics.isEmpty
-          ? 0.0
-          : moduleTopics.fold<double>(0, (sum, t) => sum + (t.currentRating ?? 0)) / moduleTopics.length;
-      return RadarEntry(value: avg);
-    }).toList();
-
-    return RadarChart(
-      RadarChartData(
-        radarTouchData: RadarTouchData(enabled: true),
-        dataSets: [
-          RadarDataSet(
-            fillColor: AppColors.primary.withValues(alpha: 0.35),
-            borderColor: AppColors.accent,
-            entryRadius: 3,
-            borderWidth: 2,
-            dataEntries: entries,
-          ),
-        ],
-        tickCount: 5,
-        ticksTextStyle: GoogleFonts.inter(color: AppColors.textMuted, fontSize: 10),
-        tickBorderData: BorderSide(color: AppColors.border.withValues(alpha: 0.5)),
-        gridBorderData: BorderSide(color: AppColors.border.withValues(alpha: 0.7)),
-        titlePositionPercentageOffset: 0.15,
-        getTitle: (index, _) {
-          if (index < 0 || index >= trimmedModules.length) {
-            return const RadarChartTitle(text: '');
-          }
-          return RadarChartTitle(
-            text: trimmedModules[index].name,
-            angle: 0,
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _StudyHeatmap extends StatelessWidget {
-  const _StudyHeatmap({required this.counts});
-
-  final Map<String, int> counts;
-
-  String _key(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
-
-  Color _cellColor(int count) {
-    if (count <= 0) return Colors.grey.withValues(alpha: 0.25);
-    if (count == 1) return AppColors.primary.withValues(alpha: 0.45);
-    if (count == 2) return AppColors.primary.withValues(alpha: 0.7);
-    return AppColors.primary;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final today = DateTime.now();
-    final start = today.subtract(const Duration(days: 83));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Last 12 weeks',
-          style: GoogleFonts.inter(fontSize: 12, color: AppColors.textSecondary),
-        ),
-        const SizedBox(height: 8),
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: List.generate(12, (weekIndex) {
-                final weekStart = start.add(Duration(days: weekIndex * 7));
-                return Padding(
-                  padding: const EdgeInsets.only(right: 4),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(7, (dayIndex) {
-                      final day = weekStart.add(Duration(days: dayIndex));
-                      final count = counts[_key(day)] ?? 0;
-                      return Container(
-                        width: 12,
-                        height: 12,
-                        margin: const EdgeInsets.only(bottom: 3),
-                        decoration: BoxDecoration(
-                          color: _cellColor(count),
-                          borderRadius: BorderRadius.circular(3),
-                        ),
-                      );
-                    }),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _TopicTrendChart extends StatelessWidget {
-  const _TopicTrendChart({required this.topic, required this.service});
+class _TopicLineChart extends StatelessWidget {
+  const _TopicLineChart({required this.topic, required this.service});
 
   final TopicModel topic;
   final SupabaseService service;
@@ -573,8 +650,8 @@ class _TopicTrendChart extends StatelessWidget {
     return FutureBuilder<List<Map<String, dynamic>>?>(
       future: service.getTopicRatingHistory(topic.id, limit: 20),
       builder: (context, snapshot) {
-        final data = snapshot.data ?? [];
-        if (data.isEmpty) {
+        final values = snapshot.data ?? [];
+        if (values.isEmpty) {
           return Center(
             child: Text(
               'No ratings yet for this topic.',
@@ -583,8 +660,7 @@ class _TopicTrendChart extends StatelessWidget {
           );
         }
 
-        final history = data.reversed.toList();
-        final spots = history.asMap().entries.map((entry) {
+        final points = values.asMap().entries.map((entry) {
           final rating = (entry.value['rating'] as num?)?.toDouble() ?? 0;
           return FlSpot(entry.key.toDouble(), rating);
         }).toList();
@@ -593,39 +669,56 @@ class _TopicTrendChart extends StatelessWidget {
           LineChartData(
             minY: 0,
             maxY: 10,
-            gridData: FlGridData(show: true),
             borderData: FlBorderData(show: false),
+            gridData: const FlGridData(drawVerticalLine: false),
+            lineTouchData: LineTouchData(enabled: true),
             titlesData: FlTitlesData(
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              bottomTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              topTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              rightTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
+              bottomTitles: const AxisTitles(
+                sideTitles: SideTitles(showTitles: false),
+              ),
               leftTitles: AxisTitles(
                 sideTitles: SideTitles(
                   showTitles: true,
-                  reservedSize: 26,
-                  getTitlesWidget: (value, _) => Text(
-                    '${value.toInt()}',
-                    style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 10),
-                  ),
+                  reservedSize: 28,
+                  getTitlesWidget: (value, meta) {
+                    return Text(
+                      value.toInt().toString(),
+                      style: GoogleFonts.inter(
+                        color: AppColors.textMuted,
+                        fontSize: 10,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),
             lineBarsData: [
               LineChartBarData(
-                spots: spots,
+                spots: points,
                 isCurved: true,
-                color: AppColors.accent,
+                color: AppColors.cyan,
                 barWidth: 3,
                 dotData: FlDotData(
                   show: true,
-                  getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
-                    radius: 3,
-                    color: AppColors.primary,
-                    strokeWidth: 1,
-                    strokeColor: Colors.white,
-                  ),
+                  getDotPainter: (spot, percent, barData, index) {
+                    return FlDotCirclePainter(
+                      radius: 3,
+                      color: AppColors.deepViolet,
+                      strokeWidth: 1,
+                      strokeColor: Colors.white,
+                    );
+                  },
                 ),
-                belowBarData: BarAreaData(show: true, color: AppColors.primary.withValues(alpha: 0.2)),
+                belowBarData: BarAreaData(
+                  show: true,
+                  color: AppColors.deepViolet.withValues(alpha: 0.2),
+                ),
               ),
             ],
           ),
@@ -635,17 +728,29 @@ class _TopicTrendChart extends StatelessWidget {
   }
 }
 
-class _ModuleDonut extends StatelessWidget {
-  const _ModuleDonut({required this.module, required this.percentage});
+class _ModuleDonutCard extends StatelessWidget {
+  const _ModuleDonutCard({
+    required this.moduleName,
+    required this.color,
+    required this.percentage,
+  });
 
-  final ModuleModel module;
+  final String moduleName;
+  final Color color;
   final double percentage;
 
   @override
   Widget build(BuildContext context) {
-    final clamped = percentage.clamp(0, 100).toDouble();
-    return SizedBox(
-      width: 120,
+    final clampedPercentage = percentage.clamp(0, 100).toDouble();
+
+    return Container(
+      width: 128,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
       child: Column(
         children: [
           SizedBox(
@@ -657,42 +762,42 @@ class _ModuleDonut extends StatelessWidget {
                 PieChart(
                   PieChartData(
                     sectionsSpace: 0,
-                    centerSpaceRadius: 24,
+                    centerSpaceRadius: 25,
                     sections: [
                       PieChartSectionData(
-                        value: clamped,
-                        color: module.subjectColor,
+                        value: clampedPercentage,
+                        color: color,
                         title: '',
-                        radius: 16,
+                        radius: 14,
                       ),
                       PieChartSectionData(
-                        value: 100 - clamped,
-                        color: Colors.grey.withValues(alpha: 0.28),
+                        value: 100 - clampedPercentage,
+                        color: Colors.grey.withValues(alpha: 0.25),
                         title: '',
-                        radius: 16,
+                        radius: 14,
                       ),
                     ],
                   ),
                 ),
                 Text(
-                  '${clamped.toInt()}%',
+                  '${clampedPercentage.round()}%',
                   style: GoogleFonts.outfit(
-                    color: Colors.white,
                     fontWeight: FontWeight.w700,
+                    fontSize: 16,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
-            module.name,
+            moduleName,
             maxLines: 2,
-            textAlign: TextAlign.center,
             overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
             style: GoogleFonts.inter(
-              fontSize: 12,
               color: AppColors.textSecondary,
+              fontSize: 12,
             ),
           ),
         ],

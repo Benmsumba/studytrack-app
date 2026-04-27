@@ -905,7 +905,37 @@ class SupabaseService {
             .eq('id', membership['group_id'])
             .maybeSingle();
 
-        results.add({...membership, 'study_groups': group});
+        var memberCount = 1;
+        String? lastActivityAt;
+
+        try {
+          final groupId = membership['group_id']?.toString();
+          if (groupId != null && groupId.isNotEmpty) {
+            final members = await client
+                .from('group_members')
+                .select('id')
+                .eq('group_id', groupId);
+            memberCount = (members as List<dynamic>).length;
+
+            final lastMessage = await client
+                .from('group_messages')
+                .select('created_at')
+                .eq('group_id', groupId)
+                .order('created_at', ascending: false)
+                .limit(1)
+                .maybeSingle();
+            lastActivityAt = lastMessage?['created_at']?.toString();
+          }
+        } catch (error) {
+          debugPrint('getMyGroups metadata error: $error');
+        }
+
+        results.add({
+          ...membership,
+          'study_groups': group,
+          'member_count': memberCount,
+          'last_activity_at': lastActivityAt,
+        });
       }
 
       return results;
@@ -922,11 +952,51 @@ class SupabaseService {
           .select()
           .eq('group_id', groupId)
           .order('joined_at');
-      return (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+
+      final currentUser = getCurrentUser();
+      final currentProfile = currentUser == null
+          ? null
+          : await getProfile(currentUser.id);
+
+      return (response as List<dynamic>).map((item) {
+        final member = item as Map<String, dynamic>;
+        final isCurrentUser = member['user_id'] == currentUser?.id;
+        if (isCurrentUser) {
+          return {
+            ...member,
+            'name': currentProfile?['name']?.toString() ?? 'You',
+            'course': currentProfile?['course']?.toString() ?? 'N/A',
+            'year_level': (currentProfile?['year_level'] as num?)?.toInt(),
+          };
+        }
+
+        final rawUserId = member['user_id']?.toString() ?? '';
+        final shortId = rawUserId.length <= 8
+            ? rawUserId
+            : rawUserId.substring(0, 8);
+        return {
+          ...member,
+          'name': 'Member $shortId',
+          'course': 'Private',
+          'year_level': null,
+        };
+      }).toList();
     } catch (error) {
       debugPrint('getGroupMembers error: $error');
+      return null;
+    }
+  }
+
+  Future<bool?> removeGroupMember(String groupId, String memberUserId) async {
+    try {
+      await client
+          .from('group_members')
+          .delete()
+          .eq('group_id', groupId)
+          .eq('user_id', memberUserId);
+      return true;
+    } catch (error) {
+      debugPrint('removeGroupMember error: $error');
       return null;
     }
   }

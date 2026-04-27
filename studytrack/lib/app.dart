@@ -9,6 +9,10 @@ import 'features/auth/screens/signup_screen.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'features/ai_tutor/screens/ai_tutor_screen.dart';
 import 'features/ai_tutor/screens/quiz_screen.dart';
+import 'features/groups/screens/group_chat_screen.dart';
+import 'features/groups/screens/group_detail_screen.dart';
+import 'features/groups/screens/groups_screen.dart';
+import 'features/groups/screens/topic_chat_screen.dart';
 import 'features/home/screens/main_shell.dart';
 import 'features/modules/screens/module_detail_screen.dart';
 import 'features/modules/screens/modules_screen.dart';
@@ -19,12 +23,8 @@ import 'features/progress/screens/progress_screen.dart';
 import 'features/progress/screens/weekly_wrapped_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
 import 'features/timetable/screens/exam_countdown_screen.dart';
-import 'features/timetable/screens/group_chat_screen.dart';
-import 'features/timetable/screens/group_detail_screen.dart';
-import 'features/timetable/screens/groups_screen.dart';
 import 'features/timetable/screens/study_session_screen.dart';
 import 'features/timetable/screens/timetable_screen.dart';
-import 'features/timetable/screens/topic_chat_screen.dart';
 
 class StudyTrackApp extends StatelessWidget {
   const StudyTrackApp({super.key});
@@ -173,7 +173,15 @@ class StudyTrackApp extends StatelessWidget {
       ),
       GoRoute(
         path: '/topics/:topicId/chat',
-        builder: (context, state) => const TopicChatScreen(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return TopicChatScreen(
+            topicId: state.pathParameters['topicId']!,
+            topicName: extra?['topicName']?.toString(),
+            moduleName: extra?['moduleName']?.toString(),
+            groupName: extra?['groupName']?.toString(),
+          );
+        },
       ),
       GoRoute(
         path: '/profile',
