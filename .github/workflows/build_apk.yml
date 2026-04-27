@@ -1,0 +1,129 @@
+name: Build Flutter APK
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: 'stable'
+          channel: 'stable'
+          cache: true
+
+      - name: Cache Flutter pub
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ runner.tool_cache }}/flutter/**/.pub-cache
+            /home/runner/.pub-cache
+          key: ${{ runner.os }}-flutter-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-pub-
+
+      - name: Get Flutter dependencies
+        run: |
+          cd studytrack
+          flutter pub get
+
+      - name: Create .env file
+        run: |
+          cd studytrack
+          cat > lib/.env << EOF
+          SUPABASE_URL=${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}
+          GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+          BACKEND_URL=${{ secrets.BACKEND_URL }}
+          EOF
+
+      - name: Run Flutter Analyze
+        run: |
+          cd studytrack
+          flutter analyze
+
+      - name: Build Flutter APK
+        run: |
+          cd studytrack
+          flutter build apk --release --split-per-abi
+
+      - name: Rename APK files
+        run: |
+          cd studytrack/build/app/outputs/apk/release
+          mv app-arm64-v8a-release.apk studytrack-arm64-v8a-${{ github.run_number }}.apk || true
+          mv app-armeabi-v7a-release.apk studytrack-armeabi-v7a-${{ github.run_number }}.apk || true
+          mv app-x86_64-release.apk studytrack-x86-64-${{ github.run_number }}.apk || true
+          ls -la
+
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: APK Builds
+          path: |
+            studytrack/build/app/outputs/apk/release/*.apk
+          retention-days: 30
+
+      - name: Create Release
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}-${{ github.run_id }}
+          release_name: StudyTrack v${{ github.run_number }} - ${{ github.sha }}
+          body: |
+            Build: ${{ github.run_number }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            
+            ✅ APK Build Successful!
+            
+            Download APK files from the artifacts section.
+            
+            **Build Details:**
+            - Branch: ${{ github.ref }}
+            - Event: ${{ github.event_name }}
+            - Runner: Ubuntu Latest
+          draft: false
+          prerelease: false
+
+      - name: Upload APK to Release
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.run_number }}-${{ github.run_id }}
+          files: |
+            studytrack/build/app/outputs/apk/release/*.apk
+
+      - name: Build Status Check
+        if: failure()
+        run: |
+          echo "❌ Build Failed"
+          exit 1
+
+      - name: Build Status Success
+        if: success()
+        run: |
+          echo "✅ Build Successful"
+          echo "APK files are ready for download from artifacts or releases"
