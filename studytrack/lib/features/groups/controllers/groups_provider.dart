@@ -47,7 +47,11 @@ class GroupsProvider extends ChangeNotifier {
   }) async {
     _errorMessage = null;
 
-    final created = await _supabaseService.createGroup(name, description, createdBy);
+    final created = await _supabaseService.createGroup(
+      name,
+      description,
+      createdBy,
+    );
     if (created == null) {
       _errorMessage = 'Failed to create group.';
       notifyListeners();
@@ -58,7 +62,10 @@ class GroupsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> joinGroup({required String inviteCode, required String userId}) async {
+  Future<void> joinGroup({
+    required String inviteCode,
+    required String userId,
+  }) async {
     _errorMessage = null;
     final joined = await _supabaseService.joinGroup(inviteCode, userId);
     if (joined == null) {

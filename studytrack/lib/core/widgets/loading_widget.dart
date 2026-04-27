@@ -15,19 +15,13 @@ class LoadingWidget extends StatefulWidget {
     this.inline = false,
   });
 
-  const LoadingWidget.fullscreen({
-    super.key,
-    this.label,
-    this.size = 72,
-  }) : fullscreen = true,
-       inline = false;
+  const LoadingWidget.fullscreen({super.key, this.label, this.size = 72})
+    : fullscreen = true,
+      inline = false;
 
-  const LoadingWidget.inline({
-    super.key,
-    this.label,
-    this.size = 22,
-  }) : fullscreen = false,
-       inline = true;
+  const LoadingWidget.inline({super.key, this.label, this.size = 22})
+    : fullscreen = false,
+      inline = true;
 
   @override
   State<LoadingWidget> createState() => _LoadingWidgetState();
@@ -112,10 +106,7 @@ class _LoadingWidgetState extends State<LoadingWidget>
     );
 
     if (widget.fullscreen) {
-      return Scaffold(
-        backgroundColor: AppColors.backgroundDark,
-        body: content,
-      );
+      return Scaffold(backgroundColor: AppColors.backgroundDark, body: content);
     }
 
     return content;

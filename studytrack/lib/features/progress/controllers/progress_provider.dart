@@ -29,15 +29,17 @@ class ProgressProvider extends ChangeNotifier {
 
     try {
       final now = DateTime.now();
-      final weekStart = DateTime(now.year, now.month, now.day)
-          .subtract(Duration(days: now.weekday - 1));
+      final weekStart = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: now.weekday - 1));
       final weekEnd = weekStart.add(const Duration(days: 6));
 
-      final sessions = await _supabaseService.getStudySessions(userId, now) ??
-          const [];
-      final topicsForCharts = await _supabaseService.getTopicsNeedingReview(
-            userId,
-          ) ??
+      final sessions =
+          await _supabaseService.getStudySessions(userId, now) ?? const [];
+      final topicsForCharts =
+          await _supabaseService.getTopicsNeedingReview(userId) ??
           const <TopicModel>[];
 
       final completed = sessions
@@ -77,8 +79,8 @@ class ProgressProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final reports = await _supabaseService.getWeeklyReports(userId, 8) ??
-          const [];
+      final reports =
+          await _supabaseService.getWeeklyReports(userId, 8) ?? const [];
 
       _chartData = {
         'weeklyReports': reports,

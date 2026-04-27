@@ -55,7 +55,10 @@ class AchievementService {
       'last_study_date': todayDate.toIso8601String().split('T').first,
     });
 
-    return StreakUpdateResult(newStreak: nextStreak, streakBroken: streakBroken);
+    return StreakUpdateResult(
+      newStreak: nextStreak,
+      streakBroken: streakBroken,
+    );
   }
 
   Future<List<BadgeModel>> checkAllBadges(String userId) async {
@@ -88,7 +91,8 @@ class AchievementService {
         !earnedTypes.contains('bookworm')) {
       pendingAwards.add('bookworm');
     }
-    if (topicBuckets.where((topic) => (topic.currentRating ?? 0) >= 8).length >= 10 &&
+    if (topicBuckets.where((topic) => (topic.currentRating ?? 0) >= 8).length >=
+            10 &&
         !earnedTypes.contains('master')) {
       pendingAwards.add('master');
     }

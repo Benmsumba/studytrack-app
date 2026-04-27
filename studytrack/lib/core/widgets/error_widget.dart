@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
 class StudyTrackErrorWidget extends StatelessWidget {
-  const StudyTrackErrorWidget({
-    super.key,
-    required this.message,
-    this.onRetry,
-  });
+  const StudyTrackErrorWidget({super.key, required this.message, this.onRetry});
 
   final String message;
   final VoidCallback? onRetry;

@@ -52,10 +52,7 @@ class EmptyStateWidget extends StatelessWidget {
               const SizedBox(height: 20),
             ],
             if (title != null) ...[
-              Text(
-                title!,
-                style: AppTextStyles.headingMedium,
-              ),
+              Text(title!, style: AppTextStyles.headingMedium),
               const SizedBox(height: 12),
             ],
             Text(
@@ -65,10 +62,7 @@ class EmptyStateWidget extends StatelessWidget {
             ),
             if (illustrationName != null) ...[
               const SizedBox(height: 10),
-              Text(
-                illustrationName!,
-                style: AppTextStyles.caption,
-              ),
+              Text(illustrationName!, style: AppTextStyles.caption),
             ],
             if (onRetry != null) ...[
               const SizedBox(height: 20),
@@ -82,18 +76,12 @@ class EmptyStateWidget extends StatelessWidget {
                     vertical: 10,
                   ),
                 ),
-                child: Text(
-                  'Retry',
-                  style: AppTextStyles.buttonSmall,
-                ),
+                child: Text('Retry', style: AppTextStyles.buttonSmall),
               ),
             ],
             if (onAction != null && actionLabel != null) ...[
               const SizedBox(height: 12),
-              OutlinedButton(
-                onPressed: onAction,
-                child: Text(actionLabel!),
-              ),
+              OutlinedButton(onPressed: onAction, child: Text(actionLabel!)),
             ],
           ],
         ),

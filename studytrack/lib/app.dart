@@ -18,7 +18,9 @@ import 'features/modules/screens/module_detail_screen.dart';
 import 'features/modules/screens/modules_screen.dart';
 import 'features/modules/screens/topic_detail_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
+import 'features/onboarding/screens/onboarding_steps_2356.dart';
 import 'features/profile/screens/profile_screen.dart';
+import 'features/notifications/screens/notifications_screen.dart';
 import 'features/progress/screens/progress_screen.dart';
 import 'features/progress/screens/weekly_wrapped_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
@@ -84,6 +86,10 @@ class StudyTrackApp extends StatelessWidget {
       GoRoute(
         path: '/onboarding',
         builder: (context, state) => const OnboardingScreen(),
+      ),
+      GoRoute(
+        path: '/onboarding-steps-2356',
+        builder: (context, state) => const OnboardingSteps2356Screen(),
       ),
       GoRoute(path: '/home', redirect: (context, state) => '/home/timetable'),
       StatefulShellRoute.indexedStack(
@@ -190,6 +196,10 @@ class StudyTrackApp extends StatelessWidget {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => const NotificationsScreen(),
       ),
     ],
   );
