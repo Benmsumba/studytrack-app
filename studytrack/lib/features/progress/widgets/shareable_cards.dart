@@ -37,10 +37,7 @@ class WeeklyReportCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF0F0F1A),
-              const Color(0xFF16213E),
-            ],
+            colors: [const Color(0xFF0F0F1A), const Color(0xFF16213E)],
           ),
         ),
         child: Padding(
@@ -86,8 +83,14 @@ class WeeklyReportCard extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildStatBox('Topics\nStudied', topicsStudied.toString()),
-                      _buildStatBox('Avg\nRating', '${averageRating.toStringAsFixed(1)}/10'),
+                      _buildStatBox(
+                        'Topics\nStudied',
+                        topicsStudied.toString(),
+                      ),
+                      _buildStatBox(
+                        'Avg\nRating',
+                        '${averageRating.toStringAsFixed(1)}/10',
+                      ),
                     ],
                   ),
                   const SizedBox(height: 32),
@@ -453,10 +456,7 @@ class StreakCard extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              const Color(0xFF0F0F1A),
-              const Color(0xFF16213E),
-            ],
+            colors: [const Color(0xFF0F0F1A), const Color(0xFF16213E)],
           ),
         ),
         child: Padding(
@@ -467,10 +467,7 @@ class StreakCard extends StatelessWidget {
             children: [
               Column(
                 children: [
-                  Text(
-                    '🔥',
-                    style: GoogleFonts.outfit(fontSize: 160),
-                  ),
+                  Text('🔥', style: GoogleFonts.outfit(fontSize: 160)),
                   const SizedBox(height: 24),
                   Text(
                     'Keep it going!',

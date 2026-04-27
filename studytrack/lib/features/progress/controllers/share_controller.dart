@@ -28,7 +28,8 @@ class ShareController extends ChangeNotifier {
       }
 
       final directory = await getTemporaryDirectory();
-      final imagePath = '${directory.path}/studytrack_card_${DateTime.now().millisecondsSinceEpoch}.png';
+      final imagePath =
+          '${directory.path}/studytrack_card_${DateTime.now().millisecondsSinceEpoch}.png';
 
       final file = await _saveImage(image, imagePath);
 
@@ -88,8 +89,9 @@ class ShareController extends ChangeNotifier {
           key.currentContext!.findRenderObject() as RenderRepaintBoundary;
 
       final ui.Image image = await boundary.toImage(pixelRatio: 1.0);
-      final ByteData? byteData =
-          await image.toByteData(format: ui.ImageByteFormat.png);
+      final ByteData? byteData = await image.toByteData(
+        format: ui.ImageByteFormat.png,
+      );
 
       return byteData?.buffer.asUint8List();
     } catch (e) {

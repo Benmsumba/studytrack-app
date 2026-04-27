@@ -23,8 +23,7 @@ class NotificationService {
     const AndroidInitializationSettings androidInitSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    DarwinInitializationSettings iosInitSettings =
-        DarwinInitializationSettings(
+    DarwinInitializationSettings iosInitSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
@@ -127,7 +126,8 @@ class NotificationService {
   }) async {
     try {
       final sessionStart = DateTime.parse(
-          '${session.scheduledDate} ${session.startTime}');
+        '${session.scheduledDate} ${session.startTime}',
+      );
       final notificationTime = sessionStart.subtract(
         const Duration(minutes: 15),
       );
@@ -169,8 +169,7 @@ class NotificationService {
       await _plugin.zonedSchedule(
         id: topic.id.hashCode,
         title: '🧠 Time to Review: ${topic.name}',
-        body:
-            'You rated it ${topic.currentRating}/10 — let\'s keep it fresh!',
+        body: 'You rated it ${topic.currentRating}/10 — let\'s keep it fresh!',
         scheduledDate: tz.TZDateTime.from(reviewDate as DateTime, tz.local),
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
@@ -191,9 +190,7 @@ class NotificationService {
     }
   }
 
-  Future<void> scheduleExamCountdown({
-    required ExamModel exam,
-  }) async {
+  Future<void> scheduleExamCountdown({required ExamModel exam}) async {
     try {
       final examDate = exam.examDate is String
           ? DateTime.parse(exam.examDate as String)
@@ -226,7 +223,12 @@ class NotificationService {
       }
 
       if (examDate.isAfter(now)) {
-        final morning = DateTime(examDate.year, examDate.month, examDate.day, 7);
+        final morning = DateTime(
+          examDate.year,
+          examDate.month,
+          examDate.day,
+          7,
+        );
         await _scheduleExamNotification(
           morning,
           '🎯 Exam day!',
