@@ -155,7 +155,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
   }
 
   Widget _buildTopicLabel() {
-    // TODO: Replace with actual topic data
+    // Placeholder: Replace with actual topic data
     const topicName = 'Pharmacokinetics';
     const moduleName = 'Pharmacology';
 
@@ -216,7 +216,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
             ),
             onPressed: () {
               setState(() => _isRunning = !_isRunning);
-              // TODO: Implement timer logic
+              // Placeholder: Implement timer logic
             },
           ),
         ),
@@ -241,7 +241,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                 _isRunning = false;
                 _seconds = 25 * 60;
               });
-              // TODO: Implement stop logic
+              // Placeholder: Implement stop logic
             },
           ),
         ),

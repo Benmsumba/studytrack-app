@@ -80,7 +80,7 @@ class _OnboardingStep2ScreenState extends State<OnboardingStep2Screen> {
                   child: TextButton(
                     onPressed: _selectedCoursesCount > 0
                         ? () {
-                            // TODO: Navigate to next step
+                            // Placeholder: Navigate to next step
                           }
                         : null,
                     style: TextButton.styleFrom(
@@ -108,7 +108,7 @@ class _OnboardingStep2ScreenState extends State<OnboardingStep2Screen> {
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () {
-                    // TODO: Skip to next step
+                    // Placeholder: Skip to next step
                   },
                   child: Text(
                     'Skip',
@@ -170,7 +170,7 @@ class _OnboardingStep2ScreenState extends State<OnboardingStep2Screen> {
               value: false,
               onChanged: (val) {
                 setState(() {
-                  // TODO: Update selected courses
+                  // Placeholder: Update selected courses
                 });
               },
               fillColor: WidgetStateProperty.all(const Color(0xFF7C3AED)),

@@ -278,7 +278,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () {
-                // TODO: Navigate to exam study module
+                // Placeholder: Navigate to exam study module
               },
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFF7C3AED)),

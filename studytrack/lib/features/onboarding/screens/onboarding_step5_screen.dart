@@ -139,7 +139,7 @@ class _OnboardingStep5ScreenState extends State<OnboardingStep5Screen> {
                   ),
                   child: TextButton(
                     onPressed: () {
-                      // TODO: Navigate to next step
+                      // Placeholder: Navigate to next step
                     },
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

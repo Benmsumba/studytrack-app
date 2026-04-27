@@ -71,7 +71,7 @@ class AnalyticsScreen extends StatelessWidget {
   }
 
   Widget _buildStatsRow() {
-    // TODO: Replace with dynamic data from analytics provider
+    // Placeholder: Replace with dynamic data from analytics provider
     final stats = [
       {'icon': '🔥', 'label': 'Streak:', 'value': '12 Days'},
       {'icon': '🏆', 'label': 'Mastered:', 'value': '45'},

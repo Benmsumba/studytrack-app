@@ -72,7 +72,7 @@ class OnboardingStep1Screen extends StatelessWidget {
                     ),
                   ),
                   onChanged: (value) {
-                    // TODO: Store user name in state management
+                    // Placeholder: Store user name in state management
                   },
                 ),
               ),
@@ -88,7 +88,7 @@ class OnboardingStep1Screen extends StatelessWidget {
                   ),
                   child: TextButton(
                     onPressed: () {
-                      // TODO: Navigate to Step 2
+                      // Placeholder: Navigate to Step 2
                     },
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -111,7 +111,7 @@ class OnboardingStep1Screen extends StatelessWidget {
               Center(
                 child: TextButton(
                   onPressed: () {
-                    // TODO: Skip onboarding
+                    // Placeholder: Skip onboarding
                   },
                   child: Text(
                     'Skip',

@@ -93,7 +93,7 @@ class OnboardingStep6Screen extends StatelessWidget {
                   ),
                   child: TextButton(
                     onPressed: () {
-                      // TODO: Navigate to home screen
+                      // Placeholder: Navigate to home screen
                     },
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

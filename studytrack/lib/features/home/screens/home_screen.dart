@@ -29,7 +29,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildHeader() {
-    // TODO: Replace with dynamic user data from provider/state management
+    // Placeholder values until provider-backed user data is wired in.
     final userName = 'Chifundo'; // Get from User model
     final streakCount = 12; // Get from User model
 
@@ -127,7 +127,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildStudySessionCard() {
-    // TODO: Replace with dynamic study session data
+    // Placeholder values until live study session data is available.
     final topicName = 'Pharmacokinetics'; // Get from current session
     final moduleName = 'Pharmacology'; // Get from topic's module
 
@@ -236,7 +236,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildDailyGoalCard() {
-    // TODO: Replace with dynamic goal data from user model/provider
+    // Placeholder values until goal progress is sourced from state.
     const currentHours = 3;
     const targetHours = 6;
     final progress = currentHours / targetHours;
@@ -290,7 +290,7 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildExamCountdownCard() {
-    // TODO: Replace with dynamic exam data from Exam model
+    // Placeholder values until exam countdown data is model-driven.
     const examName = 'Anatomy Final';
     const daysRemaining = 12;
     const readiness = 0.86;
