@@ -1,8 +1,0 @@
-fastapi
-uvicorn
-python-multipart
-pymupdf
-python-pptx
-supabase
-python-dotenv
-httpx

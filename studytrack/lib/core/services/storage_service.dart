@@ -1,9 +1,8 @@
 import 'dart:io';
 import 'dart:async';
-import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'supabase_service.dart';
 
@@ -11,26 +10,20 @@ class UploadResult {
   const UploadResult({
     required this.noteId,
     required this.fileUrl,
-    required this.chunksCount,
   });
 
   final String noteId;
   final String fileUrl;
-  final int chunksCount;
 }
 
 class StorageService {
   StorageService({SupabaseService? supabaseService})
       : _supabaseService = supabaseService ?? SupabaseService();
 
-  static const String _defaultBackendUrl = String.fromEnvironment(
-    'DOCUMENT_BACKEND_URL',
-    defaultValue: 'http://localhost:8000',
-  );
-
   final SupabaseService _supabaseService;
   final ValueNotifier<double> uploadProgress = ValueNotifier<double>(0);
 
+  /// Upload a note file directly to Supabase Storage (PDF or PPTX)
   Future<UploadResult?> uploadNoteFile({
     required File file,
     required String topicId,
@@ -50,81 +43,50 @@ class StorageService {
       return null;
     }
 
-    final uri = Uri.parse('$_defaultBackendUrl/process-document');
-    final boundary = 'studytrack-${DateTime.now().millisecondsSinceEpoch}';
-
-    final bodyBuilder = BytesBuilder();
-    void addField(String name, String value) {
-      bodyBuilder
-        ..add(utf8.encode('--$boundary\r\n'))
-        ..add(
-          utf8.encode(
-            'Content-Disposition: form-data; name="$name"\r\n\r\n',
-          ),
-        )
-        ..add(utf8.encode(value))
-        ..add(utf8.encode('\r\n'));
-    }
-
-    addField('topic_id', topicId);
-    addField('user_id', userId);
-    addField('is_shared', isSharedWithGroup ? 'true' : 'false');
-
-    final mimeType = ext == 'pdf'
-        ? 'application/pdf'
-        : 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-
-    bodyBuilder
-      ..add(utf8.encode('--$boundary\r\n'))
-      ..add(
-        utf8.encode(
-          'Content-Disposition: form-data; name="file"; filename="$filename"\r\n',
-        ),
-      )
-      ..add(utf8.encode('Content-Type: $mimeType\r\n\r\n'))
-      ..add(bytes)
-      ..add(utf8.encode('\r\n--$boundary--\r\n'));
-
-    final payload = bodyBuilder.takeBytes();
-
     try {
-      final client = HttpClient();
-      final request = await client.postUrl(uri);
-      request.headers.set(
-        HttpHeaders.contentTypeHeader,
-        'multipart/form-data; boundary=$boundary',
-      );
-      request.headers.set(HttpHeaders.contentLengthHeader, payload.length);
+      // Generate unique file path in Supabase Storage
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final storagePath = 'notes/$userId/$topicId/$timestamp-$filename';
 
-      const chunkSize = 16 * 1024;
-      var sent = 0;
-      while (sent < payload.length) {
-        final end = (sent + chunkSize > payload.length)
-            ? payload.length
-            : sent + chunkSize;
-        request.add(payload.sublist(sent, end));
-        sent = end;
-        uploadProgress.value = sent / payload.length;
-      }
+      // Upload file to Supabase Storage
+      final response = await _supabaseService.client.storage
+          .from('uploaded_files')
+          .uploadBinary(
+            storagePath,
+            bytes,
+            fileOptions: FileOptions(
+              cacheControl: '3600',
+              upsert: false,
+            ),
+          );
 
-      final response = await request.close();
-      final responseText = await utf8.decoder.bind(response).join();
-      client.close();
-
-      if (response.statusCode < 200 || response.statusCode > 299) {
+      if (response.isEmpty) {
         return null;
       }
 
-      final json = jsonDecode(responseText) as Map<String, dynamic>;
-      final noteId = (json['note_id'] ?? '').toString();
-      final fileUrl = (json['file_url'] ?? '').toString();
-      final chunksCount = (json['chunks_count'] as num?)?.toInt() ?? 0;
-      if (noteId.isEmpty || fileUrl.isEmpty) {
-        return null;
-      }
+      // Get public URL for the uploaded file
+      final fileUrl = _supabaseService.client.storage
+          .from('uploaded_files')
+          .getPublicUrl(storagePath);
 
-      final ready = await _waitForProcessingReady(noteId);
-      if (!ready) {
+      // Create note record in Supabase database
+      final noteResponse = await _supabaseService.client
+          .from('uploaded_notes')
+          .insert({
+            'topic_id': topicId,
+            'user_id': userId,
+            'file_name': filename,
+            'file_url': fileUrl,
+            'file_type': ext,
+            'is_shared_with_group': isSharedWithGroup,
+            'processing_status': 'ready', // Mark as ready immediately
+            'created_at': DateTime.now().toIso8601String(),
+          })
+          .select()
+          .single();
+
+      final noteId = (noteResponse['id'] ?? '').toString();
+      if (noteId.isEmpty) {
         return null;
       }
 
@@ -132,13 +94,14 @@ class StorageService {
       return UploadResult(
         noteId: noteId,
         fileUrl: fileUrl,
-        chunksCount: chunksCount,
       );
     } catch (_) {
       return null;
     }
   }
 
+
+  /// Get relevant note context from all notes in a topic (ranked by keyword relevance)
   Future<String> getNoteContext({
     required String topicId,
     required String searchQuery,
@@ -174,28 +137,6 @@ class StorageService {
 
     final ranked = _rankChunksByKeyword(allChunks, searchQuery, maxChunks: 5);
     return ranked.join('\n\n');
-  }
-
-  Future<bool> _waitForProcessingReady(String noteId) async {
-    for (var i = 0; i < 40; i++) {
-      final row = await _supabaseService.client
-          .from('uploaded_notes')
-          .select('processing_status')
-          .eq('id', noteId)
-          .maybeSingle();
-
-      final status = (row?['processing_status'] as String?) ?? '';
-      if (status == 'ready') {
-        return true;
-      }
-      if (status == 'failed') {
-        return false;
-      }
-
-      await Future<void>.delayed(const Duration(seconds: 3));
-    }
-
-    return false;
   }
 
   List<String> _rankChunksByKeyword(

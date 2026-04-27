@@ -7,7 +7,8 @@ class OnboardingWelcomeScreen extends StatefulWidget {
   const OnboardingWelcomeScreen({super.key});
 
   @override
-  State<OnboardingWelcomeScreen> createState() => _OnboardingWelcomeScreenState();
+  State<OnboardingWelcomeScreen> createState() =>
+      _OnboardingWelcomeScreenState();
 }
 
 class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
@@ -25,19 +26,24 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: List.generate(6, (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  height: 8,
-                  width: _currentPage == index ? 24 : 8,
-                  decoration: BoxDecoration(
-                    color: _currentPage == index ? AppColors.cyan : Colors.white24,
-                    borderRadius: BorderRadius.circular(4),
+                children: List.generate(
+                  6,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    height: 8,
+                    width: _currentPage == index ? 24 : 8,
+                    decoration: BoxDecoration(
+                      color: _currentPage == index
+                          ? AppColors.cyan
+                          : Colors.white24,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
                   ),
-                )),
+                ),
               ),
             ),
-            
+
             Expanded(
               child: PageView(
                 controller: _pageController,
@@ -55,15 +61,27 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextButton(onPressed: () {}, child: const Text("Skip", style: TextStyle(color: Colors.white54))),
+                  TextButton(
+                    onPressed: () {},
+                    child: const Text(
+                      "Skip",
+                      style: TextStyle(color: Colors.white54),
+                    ),
+                  ),
                   Container(
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.transparent, shadowColor: Colors.transparent),
-                      onPressed: () => _pageController.nextPage(duration: const Duration(milliseconds: 500), curve: Curves.ease),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                      ),
+                      onPressed: () => _pageController.nextPage(
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.ease,
+                      ),
                       child: const Text("Next"),
                     ),
                   ),
@@ -82,11 +100,26 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.handshake_outlined, size: 100, color: AppColors.cyan),
+          const Icon(
+            Icons.handshake_outlined,
+            size: 100,
+            color: AppColors.cyan,
+          ),
           const SizedBox(height: 32),
-          Text("Welcome to StudyTrack", textAlign: TextAlign.center, style: GoogleFonts.outfit(fontSize: 28, fontWeight: FontWeight.bold)),
+          Text(
+            "Welcome to StudyTrack",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 16),
-          Text("Your personalized health sciences study companion.", textAlign: TextAlign.center, style: GoogleFonts.inter(color: Colors.white70)),
+          Text(
+            "Your personalized health sciences study companion.",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(color: Colors.white70),
+          ),
         ],
       ),
     );
@@ -98,7 +131,13 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("YOUR PRIME\nSTUDY TIME", style: GoogleFonts.outfit(fontSize: 32, fontWeight: FontWeight.bold)),
+          Text(
+            "YOUR PRIME\nSTUDY TIME",
+            style: GoogleFonts.outfit(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           const SizedBox(height: 32),
           Expanded(
             child: GridView.count(
@@ -106,10 +145,26 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               children: [
-                _buildTimeOption("MORNING", Icons.light_mode_outlined, "8 AM - 12 PM"),
-                _buildTimeOption("AFTERNOON", Icons.wb_sunny_outlined, "12 PM - 4 PM"),
-                _buildTimeOption("EVENING", Icons.dark_mode_outlined, "4 PM - 8 PM"),
-                _buildTimeOption("NIGHT", Icons.nights_stay_outlined, "8 PM - 12 AM"),
+                _buildTimeOption(
+                  "MORNING",
+                  Icons.light_mode_outlined,
+                  "8 AM - 12 PM",
+                ),
+                _buildTimeOption(
+                  "AFTERNOON",
+                  Icons.wb_sunny_outlined,
+                  "12 PM - 4 PM",
+                ),
+                _buildTimeOption(
+                  "EVENING",
+                  Icons.dark_mode_outlined,
+                  "4 PM - 8 PM",
+                ),
+                _buildTimeOption(
+                  "NIGHT",
+                  Icons.nights_stay_outlined,
+                  "8 PM - 12 AM",
+                ),
               ],
             ),
           ),
@@ -128,7 +183,10 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
           const SizedBox(height: 12),
           Text(title, style: GoogleFonts.outfit(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.white54)),
+          Text(
+            subtitle,
+            style: const TextStyle(fontSize: 10, color: Colors.white54),
+          ),
         ],
       ),
     );

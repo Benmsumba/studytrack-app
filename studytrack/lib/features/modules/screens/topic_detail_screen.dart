@@ -149,7 +149,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
         content: Text(
           uploadResult == null
               ? 'Upload failed. Please try again.'
-              : 'Uploaded and processed ${uploadResult.chunksCount} chunks.',
+              : 'File uploaded successfully.',
         ),
         behavior: SnackBarBehavior.floating,
       ),
