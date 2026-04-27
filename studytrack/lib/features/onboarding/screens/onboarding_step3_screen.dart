@@ -160,8 +160,8 @@ class _OnboardingStep3ScreenState extends State<OnboardingStep3Screen> {
           gradient: isSelected
               ? LinearGradient(
                   colors: [
-                    const Color(0xFF7C3AED).withOpacity(0.1),
-                    const Color(0xFF06B6D4).withOpacity(0.05),
+                    const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                    const Color(0xFF06B6D4).withValues(alpha: 0.05),
                   ],
                 )
               : null,
@@ -173,7 +173,7 @@ class _OnboardingStep3ScreenState extends State<OnboardingStep3Screen> {
               height: 48,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? const Color(0xFF7C3AED).withOpacity(0.2)
+                    ? const Color(0xFF7C3AED).withValues(alpha: 0.2)
                     : const Color(0xFF2D2D44),
                 borderRadius: BorderRadius.circular(12),
               ),

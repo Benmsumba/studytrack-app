@@ -96,7 +96,7 @@ class _OnboardingStep4ScreenState extends State<OnboardingStep4Screen> {
       child: Container(
         decoration: BoxDecoration(
           color: isSelected
-              ? const Color(0xFF7C3AED).withOpacity(0.15)
+              ? const Color(0xFF7C3AED).withValues(alpha: 0.15)
               : const Color(0xFF16213E),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(

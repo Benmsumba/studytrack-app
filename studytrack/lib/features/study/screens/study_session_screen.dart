@@ -106,7 +106,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF7C3AED).withOpacity(glowOpacity),
+                      color: const Color(0xFF7C3AED).withValues(alpha: glowOpacity),
                       blurRadius: 40,
                       spreadRadius: 10,
                     ),

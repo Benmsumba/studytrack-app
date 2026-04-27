@@ -33,10 +33,12 @@ class ShareController extends ChangeNotifier {
 
       final file = await _saveImage(image, imagePath);
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: 'Check out my StudyTrack progress! 📚',
-        subject: 'My StudyTrack Weekly Report',
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path)],
+          text: 'Check out my StudyTrack progress! 📚',
+          subject: 'My StudyTrack Weekly Report',
+        ),
       );
 
       _isCapturing = false;
@@ -95,7 +97,7 @@ class ShareController extends ChangeNotifier {
 
       return byteData?.buffer.asUint8List();
     } catch (e) {
-      print('Error capturing widget: $e');
+      debugPrint('Error capturing widget: $e');
       _lastError = 'Error capturing widget: $e';
       return null;
     }

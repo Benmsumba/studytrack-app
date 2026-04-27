@@ -50,8 +50,8 @@ class _OnboardingStep5ScreenState extends State<OnboardingStep5Screen> {
                         shape: BoxShape.circle,
                         gradient: LinearGradient(
                           colors: [
-                            const Color(0xFF7C3AED).withOpacity(0.2),
-                            const Color(0xFF06B6D4).withOpacity(0.2),
+                            const Color(0xFF7C3AED).withValues(alpha: 0.2),
+                            const Color(0xFF06B6D4).withValues(alpha: 0.2),
                           ],
                         ),
                         border: Border.all(

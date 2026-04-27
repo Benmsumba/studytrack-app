@@ -1,4 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/foundation.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzdata;
 
@@ -88,7 +89,7 @@ class NotificationService {
         matchDateTimeComponents: DateTimeComponents.time,
       );
     } catch (e) {
-      print('Error scheduling daily briefing: $e');
+      debugPrint('Error scheduling daily briefing: $e');
     }
   }
 
@@ -117,7 +118,7 @@ class NotificationService {
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       );
     } catch (e) {
-      print('Error scheduling weekly report: $e');
+      debugPrint('Error scheduling weekly report: $e');
     }
   }
 
@@ -152,7 +153,7 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
     } catch (e) {
-      print('Error scheduling study session: $e');
+      debugPrint('Error scheduling study session: $e');
     }
   }
 
@@ -186,7 +187,7 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
     } catch (e) {
-      print('Error scheduling spaced repetition reminder: $e');
+      debugPrint('Error scheduling spaced repetition reminder: $e');
     }
   }
 
@@ -237,7 +238,7 @@ class NotificationService {
         );
       }
     } catch (e) {
-      print('Error scheduling exam countdown: $e');
+      debugPrint('Error scheduling exam countdown: $e');
     }
   }
 
@@ -268,7 +269,7 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
     } catch (e) {
-      print('Error scheduling exam notification: $e');
+      debugPrint('Error scheduling exam notification: $e');
     }
   }
 
@@ -282,7 +283,7 @@ class NotificationService {
 
   void _onSelectNotification(NotificationResponse? response) {
     if (response != null && response.payload != null) {
-      print('Notification tapped: ${response.payload}');
+      debugPrint('Notification tapped: ${response.payload}');
     }
   }
 

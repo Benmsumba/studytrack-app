@@ -140,7 +140,7 @@ class _QuizScreenState extends State<QuizScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               color: isSelected
-                  ? const Color(0xFF7C3AED).withOpacity(0.2)
+                  ? const Color(0xFF7C3AED).withValues(alpha: 0.2)
                   : const Color(0xFF16213E),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
