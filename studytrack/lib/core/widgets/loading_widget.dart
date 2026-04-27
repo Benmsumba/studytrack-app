@@ -4,12 +4,30 @@ import '../constants/app_colors.dart';
 class LoadingWidget extends StatefulWidget {
   final String? label;
   final double size;
+  final bool fullscreen;
+  final bool inline;
 
   const LoadingWidget({
     super.key,
     this.label,
     this.size = 50,
+    this.fullscreen = false,
+    this.inline = false,
   });
+
+  const LoadingWidget.fullscreen({
+    super.key,
+    this.label,
+    this.size = 72,
+  }) : fullscreen = true,
+       inline = false;
+
+  const LoadingWidget.inline({
+    super.key,
+    this.label,
+    this.size = 22,
+  }) : fullscreen = false,
+       inline = true;
 
   @override
   State<LoadingWidget> createState() => _LoadingWidgetState();
@@ -36,9 +54,10 @@ class _LoadingWidgetState extends State<LoadingWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Center(
+    final content = Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           RotationTransition(
             turns: _controller,
@@ -77,7 +96,7 @@ class _LoadingWidgetState extends State<LoadingWidget>
               ),
             ),
           ),
-          if (widget.label != null) ...[
+          if (widget.label != null && !widget.inline) ...[
             const SizedBox(height: 16),
             Text(
               widget.label!,
@@ -91,5 +110,14 @@ class _LoadingWidgetState extends State<LoadingWidget>
         ],
       ),
     );
+
+    if (widget.fullscreen) {
+      return Scaffold(
+        backgroundColor: AppColors.backgroundDark,
+        body: content,
+      );
+    }
+
+    return content;
   }
 }

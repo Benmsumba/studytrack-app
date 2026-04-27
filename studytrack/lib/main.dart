@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/constants/app_constants.dart';
+import 'features/auth/controllers/auth_provider.dart';
+import 'features/groups/controllers/groups_provider.dart';
+import 'features/modules/controllers/modules_provider.dart';
+import 'features/progress/controllers/progress_provider.dart';
+import 'features/timetable/controllers/timetable_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +25,18 @@ Future<void> main() async {
     );
   }
 
-  runApp(const StudyTrackApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ModulesProvider()),
+        ChangeNotifierProvider(create: (_) => TimetableProvider()),
+        ChangeNotifierProvider(create: (_) => ProgressProvider()),
+        ChangeNotifierProvider(create: (_) => GroupsProvider()),
+      ],
+      child: const StudyTrackApp(),
+    ),
+  );
 }
 
 Future<void> _completeAuthCodeExchangeIfPresent() async {

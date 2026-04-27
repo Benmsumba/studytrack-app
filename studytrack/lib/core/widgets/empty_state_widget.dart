@@ -3,17 +3,25 @@ import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
 class EmptyStateWidget extends StatelessWidget {
-  final String message;
+  final String? message;
   final String? title;
+  final String? subtitle;
   final IconData? icon;
+  final String? illustrationName;
   final VoidCallback? onRetry;
+  final VoidCallback? onAction;
+  final String? actionLabel;
 
   const EmptyStateWidget({
     super.key,
-    required this.message,
+    this.message,
     this.title,
+    this.subtitle,
     this.icon,
+    this.illustrationName,
     this.onRetry,
+    this.onAction,
+    this.actionLabel,
   });
 
   @override
@@ -51,10 +59,17 @@ class EmptyStateWidget extends StatelessWidget {
               const SizedBox(height: 12),
             ],
             Text(
-              message,
+              subtitle ?? message ?? 'Nothing to show right now.',
               style: AppTextStyles.bodyMediumSecondary,
               textAlign: TextAlign.center,
             ),
+            if (illustrationName != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                illustrationName!,
+                style: AppTextStyles.caption,
+              ),
+            ],
             if (onRetry != null) ...[
               const SizedBox(height: 20),
               ElevatedButton(
@@ -71,6 +86,13 @@ class EmptyStateWidget extends StatelessWidget {
                   'Retry',
                   style: AppTextStyles.buttonSmall,
                 ),
+              ),
+            ],
+            if (onAction != null && actionLabel != null) ...[
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: onAction,
+                child: Text(actionLabel!),
               ),
             ],
           ],
