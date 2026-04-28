@@ -1,0 +1,17 @@
+# CODEOWNERS
+# These owners are automatically requested for review on pull requests
+# that touch the files or directories listed below.
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything not matched below
+* @Benmsumba
+
+# CI/CD and build configuration — require explicit review
+.github/workflows/ @Benmsumba
+studytrack/android/ @Benmsumba
+
+# Database schema — high-impact changes
+supabase/ @Benmsumba
+
+# Security policy
+SECURITY.md @Benmsumba

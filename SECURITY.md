@@ -1,41 +1,112 @@
-SECURITY and Emergency Remediation
+# Security Policy
 
-Immediate actions (must be done now by a human with console access):
+## Supported Versions
 
-- Rotate Supabase service-role and anon keys using the Supabase dashboard.
-- Rotate the Gemini API key in the provider console (for example Google Cloud).
-- Replace any compromised Android signing keystore and passwords; generate a new keystore if needed.
+Only the latest release on the `main` branch receives security fixes.
 
-Repository-side remediation steps (do these after rotating keys):
+| Version | Supported |
+|---|---|
+| Latest (`main`) | Yes |
+| Older tags | No |
 
-1) Remove sensitive files from the current branch (if present):
+---
 
-   git rm --cached path/to/.env || true
-   git rm --cached studytrack/android/key.properties || true
-   git rm --cached -r studytrack/keystore || true
-   git commit -m "chore: remove sensitive files from repo" || true
+## Reporting a Vulnerability
 
-2) Scrub secrets from git history. Recommended approaches (run AFTER rotation):
+**Do not open a public GitHub issue for security vulnerabilities.**
 
-   Option A - BFG Repo-Cleaner:
-   - Create a file named secrets-to-remove.txt listing secrets or patterns (one per line).
-   - Run: bfg --delete-lines secrets-to-remove.txt
-   - Then: git reflog expire --expire=now --all
-   - Then: git gc --prune=now --aggressive
-   - Finally: git push --force
+To report a vulnerability, open a [GitHub Security Advisory](https://github.com/Benmsumba/studytrack-app/security/advisories/new) on this repository. You will receive an acknowledgement within 48 hours. If you do not hear back within that window, follow up by mentioning it in a private message.
 
-   Option B - git-filter-repo (advanced):
-   - Install: pip install git-filter-repo
-   - Create a replace file and run: git filter-repo --replace-text secrets-to-replace.txt
-   - Then force-push the cleaned history
+Please include:
 
-3) Re-add rotated secrets to GitHub Actions Secrets (Repository Settings) not to repository files.
+- A clear description of the vulnerability and its potential impact.
+- Steps to reproduce or a proof-of-concept (if safe to share).
+- The affected component (auth, offline sync, AI tutor, etc.) and version.
 
-Verification:
+We will work with you to validate and address the issue before any public disclosure.
 
-   git log --all -p -G "SUPABASE_URL|SUPABASE_ANON_KEY|GEMINI_API_KEY|storePassword|keyPassword|release-keystore|\\.env"
+---
 
-Notes:
+## Sensitive Files
 
-- I cannot rotate provider-side keys or force-push cleaned history for you. These steps need console access and a human operator.
-- I added repo protections and CI changes in the repository to avoid future accidental exposure. Follow the steps above to complete remediation.
+The following files must never be committed to the repository. They are excluded by `.gitignore`:
+
+| File | Why |
+|---|---|
+| `.env` | Contains Supabase URL, anon key, and Gemini API key |
+| `studytrack/android/key.properties` | Contains Android signing keystore path and passwords |
+| `*.jks`, `*.keystore` | Android release signing keystores |
+| `studytrack/android/keystore/` | Keystore directory |
+
+If any of these are accidentally committed, follow the remediation steps below immediately.
+
+---
+
+## Secret Rotation (Emergency Remediation)
+
+If a secret is exposed in the git history, take these steps:
+
+### 1. Rotate the secret immediately (before cleaning history)
+
+| Secret | Where to rotate |
+|---|---|
+| `SUPABASE_URL` / `SUPABASE_ANON_KEY` | Supabase Dashboard → Settings → API → Regenerate keys |
+| `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com) → Manage API keys |
+| Android keystore | Generate a new keystore with `keytool`; old APKs cannot be updated under the old key |
+
+### 2. Remove the file from the working tree
+
+```bash
+git rm --cached path/to/.env || true
+git rm --cached studytrack/android/key.properties || true
+git rm --cached -r studytrack/keystore || true
+git commit -m "chore: remove sensitive files from tracking"
+```
+
+### 3. Scrub the secret from git history
+
+**Option A — BFG Repo-Cleaner (recommended):**
+
+```bash
+# List secrets to remove, one per line
+echo "YOUR_EXPOSED_SECRET" > secrets.txt
+
+bfg --replace-text secrets.txt
+git reflog expire --expire=now --all
+git gc --prune=now --aggressive
+git push --force
+```
+
+**Option B — git-filter-repo:**
+
+```bash
+pip install git-filter-repo
+# Create a replacements file, then:
+git filter-repo --replace-text replacements.txt
+git push --force
+```
+
+### 4. Verify the history is clean
+
+```bash
+git log --all -p -G "SUPABASE_URL\|SUPABASE_ANON_KEY\|GEMINI_API_KEY\|storePassword\|keyPassword"
+```
+
+### 5. Re-add rotated secrets to GitHub Actions
+
+Go to **Settings → Secrets and variables → Actions** and update:
+
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `GEMINI_API_KEY`
+- `KEYSTORE_BASE64`, `KEY_ALIAS`, `KEY_PASSWORD`, `STORE_PASSWORD`
+
+---
+
+## Security Best Practices for Contributors
+
+- Pass API keys via `--dart-define` or `--dart-define-from-file`. Never hardcode them in source.
+- Use `const String.fromEnvironment(...)` to read build-time values in Dart; these are not included in debug builds unless explicitly passed.
+- Row Level Security (RLS) is enabled on all user-facing Supabase tables. Do not disable RLS without a documented justification and a reviewed PR.
+- The Supabase `anon` key is safe to ship in the client. The `service_role` key must never leave the server/CI environment.
+- All Android permissions declared in `AndroidManifest.xml` must have corresponding runtime permission handling in Dart code.
