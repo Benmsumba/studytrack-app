@@ -10,9 +10,10 @@ class AppColors {
   // ============ Premium Brand Colors (Neon) ============
   /// Exact neon violet from design spec
   static const Color neonViolet = Color(0xFF7C3AED);
+
   /// Exact cyan from design spec
   static const Color neonCyan = Color(0xFF06B6D4);
-  
+
   // Legacy aliases for compatibility
   static const Color primary = neonViolet;
   static const Color accent = neonCyan;
@@ -85,7 +86,7 @@ class AppColors {
 
   // ============ Subject/Module Colors (for charts and categorization) ============
   static const Map<String, Color> subjectColors = {
-    'pharmacology': Color(0xFFFF5252),
+    'clinical-sciences': Color(0xFFFF5252),
     'anatomy': Color(0xFF7C3AED),
     'biochemistry': Color(0xFF06B6D4),
     'physiology': Color(0xFFFFAB40),

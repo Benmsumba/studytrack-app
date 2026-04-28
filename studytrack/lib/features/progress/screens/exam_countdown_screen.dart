@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../core/constants/app_colors.dart';
+import '../../../core/services/supabase_service.dart';
+import '../../../models/exam_model.dart';
+
 class ExamCountdownScreen extends StatefulWidget {
   const ExamCountdownScreen({super.key});
 
@@ -9,8 +13,54 @@ class ExamCountdownScreen extends StatefulWidget {
 }
 
 class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
+  final SupabaseService _service = SupabaseService();
+
+  bool _isLoading = true;
+  List<ExamModel> _exams = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadExams();
+  }
+
+  Future<void> _loadExams() async {
+    final user = _service.getCurrentUser();
+    if (user == null) {
+      if (!mounted) return;
+      setState(() {
+        _exams = const [];
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final rows = await _service.getUpcomingExams(user.id) ?? const [];
+      final exams = rows.map(ExamModel.fromJson).toList();
+      if (!mounted) return;
+      setState(() {
+        _exams = exams;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _exams = const [];
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0F0F1A),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       body: SafeArea(
@@ -22,40 +72,41 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
               Text(
                 'Upcoming Exams',
                 style: GoogleFonts.outfit(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 20),
-              _buildExamCard(
-                subject: 'Pharmacology',
-                date: 'Dec 15, 2024',
-                time: '2:00 PM',
-                daysLeft: 12,
-                readiness: 0.75,
-              ),
-              const SizedBox(height: 14),
-              _buildExamCard(
-                subject: 'Microbiology',
-                date: 'Dec 22, 2024',
-                time: '10:00 AM',
-                daysLeft: 19,
-                readiness: 0.45,
-              ),
-              const SizedBox(height: 14),
-              _buildExamCard(
-                subject: 'Biochemistry',
-                date: 'Dec 28, 2024',
-                time: '1:00 PM',
-                daysLeft: 25,
-                readiness: 0.30,
-              ),
+              if (_exams.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF16213E),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFF2D2D44)),
+                  ),
+                  child: Text(
+                    'No upcoming exams yet',
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF9CA3AF),
+                      fontSize: 14,
+                    ),
+                  ),
+                )
+              else
+                ..._exams.map(
+                  (exam) => Padding(
+                    padding: const EdgeInsets.only(bottom: 14),
+                    child: _buildExamCard(exam: exam),
+                  ),
+                ),
               const SizedBox(height: 24),
               Text(
                 'Study Recommendations',
                 style: GoogleFonts.outfit(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -81,7 +132,9 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Focus on weak topics in Biochemistry to boost readiness before exam',
+                            _exams.isEmpty
+                                ? 'Add an exam to get personalized readiness tips.'
+                                : 'Focus on your weakest topics to boost readiness before the next exam.',
                             style: GoogleFonts.inter(
                               color: const Color(0xFFFDE047),
                               fontSize: 13,
@@ -101,7 +154,9 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Maintain 6 hours daily study for best exam prep',
+                            _exams.isEmpty
+                                ? 'Keep a steady daily study rhythm to stay ready.'
+                                : 'Maintain a steady daily study rhythm for your next exam.',
                             style: GoogleFonts.inter(
                               color: const Color(0xFFA7F3D0),
                               fontSize: 13,
@@ -120,13 +175,9 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
     );
   }
 
-  Widget _buildExamCard({
-    required String subject,
-    required String date,
-    required String time,
-    required int daysLeft,
-    required double readiness,
-  }) {
+  Widget _buildExamCard({required ExamModel exam}) {
+    final daysLeft = exam.daysUntilExam;
+    final readiness = (1 - (daysLeft / 21)).clamp(0.0, 1.0).toDouble();
     final urgency = daysLeft <= 7
         ? 'Urgent'
         : daysLeft <= 14
@@ -152,9 +203,9 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                subject,
+                exam.title,
                 style: GoogleFonts.outfit(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -186,7 +237,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                date,
+                _formatDate(exam.examDate),
                 style: GoogleFonts.inter(
                   color: const Color(0xFF9CA3AF),
                   fontSize: 12,
@@ -200,7 +251,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                time,
+                exam.examTime ?? 'All day',
                 style: GoogleFonts.inter(
                   color: const Color(0xFF9CA3AF),
                   fontSize: 12,
@@ -278,7 +329,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
             width: double.infinity,
             child: OutlinedButton(
               onPressed: () {
-                // Placeholder: Navigate to exam study module
+                if (_exams.isEmpty) return;
               },
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFF7C3AED)),
@@ -299,5 +350,23 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
         ],
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 }

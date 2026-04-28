@@ -43,27 +43,27 @@ class _OnboardingStep2ScreenState extends State<OnboardingStep2Screen> {
               Expanded(
                 child: ListView(
                   children: [
+                    _buildCourseCheckbox('Core Module 1', Icons.book_outlined),
                     _buildCourseCheckbox(
-                      'Pharmacology',
-                      Icons.medication_outlined,
+                      'Core Module 2',
+                      Icons.menu_book_outlined,
                     ),
                     _buildCourseCheckbox(
-                      'Anatomy',
-                      Icons.accessibility_new_outlined,
-                    ),
-                    _buildCourseCheckbox(
-                      'Biochemistry',
+                      'Core Module 3',
                       Icons.science_outlined,
                     ),
                     _buildCourseCheckbox(
-                      'Microbiology',
-                      Icons.bug_report_outlined,
+                      'Core Module 4',
+                      Icons.school_outlined,
                     ),
                     _buildCourseCheckbox(
-                      'Pathology',
-                      Icons.local_hospital_outlined,
+                      'Core Module 5',
+                      Icons.health_and_safety_outlined,
                     ),
-                    _buildCourseCheckbox('Physiology', Icons.favorite_outline),
+                    _buildCourseCheckbox(
+                      'Core Module 6',
+                      Icons.favorite_outline,
+                    ),
                   ],
                 ),
               ),
@@ -78,11 +78,7 @@ class _OnboardingStep2ScreenState extends State<OnboardingStep2Screen> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TextButton(
-                    onPressed: _selectedCoursesCount > 0
-                        ? () {
-                            // Placeholder: Navigate to next step
-                          }
-                        : null,
+                    onPressed: _selectedCoursesCount > 0 ? () {} : null,
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -107,9 +103,7 @@ class _OnboardingStep2ScreenState extends State<OnboardingStep2Screen> {
               SizedBox(
                 width: double.infinity,
                 child: TextButton(
-                  onPressed: () {
-                    // Placeholder: Skip to next step
-                  },
+                  onPressed: () {},
                   child: Text(
                     'Skip',
                     style: GoogleFonts.inter(

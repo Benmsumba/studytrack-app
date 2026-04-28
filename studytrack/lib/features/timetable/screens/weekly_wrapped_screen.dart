@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/gemini_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../models/topic_model.dart';
 
 class WeeklyWrappedScreen extends StatefulWidget {
   const WeeklyWrappedScreen({super.key});
@@ -43,25 +44,54 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
       studentName = (profile?['name'] as String?) ?? 'Student';
       streak = (profile?['streak_count'] as num?)?.toInt() ?? 0;
 
-      // Mock data for demo
-      topicsStudied = 12;
-      averageRating = 7.3;
-      bestSubject = 'Pharmacology';
-      weakestSubject = 'Pathology';
-      sessionsCompleted = 15;
-      sessionsMissed = 2;
+      final report = await _supabase.getLastWeekReport(user.id);
+      final topics =
+          await _supabase.getTopicsNeedingReview(user.id) ??
+          const <TopicModel>[];
+      final sessions =
+          await _supabase.getStudySessions(user.id, DateTime.now()) ??
+          const <Map<String, dynamic>>[];
 
-      // Generate AI summary
-      aiSummary = await _gemini.generateWeeklyWrappedSummary(
-        studentName: studentName!,
-        topicsStudied: topicsStudied,
-        averageRating: averageRating,
-        bestSubject: bestSubject,
-        weakestSubject: weakestSubject,
-        streak: streak,
-        sessionsCompleted: sessionsCompleted,
-        sessionsMissed: sessionsMissed,
-      );
+      topicsStudied =
+          (report?['topics_studied'] as num?)?.toInt() ?? topics.length;
+      averageRating =
+          (report?['average_rating'] as num?)?.toDouble() ??
+          _averageRating(topics);
+      final bestSubjectFromReport = report?['best_subject']?.toString().trim();
+      bestSubject =
+          bestSubjectFromReport != null && bestSubjectFromReport.isNotEmpty
+          ? bestSubjectFromReport
+          : _bestTopicName(topics) ?? 'Top Topic';
+      final weakestSubjectFromReport = report?['weakest_subject']
+          ?.toString()
+          .trim();
+      weakestSubject =
+          weakestSubjectFromReport != null &&
+              weakestSubjectFromReport.isNotEmpty
+          ? weakestSubjectFromReport
+          : _weakestTopicName(topics) ?? 'Focus Topic';
+      sessionsCompleted =
+          (report?['sessions_completed'] as num?)?.toInt() ??
+          sessions
+              .where((row) => (row['status']?.toString() ?? '') == 'completed')
+              .length;
+      sessionsMissed =
+          (report?['sessions_missed'] as num?)?.toInt() ??
+          (sessions.length - sessionsCompleted).clamp(0, 999);
+
+      final reportSummary = report?['ai_summary']?.toString().trim();
+      aiSummary = reportSummary != null && reportSummary.isNotEmpty
+          ? reportSummary
+          : await _gemini.generateWeeklyWrappedSummary(
+              studentName: studentName!,
+              topicsStudied: topicsStudied,
+              averageRating: averageRating,
+              bestSubject: bestSubject,
+              weakestSubject: weakestSubject,
+              streak: streak,
+              sessionsCompleted: sessionsCompleted,
+              sessionsMissed: sessionsMissed,
+            );
 
       if (mounted) {
         setState(() => _isLoading = false);
@@ -72,6 +102,34 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  double _averageRating(List<TopicModel> topics) {
+    final rated = topics.where((topic) => topic.currentRating != null).toList();
+    if (rated.isEmpty) {
+      return 0;
+    }
+
+    final total = rated.fold<int>(
+      0,
+      (sum, topic) => sum + (topic.currentRating ?? 0),
+    );
+
+    return total / rated.length;
+  }
+
+  String? _bestTopicName(List<TopicModel> topics) {
+    if (topics.isEmpty) return null;
+    final sorted = [...topics]
+      ..sort((a, b) => (b.currentRating ?? 0).compareTo(a.currentRating ?? 0));
+    return sorted.first.name;
+  }
+
+  String? _weakestTopicName(List<TopicModel> topics) {
+    if (topics.isEmpty) return null;
+    final sorted = [...topics]
+      ..sort((a, b) => (a.currentRating ?? 0).compareTo(b.currentRating ?? 0));
+    return sorted.first.name;
   }
 
   @override

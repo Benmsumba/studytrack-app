@@ -1,4 +1,4 @@
-package com.studytrack.studytrack
+package com.studytrack.app
 
 import io.flutter.embedding.android.FlutterActivity
 

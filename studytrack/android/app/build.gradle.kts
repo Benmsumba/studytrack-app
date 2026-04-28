@@ -15,8 +15,8 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.studytrack.studytrack"
-    compileSdk = flutter.compileSdkVersion
+    namespace = "com.studytrack.app"
+    compileSdk = 34
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -29,9 +29,9 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.studytrack.studytrack"
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        applicationId = "com.studytrack.app"
+        minSdk = 21
+        targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
