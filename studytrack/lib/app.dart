@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/constants/app_colors.dart';
+import 'core/constants/app_text_styles.dart';
 import 'core/constants/app_constants.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/onboarding_welcome_screen.dart';
@@ -38,7 +40,7 @@ class StudyTrackApp extends StatelessWidget {
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: const Color(0xFF0D0D12),
+      scaffoldBackgroundColor: AppColors.backgroundDark,
       colorScheme: const ColorScheme.dark(
         primary: Color(0xFF7C3AED),
         secondary: Color(0xFF06B6D4),
@@ -61,7 +63,24 @@ class StudyTrackApp extends StatelessWidget {
       ),
     );
 
-    return base.copyWith(textTheme: GoogleFonts.interTextTheme(base.textTheme));
+    return base.copyWith(
+      textTheme: GoogleFonts.interTextTheme(base.textTheme).copyWith(
+        displayLarge: AppTextStyles.displayLarge,
+        displayMedium: AppTextStyles.displayMedium,
+        headlineLarge: AppTextStyles.headingLarge,
+        headlineMedium: AppTextStyles.headingMedium,
+        headlineSmall: AppTextStyles.headingSmall,
+        titleLarge: AppTextStyles.headingSmall,
+        titleMedium: AppTextStyles.label,
+        titleSmall: AppTextStyles.labelSecondary,
+        bodyLarge: AppTextStyles.bodyLarge,
+        bodyMedium: AppTextStyles.bodyMedium,
+        bodySmall: AppTextStyles.bodySmall,
+        labelLarge: AppTextStyles.button,
+        labelMedium: AppTextStyles.label,
+        labelSmall: AppTextStyles.caption,
+      ),
+    );
   }
 
   static final GoRouter _router = GoRouter(

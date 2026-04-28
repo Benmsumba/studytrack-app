@@ -1,27 +1,229 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class HomeScreen extends StatelessWidget {
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/supabase_service.dart';
+import '../../../models/module_model.dart';
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final SupabaseService _service = SupabaseService();
+
+  bool _isLoading = true;
+  String _userName = 'Student';
+  String? _avatarUrl;
+  int _streakCount = 0;
+  String _topicName = 'No active session';
+  String _moduleName = 'Add a study session';
+  int _targetHours = 3;
+  double _dailyHoursFilled = 0;
+  double _sessionProgress = 0;
+  String _examName = 'No upcoming exam';
+  int _daysRemaining = 0;
+  double _examReadiness = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHomeData();
+  }
+
+  Future<void> _loadHomeData() async {
+    final user = _service.getCurrentUser();
+    if (user == null) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      final profile = await _service.getProfile(user.id);
+      final modules =
+          await _service.getModules(user.id) ?? const <ModuleModel>[];
+      final todaySessions =
+          await _service.getStudySessions(user.id, DateTime.now()) ??
+          <Map<String, dynamic>>[];
+      final upcomingExams =
+          await _service.getUpcomingExams(user.id) ?? <Map<String, dynamic>>[];
+
+      final activeSession = _firstMap(todaySessions);
+      final upcomingExam = _firstMap(upcomingExams);
+      final examDate = _parseDate(
+        upcomingExam?['exam_date'] ??
+            upcomingExam?['date'] ??
+            upcomingExam?['scheduled_date'],
+      );
+
+      final completedMinutes = todaySessions.fold<int>(
+        0,
+        (total, session) => total + _sessionMinutes(session),
+      );
+
+      final name = _displayName(profile, user.email);
+      final avatarUrl = profile?['avatar_url']?.toString().trim();
+      final streakCount = (profile?['streak_count'] as num?)?.toInt() ?? 0;
+      final targetHours =
+          (profile?['study_hours_per_day'] as num?)?.toInt() ?? 3;
+      final sessionProgress = targetHours <= 0
+          ? 0.0
+          : math.min(completedMinutes / (targetHours * 60), 1.0);
+
+      final topicName =
+          _firstText(activeSession, ['topic_name', 'title', 'name']) ??
+          'No active session';
+      final moduleName =
+          _resolveModuleName(activeSession, modules) ?? 'Add a study session';
+
+      final examName =
+          _firstText(upcomingExam, ['title', 'name']) ?? 'No upcoming exam';
+      final daysRemaining = examDate == null
+          ? 0
+          : math.max(examDate.difference(DateTime.now()).inDays, 0);
+      final examReadiness = examDate == null
+          ? 0.0
+          : (1 - (daysRemaining / 21)).clamp(0.0, 1.0).toDouble();
+
+      if (!mounted) return;
+      setState(() {
+        _userName = name;
+        _avatarUrl = avatarUrl;
+        _streakCount = streakCount;
+        _topicName = topicName;
+        _moduleName = moduleName;
+        _targetHours = targetHours;
+        _dailyHoursFilled = completedMinutes / 60;
+        _sessionProgress = sessionProgress;
+        _examName = examName;
+        _daysRemaining = daysRemaining;
+        _examReadiness = examReadiness;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _displayName(Map<String, dynamic>? profile, String? email) {
+    final candidates = [
+      profile?['display_name'],
+      profile?['name'],
+      profile?['full_name'],
+      email?.split('@').first,
+    ];
+
+    for (final candidate in candidates) {
+      final text = candidate?.toString().trim();
+      if (text != null && text.isNotEmpty) {
+        return text;
+      }
+    }
+
+    return 'Student';
+  }
+
+  Map<String, dynamic>? _firstMap(List<Map<String, dynamic>> items) {
+    if (items.isEmpty) return null;
+    return items.first;
+  }
+
+  String? _firstText(Map<String, dynamic>? data, List<String> keys) {
+    if (data == null) return null;
+    for (final key in keys) {
+      final value = data[key]?.toString().trim();
+      if (value != null && value.isNotEmpty) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  String? _resolveModuleName(
+    Map<String, dynamic>? session,
+    List<ModuleModel> modules,
+  ) {
+    final direct = _firstText(session, ['module_name', 'module']);
+    if (direct != null) {
+      return direct;
+    }
+
+    final moduleId = session?['module_id']?.toString();
+    if (moduleId == null || moduleId.isEmpty) {
+      return null;
+    }
+
+    for (final module in modules) {
+      if (module.id == moduleId) {
+        return module.name;
+      }
+    }
+
+    return null;
+  }
+
+  int _sessionMinutes(Map<String, dynamic> session) {
+    final values = [
+      session['actual_duration_minutes'],
+      session['planned_duration_minutes'],
+      session['duration_minutes'],
+    ];
+
+    for (final value in values) {
+      if (value is num) {
+        return value.toInt();
+      }
+    }
+
+    return 0;
+  }
+
+  DateTime? _parseDate(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value.toString());
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundDark,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
+      backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 24),
-              _buildStudySessionCard(),
-              const SizedBox(height: 14),
-              _buildDailyGoalCard(),
-              const SizedBox(height: 14),
-              _buildExamCountdownCard(),
-            ],
+        child: RefreshIndicator(
+          color: AppColors.accent,
+          backgroundColor: AppColors.surfaceDark,
+          onRefresh: _loadHomeData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 24),
+                _buildStudySessionCard(),
+                const SizedBox(height: 14),
+                _buildDailyGoalCard(),
+                const SizedBox(height: 14),
+                _buildExamCountdownCard(),
+              ],
+            ),
           ),
         ),
       ),
@@ -29,9 +231,13 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildHeader() {
-    // Placeholder values until provider-backed user data is wired in.
-    final userName = 'Chifundo'; // Get from User model
-    final streakCount = 12; // Get from User model
+    final initials = _userName
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .map((part) => part[0])
+        .take(2)
+        .join();
 
     return Row(
       children: [
@@ -42,7 +248,7 @@ class HomeScreen extends StatelessWidget {
               Text(
                 'StudyTrack',
                 style: GoogleFonts.outfit(
-                  color: const Color(0xFF9CA3AF),
+                  color: AppColors.textMuted,
                   fontSize: 11,
                   letterSpacing: 1.5,
                   fontWeight: FontWeight.w500,
@@ -50,11 +256,9 @@ class HomeScreen extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Good Morning,\n$userName!',
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
+                'Good Morning,\n$_userName!',
+                style: AppTextStyles.headingLarge.copyWith(
                   fontSize: 26,
-                  fontWeight: FontWeight.bold,
                   height: 1.25,
                 ),
               ),
@@ -64,9 +268,9 @@ class HomeScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFF1A1A2E),
+            color: AppColors.surfaceDark,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF2D2D44)),
+            border: Border.all(color: AppColors.border),
           ),
           child: const Icon(
             Icons.notifications_outlined,
@@ -83,12 +287,32 @@ class HomeScreen extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF7C3AED), width: 2),
-                image: const DecorationImage(
-                  image: NetworkImage('https://i.pravatar.cc/100?img=11'),
-                  fit: BoxFit.cover,
-                ),
+                border: Border.all(color: AppColors.primary, width: 2),
+                color: AppColors.cardDark,
               ),
+              child: _avatarUrl != null && _avatarUrl!.isNotEmpty
+                  ? ClipOval(
+                      child: Image.network(
+                        _avatarUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Text(
+                            initials.isEmpty ? 'S' : initials,
+                            style: AppTextStyles.label.copyWith(
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Text(
+                        initials.isEmpty ? 'S' : initials,
+                        style: AppTextStyles.label.copyWith(
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
             ),
             Positioned(
               bottom: -4,
@@ -96,10 +320,10 @@ class HomeScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1A1A2E),
+                  color: AppColors.surfaceDark,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: const Color(0xFF0F0F1A),
+                    color: AppColors.backgroundDark,
                     width: 1.5,
                   ),
                 ),
@@ -109,8 +333,8 @@ class HomeScreen extends StatelessWidget {
                     const Text('🔥', style: TextStyle(fontSize: 9)),
                     const SizedBox(width: 2),
                     Text(
-                      '$streakCount',
-                      style: GoogleFonts.outfit(
+                      '$_streakCount',
+                      style: AppTextStyles.caption.copyWith(
                         color: Colors.white,
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
@@ -127,27 +351,21 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildStudySessionCard() {
-    // Placeholder values until live study session data is available.
-    final topicName = 'Pharmacokinetics'; // Get from current session
-    final moduleName = 'Pharmacology'; // Get from topic's module
-
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
+        color: AppColors.cardDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2D2D44)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
           Text(
             'START STUDY SESSION',
-            style: GoogleFonts.outfit(
-              color: const Color(0xFF9CA3AF),
-              fontSize: 11,
+            style: AppTextStyles.labelSecondary.copyWith(
               letterSpacing: 1.5,
-              fontWeight: FontWeight.w600,
+              color: AppColors.textMuted,
             ),
           ),
           const SizedBox(height: 20),
@@ -161,42 +379,37 @@ class HomeScreen extends StatelessWidget {
                   width: 110,
                   height: 110,
                   child: CircularProgressIndicator(
-                    value: 0.0,
+                    value: _sessionProgress,
                     strokeWidth: 7,
-                    backgroundColor: const Color(0xFF2D2D44),
+                    backgroundColor: AppColors.border,
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFF7C3AED),
+                      AppColors.primary,
                     ),
                     strokeCap: StrokeCap.round,
                   ),
                 ),
                 Text(
-                  '0%',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  '${(_sessionProgress * 100).toStringAsFixed(0)}%',
+                  style: AppTextStyles.displayMedium.copyWith(fontSize: 26),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 16),
           Text(
-            'Topic: $topicName',
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            'Topic: $_topicName',
+            style: AppTextStyles.headingSmall.copyWith(fontSize: 16),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
           Text(
-            'from $moduleName module',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF9CA3AF),
-              fontSize: 12,
-            ),
+            'from $_moduleName module',
+            style: AppTextStyles.bodySmallSecondary,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 18),
           SizedBox(
@@ -211,7 +424,7 @@ class HomeScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: TextButton(
-                onPressed: () {},
+                onPressed: () => context.push('/study-session'),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   shape: RoundedRectangleBorder(
@@ -220,10 +433,8 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: Text(
                   'START SESSION',
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.button.copyWith(
                     color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -236,17 +447,16 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildDailyGoalCard() {
-    // Placeholder values until goal progress is sourced from state.
-    const currentHours = 3;
-    const targetHours = 6;
-    final progress = currentHours / targetHours;
+    final progress = _targetHours <= 0
+        ? 0.0
+        : (_dailyHoursFilled / _targetHours).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
+        color: AppColors.cardDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2D2D44)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -255,19 +465,14 @@ class HomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Daily Goal: $currentHours/$targetHours Hours',
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+                'Daily Goal: ${_dailyHoursFilled.toStringAsFixed(1)}/$_targetHours Hours',
+                style: AppTextStyles.headingSmall.copyWith(fontSize: 14),
               ),
               Text(
                 '${(progress * 100).toInt()}%',
-                style: GoogleFonts.outfit(
-                  color: const Color(0xFF10B981),
+                style: AppTextStyles.headingSmall.copyWith(
                   fontSize: 14,
-                  fontWeight: FontWeight.bold,
+                  color: AppColors.success,
                 ),
               ),
             ],
@@ -277,9 +482,9 @@ class HomeScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: progress,
-              backgroundColor: const Color(0xFF2D2D44),
+              backgroundColor: AppColors.border,
               valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF10B981),
+                AppColors.success,
               ),
               minHeight: 7,
             ),
@@ -290,19 +495,16 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildExamCountdownCard() {
-    // Placeholder values until exam countdown data is model-driven.
-    const examName = 'Anatomy Final';
-    const daysRemaining = 12;
-    const readiness = 0.86;
+    final examLabel = _daysRemaining <= 0 && _examName == 'No upcoming exam'
+        ? 'No exams scheduled'
+        : '$_examName: $_daysRemaining Days';
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
+        color: AppColors.cardDark,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFF59E0B).withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: AppColors.warning.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
@@ -311,29 +513,24 @@ class HomeScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$examName: $daysRemaining Days',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  examLabel,
+                  style: AppTextStyles.headingSmall.copyWith(fontSize: 14),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Readiness pulse',
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF),
-                    fontSize: 11,
-                  ),
+                  _examName == 'No upcoming exam'
+                      ? 'Add your next exam to start a countdown'
+                      : 'Readiness pulse',
+                  style: AppTextStyles.bodySmallSecondary,
                 ),
                 const SizedBox(height: 10),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
                   child: LinearProgressIndicator(
-                    value: readiness,
-                    backgroundColor: const Color(0xFF2D2D44),
+                    value: _examReadiness,
+                    backgroundColor: AppColors.border,
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFFF59E0B),
+                      AppColors.warning,
                     ),
                     minHeight: 6,
                   ),
@@ -352,18 +549,18 @@ class HomeScreen extends StatelessWidget {
                   width: 54,
                   height: 54,
                   child: CircularProgressIndicator(
-                    value: readiness,
+                    value: _examReadiness,
                     strokeWidth: 5,
-                    backgroundColor: const Color(0xFF2D2D44),
+                    backgroundColor: AppColors.border,
                     valueColor: const AlwaysStoppedAnimation<Color>(
-                      Color(0xFFF59E0B),
+                      AppColors.warning,
                     ),
                     strokeCap: StrokeCap.round,
                   ),
                 ),
                 Text(
-                  '${(readiness * 100).toInt()}%',
-                  style: GoogleFonts.outfit(
+                  '${(_examReadiness * 100).toInt()}%',
+                  style: AppTextStyles.caption.copyWith(
                     color: Colors.white,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
