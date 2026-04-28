@@ -18,11 +18,21 @@ class AppConstants {
     return fromEnv.isNotEmpty ? fromEnv : supabaseAnonKey;
   }
 
+  static String get resolvedGeminiApiKey {
+    const fromEnv = String.fromEnvironment('GEMINI_API_KEY');
+    return fromEnv.isNotEmpty ? fromEnv : geminiApiKey;
+  }
+
   static bool get isSupabaseConfigured {
     return resolvedSupabaseUrl.isNotEmpty &&
         resolvedSupabaseAnonKey.isNotEmpty &&
         resolvedSupabaseUrl != 'YOUR_SUPABASE_URL' &&
         resolvedSupabaseAnonKey != 'YOUR_SUPABASE_ANON_KEY';
+  }
+
+  static bool get isGeminiConfigured {
+    final key = resolvedGeminiApiKey;
+    return key.isNotEmpty && key != 'YOUR_GEMINI_API_KEY';
   }
 
   // Sections
