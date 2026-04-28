@@ -78,7 +78,7 @@ jobs:
           path: studytrack/build/app/outputs/flutter-apk/*.apk
 
       - name: Create release
-        if: github.ref == 'refs/heads/main'
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}

@@ -1,0 +1,32 @@
+# Root .gitignore for studytrack-app
+# See https://flutter.dev/docs/deployment/android#signing-the-app
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+/build/
+
+# macOS
+.DS_Store
+
+# IDEs
+.idea/
+*.iml
+
+# Local env and secrets
+.env
+.env.*
+studytrack/.env
+
+# Android signing
+**/key.properties
+**/*.keystore
+studytrack/keystore/
+
+# Local generated artifacts
+/dist/
+*.apk
+*.aab
