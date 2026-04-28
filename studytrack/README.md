@@ -1,17 +1,21 @@
-# studytrack
+# StudyTrack App
 
-A new Flutter project.
+StudyTrack is the Flutter application that powers the mobile experience for planning classes, tracking study progress, and staying organized.
 
-## Getting Started
+## What Lives Here
 
-This project is a starting point for a Flutter application.
+- `lib/` app features, services, models, and widgets
+- `android/`, `linux/`, and `web/` platform-specific project files
+- `test/` widget and unit tests
+- `build/` generated outputs from Flutter tooling
 
-A few resources to get you started if this is your first Flutter project:
+## Working Locally
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+From this directory, use the usual Flutter commands:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- `flutter pub get`
+- `flutter analyze`
+- `flutter test`
+- `flutter run`
+
+See the repository root [README](../README.md) for project overview, policies, and contribution links.
