@@ -193,6 +193,16 @@ class SupabaseService {
     }
   }
 
+  Future<bool> resetPasswordForEmail(String email) async {
+    try {
+      await client.auth.resetPasswordForEmail(email.trim());
+      return true;
+    } catch (error) {
+      debugPrint('resetPasswordForEmail error: $error');
+      return false;
+    }
+  }
+
   User? getCurrentUser() {
     try {
       return client.auth.currentUser;
