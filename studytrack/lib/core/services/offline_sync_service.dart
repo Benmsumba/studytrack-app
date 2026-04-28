@@ -310,8 +310,7 @@ class OfflineSyncService extends ChangeNotifier {
       DateTime.now().toIso8601String(),
     );
     await HomeWidget.updateWidget(
-      qualifiedAndroidName:
-          'com.studytrack.studytrack.StudyTrackWidgetProvider',
+      qualifiedAndroidName: 'com.studytrack.app.StudyTrackWidgetProvider',
     );
   }
 

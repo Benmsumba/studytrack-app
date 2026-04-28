@@ -46,19 +46,25 @@ class WrappedCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
           gradient: LinearGradient(
             colors: customBorderColors ?? AppColors.borderGradient.colors,
-            begin: customBorderColors == null ? Alignment.topLeft : Alignment.topLeft,
-            end: customBorderColors == null ? Alignment.bottomRight : Alignment.bottomRight,
+            begin: customBorderColors == null
+                ? Alignment.topLeft
+                : Alignment.topLeft,
+            end: customBorderColors == null
+                ? Alignment.bottomRight
+                : Alignment.bottomRight,
           ),
         ),
         padding: const EdgeInsets.all(1.2),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-            child: Container(
-              color: AppColors.cardDark.withValues(alpha: 0.85),
-              padding: EdgeInsets.all(padding),
-              child: child,
+          child: ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Container(
+                color: AppColors.cardDark.withValues(alpha: 0.85),
+                padding: EdgeInsets.all(padding),
+                child: child,
+              ),
             ),
           ),
         ),
@@ -125,10 +131,7 @@ class _PremiumButtonState extends State<PremiumButton> {
                         valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                       ),
                     )
-                  : Text(
-                      widget.label,
-                      style: AppTextStyles.button,
-                    ),
+                  : Text(widget.label, style: AppTextStyles.button),
             ),
           ),
         ),
@@ -191,10 +194,7 @@ class _PremiumTextFieldState extends State<PremiumTextField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.label,
-          style: AppTextStyles.label,
-        ),
+        Text(widget.label, style: AppTextStyles.label),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(

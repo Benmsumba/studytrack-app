@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
@@ -23,7 +24,8 @@ class StudySessionScreen extends StatefulWidget {
   State<StudySessionScreen> createState() => _StudySessionScreenState();
 }
 
-class _StudySessionScreenState extends State<StudySessionScreen> {
+class _StudySessionScreenState extends State<StudySessionScreen>
+    with WidgetsBindingObserver {
   final SupabaseService _service = SupabaseService();
   late final ConfettiController _confettiController;
 
@@ -36,28 +38,45 @@ class _StudySessionScreenState extends State<StudySessionScreen> {
 
   late int _totalSeconds;
   late int _remainingSeconds;
-  DateTime? _startTimestamp;
 
   String _topicName = 'Focus Session';
   bool _isCompleting = false;
 
+  String get _statePrefix =>
+      'study_session_${widget.sessionId ?? widget.topicId ?? 'default'}';
+
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 2),
     );
     _totalSeconds = _studyDurationMinutes * 60;
     _remainingSeconds = _totalSeconds;
     _topicName = widget.topicName ?? 'Focus Session';
+    _restoreSessionState();
     _resolveTopicName();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     _confettiController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      unawaited(_persistSessionState());
+      _timer?.cancel();
+    } else if (state == AppLifecycleState.resumed) {
+      unawaited(_restoreSessionState());
+    }
   }
 
   Future<void> _resolveTopicName() async {
@@ -77,6 +96,68 @@ class _StudySessionScreenState extends State<StudySessionScreen> {
     setState(() {
       _topicName = name;
     });
+    unawaited(_persistSessionState());
+  }
+
+  Future<void> _restoreSessionState() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedRemaining = prefs.getInt('${_statePrefix}_remainingSeconds');
+    final savedTotal = prefs.getInt('${_statePrefix}_totalSeconds');
+    final savedStudyMinutes = prefs.getInt(
+      '${_statePrefix}_studyDurationMinutes',
+    );
+    final savedRunning = prefs.getBool('${_statePrefix}_isRunning') ?? false;
+    final savedBreakMode =
+        prefs.getBool('${_statePrefix}_isBreakMode') ?? false;
+    final savedTopicName = prefs.getString('${_statePrefix}_topicName');
+    final savedAt = prefs.getInt('${_statePrefix}_savedAt');
+
+    if (!mounted) return;
+
+    setState(() {
+      if (savedStudyMinutes != null && savedStudyMinutes > 0) {
+        _studyDurationMinutes = savedStudyMinutes;
+      }
+
+      if (savedTotal != null && savedTotal > 0) {
+        _totalSeconds = savedTotal;
+      }
+
+      if (savedRemaining != null && savedRemaining >= 0) {
+        _remainingSeconds = savedRemaining;
+      }
+
+      _isBreakMode = savedBreakMode;
+      if (savedTopicName != null && savedTopicName.isNotEmpty) {
+        _topicName = savedTopicName;
+      }
+      _isRunning = savedRunning;
+    });
+
+    if (_isRunning && savedAt != null) {
+      final elapsedSeconds = DateTime.now()
+          .difference(DateTime.fromMillisecondsSinceEpoch(savedAt))
+          .inSeconds;
+      if (elapsedSeconds > 0) {
+        setState(() {
+          _remainingSeconds = (_remainingSeconds - elapsedSeconds).clamp(
+            0,
+            _totalSeconds,
+          );
+        });
+      }
+    }
+
+    if (_isRunning && _remainingSeconds > 0) {
+      _startTimer();
+    } else if (_isRunning && _remainingSeconds == 0) {
+      _isRunning = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          unawaited(_showRatingDialog());
+        }
+      });
+    }
   }
 
   void _setStudyDuration(int minutes) {
@@ -87,15 +168,16 @@ class _StudySessionScreenState extends State<StudySessionScreen> {
       _totalSeconds = minutes * 60;
       _remainingSeconds = _totalSeconds;
     });
+    unawaited(_persistSessionState());
   }
 
   void _startTimer() {
     if (_isRunning) return;
 
-    _startTimestamp ??= DateTime.now();
     setState(() {
       _isRunning = true;
     });
+    unawaited(_persistSessionState());
 
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_remainingSeconds <= 1) {
@@ -117,6 +199,7 @@ class _StudySessionScreenState extends State<StudySessionScreen> {
       setState(() {
         _remainingSeconds -= 1;
       });
+      unawaited(_persistSessionState());
     });
   }
 
@@ -125,6 +208,7 @@ class _StudySessionScreenState extends State<StudySessionScreen> {
     setState(() {
       _isRunning = false;
     });
+    unawaited(_persistSessionState());
   }
 
   void _resetTimer() {
@@ -132,10 +216,10 @@ class _StudySessionScreenState extends State<StudySessionScreen> {
     setState(() {
       _isRunning = false;
       _isBreakMode = false;
-      _startTimestamp = null;
       _totalSeconds = _studyDurationMinutes * 60;
       _remainingSeconds = _totalSeconds;
     });
+    unawaited(_clearSessionState());
   }
 
   void _startBreak() {
@@ -146,6 +230,35 @@ class _StudySessionScreenState extends State<StudySessionScreen> {
       _totalSeconds = _breakDurationMinutes * 60;
       _remainingSeconds = _totalSeconds;
     });
+    unawaited(_persistSessionState());
+  }
+
+  Future<void> _persistSessionState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(
+      '${_statePrefix}_studyDurationMinutes',
+      _studyDurationMinutes,
+    );
+    await prefs.setInt('${_statePrefix}_totalSeconds', _totalSeconds);
+    await prefs.setInt('${_statePrefix}_remainingSeconds', _remainingSeconds);
+    await prefs.setBool('${_statePrefix}_isRunning', _isRunning);
+    await prefs.setBool('${_statePrefix}_isBreakMode', _isBreakMode);
+    await prefs.setString('${_statePrefix}_topicName', _topicName);
+    await prefs.setInt(
+      '${_statePrefix}_savedAt',
+      DateTime.now().millisecondsSinceEpoch,
+    );
+  }
+
+  Future<void> _clearSessionState() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('${_statePrefix}_studyDurationMinutes');
+    await prefs.remove('${_statePrefix}_totalSeconds');
+    await prefs.remove('${_statePrefix}_remainingSeconds');
+    await prefs.remove('${_statePrefix}_isRunning');
+    await prefs.remove('${_statePrefix}_isBreakMode');
+    await prefs.remove('${_statePrefix}_topicName');
+    await prefs.remove('${_statePrefix}_savedAt');
   }
 
   Future<void> _showRatingDialog() async {
@@ -251,6 +364,7 @@ class _StudySessionScreenState extends State<StudySessionScreen> {
     });
 
     await _showInfoDialog('Great session! Your progress has been saved.');
+    await _clearSessionState();
   }
 
   Future<void> _showInfoDialog(String message) async {

@@ -4,9 +4,9 @@
 
 # Preserve home_widget provider and generated R references.
 -keep class es.antonborri.home_widget.** { *; }
--keep class com.studytrack.studytrack.StudyTrackWidgetProvider { *; }
+-keep class com.studytrack.app.StudyTrackWidgetProvider { *; }
 
 # Keep model classes serialized from JSON maps.
--keepclassmembers class com.studytrack.studytrack.** {
+-keepclassmembers class com.studytrack.app.** {
     <fields>;
 }

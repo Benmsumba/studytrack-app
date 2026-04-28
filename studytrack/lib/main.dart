@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:ui';
 
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -19,29 +21,59 @@ import 'features/timetable/controllers/timetable_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
 
+  FlutterError.onError = (details) {
+    FlutterError.presentError(details);
+    debugPrint('Flutter error: ${details.exceptionAsString()}');
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    debugPrint('Uncaught platform error: $error');
+    debugPrintStack(stackTrace: stack);
+    return true;
+  };
+
+  await runZonedGuarded(
+    () async {
+      await _bootstrapApp();
+    },
+    (error, stack) {
+      debugPrint('Uncaught zone error: $error');
+      debugPrintStack(stackTrace: stack);
+    },
+  );
+}
+
+Future<void> _bootstrapApp() async {
   if (AppConstants.isSupabaseConfigured) {
-    await Supabase.initialize(
-      url: AppConstants.resolvedSupabaseUrl,
-      anonKey: AppConstants.resolvedSupabaseAnonKey,
-    );
-    await _completeAuthCodeExchangeIfPresent();
+    try {
+      await Supabase.initialize(
+        url: AppConstants.resolvedSupabaseUrl,
+        anonKey: AppConstants.resolvedSupabaseAnonKey,
+      );
+      await _completeAuthCodeExchangeIfPresent();
+    } catch (error, stack) {
+      debugPrint('Supabase initialization failed: $error');
+      debugPrintStack(stackTrace: stack);
+    }
   } else {
     debugPrint(
       'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY via --dart-define or update AppConstants.',
     );
   }
 
-  await OfflineSyncService.instance.initialize();
+  await _safeInit(() => OfflineSyncService.instance.initialize());
 
   final notificationService = NotificationService();
-  await notificationService.initialize();
+  await _safeInit(notificationService.initialize);
+
   if (AppConstants.isSupabaseConfigured) {
-    await notificationService.bootstrapForCurrentUser();
+    await _safeInit(notificationService.bootstrapForCurrentUser);
 
     Supabase.instance.client.auth.onAuthStateChange.listen((event) {
       if (event.session != null) {
-        unawaited(notificationService.bootstrapForCurrentUser());
+        unawaited(_safeInit(notificationService.bootstrapForCurrentUser));
       }
     });
   }
@@ -62,6 +94,15 @@ Future<void> main() async {
       child: const StudyTrackApp(),
     ),
   );
+}
+
+Future<void> _safeInit(Future<void> Function() action) async {
+  try {
+    await action();
+  } catch (error, stack) {
+    debugPrint('Startup step failed: $error');
+    debugPrintStack(stackTrace: stack);
+  }
 }
 
 Future<void> _completeAuthCodeExchangeIfPresent() async {
