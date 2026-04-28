@@ -36,13 +36,15 @@ Future<void> main() async {
 
   final notificationService = NotificationService();
   await notificationService.initialize();
-  await notificationService.bootstrapForCurrentUser();
+  if (AppConstants.isSupabaseConfigured) {
+    await notificationService.bootstrapForCurrentUser();
 
-  Supabase.instance.client.auth.onAuthStateChange.listen((event) {
-    if (event.session != null) {
-      unawaited(notificationService.bootstrapForCurrentUser());
-    }
-  });
+    Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+      if (event.session != null) {
+        unawaited(notificationService.bootstrapForCurrentUser());
+      }
+    });
+  }
 
   runApp(
     MultiProvider(

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'core/constants/app_constants.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/onboarding_welcome_screen.dart';
 import 'features/auth/screens/signup_screen.dart';
@@ -76,6 +77,10 @@ class StudyTrackApp extends StatelessWidget {
 
       if (publicRoutes.contains(location)) {
         return null;
+      }
+
+      if (!AppConstants.isSupabaseConfigured) {
+        return '/login';
       }
 
       final user = Supabase.instance.client.auth.currentUser;

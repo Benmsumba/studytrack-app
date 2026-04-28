@@ -12,23 +12,7 @@
 
 ## Step 2: Apply Credentials to the App
 
-### Option A: Update app_constants.dart (Permanent)
-Edit `/workspaces/studytrack-app/studytrack/lib/core/constants/app_constants.dart`:
-
-```dart
-static const String supabaseUrl = 'https://YOUR_PROJECT.supabase.co';
-static const String supabaseAnonKey = 'YOUR_ANON_KEY_HERE';
-```
-
-Replace `YOUR_PROJECT` and `YOUR_ANON_KEY_HERE` with your actual values.
-
-Then run:
-```bash
-cd /workspaces/studytrack-app/studytrack
-flutter run -d web-server --web-hostname 0.0.0.0 --web-port 8080
-```
-
-### Option B: Use dart-define (For Testing - No File Changes)
+### Option A: Use dart-define (Recommended)
 ```bash
 cd /workspaces/studytrack-app/studytrack
 flutter run -d web-server \
@@ -37,6 +21,9 @@ flutter run -d web-server \
   --dart-define=SUPABASE_URL=https://YOUR_PROJECT.supabase.co \
   --dart-define=SUPABASE_ANON_KEY=YOUR_ANON_KEY_HERE
 ```
+
+### Option B: Copy the local example file
+Copy `studytrack/.env.example` to your own local environment file and replace the placeholder values before building release APKs.
 
 ## Step 3: Verify Setup
 
@@ -57,3 +44,4 @@ flutter run -d web-server \
 - **Never commit real credentials** to git (use `.gitignore`)
 - Store secrets in GitHub Actions secrets or environment variables
 - The app supports reading from `--dart-define` for CI/CD pipelines
+- The release APK workflow requires `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `GEMINI_API_KEY` secrets

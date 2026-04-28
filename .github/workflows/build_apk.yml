@@ -49,9 +49,30 @@ jobs:
         working-directory: studytrack
         run: flutter test
 
+      - name: Validate release secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          for name in SUPABASE_URL SUPABASE_ANON_KEY GEMINI_API_KEY; do
+            if [ -z "${!name}" ]; then
+              echo "Missing required secret: $name"
+              exit 1
+            fi
+          done
+
       - name: Build APK (split per ABI)
         working-directory: studytrack
-        run: flutter build apk --release --split-per-abi
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          flutter build apk --release --split-per-abi \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+            --dart-define=GEMINI_API_KEY="$GEMINI_API_KEY"
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
