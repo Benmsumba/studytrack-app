@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/services/voice_note_service.dart';
 import 'voice_note_player_widget.dart';
@@ -30,7 +31,9 @@ class VoiceNoteRecorderWidget extends StatefulWidget {
 }
 
 class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
-  final VoiceNoteService _service = VoiceNoteService();
+  final VoiceNoteService _service = VoiceNoteService(
+    geminiApiKey: AppConstants.resolvedGeminiApiKey,
+  );
   final SupabaseService _supabaseService = SupabaseService();
 
   bool _isRecording = false;
