@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 
 class GroupChatScreen extends StatefulWidget {
   const GroupChatScreen({super.key, required this.groupId, this.group});
@@ -83,9 +84,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     return HSVColor.fromAHSV(1, hue, 0.6, 0.85).toColor();
   }
 
-  Future<void> _sendMessage() async {
+  Future<void> _sendMessage([String? quickText]) async {
     final user = _service.getCurrentUser();
-    final content = _messageController.text.trim();
+    final content = (quickText ?? _messageController.text).trim();
     if (user == null || content.isEmpty || _sending) return;
 
     setState(() => _sending = true);
@@ -111,6 +112,40 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       _messages = [..._messages, sent];
     });
     _scrollToBottom();
+  }
+
+  Future<void> _openVoiceRecorder() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.backgroundDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+          ),
+          child: VoiceNoteRecorderWidget(
+            topicId: null,
+            allowUpload: false,
+            title: 'Record a voice message',
+            subtitle: 'Transcribe, then send to the group chat',
+            onSaved: (result) async {
+              final navigator = Navigator.of(sheetContext);
+              await _sendMessage('🎙 Voice note: ${result.transcription}');
+              if (navigator.mounted) {
+                navigator.pop();
+              }
+            },
+          ),
+        );
+      },
+    );
   }
 
   void _scrollToBottom() {
@@ -259,6 +294,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: _openVoiceRecorder,
+                    icon: const Icon(Icons.mic_none_rounded),
+                    color: AppColors.accent,
+                  ),
+                  const SizedBox(width: 4),
                   IconButton.filled(
                     onPressed: _sending ? null : _sendMessage,
                     icon: _sending

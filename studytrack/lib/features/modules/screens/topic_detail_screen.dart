@@ -10,6 +10,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../voice_notes/widgets/voice_note_player_widget.dart';
+import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 import '../../../models/uploaded_note_model.dart';
@@ -36,6 +38,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   ModuleModel? _module;
   List<Map<String, dynamic>> _ratingHistory = const [];
   List<UploadedNoteModel> _uploadedNotes = const [];
+  final Map<String, String> _voiceNoteTranscripts = {};
   int _selectedRating = 0;
 
   @override
@@ -60,9 +63,28 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
         ? null
         : await _service.getModuleById(topic.moduleId);
 
-    final history = await _service.getTopicRatingHistory(widget.topicId, limit: 5) ??
+    final history =
+        await _service.getTopicRatingHistory(widget.topicId, limit: 5) ??
         <Map<String, dynamic>>[];
     final notes = await _service.getNotesByTopic(widget.topicId) ?? [];
+    final voiceNotes = notes
+        .where((note) {
+          final type = (note['file_type'] as String?)?.toLowerCase() ?? '';
+          return type != 'pdf' && type != 'pptx';
+        })
+        .toList(growable: false);
+
+    final transcripts = <String, String>{};
+    for (final note in voiceNotes) {
+      final noteId = note['id']?.toString() ?? '';
+      if (noteId.isEmpty) continue;
+      final chunks = await _service.getNoteChunks(noteId) ?? [];
+      transcripts[noteId] = chunks
+          .map((chunk) => chunk['content']?.toString() ?? '')
+          .where((chunk) => chunk.trim().isNotEmpty)
+          .join(' ')
+          .trim();
+    }
 
     if (!mounted) return;
     setState(() {
@@ -70,6 +92,9 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
       _module = module;
       _ratingHistory = history;
       _uploadedNotes = notes.map(UploadedNoteModel.fromJson).toList();
+      _voiceNoteTranscripts
+        ..clear()
+        ..addAll(transcripts);
       _selectedRating = topic?.currentRating ?? 0;
       _notesController.text = topic?.notes ?? '';
       _isLoading = false;
@@ -121,7 +146,9 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('File upload from web is not enabled for this flow yet.'),
+          content: Text(
+            'File upload from web is not enabled for this flow yet.',
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -222,12 +249,78 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                   const SizedBox(height: 14),
                   _buildNotesSection(topic),
                   const SizedBox(height: 14),
+                  _buildVoiceNotesSection(),
+                  const SizedBox(height: 14),
                   _buildUploadsSection(),
                   const SizedBox(height: 14),
                   _buildRatingSection(),
                 ],
               ),
             ),
+    );
+  }
+
+  Widget _buildVoiceNotesSection() {
+    final voiceNotes = _uploadedNotes
+        .where((note) {
+          final type = note.fileType.toLowerCase();
+          return type != 'pdf' && type != 'pptx';
+        })
+        .toList(growable: false);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.cardDark,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Voice Notes',
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              const Icon(Icons.mic_rounded, color: AppColors.accent),
+            ],
+          ),
+          const SizedBox(height: 12),
+          VoiceNoteRecorderWidget(
+            topicId: widget.topicId,
+            onSaved: (_) async {
+              await _load();
+            },
+          ),
+          const SizedBox(height: 12),
+          if (voiceNotes.isEmpty)
+            Text(
+              'No voice notes yet. Record a quick explanation or revision summary.',
+              style: GoogleFonts.inter(color: AppColors.textSecondary),
+            )
+          else
+            ...voiceNotes.map((note) {
+              final transcript = _voiceNoteTranscripts[note.id] ?? '';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: VoiceNotePlayerWidget(
+                  source: note.fileUrl,
+                  title: note.fileName,
+                  subtitle: transcript.isEmpty
+                      ? 'Tap play to review the note'
+                      : transcript,
+                ),
+              );
+            }),
+        ],
+      ),
     );
   }
 
@@ -262,7 +355,10 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: topic.ratingColor,
                   borderRadius: BorderRadius.circular(12),
@@ -335,12 +431,24 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
 
   Widget _buildActionsGrid() {
     final actions = [
-      ('🤖', 'Explain This', () => context.push('/topics/${widget.topicId}/ai-tutor')),
+      (
+        '🤖',
+        'Explain This',
+        () => context.push('/topics/${widget.topicId}/ai-tutor'),
+      ),
       ('📝', 'Test Me', () => context.push('/topics/${widget.topicId}/quiz')),
       ('🧠', 'Mnemonic', () => _showPlannedFeature('Mnemonic')),
       ('📋', 'Summarize Notes', () => _showPlannedFeature('Summarize Notes')),
-      ('🔍', 'Predict Questions', () => _showPlannedFeature('Predict Questions')),
-      ('💬', 'Topic Chat', () => context.push('/topics/${widget.topicId}/chat')),
+      (
+        '🔍',
+        'Predict Questions',
+        () => _showPlannedFeature('Predict Questions'),
+      ),
+      (
+        '💬',
+        'Topic Chat',
+        () => context.push('/topics/${widget.topicId}/chat'),
+      ),
     ];
 
     return GridView.builder(
@@ -404,7 +512,9 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
               ),
             ),
             trailing: Icon(
-              _notesExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+              _notesExpanded
+                  ? Icons.expand_less_rounded
+                  : Icons.expand_more_rounded,
               color: Colors.white,
             ),
             onTap: () {
@@ -455,11 +565,15 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                             ? const SizedBox(
                                 width: 14,
                                 height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : Text(
                                 'Save',
-                                style: GoogleFonts.inter(color: AppColors.accent),
+                                style: GoogleFonts.inter(
+                                  color: AppColors.accent,
+                                ),
                               ),
                       ),
                     ],
@@ -496,7 +610,10 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
               const Spacer(),
               TextButton.icon(
                 onPressed: _uploadNote,
-                icon: const Icon(Icons.upload_file_rounded, color: AppColors.accent),
+                icon: const Icon(
+                  Icons.upload_file_rounded,
+                  color: AppColors.accent,
+                ),
                 label: Text(
                   'Upload',
                   style: GoogleFonts.inter(color: AppColors.accent),

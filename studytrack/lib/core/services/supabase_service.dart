@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../models/module_model.dart';
 import '../../models/topic_model.dart';
+import 'offline_sync_service.dart';
 
 class SupabaseService {
   SupabaseService._internal();
@@ -15,9 +17,63 @@ class SupabaseService {
 
   RealtimeChannel? _messagesChannel;
   String? _lastAuthError;
+  final OfflineSyncService _offlineSync = OfflineSyncService.instance;
+  final Uuid _uuid = const Uuid();
 
   SupabaseClient get client => Supabase.instance.client;
   String? get lastAuthError => _lastAuthError;
+
+  Future<bool> _isOnline() async => _offlineSync.onlineNow;
+
+  String _queryKey(String entity, String scope) => '$entity::$scope';
+
+  Future<List<Map<String, dynamic>>?> _cachedList(String entity, String scope) {
+    return _offlineSync.cachedQuery(_queryKey(entity, scope));
+  }
+
+  Future<void> _cacheList(
+    String entity,
+    String scope,
+    List<Map<String, dynamic>> items,
+  ) async {
+    await _offlineSync.cacheQuery(
+      queryKey: _queryKey(entity, scope),
+      entity: entity,
+      payload: items,
+    );
+  }
+
+  Future<Map<String, dynamic>?> _cachedRecord(String entity, String recordId) {
+    return _offlineSync.cachedRecord(entity: entity, recordId: recordId);
+  }
+
+  Future<void> _cacheRecord(
+    String entity,
+    String recordId,
+    Map<String, dynamic> payload,
+  ) async {
+    await _offlineSync.cacheRecord(
+      entity: entity,
+      recordId: recordId,
+      payload: payload,
+    );
+  }
+
+  Future<void> _queueChange(
+    String entity,
+    String operation,
+    Map<String, dynamic> payload, {
+    String? recordId,
+  }) async {
+    await _offlineSync.queueChange(
+      entity: entity,
+      operation: operation,
+      payload: payload,
+      recordId: recordId,
+    );
+  }
+
+  String _newId() => _uuid.v4();
 
   // ---------------------------------------------------------------------------
   // AUTH
@@ -161,15 +217,22 @@ class SupabaseService {
 
   Future<Map<String, dynamic>?> getProfile(String userId) async {
     try {
-      final response = await client
-          .from('profiles')
-          .select()
-          .eq('id', userId)
-          .maybeSingle();
-      return response;
+      if (await _isOnline()) {
+        final response = await client
+            .from('profiles')
+            .select()
+            .eq('id', userId)
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('profiles', userId, response);
+        }
+        return response;
+      }
+
+      return await _cachedRecord('profiles', userId);
     } catch (error) {
       debugPrint('getProfile error: $error');
-      return null;
+      return _cachedRecord('profiles', userId);
     }
   }
 
@@ -178,8 +241,21 @@ class SupabaseService {
     Map<String, dynamic> data,
   ) async {
     try {
-      final response = await _upsertProfile(userId: userId, data: data);
-      return response;
+      final payload = {'id': userId, ...data};
+      if (await _isOnline()) {
+        final response = await _upsertProfile(userId: userId, data: data);
+        if (response != null) {
+          await _cacheRecord('profiles', userId, response);
+        }
+        return response;
+      }
+
+      await _queueChange('profiles', 'upsert', payload, recordId: userId);
+      final existing =
+          await _cachedRecord('profiles', userId) ?? {'id': userId};
+      final optimistic = {...existing, ...data, 'id': userId};
+      await _cacheRecord('profiles', userId, optimistic);
+      return optimistic;
     } catch (error) {
       debugPrint('updateProfile error: $error');
       return null;
@@ -328,36 +404,51 @@ class SupabaseService {
 
   Future<List<ModuleModel>?> getModules(String userId) async {
     try {
-      final response = await client
-          .from('modules')
-          .select()
-          .eq('user_id', userId)
-          .order('created_at');
-      return (response as List<dynamic>)
-          .map((item) => ModuleModel.fromJson(item as Map<String, dynamic>))
-          .toList();
+      if (await _isOnline()) {
+        final response = await client
+            .from('modules')
+            .select()
+            .eq('user_id', userId)
+            .order('created_at');
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('modules', userId, rows);
+        return rows.map(ModuleModel.fromJson).toList();
+      }
+
+      final cached = await _cachedList('modules', userId);
+      return cached?.map(ModuleModel.fromJson).toList();
     } catch (error) {
       debugPrint('getModules error: $error');
-      return null;
+      final cached = await _cachedList('modules', userId);
+      return cached?.map(ModuleModel.fromJson).toList();
     }
   }
 
   Future<ModuleModel?> getModuleById(String moduleId) async {
     try {
-      final response = await client
-          .from('modules')
-          .select()
-          .eq('id', moduleId)
-          .maybeSingle();
+      if (await _isOnline()) {
+        final response = await client
+            .from('modules')
+            .select()
+            .eq('id', moduleId)
+            .maybeSingle();
 
-      if (response == null) {
-        return null;
+        if (response == null) {
+          return null;
+        }
+
+        await _cacheRecord('modules', moduleId, response);
+        return ModuleModel.fromJson(response);
       }
 
-      return ModuleModel.fromJson(response);
+      final cached = await _cachedRecord('modules', moduleId);
+      return cached == null ? null : ModuleModel.fromJson(cached);
     } catch (error) {
       debugPrint('getModuleById error: $error');
-      return null;
+      final cached = await _cachedRecord('modules', moduleId);
+      return cached == null ? null : ModuleModel.fromJson(cached);
     }
   }
 
@@ -367,17 +458,30 @@ class SupabaseService {
     String color,
   ) async {
     try {
-      final response = await client
-          .from('modules')
-          .insert({
-            'user_id': userId,
-            'name': name,
-            'color': color,
-            'created_at': DateTime.now().toIso8601String(),
-          })
-          .select()
-          .maybeSingle();
-      return response;
+      final moduleId = _newId();
+      final payload = {
+        'id': moduleId,
+        'user_id': userId,
+        'name': name,
+        'color': color,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+
+      if (await _isOnline()) {
+        final response = await client
+            .from('modules')
+            .insert(payload)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('modules', response['id'].toString(), response);
+        }
+        return response;
+      }
+
+      await _queueChange('modules', 'insert', payload, recordId: moduleId);
+      await _cacheRecord('modules', moduleId, payload);
+      return payload;
     } catch (error) {
       debugPrint('addModule error: $error');
       return null;
@@ -389,13 +493,26 @@ class SupabaseService {
     Map<String, dynamic> data,
   ) async {
     try {
-      final response = await client
-          .from('modules')
-          .update(data)
-          .eq('id', moduleId)
-          .select()
-          .maybeSingle();
-      return response;
+      if (await _isOnline()) {
+        final response = await client
+            .from('modules')
+            .update(data)
+            .eq('id', moduleId)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('modules', moduleId, response);
+        }
+        return response;
+      }
+
+      final payload = {'id': moduleId, ...data};
+      await _queueChange('modules', 'update', payload, recordId: moduleId);
+      final existing =
+          await _cachedRecord('modules', moduleId) ?? {'id': moduleId};
+      final optimistic = {...existing, ...data, 'id': moduleId};
+      await _cacheRecord('modules', moduleId, optimistic);
+      return optimistic;
     } catch (error) {
       debugPrint('updateModule error: $error');
       return null;
@@ -404,7 +521,18 @@ class SupabaseService {
 
   Future<bool?> deleteModule(String moduleId) async {
     try {
-      await client.from('modules').delete().eq('id', moduleId);
+      if (await _isOnline()) {
+        await client.from('modules').delete().eq('id', moduleId);
+        await _offlineSync.deleteCachedRecord(
+          entity: 'modules',
+          recordId: moduleId,
+        );
+        return true;
+      }
+
+      await _queueChange('modules', 'delete', {
+        'id': moduleId,
+      }, recordId: moduleId);
       return true;
     } catch (error) {
       debugPrint('deleteModule error: $error');
@@ -418,36 +546,51 @@ class SupabaseService {
 
   Future<List<TopicModel>?> getTopics(String moduleId) async {
     try {
-      final response = await client
-          .from('topics')
-          .select()
-          .eq('module_id', moduleId)
-          .order('created_at');
-      return (response as List<dynamic>)
-          .map((item) => TopicModel.fromJson(item as Map<String, dynamic>))
-          .toList();
+      if (await _isOnline()) {
+        final response = await client
+            .from('topics')
+            .select()
+            .eq('module_id', moduleId)
+            .order('created_at');
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('topics', moduleId, rows);
+        return rows.map(TopicModel.fromJson).toList();
+      }
+
+      final cached = await _cachedList('topics', moduleId);
+      return cached?.map(TopicModel.fromJson).toList();
     } catch (error) {
       debugPrint('getTopics error: $error');
-      return null;
+      final cached = await _cachedList('topics', moduleId);
+      return cached?.map(TopicModel.fromJson).toList();
     }
   }
 
   Future<TopicModel?> getTopicById(String topicId) async {
     try {
-      final response = await client
-          .from('topics')
-          .select()
-          .eq('id', topicId)
-          .maybeSingle();
+      if (await _isOnline()) {
+        final response = await client
+            .from('topics')
+            .select()
+            .eq('id', topicId)
+            .maybeSingle();
 
-      if (response == null) {
-        return null;
+        if (response == null) {
+          return null;
+        }
+
+        await _cacheRecord('topics', topicId, response);
+        return TopicModel.fromJson(response);
       }
 
-      return TopicModel.fromJson(response);
+      final cached = await _cachedRecord('topics', topicId);
+      return cached == null ? null : TopicModel.fromJson(cached);
     } catch (error) {
       debugPrint('getTopicById error: $error');
-      return null;
+      final cached = await _cachedRecord('topics', topicId);
+      return cached == null ? null : TopicModel.fromJson(cached);
     }
   }
 
@@ -456,21 +599,29 @@ class SupabaseService {
     int limit = 5,
   }) async {
     try {
-      final response = await client
-          .from('topic_ratings_history')
-          .select()
-          .eq('topic_id', topicId)
-          .order('rated_at', ascending: false)
-          .limit(limit);
+      final queryKey = 'topic_ratings_history:$topicId:$limit';
+      if (await _isOnline()) {
+        final response = await client
+            .from('topic_ratings_history')
+            .select()
+            .eq('topic_id', topicId)
+            .order('rated_at', ascending: false)
+            .limit(limit);
 
-      final values = (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+        final values = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('topic_ratings_history', queryKey, values);
+        return values.reversed.toList();
+      }
 
-      return values.reversed.toList();
+      final cached = await _cachedList('topic_ratings_history', queryKey);
+      return cached?.reversed.toList();
     } catch (error) {
       debugPrint('getTopicRatingHistory error: $error');
-      return null;
+      final queryKey = 'topic_ratings_history:$topicId:$limit';
+      final cached = await _cachedList('topic_ratings_history', queryKey);
+      return cached?.reversed.toList();
     }
   }
 
@@ -480,19 +631,32 @@ class SupabaseService {
     String name,
   ) async {
     try {
-      final response = await client
-          .from('topics')
-          .insert({
-            'module_id': moduleId,
-            'user_id': userId,
-            'name': name,
-            'is_studied': false,
-            'study_count': 0,
-            'created_at': DateTime.now().toIso8601String(),
-          })
-          .select()
-          .maybeSingle();
-      return response;
+      final topicId = _newId();
+      final payload = {
+        'id': topicId,
+        'module_id': moduleId,
+        'user_id': userId,
+        'name': name,
+        'is_studied': false,
+        'study_count': 0,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+
+      if (await _isOnline()) {
+        final response = await client
+            .from('topics')
+            .insert(payload)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('topics', response['id'].toString(), response);
+        }
+        return response;
+      }
+
+      await _queueChange('topics', 'insert', payload, recordId: topicId);
+      await _cacheRecord('topics', topicId, payload);
+      return payload;
     } catch (error) {
       debugPrint('addTopic error: $error');
       return null;
@@ -504,37 +668,55 @@ class SupabaseService {
     int rating,
   ) async {
     try {
-      final topicResponse = await client
-          .from('topics')
-          .select('id, user_id, study_count')
-          .eq('id', topicId)
-          .maybeSingle();
-
+      final topicResponse = await getTopicById(topicId);
       if (topicResponse == null) {
         return null;
       }
 
-      final currentStudyCount = (topicResponse['study_count'] as int?) ?? 0;
-
-      await client.from('topic_ratings_history').insert({
+      final currentStudyCount = topicResponse.studyCount;
+      final nowIso = DateTime.now().toIso8601String();
+      final historyPayload = {
+        'id': _newId(),
         'topic_id': topicId,
-        'user_id': topicResponse['user_id'],
+        'user_id': topicResponse.userId,
         'rating': rating,
-        'rated_at': DateTime.now().toIso8601String(),
-      });
+        'rated_at': nowIso,
+      };
+      final topicPayload = {
+        'id': topicId,
+        'current_rating': rating,
+        'study_count': currentStudyCount + 1,
+        'last_studied_at': nowIso,
+      };
 
-      final response = await client
-          .from('topics')
-          .update({
-            'current_rating': rating,
-            'study_count': currentStudyCount + 1,
-            'last_studied_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', topicId)
-          .select()
-          .maybeSingle();
+      if (await _isOnline()) {
+        await client.from('topic_ratings_history').insert(historyPayload);
+        final response = await client
+            .from('topics')
+            .update({
+              'current_rating': rating,
+              'study_count': currentStudyCount + 1,
+              'last_studied_at': nowIso,
+            })
+            .eq('id', topicId)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('topics', topicId, response);
+        }
+        return response;
+      }
 
-      return response;
+      await _queueChange(
+        'topic_ratings_history',
+        'insert',
+        historyPayload,
+        recordId: historyPayload['id']?.toString(),
+      );
+      await _queueChange('topics', 'update', topicPayload, recordId: topicId);
+      final optimistic = {...topicResponse.toJson(), ...topicPayload};
+      await _cacheRecord('topics', topicId, optimistic);
+      return optimistic;
     } catch (error) {
       debugPrint('updateTopicRating error: $error');
       return null;
@@ -543,27 +725,39 @@ class SupabaseService {
 
   Future<Map<String, dynamic>?> markTopicStudied(String topicId) async {
     try {
-      final topic = await client
-          .from('topics')
-          .select('study_count')
-          .eq('id', topicId)
-          .maybeSingle();
-
+      final topic = await getTopicById(topicId);
       if (topic == null) {
         return null;
       }
 
-      final response = await client
-          .from('topics')
-          .update({
-            'is_studied': true,
-            'study_count': ((topic['study_count'] as int?) ?? 0) + 1,
-            'last_studied_at': DateTime.now().toIso8601String(),
-          })
-          .eq('id', topicId)
-          .select()
-          .maybeSingle();
-      return response;
+      final payload = {
+        'id': topicId,
+        'is_studied': true,
+        'study_count': topic.studyCount + 1,
+        'last_studied_at': DateTime.now().toIso8601String(),
+      };
+
+      if (await _isOnline()) {
+        final response = await client
+            .from('topics')
+            .update({
+              'is_studied': true,
+              'study_count': topic.studyCount + 1,
+              'last_studied_at': DateTime.now().toIso8601String(),
+            })
+            .eq('id', topicId)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('topics', topicId, response);
+        }
+        return response;
+      }
+
+      await _queueChange('topics', 'update', payload, recordId: topicId);
+      final optimistic = {...topic.toJson(), ...payload};
+      await _cacheRecord('topics', topicId, optimistic);
+      return optimistic;
     } catch (error) {
       debugPrint('markTopicStudied error: $error');
       return null;
@@ -575,13 +769,29 @@ class SupabaseService {
     String notes,
   ) async {
     try {
-      final response = await client
-          .from('topics')
-          .update({'notes': notes})
-          .eq('id', topicId)
-          .select()
-          .maybeSingle();
-      return response;
+      if (await _isOnline()) {
+        final response = await client
+            .from('topics')
+            .update({'notes': notes})
+            .eq('id', topicId)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('topics', topicId, response);
+        }
+        return response;
+      }
+
+      await _queueChange('topics', 'update', {
+        'id': topicId,
+        'notes': notes,
+      }, recordId: topicId);
+      final topic = await getTopicById(topicId);
+      final optimistic = topic == null
+          ? {'id': topicId, 'notes': notes}
+          : {...topic.toJson(), 'notes': notes};
+      await _cacheRecord('topics', topicId, optimistic);
+      return optimistic;
     } catch (error) {
       debugPrint('updateTopicNotes error: $error');
       return null;
@@ -590,25 +800,46 @@ class SupabaseService {
 
   Future<List<TopicModel>?> getTopicsNeedingReview(String userId) async {
     try {
-      final nowIso = DateTime.now().toIso8601String();
-      final response = await client
-          .from('topics')
-          .select()
-          .eq('user_id', userId)
-          .lte('next_review_at', nowIso)
-          .order('next_review_at');
-      return (response as List<dynamic>)
-          .map((item) => TopicModel.fromJson(item as Map<String, dynamic>))
-          .toList();
+      final queryKey = 'topics_needing_review:$userId';
+      if (await _isOnline()) {
+        final nowIso = DateTime.now().toIso8601String();
+        final response = await client
+            .from('topics')
+            .select()
+            .eq('user_id', userId)
+            .lte('next_review_at', nowIso)
+            .order('next_review_at');
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('topics_needing_review', queryKey, rows);
+        return rows.map(TopicModel.fromJson).toList();
+      }
+
+      final cached = await _cachedList('topics_needing_review', queryKey);
+      return cached?.map(TopicModel.fromJson).toList();
     } catch (error) {
       debugPrint('getTopicsNeedingReview error: $error');
-      return null;
+      final queryKey = 'topics_needing_review:$userId';
+      final cached = await _cachedList('topics_needing_review', queryKey);
+      return cached?.map(TopicModel.fromJson).toList();
     }
   }
 
   Future<bool?> deleteTopic(String topicId) async {
     try {
-      await client.from('topics').delete().eq('id', topicId);
+      if (await _isOnline()) {
+        await client.from('topics').delete().eq('id', topicId);
+        await _offlineSync.deleteCachedRecord(
+          entity: 'topics',
+          recordId: topicId,
+        );
+        return true;
+      }
+
+      await _queueChange('topics', 'delete', {
+        'id': topicId,
+      }, recordId: topicId);
       return true;
     } catch (error) {
       debugPrint('deleteTopic error: $error');
@@ -626,29 +857,54 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>?> getClassTimetable(String userId) async {
     try {
-      final response = await client
-          .from('class_timetable')
-          .select()
-          .eq('user_id', userId)
-          .order('day_of_week')
-          .order('start_time');
-      return (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+      if (await _isOnline()) {
+        final response = await client
+            .from('class_timetable')
+            .select()
+            .eq('user_id', userId)
+            .order('day_of_week')
+            .order('start_time');
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('class_timetable', userId, rows);
+        return rows;
+      }
+
+      return await _cachedList('class_timetable', userId);
     } catch (error) {
       debugPrint('getClassTimetable error: $error');
-      return null;
+      return _cachedList('class_timetable', userId);
     }
   }
 
   Future<Map<String, dynamic>?> addClassSlot(Map<String, dynamic> data) async {
     try {
-      final response = await client
-          .from('class_timetable')
-          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
-          .select()
-          .maybeSingle();
-      return response;
+      final id = _newId();
+      final payload = {
+        'id': id,
+        ...data,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+      if (await _isOnline()) {
+        final response = await client
+            .from('class_timetable')
+            .insert(payload)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord(
+            'class_timetable',
+            response['id'].toString(),
+            response,
+          );
+        }
+        return response;
+      }
+
+      await _queueChange('class_timetable', 'insert', payload, recordId: id);
+      await _cacheRecord('class_timetable', id, payload);
+      return payload;
     } catch (error) {
       debugPrint('addClassSlot error: $error');
       return null;
@@ -660,13 +916,23 @@ class SupabaseService {
     Map<String, dynamic> data,
   ) async {
     try {
-      final response = await client
-          .from('class_timetable')
-          .update(data)
-          .eq('id', id)
-          .select()
-          .maybeSingle();
-      return response;
+      if (await _isOnline()) {
+        final response = await client
+            .from('class_timetable')
+            .update(data)
+            .eq('id', id)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('class_timetable', id, response);
+        }
+        return response;
+      }
+
+      final payload = {'id': id, ...data};
+      await _queueChange('class_timetable', 'update', payload, recordId: id);
+      await _cacheRecord('class_timetable', id, payload);
+      return payload;
     } catch (error) {
       debugPrint('updateClassSlot error: $error');
       return null;
@@ -675,7 +941,16 @@ class SupabaseService {
 
   Future<bool?> deleteClassSlot(String id) async {
     try {
-      await client.from('class_timetable').delete().eq('id', id);
+      if (await _isOnline()) {
+        await client.from('class_timetable').delete().eq('id', id);
+        await _offlineSync.deleteCachedRecord(
+          entity: 'class_timetable',
+          recordId: id,
+        );
+        return true;
+      }
+
+      await _queueChange('class_timetable', 'delete', {'id': id}, recordId: id);
       return true;
     } catch (error) {
       debugPrint('deleteClassSlot error: $error');
@@ -689,18 +964,28 @@ class SupabaseService {
   ) async {
     try {
       final day = date.toIso8601String().split('T').first;
-      final response = await client
-          .from('study_sessions')
-          .select()
-          .eq('user_id', userId)
-          .eq('scheduled_date', day)
-          .order('start_time');
-      return (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+      final scope = '$userId:$day';
+      if (await _isOnline()) {
+        final response = await client
+            .from('study_sessions')
+            .select()
+            .eq('user_id', userId)
+            .eq('scheduled_date', day)
+            .order('start_time');
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('study_sessions', scope, rows);
+        return rows;
+      }
+
+      return _cachedList('study_sessions', scope);
     } catch (error) {
       debugPrint('getStudySessions error: $error');
-      return null;
+      return _cachedList(
+        'study_sessions',
+        '$userId:${date.toIso8601String().split('T').first}',
+      );
     }
   }
 
@@ -708,12 +993,31 @@ class SupabaseService {
     Map<String, dynamic> data,
   ) async {
     try {
-      final response = await client
-          .from('study_sessions')
-          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
-          .select()
-          .maybeSingle();
-      return response;
+      final id = _newId();
+      final payload = {
+        'id': id,
+        ...data,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+      if (await _isOnline()) {
+        final response = await client
+            .from('study_sessions')
+            .insert(payload)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord(
+            'study_sessions',
+            response['id'].toString(),
+            response,
+          );
+        }
+        return response;
+      }
+
+      await _queueChange('study_sessions', 'insert', payload, recordId: id);
+      await _cacheRecord('study_sessions', id, payload);
+      return payload;
     } catch (error) {
       debugPrint('addStudySession error: $error');
       return null;
@@ -726,13 +1030,35 @@ class SupabaseService {
     int? actualDuration,
   ) async {
     try {
-      final response = await client
-          .from('study_sessions')
-          .update({'status': status, 'actual_duration_minutes': actualDuration})
-          .eq('id', sessionId)
-          .select()
-          .maybeSingle();
-      return response;
+      final payload = {
+        'id': sessionId,
+        'status': status,
+        'actual_duration_minutes': actualDuration,
+      };
+      if (await _isOnline()) {
+        final response = await client
+            .from('study_sessions')
+            .update({
+              'status': status,
+              'actual_duration_minutes': actualDuration,
+            })
+            .eq('id', sessionId)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('study_sessions', sessionId, response);
+        }
+        return response;
+      }
+
+      await _queueChange(
+        'study_sessions',
+        'update',
+        payload,
+        recordId: sessionId,
+      );
+      await _cacheRecord('study_sessions', sessionId, payload);
+      return payload;
     } catch (error) {
       debugPrint('updateSessionStatus error: $error');
       return null;
@@ -745,28 +1071,49 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>?> getExams(String userId) async {
     try {
-      final response = await client
-          .from('exams')
-          .select()
-          .eq('user_id', userId)
-          .order('exam_date');
-      return (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+      if (await _isOnline()) {
+        final response = await client
+            .from('exams')
+            .select()
+            .eq('user_id', userId)
+            .order('exam_date');
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('exams', userId, rows);
+        return rows;
+      }
+
+      return _cachedList('exams', userId);
     } catch (error) {
       debugPrint('getExams error: $error');
-      return null;
+      return _cachedList('exams', userId);
     }
   }
 
   Future<Map<String, dynamic>?> addExam(Map<String, dynamic> data) async {
     try {
-      final response = await client
-          .from('exams')
-          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
-          .select()
-          .maybeSingle();
-      return response;
+      final id = _newId();
+      final payload = {
+        'id': id,
+        ...data,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+      if (await _isOnline()) {
+        final response = await client
+            .from('exams')
+            .insert(payload)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('exams', response['id'].toString(), response);
+        }
+        return response;
+      }
+
+      await _queueChange('exams', 'insert', payload, recordId: id);
+      await _cacheRecord('exams', id, payload);
+      return payload;
     } catch (error) {
       debugPrint('addExam error: $error');
       return null;
@@ -778,13 +1125,23 @@ class SupabaseService {
     Map<String, dynamic> data,
   ) async {
     try {
-      final response = await client
-          .from('exams')
-          .update(data)
-          .eq('id', id)
-          .select()
-          .maybeSingle();
-      return response;
+      if (await _isOnline()) {
+        final response = await client
+            .from('exams')
+            .update(data)
+            .eq('id', id)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('exams', id, response);
+        }
+        return response;
+      }
+
+      final payload = {'id': id, ...data};
+      await _queueChange('exams', 'update', payload, recordId: id);
+      await _cacheRecord('exams', id, payload);
+      return payload;
     } catch (error) {
       debugPrint('updateExam error: $error');
       return null;
@@ -793,7 +1150,13 @@ class SupabaseService {
 
   Future<bool?> deleteExam(String id) async {
     try {
-      await client.from('exams').delete().eq('id', id);
+      if (await _isOnline()) {
+        await client.from('exams').delete().eq('id', id);
+        await _offlineSync.deleteCachedRecord(entity: 'exams', recordId: id);
+        return true;
+      }
+
+      await _queueChange('exams', 'delete', {'id': id}, recordId: id);
       return true;
     } catch (error) {
       debugPrint('deleteExam error: $error');
@@ -803,18 +1166,25 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>?> getUpcomingExams(String userId) async {
     try {
-      final response = await client
-          .from('exams')
-          .select()
-          .eq('user_id', userId)
-          .gte('exam_date', DateTime.now().toIso8601String().split('T').first)
-          .order('exam_date');
-      return (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+      final scope = userId;
+      if (await _isOnline()) {
+        final response = await client
+            .from('exams')
+            .select()
+            .eq('user_id', userId)
+            .gte('exam_date', DateTime.now().toIso8601String().split('T').first)
+            .order('exam_date');
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('upcoming_exams', scope, rows);
+        return rows;
+      }
+
+      return _cachedList('upcoming_exams', scope);
     } catch (error) {
       debugPrint('getUpcomingExams error: $error');
-      return null;
+      return _cachedList('upcoming_exams', userId);
     }
   }
 
@@ -828,27 +1198,55 @@ class SupabaseService {
     String createdBy,
   ) async {
     try {
-      final response = await client
-          .from('study_groups')
-          .insert({
-            'name': name,
-            'description': description,
-            'created_by': createdBy,
-            'created_at': DateTime.now().toIso8601String(),
-          })
-          .select()
-          .maybeSingle();
+      final groupId = _newId();
+      final groupPayload = {
+        'id': groupId,
+        'name': name,
+        'description': description,
+        'created_by': createdBy,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+      final membershipPayload = {
+        'id': _newId(),
+        'group_id': groupId,
+        'user_id': createdBy,
+        'role': 'admin',
+        'joined_at': DateTime.now().toIso8601String(),
+      };
 
-      if (response != null) {
-        await client.from('group_members').insert({
-          'group_id': response['id'],
-          'user_id': createdBy,
-          'role': 'admin',
-          'joined_at': DateTime.now().toIso8601String(),
-        });
+      if (await _isOnline()) {
+        final response = await client
+            .from('study_groups')
+            .insert(groupPayload)
+            .select()
+            .maybeSingle();
+
+        if (response != null) {
+          await client.from('group_members').insert(membershipPayload);
+          await _cacheRecord(
+            'study_groups',
+            response['id'].toString(),
+            response,
+          );
+        }
+
+        return response;
       }
 
-      return response;
+      await _queueChange(
+        'study_groups',
+        'insert',
+        groupPayload,
+        recordId: groupId,
+      );
+      await _queueChange(
+        'group_members',
+        'insert',
+        membershipPayload,
+        recordId: membershipPayload['id'].toString(),
+      );
+      await _cacheRecord('study_groups', groupId, groupPayload);
+      return groupPayload;
     } catch (error) {
       debugPrint('createGroup error: $error');
       return null;
@@ -860,27 +1258,39 @@ class SupabaseService {
     String userId,
   ) async {
     try {
-      final group = await client
-          .from('study_groups')
-          .select()
-          .eq('invite_code', inviteCode.toUpperCase())
-          .maybeSingle();
+      if (await _isOnline()) {
+        final group = await client
+            .from('study_groups')
+            .select()
+            .eq('invite_code', inviteCode.toUpperCase())
+            .maybeSingle();
 
-      if (group == null) {
-        return null;
+        if (group == null) {
+          return null;
+        }
+
+        final response = await client
+            .from('group_members')
+            .upsert({
+              'group_id': group['id'],
+              'user_id': userId,
+              'role': 'member',
+              'joined_at': DateTime.now().toIso8601String(),
+            })
+            .select()
+            .maybeSingle();
+        return response;
       }
 
-      final response = await client
-          .from('group_members')
-          .upsert({
-            'group_id': group['id'],
-            'user_id': userId,
-            'role': 'member',
-            'joined_at': DateTime.now().toIso8601String(),
-          })
-          .select()
-          .maybeSingle();
-      return response;
+      await _queueChange('group_members', 'joinGroup', {
+        'invite_code': inviteCode.toUpperCase(),
+        'user_id': userId,
+      });
+      return {
+        'invite_code': inviteCode.toUpperCase(),
+        'user_id': userId,
+        'status': 'pending',
+      };
     } catch (error) {
       debugPrint('joinGroup error: $error');
       return null;
@@ -889,111 +1299,131 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>?> getMyGroups(String userId) async {
     try {
-      final memberships = await client
-          .from('group_members')
-          .select()
-          .eq('user_id', userId)
-          .order('joined_at');
-
-      final results = <Map<String, dynamic>>[];
-
-      for (final item in memberships as List<dynamic>) {
-        final membership = item as Map<String, dynamic>;
-        final group = await client
-            .from('study_groups')
+      if (await _isOnline()) {
+        final memberships = await client
+            .from('group_members')
             .select()
-            .eq('id', membership['group_id'])
-            .maybeSingle();
+            .eq('user_id', userId)
+            .order('joined_at');
 
-        var memberCount = 1;
-        String? lastActivityAt;
+        final results = <Map<String, dynamic>>[];
 
-        try {
-          final groupId = membership['group_id']?.toString();
-          if (groupId != null && groupId.isNotEmpty) {
-            final members = await client
-                .from('group_members')
-                .select('id')
-                .eq('group_id', groupId);
-            memberCount = (members as List<dynamic>).length;
+        for (final item in memberships as List<dynamic>) {
+          final membership = item as Map<String, dynamic>;
+          final group = await client
+              .from('study_groups')
+              .select()
+              .eq('id', membership['group_id'])
+              .maybeSingle();
 
-            final lastMessage = await client
-                .from('group_messages')
-                .select('created_at')
-                .eq('group_id', groupId)
-                .order('created_at', ascending: false)
-                .limit(1)
-                .maybeSingle();
-            lastActivityAt = lastMessage?['created_at']?.toString();
+          var memberCount = 1;
+          String? lastActivityAt;
+
+          try {
+            final groupId = membership['group_id']?.toString();
+            if (groupId != null && groupId.isNotEmpty) {
+              final members = await client
+                  .from('group_members')
+                  .select('id')
+                  .eq('group_id', groupId);
+              memberCount = (members as List<dynamic>).length;
+
+              final lastMessage = await client
+                  .from('group_messages')
+                  .select('created_at')
+                  .eq('group_id', groupId)
+                  .order('created_at', ascending: false)
+                  .limit(1)
+                  .maybeSingle();
+              lastActivityAt = lastMessage?['created_at']?.toString();
+            }
+          } catch (error) {
+            debugPrint('getMyGroups metadata error: $error');
           }
-        } catch (error) {
-          debugPrint('getMyGroups metadata error: $error');
+
+          results.add({
+            ...membership,
+            'study_groups': group,
+            'member_count': memberCount,
+            'last_activity_at': lastActivityAt,
+          });
         }
 
-        results.add({
-          ...membership,
-          'study_groups': group,
-          'member_count': memberCount,
-          'last_activity_at': lastActivityAt,
-        });
+        await _cacheList('my_groups', userId, results);
+        return results;
       }
 
-      return results;
+      return _cachedList('my_groups', userId);
     } catch (error) {
       debugPrint('getMyGroups error: $error');
-      return null;
+      return _cachedList('my_groups', userId);
     }
   }
 
   Future<List<Map<String, dynamic>>?> getGroupMembers(String groupId) async {
     try {
-      final response = await client
-          .from('group_members')
-          .select()
-          .eq('group_id', groupId)
-          .order('joined_at');
+      if (await _isOnline()) {
+        final response = await client
+            .from('group_members')
+            .select()
+            .eq('group_id', groupId)
+            .order('joined_at');
 
-      final currentUser = getCurrentUser();
-      final currentProfile = currentUser == null
-          ? null
-          : await getProfile(currentUser.id);
+        final currentUser = getCurrentUser();
+        final currentProfile = currentUser == null
+            ? null
+            : await getProfile(currentUser.id);
 
-      return (response as List<dynamic>).map((item) {
-        final member = item as Map<String, dynamic>;
-        final isCurrentUser = member['user_id'] == currentUser?.id;
-        if (isCurrentUser) {
+        final rows = (response as List<dynamic>).map((item) {
+          final member = item as Map<String, dynamic>;
+          final isCurrentUser = member['user_id'] == currentUser?.id;
+          if (isCurrentUser) {
+            return {
+              ...member,
+              'name': currentProfile?['name']?.toString() ?? 'You',
+              'course': currentProfile?['course']?.toString() ?? 'N/A',
+              'year_level': (currentProfile?['year_level'] as num?)?.toInt(),
+            };
+          }
+
+          final rawUserId = member['user_id']?.toString() ?? '';
+          final shortId = rawUserId.length <= 8
+              ? rawUserId
+              : rawUserId.substring(0, 8);
           return {
             ...member,
-            'name': currentProfile?['name']?.toString() ?? 'You',
-            'course': currentProfile?['course']?.toString() ?? 'N/A',
-            'year_level': (currentProfile?['year_level'] as num?)?.toInt(),
+            'name': 'Member $shortId',
+            'course': 'Private',
+            'year_level': null,
           };
-        }
+        }).toList();
 
-        final rawUserId = member['user_id']?.toString() ?? '';
-        final shortId = rawUserId.length <= 8
-            ? rawUserId
-            : rawUserId.substring(0, 8);
-        return {
-          ...member,
-          'name': 'Member $shortId',
-          'course': 'Private',
-          'year_level': null,
-        };
-      }).toList();
+        await _cacheList('group_members', groupId, rows);
+        return rows;
+      }
+
+      return _cachedList('group_members', groupId);
     } catch (error) {
       debugPrint('getGroupMembers error: $error');
-      return null;
+      return _cachedList('group_members', groupId);
     }
   }
 
   Future<bool?> removeGroupMember(String groupId, String memberUserId) async {
     try {
-      await client
-          .from('group_members')
-          .delete()
-          .eq('group_id', groupId)
-          .eq('user_id', memberUserId);
+      if (await _isOnline()) {
+        await client
+            .from('group_members')
+            .delete()
+            .eq('group_id', groupId)
+            .eq('user_id', memberUserId);
+        return true;
+      }
+
+      await _queueChange('group_members', 'removeGroupMember', {
+        'group_id': groupId,
+        'user_id': memberUserId,
+      });
       return true;
     } catch (error) {
       debugPrint('removeGroupMember error: $error');
@@ -1003,11 +1433,19 @@ class SupabaseService {
 
   Future<bool?> leaveGroup(String groupId, String userId) async {
     try {
-      await client
-          .from('group_members')
-          .delete()
-          .eq('group_id', groupId)
-          .eq('user_id', userId);
+      if (await _isOnline()) {
+        await client
+            .from('group_members')
+            .delete()
+            .eq('group_id', groupId)
+            .eq('user_id', userId);
+        return true;
+      }
+
+      await _queueChange('group_members', 'leaveGroup', {
+        'group_id': groupId,
+        'user_id': userId,
+      });
       return true;
     } catch (error) {
       debugPrint('leaveGroup error: $error');
@@ -1021,44 +1459,81 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>?> getTopicMessages(String topicId) async {
     try {
-      final response = await client
-          .from('group_messages')
-          .select()
-          .eq('topic_id', topicId)
-          .order('created_at');
-      return (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+      if (await _isOnline()) {
+        final response = await client
+            .from('group_messages')
+            .select()
+            .eq('topic_id', topicId)
+            .order('created_at');
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('topic_messages', topicId, rows);
+        return rows;
+      }
+
+      return _cachedList('topic_messages', topicId);
     } catch (error) {
       debugPrint('getTopicMessages error: $error');
-      return null;
+      return _cachedList('topic_messages', topicId);
     }
   }
 
   Future<List<Map<String, dynamic>>?> getGroupMessages(String groupId) async {
     try {
-      final response = await client
-          .from('group_messages')
-          .select()
-          .eq('group_id', groupId)
-          .order('created_at');
-      return (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+      if (await _isOnline()) {
+        final response = await client
+            .from('group_messages')
+            .select()
+            .eq('group_id', groupId)
+            .order('created_at');
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('group_messages', groupId, rows);
+        return rows;
+      }
+
+      return _cachedList('group_messages', groupId);
     } catch (error) {
       debugPrint('getGroupMessages error: $error');
-      return null;
+      return _cachedList('group_messages', groupId);
     }
   }
 
   Future<Map<String, dynamic>?> sendMessage(Map<String, dynamic> data) async {
     try {
-      final response = await client
-          .from('group_messages')
-          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
-          .select()
-          .maybeSingle();
-      return response;
+      final id = _newId();
+      final payload = {
+        'id': id,
+        ...data,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+      final scope =
+          data['topic_id']?.toString() ??
+          data['group_id']?.toString() ??
+          'messages';
+      if (await _isOnline()) {
+        final response = await client
+            .from('group_messages')
+            .insert(payload)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord(
+            'group_messages',
+            response['id'].toString(),
+            response,
+          );
+        }
+        return response;
+      }
+
+      await _queueChange('group_messages', 'insert', payload, recordId: id);
+      await _cacheRecord('group_messages', id, payload);
+      final cached = await _cachedList('group_messages', scope) ?? [];
+      await _cacheList('group_messages', scope, [...cached, payload]);
+      return payload;
     } catch (error) {
       debugPrint('sendMessage error: $error');
       return null;
@@ -1152,12 +1627,31 @@ class SupabaseService {
     Map<String, dynamic> data,
   ) async {
     try {
-      final response = await client
-          .from('weekly_reports')
-          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
-          .select()
-          .maybeSingle();
-      return response;
+      final id = _newId();
+      final payload = {
+        'id': id,
+        ...data,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+      if (await _isOnline()) {
+        final response = await client
+            .from('weekly_reports')
+            .insert(payload)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord(
+            'weekly_reports',
+            response['id'].toString(),
+            response,
+          );
+        }
+        return response;
+      }
+
+      await _queueChange('weekly_reports', 'insert', payload, recordId: id);
+      await _cacheRecord('weekly_reports', id, payload);
+      return payload;
     } catch (error) {
       debugPrint('saveWeeklyReport error: $error');
       return null;
@@ -1169,34 +1663,48 @@ class SupabaseService {
     int limit,
   ) async {
     try {
-      final response = await client
-          .from('weekly_reports')
-          .select()
-          .eq('user_id', userId)
-          .order('week_start', ascending: false)
-          .limit(limit);
-      return (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+      final scope = '$userId:$limit';
+      if (await _isOnline()) {
+        final response = await client
+            .from('weekly_reports')
+            .select()
+            .eq('user_id', userId)
+            .order('week_start', ascending: false)
+            .limit(limit);
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('weekly_reports', scope, rows);
+        return rows;
+      }
+
+      return _cachedList('weekly_reports', scope);
     } catch (error) {
       debugPrint('getWeeklyReports error: $error');
-      return null;
+      return _cachedList('weekly_reports', '$userId:$limit');
     }
   }
 
   Future<Map<String, dynamic>?> getLastWeekReport(String userId) async {
     try {
-      final response = await client
-          .from('weekly_reports')
-          .select()
-          .eq('user_id', userId)
-          .order('week_start', ascending: false)
-          .limit(1)
-          .maybeSingle();
-      return response;
+      if (await _isOnline()) {
+        final response = await client
+            .from('weekly_reports')
+            .select()
+            .eq('user_id', userId)
+            .order('week_start', ascending: false)
+            .limit(1)
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('weekly_reports', userId, response);
+        }
+        return response;
+      }
+
+      return _cachedRecord('weekly_reports', userId);
     } catch (error) {
       debugPrint('getLastWeekReport error: $error');
-      return null;
+      return _cachedRecord('weekly_reports', userId);
     }
   }
 
@@ -1208,12 +1716,34 @@ class SupabaseService {
     Map<String, dynamic> data,
   ) async {
     try {
-      final response = await client
-          .from('uploaded_notes')
-          .insert({...data, 'created_at': DateTime.now().toIso8601String()})
-          .select()
-          .maybeSingle();
-      return response;
+      final id = _newId();
+      final payload = {
+        'id': id,
+        ...data,
+        'created_at': DateTime.now().toIso8601String(),
+      };
+      final topicId = data['topic_id']?.toString() ?? 'notes';
+      if (await _isOnline()) {
+        final response = await client
+            .from('uploaded_notes')
+            .insert(payload)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord(
+            'uploaded_notes',
+            response['id'].toString(),
+            response,
+          );
+        }
+        return response;
+      }
+
+      await _queueChange('uploaded_notes', 'insert', payload, recordId: id);
+      await _cacheRecord('uploaded_notes', id, payload);
+      final cached = await _cachedList('uploaded_notes', topicId) ?? [];
+      await _cacheList('uploaded_notes', topicId, [...cached, payload]);
+      return payload;
     } catch (error) {
       debugPrint('saveUploadedNote error: $error');
       return null;
@@ -1222,17 +1752,23 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>?> getNotesByTopic(String topicId) async {
     try {
-      final response = await client
-          .from('uploaded_notes')
-          .select()
-          .eq('topic_id', topicId)
-          .order('created_at', ascending: false);
-      return (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+      if (await _isOnline()) {
+        final response = await client
+            .from('uploaded_notes')
+            .select()
+            .eq('topic_id', topicId)
+            .order('created_at', ascending: false);
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('uploaded_notes', topicId, rows);
+        return rows;
+      }
+
+      return _cachedList('uploaded_notes', topicId);
     } catch (error) {
       debugPrint('getNotesByTopic error: $error');
-      return null;
+      return _cachedList('uploaded_notes', topicId);
     }
   }
 
@@ -1241,13 +1777,26 @@ class SupabaseService {
     String status,
   ) async {
     try {
-      final response = await client
-          .from('uploaded_notes')
-          .update({'processing_status': status})
-          .eq('id', noteId)
-          .select()
-          .maybeSingle();
-      return response;
+      if (await _isOnline()) {
+        final response = await client
+            .from('uploaded_notes')
+            .update({'processing_status': status})
+            .eq('id', noteId)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('uploaded_notes', noteId, response);
+        }
+        return response;
+      }
+
+      final payload = {'id': noteId, 'processing_status': status};
+      await _queueChange('uploaded_notes', 'update', payload, recordId: noteId);
+      final existing =
+          await _cachedRecord('uploaded_notes', noteId) ?? {'id': noteId};
+      final optimistic = {...existing, 'processing_status': status};
+      await _cacheRecord('uploaded_notes', noteId, optimistic);
+      return optimistic;
     } catch (error) {
       debugPrint('updateNoteProcessingStatus error: $error');
       return null;
@@ -1259,13 +1808,26 @@ class SupabaseService {
     bool isShared,
   ) async {
     try {
-      final response = await client
-          .from('uploaded_notes')
-          .update({'is_shared_with_group': isShared})
-          .eq('id', noteId)
-          .select()
-          .maybeSingle();
-      return response;
+      if (await _isOnline()) {
+        final response = await client
+            .from('uploaded_notes')
+            .update({'is_shared_with_group': isShared})
+            .eq('id', noteId)
+            .select()
+            .maybeSingle();
+        if (response != null) {
+          await _cacheRecord('uploaded_notes', noteId, response);
+        }
+        return response;
+      }
+
+      final payload = {'id': noteId, 'is_shared_with_group': isShared};
+      await _queueChange('uploaded_notes', 'update', payload, recordId: noteId);
+      final existing =
+          await _cachedRecord('uploaded_notes', noteId) ?? {'id': noteId};
+      final optimistic = {...existing, 'is_shared_with_group': isShared};
+      await _cacheRecord('uploaded_notes', noteId, optimistic);
+      return optimistic;
     } catch (error) {
       debugPrint('updateUploadedNoteSharing error: $error');
       return null;
@@ -1274,7 +1836,18 @@ class SupabaseService {
 
   Future<bool?> deleteUploadedNote(String noteId) async {
     try {
-      await client.from('uploaded_notes').delete().eq('id', noteId);
+      if (await _isOnline()) {
+        await client.from('uploaded_notes').delete().eq('id', noteId);
+        await _offlineSync.deleteCachedRecord(
+          entity: 'uploaded_notes',
+          recordId: noteId,
+        );
+        return true;
+      }
+
+      await _queueChange('uploaded_notes', 'delete', {
+        'id': noteId,
+      }, recordId: noteId);
       return true;
     } catch (error) {
       debugPrint('deleteUploadedNote error: $error');
@@ -1284,17 +1857,23 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>?> getNoteChunks(String noteId) async {
     try {
-      final response = await client
-          .from('note_chunks')
-          .select()
-          .eq('note_id', noteId)
-          .order('chunk_index');
-      return (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+      if (await _isOnline()) {
+        final response = await client
+            .from('note_chunks')
+            .select()
+            .eq('note_id', noteId)
+            .order('chunk_index');
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('note_chunks', noteId, rows);
+        return rows;
+      }
+
+      return _cachedList('note_chunks', noteId);
     } catch (error) {
       debugPrint('getNoteChunks error: $error');
-      return null;
+      return _cachedList('note_chunks', noteId);
     }
   }
 
@@ -1305,6 +1884,7 @@ class SupabaseService {
     try {
       final payload = chunks.asMap().entries.map((entry) {
         return {
+          'id': _newId(),
           'note_id': noteId,
           'chunk_index': entry.key,
           'content': entry.value,
@@ -1312,14 +1892,28 @@ class SupabaseService {
         };
       }).toList();
 
-      final response = await client
-          .from('note_chunks')
-          .insert(payload)
-          .select();
+      if (await _isOnline()) {
+        final response = await client
+            .from('note_chunks')
+            .insert(payload)
+            .select();
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('note_chunks', noteId, rows);
+        return rows;
+      }
 
-      return (response as List<dynamic>)
-          .map((item) => item as Map<String, dynamic>)
-          .toList();
+      for (final chunk in payload) {
+        await _queueChange(
+          'note_chunks',
+          'insert',
+          chunk,
+          recordId: chunk['id']?.toString(),
+        );
+      }
+      await _cacheList('note_chunks', noteId, payload);
+      return payload;
     } catch (error) {
       debugPrint('saveNoteChunks error: $error');
       return null;

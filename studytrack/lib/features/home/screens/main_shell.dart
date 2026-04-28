@@ -27,14 +27,7 @@ class MainShell extends StatelessWidget {
                 child: _Header(
                   title: _titles[currentIndex],
                   onProfileTap: () => context.go('/profile'),
-                  onNotificationTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Notifications coming soon.'),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  },
+                  onNotificationTap: () => context.push('/notifications'),
                 ),
               ),
               Expanded(child: navigationShell),
@@ -44,9 +37,7 @@ class MainShell extends StatelessWidget {
             Positioned(
               right: 20,
               bottom: 92,
-              child: _StudyNowFab(
-                onTap: () => context.go('/study-session'),
-              ),
+              child: _StudyNowFab(onTap: () => context.go('/study-session')),
             ),
           Positioned(
             left: 20,
@@ -110,7 +101,10 @@ class _Header extends StatelessWidget {
           ),
           IconButton(
             onPressed: onNotificationTap,
-            icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+            icon: const Icon(
+              Icons.notifications_none_rounded,
+              color: Colors.white,
+            ),
           ),
           GestureDetector(
             onTap: onProfileTap,

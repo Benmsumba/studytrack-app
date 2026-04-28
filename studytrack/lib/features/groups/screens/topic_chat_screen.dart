@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 
 class TopicChatScreen extends StatefulWidget {
   const TopicChatScreen({
@@ -164,6 +165,37 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
         const SnackBar(content: Text('Anonymous struggle flag submitted.')),
       );
     }
+  }
+
+  Future<void> _openVoiceRecorder() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.backgroundDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        return Padding(
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+          ),
+          child: VoiceNoteRecorderWidget(
+            topicId: widget.topicId,
+            onSaved: (result) async {
+              final navigator = Navigator.of(sheetContext);
+              await _sendMessage('🎙 Voice note: ${result.transcription}');
+              if (navigator.mounted) {
+                navigator.pop();
+              }
+            },
+          ),
+        );
+      },
+    );
   }
 
   void _scrollToBottom() {
@@ -380,6 +412,12 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: _openVoiceRecorder,
+                        icon: const Icon(Icons.mic_none_rounded),
+                        color: AppColors.accent,
+                      ),
+                      const SizedBox(width: 4),
                       IconButton.filled(
                         onPressed: _sending ? null : _sendMessage,
                         icon: _sending

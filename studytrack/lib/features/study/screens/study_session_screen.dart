@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../widgets/music_player_widget.dart';
+
 class StudySessionScreen extends StatefulWidget {
   const StudySessionScreen({super.key});
 
@@ -54,6 +56,8 @@ class _StudySessionScreenState extends State<StudySessionScreen>
               _buildTopicLabel(),
               const SizedBox(height: 12),
               _buildSessionIndicator(),
+              const SizedBox(height: 18),
+              const MusicPlayerWidget(),
               const Spacer(),
               _buildControls(),
               const SizedBox(height: 24),
@@ -106,7 +110,9 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF7C3AED).withValues(alpha: glowOpacity),
+                      color: const Color(
+                        0xFF7C3AED,
+                      ).withValues(alpha: glowOpacity),
                       blurRadius: 40,
                       spreadRadius: 10,
                     ),
@@ -155,7 +161,6 @@ class _StudySessionScreenState extends State<StudySessionScreen>
   }
 
   Widget _buildTopicLabel() {
-    // Placeholder: Replace with actual topic data
     const topicName = 'Pharmacokinetics';
     const moduleName = 'Pharmacology';
 
@@ -199,7 +204,6 @@ class _StudySessionScreenState extends State<StudySessionScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Pause/Resume button
         Container(
           width: 60,
           height: 60,
@@ -216,12 +220,10 @@ class _StudySessionScreenState extends State<StudySessionScreen>
             ),
             onPressed: () {
               setState(() => _isRunning = !_isRunning);
-              // Placeholder: Implement timer logic
             },
           ),
         ),
         const SizedBox(width: 20),
-        // Stop button
         Container(
           width: 60,
           height: 60,
@@ -241,7 +243,6 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                 _isRunning = false;
                 _seconds = 25 * 60;
               });
-              // Placeholder: Implement stop logic
             },
           ),
         ),

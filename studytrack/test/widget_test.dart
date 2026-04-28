@@ -6,12 +6,21 @@
 // tree, read text, and verify that the values of widget properties are correct.
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 
 import 'package:studytrack/app.dart';
+import 'package:studytrack/core/services/offline_sync_service.dart';
 
 void main() {
   testWidgets('StudyTrack app renders', (WidgetTester tester) async {
-    await tester.pumpWidget(const StudyTrackApp());
+    TestWidgetsFlutterBinding.ensureInitialized();
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider<OfflineSyncService>.value(
+        value: OfflineSyncService.instance,
+        child: const StudyTrackApp(),
+      ),
+    );
 
     expect(find.byType(StudyTrackApp), findsOneWidget);
   });

@@ -1,13 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/constants/app_constants.dart';
+import 'core/services/notification_service.dart';
+import 'core/services/offline_sync_service.dart';
 import 'features/auth/controllers/auth_provider.dart';
 import 'features/groups/controllers/groups_provider.dart';
 import 'features/modules/controllers/modules_provider.dart';
+import 'features/notifications/controllers/notification_provider.dart';
+import 'features/profile/controllers/profile_provider.dart';
 import 'features/progress/controllers/progress_provider.dart';
+import 'features/settings/controllers/settings_provider.dart';
 import 'features/timetable/controllers/timetable_provider.dart';
 
 Future<void> main() async {
@@ -25,14 +32,30 @@ Future<void> main() async {
     );
   }
 
+  await OfflineSyncService.instance.initialize();
+
+  final notificationService = NotificationService();
+  await notificationService.initialize();
+  await notificationService.bootstrapForCurrentUser();
+
+  Supabase.instance.client.auth.onAuthStateChange.listen((event) {
+    if (event.session != null) {
+      unawaited(notificationService.bootstrapForCurrentUser());
+    }
+  });
+
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider.value(value: OfflineSyncService.instance),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ModulesProvider()),
         ChangeNotifierProvider(create: (_) => TimetableProvider()),
         ChangeNotifierProvider(create: (_) => ProgressProvider()),
         ChangeNotifierProvider(create: (_) => GroupsProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
+        ChangeNotifierProvider(create: (_) => ProfileProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()..load()),
       ],
       child: const StudyTrackApp(),
     ),

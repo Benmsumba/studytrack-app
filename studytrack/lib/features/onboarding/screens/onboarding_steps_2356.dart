@@ -49,7 +49,10 @@ class _OnboardingSteps2356ScreenState extends State<OnboardingSteps2356Screen> {
               children: [
                 Text(
                   '${_index + 1}/${steps.length}',
-                  style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
+                  style: const TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    fontSize: 12,
+                  ),
                 ),
                 const SizedBox(width: 8),
                 IconButton(

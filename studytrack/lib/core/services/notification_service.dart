@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tzdata;
 
+import '../../core/services/supabase_service.dart';
 import '../../models/exam_model.dart';
 import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
@@ -11,6 +12,13 @@ class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+  final SupabaseService _supabaseService = SupabaseService();
+
+  static const String _dailyBriefingChannel = 'daily_briefing';
+  static const String _studyRemindersChannel = 'study_reminders';
+  static const String _examCountdownChannel = 'exam_countdown';
+  static const String _weeklyReportChannel = 'weekly_report';
+  static const String _spacedRepetitionChannel = 'spaced_repetition';
 
   factory NotificationService() {
     return _instance;
@@ -39,6 +47,66 @@ class NotificationService {
       settings: initSettings,
       onDidReceiveNotificationResponse: _onSelectNotification,
     );
+
+    final androidPlugin = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    await androidPlugin?.requestNotificationsPermission();
+    await _createAndroidChannels(androidPlugin);
+  }
+
+  Future<void> bootstrapForCurrentUser() async {
+    final user = _supabaseService.getCurrentUser();
+    if (user == null) {
+      return;
+    }
+
+    try {
+      await cancelAll();
+
+      final profile = await _supabaseService.getProfile(user.id);
+      final sessions = await _supabaseService.getStudySessions(
+        user.id,
+        DateTime.now(),
+      );
+      final topics = await _supabaseService.getTopicsNeedingReview(user.id);
+      final exams = await _supabaseService.getUpcomingExams(user.id);
+
+      final studentName =
+          (profile?['name'] as String?)?.trim().isNotEmpty == true
+          ? profile!['name'] as String
+          : 'Student';
+
+      await scheduleDailyBriefing(
+        hour: '07',
+        minute: '00',
+        studentName: studentName,
+      );
+      await scheduleWeeklyReport();
+      await scheduleStreakReminder();
+
+      for (final row in sessions ?? const <Map<String, dynamic>>[]) {
+        final session = StudySessionModel.fromJson(row);
+        if (session.status != 'completed') {
+          await scheduleStudySession(session: session);
+        }
+        if (session.isOverdue) {
+          await scheduleMissedSessionFollowUp(session: session);
+        }
+      }
+
+      for (final topic in topics ?? const <TopicModel>[]) {
+        await scheduleSpacedRepetitionReminder(topic: topic);
+      }
+
+      for (final row in exams ?? const <Map<String, dynamic>>[]) {
+        final exam = ExamModel.fromJson(row);
+        await scheduleExamCountdown(exam: exam);
+      }
+    } catch (error) {
+      debugPrint('Notification bootstrap failed: $error');
+    }
   }
 
   Future<void> scheduleDailyBriefing({
@@ -75,7 +143,7 @@ class NotificationService {
         scheduledDate: tz.TZDateTime.from(scheduledDate, tz.local),
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
-            'daily_briefing',
+            _dailyBriefingChannel,
             'Daily Briefing',
             channelDescription: 'Morning study briefing notifications',
           ),
@@ -104,7 +172,7 @@ class NotificationService {
         scheduledDate: tz.TZDateTime.from(sundayEightPM, tz.local),
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
-            'weekly_report',
+            _weeklyReportChannel,
             'Weekly Report',
             channelDescription: 'Sunday weekly wrapped reports',
           ),
@@ -126,21 +194,33 @@ class NotificationService {
     required StudySessionModel session,
   }) async {
     try {
-      final sessionStart = DateTime.parse(
-        '${session.scheduledDate} ${session.startTime}',
+      if (session.startTime == null || session.startTime!.trim().isEmpty) {
+        return;
+      }
+
+      final time = _parseClock(session.startTime!);
+      final sessionStart = DateTime(
+        session.scheduledDate.year,
+        session.scheduledDate.month,
+        session.scheduledDate.day,
+        time.hour,
+        time.minute,
       );
       final notificationTime = sessionStart.subtract(
         const Duration(minutes: 15),
       );
+      if (notificationTime.isBefore(DateTime.now())) {
+        return;
+      }
 
       await _plugin.zonedSchedule(
-        id: session.id.hashCode,
+        id: _notificationId('study_${session.id}'),
         title: '⏰ Study Session Starting Soon!',
         body: 'Get ready for: ${session.title}',
         scheduledDate: tz.TZDateTime.from(notificationTime, tz.local),
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
-            'study_reminders',
+            _studyRemindersChannel,
             'Study Reminders',
             channelDescription: 'Study session reminders',
           ),
@@ -168,13 +248,13 @@ class NotificationService {
           : topic.nextReviewAt;
 
       await _plugin.zonedSchedule(
-        id: topic.id.hashCode,
+        id: _notificationId('review_${topic.id}'),
         title: '🧠 Time to Review: ${topic.name}',
         body: 'You rated it ${topic.currentRating}/10 — let\'s keep it fresh!',
         scheduledDate: tz.TZDateTime.from(reviewDate as DateTime, tz.local),
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
-            'spaced_repetition',
+            _spacedRepetitionChannel,
             'Spaced Repetition',
             channelDescription: 'Topic review reminders',
           ),
@@ -202,7 +282,7 @@ class NotificationService {
         examDate.subtract(const Duration(days: 7)),
         '📅 Exam in 7 days!',
         '${exam.title} — start your prep now',
-        2,
+        _notificationId('exam7_${exam.id}'),
       );
 
       if (examDate.subtract(const Duration(days: 3)).isAfter(now)) {
@@ -210,7 +290,7 @@ class NotificationService {
           examDate.subtract(const Duration(days: 3)),
           '📅 Exam in 3 days!',
           '${exam.title} — final push!',
-          3,
+          _notificationId('exam3_${exam.id}'),
         );
       }
 
@@ -219,7 +299,7 @@ class NotificationService {
           examDate.subtract(const Duration(days: 1)),
           '🚨 Exam tomorrow!',
           '${exam.title} — get some rest!',
-          4,
+          _notificationId('exam1_${exam.id}'),
         );
       }
 
@@ -234,12 +314,71 @@ class NotificationService {
           morning,
           '🎯 Exam day!',
           '${exam.title} at ${exam.examTime} in ${exam.venue}',
-          5,
+          _notificationId('exam0_${exam.id}'),
         );
       }
     } catch (e) {
       debugPrint('Error scheduling exam countdown: $e');
     }
+  }
+
+  Future<void> scheduleStreakReminder() async {
+    final now = DateTime.now();
+    var target = DateTime(now.year, now.month, now.day, 20, 30);
+    if (!target.isAfter(now)) {
+      target = target.add(const Duration(days: 1));
+    }
+
+    await _plugin.zonedSchedule(
+      id: _notificationId('streak_daily'),
+      title: '🔥 Keep your streak alive',
+      body: 'Even a 15-minute review today keeps your streak going.',
+      scheduledDate: tz.TZDateTime.from(target, tz.local),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _studyRemindersChannel,
+          'Study Reminders',
+          channelDescription: 'Study session reminders',
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.alarmClock,
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
+  }
+
+  Future<void> scheduleMissedSessionFollowUp({
+    required StudySessionModel session,
+  }) async {
+    final now = DateTime.now();
+    var target = DateTime(now.year, now.month, now.day, 18, 30);
+    if (!target.isAfter(now)) {
+      target = target.add(const Duration(days: 1));
+    }
+
+    await _plugin.zonedSchedule(
+      id: _notificationId('missed_${session.id}'),
+      title: '📌 Catch-up reminder',
+      body: 'You missed ${session.title}. Reschedule it to stay on track.',
+      scheduledDate: tz.TZDateTime.from(target, tz.local),
+      notificationDetails: const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _studyRemindersChannel,
+          'Study Reminders',
+          channelDescription: 'Study session reminders',
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      androidScheduleMode: AndroidScheduleMode.alarmClock,
+    );
   }
 
   Future<void> _scheduleExamNotification(
@@ -256,7 +395,7 @@ class NotificationService {
         scheduledDate: tz.TZDateTime.from(dateTime, tz.local),
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
-            'exam_countdown',
+            _examCountdownChannel,
             'Exam Countdown',
             channelDescription: 'Exam warning notifications',
           ),
@@ -315,6 +454,66 @@ class NotificationService {
 
   _TimeOfDay _parseTime(String hour, String minute) {
     return _TimeOfDay(int.parse(hour), int.parse(minute));
+  }
+
+  _TimeOfDay _parseClock(String value) {
+    final parts = value.split(':');
+    if (parts.length < 2) {
+      return _TimeOfDay(8, 0);
+    }
+
+    final hour = int.tryParse(parts[0]) ?? 8;
+    final minute = int.tryParse(parts[1]) ?? 0;
+    return _TimeOfDay(hour.clamp(0, 23), minute.clamp(0, 59));
+  }
+
+  int _notificationId(String seed) {
+    return seed.hashCode & 0x7fffffff;
+  }
+
+  Future<void> _createAndroidChannels(
+    AndroidFlutterLocalNotificationsPlugin? androidPlugin,
+  ) async {
+    if (androidPlugin == null) {
+      return;
+    }
+
+    const channels = <AndroidNotificationChannel>[
+      AndroidNotificationChannel(
+        _dailyBriefingChannel,
+        'Daily Briefing',
+        description: 'Morning study briefing notifications',
+        importance: Importance.defaultImportance,
+      ),
+      AndroidNotificationChannel(
+        _studyRemindersChannel,
+        'Study Reminders',
+        description: 'Study sessions, streak nudges and catch-up reminders',
+        importance: Importance.high,
+      ),
+      AndroidNotificationChannel(
+        _examCountdownChannel,
+        'Exam Countdown',
+        description: 'Exam alerts and countdown milestones',
+        importance: Importance.high,
+      ),
+      AndroidNotificationChannel(
+        _weeklyReportChannel,
+        'Weekly Report',
+        description: 'Sunday weekly wrapped report notifications',
+        importance: Importance.defaultImportance,
+      ),
+      AndroidNotificationChannel(
+        _spacedRepetitionChannel,
+        'Spaced Repetition',
+        description: 'Topic review reminders based on self ratings',
+        importance: Importance.defaultImportance,
+      ),
+    ];
+
+    for (final channel in channels) {
+      await androidPlugin.createNotificationChannel(channel);
+    }
   }
 }
 

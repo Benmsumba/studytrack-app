@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
+import '../controllers/settings_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -15,14 +17,10 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final SupabaseService _service = SupabaseService();
 
-  bool _darkMode = true;
-  bool _dailyBriefing = true;
-  bool _studyReminders = true;
-  bool _examAlerts = true;
-  bool _weeklyReport = true;
-
   @override
   Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: SingleChildScrollView(
@@ -53,29 +51,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _SettingsToggle(
                 title: 'Daily Briefing',
                 subtitle: 'Morning study reminder',
-                value: _dailyBriefing,
-                onChanged: (value) => setState(() => _dailyBriefing = value),
+                value: settings.dailyBriefing,
+                onChanged: settings.setDailyBriefing,
               ),
               const SizedBox(height: 12),
               _SettingsToggle(
                 title: 'Study Session Reminders',
                 subtitle: '15 minutes before session',
-                value: _studyReminders,
-                onChanged: (value) => setState(() => _studyReminders = value),
+                value: settings.studyReminders,
+                onChanged: settings.setStudyReminders,
               ),
               const SizedBox(height: 12),
               _SettingsToggle(
                 title: 'Exam Countdown',
                 subtitle: 'Alerts leading up to exams',
-                value: _examAlerts,
-                onChanged: (value) => setState(() => _examAlerts = value),
+                value: settings.examAlerts,
+                onChanged: settings.setExamAlerts,
               ),
               const SizedBox(height: 12),
               _SettingsToggle(
                 title: 'Weekly Wrapped',
                 subtitle: 'Sunday at 8 PM',
-                value: _weeklyReport,
-                onChanged: (value) => setState(() => _weeklyReport = value),
+                value: settings.weeklyReport,
+                onChanged: settings.setWeeklyReport,
               ),
               const SizedBox(height: 32),
 
@@ -85,8 +83,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _SettingsToggle(
                 title: 'Dark Mode',
                 subtitle: 'Always on',
-                value: _darkMode,
-                onChanged: (value) => setState(() => _darkMode = value),
+                value: settings.darkMode,
+                onChanged: settings.setDarkMode,
               ),
               const SizedBox(height: 32),
 
@@ -305,11 +303,11 @@ class _SettingsToggle extends StatelessWidget {
               ),
             ],
           ),
-              Switch(
-                value: value,
-                onChanged: onChanged,
-                activeThumbColor: AppColors.primary,
-              ),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeThumbColor: AppColors.primary,
+          ),
         ],
       ),
     );

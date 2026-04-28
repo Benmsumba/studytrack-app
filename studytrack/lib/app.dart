@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -27,9 +28,40 @@ import 'features/settings/screens/settings_screen.dart';
 import 'features/timetable/screens/exam_countdown_screen.dart';
 import 'features/timetable/screens/study_session_screen.dart';
 import 'features/timetable/screens/timetable_screen.dart';
+import 'core/widgets/offline_status_banner.dart';
 
 class StudyTrackApp extends StatelessWidget {
   const StudyTrackApp({super.key});
+
+  static ThemeData _buildTheme() {
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: const Color(0xFF0D0D12),
+      colorScheme: const ColorScheme.dark(
+        primary: Color(0xFF7C3AED),
+        secondary: Color(0xFF06B6D4),
+        surface: Color(0xFF16161E),
+        error: Color(0xFFFF5252),
+      ),
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+        },
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF1C1C26),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+
+    return base.copyWith(textTheme: GoogleFonts.interTextTheme(base.textTheme));
+  }
 
   static final GoRouter _router = GoRouter(
     initialLocation: '/splash',
@@ -210,6 +242,10 @@ class StudyTrackApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
       title: 'StudyTrack',
+      theme: _buildTheme(),
+      builder: (context, child) {
+        return OfflineStatusBanner(child: child ?? const SizedBox.shrink());
+      },
     );
   }
 }
