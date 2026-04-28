@@ -1,6 +1,6 @@
 name: Deploy Supabase Backend
 
-on:
+"on":
   push:
     branches:
       - main
