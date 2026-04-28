@@ -45,3 +45,9 @@ Copy `studytrack/.env.example` to your own local environment file and replace th
 - Store secrets in GitHub Actions secrets or environment variables
 - The app supports reading from `--dart-define` for CI/CD pipelines
 - The release APK workflow requires `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `GEMINI_API_KEY` secrets
+
+## Emergency (exposed credentials)
+
+If any keys have been committed to git history, rotate them immediately and follow the repo remediation steps in SECURITY.md. After rotation, add the new values to GitHub Actions secrets rather than committing them to the repository.
+
+See SECURITY.md for step-by-step commands and history-scrub guidance.
