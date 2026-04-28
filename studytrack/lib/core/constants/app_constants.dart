@@ -3,10 +3,9 @@ class AppConstants {
   static const String appName = 'StudyTrack';
   static const String appVersion = '1.0.0';
 
-  // Environment placeholders
+  // Environment placeholders. Provide real values via --dart-define.
   static const String supabaseUrl = 'YOUR_SUPABASE_URL';
-  static const String supabaseAnonKey =
-      'YOUR_SUPABASE_ANON_KEY';
+  static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
   static const String geminiApiKey = 'YOUR_GEMINI_API_KEY';
 
   static String get resolvedSupabaseUrl {

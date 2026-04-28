@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_DIR="$ROOT_DIR/studytrack"
 
 PASS_COUNT=0
-TOTAL_COUNT=10
+TOTAL_COUNT=12
 
 GREEN="\033[0;32m"
 RED="\033[0;31m"
@@ -33,21 +33,22 @@ else
 fi
 
 # 2. env file exists
-if [[ -f "$APP_DIR/lib/.env" || -f "$APP_DIR/.env" ]]; then
-  pass ".env file exists"
+if [[ -f "$APP_DIR/.env.example" || -f "$APP_DIR/lib/.env.example" ]]; then
+  pass "Example env file exists"
 else
-  fail ".env file missing"
+  fail "Example env file missing"
 fi
 
-# 3. Supabase connection vars present
-if grep -q "SUPABASE_URL" "$APP_DIR/pubspec.yaml"; then
+# 3. Supabase connection wiring present
+if grep -q "String.fromEnvironment('SUPABASE_URL')" "$APP_DIR/lib/core/constants/app_constants.dart" && \
+  grep -q "String.fromEnvironment('SUPABASE_ANON_KEY')" "$APP_DIR/lib/core/constants/app_constants.dart"; then
   pass "Supabase config wiring present"
 else
   fail "Supabase config wiring missing"
 fi
 
 # 4. Gemini key wiring
-if grep -q "GEMINI_API_KEY" "$ROOT_DIR/.github/workflows/build_apk.yml" 2>/dev/null; then
+if grep -q "String.fromEnvironment('GEMINI_API_KEY')" "$APP_DIR/lib/core/services/gemini_service.dart"; then
   pass "Gemini API key wiring"
 else
   fail "Gemini API key wiring missing"
@@ -81,7 +82,22 @@ else
   fail "pubspec version missing"
 fi
 
-# 9. backend Dockerfile or supabase-only mode
+# 9. Linux desktop native prerequisites
+if command -v pkg-config >/dev/null 2>&1 && \
+  pkg-config --exists gtk+-3.0 gstreamer-1.0 gstreamer-app-1.0 gstreamer-audio-1.0; then
+  pass "Linux desktop native dependencies present"
+else
+  fail "Linux desktop native dependencies missing"
+fi
+
+# 10. Android SDK availability
+if [[ -n "${ANDROID_HOME:-}" && -d "${ANDROID_HOME:-}" ]] || [[ -n "${ANDROID_SDK_ROOT:-}" && -d "${ANDROID_SDK_ROOT:-}" ]]; then
+  pass "Android SDK path configured"
+else
+  fail "Android SDK path missing"
+fi
+
+# 11. backend Dockerfile or supabase-only mode
 if [[ -f "$ROOT_DIR/backend/Dockerfile" ]]; then
   pass "Backend Dockerfile exists"
 else
@@ -89,7 +105,7 @@ else
   pass "Backend check (Supabase-only)"
 fi
 
-# 10. GitHub actions workflows
+# 12. GitHub actions workflows
 if [[ -f "$ROOT_DIR/.github/workflows/build_apk.yml" ]]; then
   pass "GitHub Actions workflow exists"
 else
