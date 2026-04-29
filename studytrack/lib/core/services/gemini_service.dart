@@ -1,8 +1,18 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 import '../constants/app_constants.dart';
+
+class _CacheEntry {
+  _CacheEntry(this.value) : timestamp = DateTime.now();
+
+  final String value;
+  final DateTime timestamp;
+
+  bool isExpired(Duration ttl) => DateTime.now().difference(timestamp) > ttl;
+}
 
 class QuizQuestion {
   const QuizQuestion({
@@ -54,6 +64,11 @@ class GeminiService {
     apiKey: _resolvedApiKey,
   );
 
+  final Map<int, _CacheEntry> _cache = {};
+  static const _cacheTtl = Duration(hours: 1);
+  static const _maxCacheEntries = 100;
+  static const _maxRetries = 3;
+
   String get _resolvedApiKey {
     const fromEnv = String.fromEnvironment('GEMINI_API_KEY');
     if (fromEnv.isNotEmpty) {
@@ -61,6 +76,8 @@ class GeminiService {
     }
     return AppConstants.geminiApiKey;
   }
+
+  void clearCache() => _cache.clear();
 
   Future<String> explainTopic({
     required String topicName,
@@ -290,16 +307,36 @@ $message
       return 'Gemini API key is not configured.';
     }
 
-    try {
-      final response = await _model.generateContent([Content.text(prompt)]);
-      final text = response.text?.trim() ?? '';
-      if (text.isEmpty) {
-        return fallback;
-      }
-      return text;
-    } catch (error) {
-      return '$fallback Error: $error';
+    final cacheKey = prompt.hashCode;
+    final cached = _cache[cacheKey];
+    if (cached != null && !cached.isExpired(_cacheTtl)) {
+      return cached.value;
     }
+
+    Exception? lastError;
+    for (var attempt = 0; attempt < _maxRetries; attempt++) {
+      try {
+        final response = await _model.generateContent([Content.text(prompt)]);
+        final text = response.text?.trim() ?? '';
+        if (text.isEmpty) {
+          return fallback;
+        }
+
+        if (_cache.length >= _maxCacheEntries) {
+          _cache.remove(_cache.keys.first);
+        }
+        _cache[cacheKey] = _CacheEntry(text);
+        return text;
+      } catch (error) {
+        lastError = error is Exception ? error : Exception(error.toString());
+        if (attempt < _maxRetries - 1) {
+          await Future<void>.delayed(Duration(seconds: 1 << attempt));
+        }
+      }
+    }
+
+    debugPrint('GeminiService: all retries failed — $lastError');
+    return '$fallback Error: $lastError';
   }
 
   Map<String, dynamic>? _decodeJson(String jsonText) {
