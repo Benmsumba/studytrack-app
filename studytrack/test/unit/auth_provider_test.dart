@@ -91,21 +91,23 @@ void main() {
   });
 
   group('AuthProvider — register', () {
-    test('sets errorMessage from lastAuthError when signUp returns null',
-        () async {
-      fake.setSignUpResult(null);
-      fake.setLastAuthError('Email already in use.');
+    test(
+      'sets errorMessage from lastAuthError when signUp returns null',
+      () async {
+        fake.setSignUpResult(null);
+        fake.setLastAuthError('Email already in use.');
 
-      await provider.register(
-        fullName: 'Alice',
-        email: 'alice@test.com',
-        password: 'Password1!',
-      );
+        await provider.register(
+          fullName: 'Alice',
+          email: 'alice@test.com',
+          password: 'Password1!',
+        );
 
-      expect(provider.currentUser, isNull);
-      expect(provider.errorMessage, 'Email already in use.');
-      expect(provider.isLoading, isFalse);
-    });
+        expect(provider.currentUser, isNull);
+        expect(provider.errorMessage, 'Email already in use.');
+        expect(provider.isLoading, isFalse);
+      },
+    );
 
     test('falls back to generic message when lastAuthError is null', () async {
       fake.setSignUpResult(null);
@@ -148,17 +150,19 @@ void main() {
   });
 
   group('AuthProvider — login', () {
-    test('sets errorMessage from lastAuthError when signIn returns null',
-        () async {
-      fake.setSignInResult(null);
-      fake.setLastAuthError('Invalid credentials.');
+    test(
+      'sets errorMessage from lastAuthError when signIn returns null',
+      () async {
+        fake.setSignInResult(null);
+        fake.setLastAuthError('Invalid credentials.');
 
-      await provider.login(email: 'x@x.com', password: 'wrong');
+        await provider.login(email: 'x@x.com', password: 'wrong');
 
-      expect(provider.currentUser, isNull);
-      expect(provider.errorMessage, 'Invalid credentials.');
-      expect(provider.isLoading, isFalse);
-    });
+        expect(provider.currentUser, isNull);
+        expect(provider.errorMessage, 'Invalid credentials.');
+        expect(provider.isLoading, isFalse);
+      },
+    );
 
     test('falls back to generic message when lastAuthError is null', () async {
       fake.setSignInResult(null);

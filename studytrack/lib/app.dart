@@ -194,7 +194,8 @@ class StudyTrackApp extends StatelessWidget {
       ),
       GoRoute(path: '/home', redirect: (context, state) => '/home/timetable'),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) => MainShell(navigationShell: navigationShell),
+        builder: (context, state, navigationShell) =>
+            MainShell(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -305,17 +306,15 @@ class StudyTrackApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      routerConfig: _router,
-      title: 'StudyTrack',
-      theme: _buildTheme(),
-      builder: (context, child) => Stack(
-          children: [
-            OfflineStatusBanner(
-              child: child ?? const SizedBox.shrink(),
-            ),
-            const UpdateOverlay(),
-          ],
-        ),
-    );
+    debugShowCheckedModeBanner: false,
+    routerConfig: _router,
+    title: 'StudyTrack',
+    theme: _buildTheme(),
+    builder: (context, child) => Stack(
+      children: [
+        OfflineStatusBanner(child: child ?? const SizedBox.shrink()),
+        const UpdateOverlay(),
+      ],
+    ),
+  );
 }

@@ -8,11 +8,11 @@ class LoadingShimmerWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemBuilder: (_, index) => _ShimmerCard(height: index == 0 ? 110 : 72),
-      separatorBuilder: (_, itemIndex) => const SizedBox(height: 12),
-      itemCount: _itemCount,
-    );
+    padding: const EdgeInsets.all(16),
+    itemBuilder: (_, index) => _ShimmerCard(height: index == 0 ? 110 : 72),
+    separatorBuilder: (_, itemIndex) => const SizedBox(height: 12),
+    itemCount: _itemCount,
+  );
 }
 
 class _ShimmerCard extends StatelessWidget {
@@ -22,14 +22,14 @@ class _ShimmerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Shimmer.fromColors(
-      baseColor: const Color(0xFF1A1A2E),
-      highlightColor: const Color(0xFF252544),
-      child: Container(
-        height: height,
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A2E),
-          borderRadius: BorderRadius.circular(14),
-        ),
+    baseColor: const Color(0xFF1A1A2E),
+    highlightColor: const Color(0xFF252544),
+    child: Container(
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A1A2E),
+        borderRadius: BorderRadius.circular(14),
       ),
-    );
+    ),
+  );
 }

@@ -6,7 +6,8 @@ import '../../../core/constants/app_colors.dart';
 
 class VoiceNotePlayerWidget extends StatefulWidget {
   const VoiceNotePlayerWidget({
-    required this.source, super.key,
+    required this.source,
+    super.key,
     this.title = 'Voice note',
     this.subtitle,
   });
@@ -51,67 +52,67 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
 
   @override
   Widget build(BuildContext context) => Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.graphic_eq_rounded, color: Colors.white),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      gradient: AppColors.cardGradient,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Row(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            gradient: AppColors.primaryGradient,
+            borderRadius: BorderRadius.circular(14),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.title,
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                  ),
+          child: const Icon(Icons.graphic_eq_rounded, color: Colors.white),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                widget.title,
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
                 ),
-                if (widget.subtitle != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.subtitle!,
-                    style: GoogleFonts.inter(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+              ),
+              if (widget.subtitle != null) ...[
+                const SizedBox(height: 4),
+                Text(
+                  widget.subtitle!,
+                  style: GoogleFonts.inter(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
                   ),
-                ],
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
-            ),
+            ],
           ),
-          const SizedBox(width: 8),
-          IconButton(
-            onPressed: _togglePlayback,
-            icon: Icon(
-              _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
-            ),
-            color: AppColors.accent,
-            iconSize: 30,
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          onPressed: _togglePlayback,
+          icon: Icon(
+            _isPlaying ? Icons.pause_circle_filled : Icons.play_circle_fill,
           ),
-          IconButton(
-            onPressed: _stop,
-            icon: const Icon(Icons.stop_circle_outlined),
-            color: AppColors.textSecondary,
-            iconSize: 28,
-          ),
-        ],
-      ),
-    );
+          color: AppColors.accent,
+          iconSize: 30,
+        ),
+        IconButton(
+          onPressed: _stop,
+          icon: const Icon(Icons.stop_circle_outlined),
+          color: AppColors.textSecondary,
+          iconSize: 28,
+        ),
+      ],
+    ),
+  );
 }

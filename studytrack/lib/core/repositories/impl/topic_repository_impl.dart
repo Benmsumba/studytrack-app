@@ -9,7 +9,6 @@ import '../topic_repository.dart';
 
 /// Implementation of TopicRepository using SupabaseService
 class TopicRepositoryImpl implements TopicRepository {
-
   TopicRepositoryImpl(this._supabaseService);
   final SupabaseService _supabaseService;
 

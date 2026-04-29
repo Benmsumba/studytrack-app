@@ -198,77 +198,77 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      body: SafeArea(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-              child: Row(
-                children: [
-                  Text(
-                    'Notifications',
-                    style: AppTextStyles.headingLarge.copyWith(fontSize: 28),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: _loadNotifications,
-                    child: Text(
-                      'Refresh',
-                      style: GoogleFonts.inter(
-                        color: AppColors.accent,
-                        fontWeight: FontWeight.w600,
-                      ),
+    backgroundColor: AppColors.backgroundDark,
+    body: SafeArea(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            child: Row(
+              children: [
+                Text(
+                  'Notifications',
+                  style: AppTextStyles.headingLarge.copyWith(fontSize: 28),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: _loadNotifications,
+                  child: Text(
+                    'Refresh',
+                    style: GoogleFonts.inter(
+                      color: AppColors.accent,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Expanded(
-              child: RefreshIndicator(
-                color: AppColors.accent,
-                backgroundColor: AppColors.surfaceDark,
-                onRefresh: _loadNotifications,
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _items.isEmpty
-                    ? ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 120),
-                            child: Center(
-                              child: Text(
-                                'No new notifications',
-                                style: AppTextStyles.bodyMediumSecondary,
-                              ),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              color: AppColors.accent,
+              backgroundColor: AppColors.surfaceDark,
+              onRefresh: _loadNotifications,
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _items.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 120),
+                          child: Center(
+                            child: Text(
+                              'No new notifications',
+                              style: AppTextStyles.bodyMediumSecondary,
                             ),
                           ),
-                        ],
-                      )
-                    : ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        children: _items
-                            .map(
-                              (item) => _NotificationTile(
-                                title: item.title,
-                                body: item.body,
-                                timeLabel: item.timeLabel,
-                                icon: item.icon,
-                                iconColor: item.iconColor,
-                                unread: item.unread,
-                              ),
-                            )
-                            .toList(),
-                      ),
-              ),
+                        ),
+                      ],
+                    )
+                  : ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      children: _items
+                          .map(
+                            (item) => _NotificationTile(
+                              title: item.title,
+                              body: item.body,
+                              timeLabel: item.timeLabel,
+                              icon: item.icon,
+                              iconColor: item.iconColor,
+                              unread: item.unread,
+                            ),
+                          )
+                          .toList(),
+                    ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
 }
 
 class _NotificationTileData {
@@ -308,62 +308,60 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: unread ? AppColors.primary : AppColors.border,
-          width: unread ? 1.2 : 1,
-        ),
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(
+        color: unread ? AppColors.primary : AppColors.border,
+        width: unread ? 1.2 : 1,
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: iconColor, size: 22),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: iconColor.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(10),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: AppTextStyles.headingSmall.copyWith(
-                          fontSize: 14,
-                        ),
+          child: Icon(icon, color: iconColor, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: AppTextStyles.headingSmall.copyWith(fontSize: 14),
+                    ),
+                  ),
+                  if (unread)
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF06B6D4),
+                        shape: BoxShape.circle,
                       ),
                     ),
-                    if (unread)
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Color(0xFF06B6D4),
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(body, style: AppTextStyles.bodySmallSecondary),
-                const SizedBox(height: 6),
-                Text(timeLabel, style: AppTextStyles.caption),
-              ],
-            ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(body, style: AppTextStyles.bodySmallSecondary),
+              const SizedBox(height: 6),
+              Text(timeLabel, style: AppTextStyles.caption),
+            ],
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 }

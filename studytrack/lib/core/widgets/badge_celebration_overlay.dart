@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 
 class BadgeCelebrationOverlay extends StatefulWidget {
   const BadgeCelebrationOverlay({
-    required this.badgeTitle, required this.badgeDescription, super.key,
+    required this.badgeTitle,
+    required this.badgeDescription,
+    super.key,
     this.onDismiss,
   });
 
@@ -40,66 +42,66 @@ class _BadgeCelebrationOverlayState extends State<BadgeCelebrationOverlay> {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-      onTap: _dismiss,
-      child: Material(
-        color: Colors.black.withValues(alpha: 0.75),
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            ConfettiWidget(
-              confettiController: _controller,
-              blastDirectionality: BlastDirectionality.explosive,
-              shouldLoop: false,
-              emissionFrequency: 0.04,
-              numberOfParticles: 30,
-              gravity: 0.2,
+    onTap: _dismiss,
+    child: Material(
+      color: Colors.black.withValues(alpha: 0.75),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          ConfettiWidget(
+            confettiController: _controller,
+            blastDirectionality: BlastDirectionality.explosive,
+            shouldLoop: false,
+            emissionFrequency: 0.04,
+            numberOfParticles: 30,
+            gravity: 0.2,
+          ),
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 28),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF16213E),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF7C3AED)),
             ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 28),
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xFF16213E),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF7C3AED)),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('🏆', style: TextStyle(fontSize: 40)),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Awesome! You earned a badge',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 18,
-                    ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('🏆', style: TextStyle(fontSize: 40)),
+                const SizedBox(height: 12),
+                const Text(
+                  'Awesome! You earned a badge',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    widget.badgeTitle,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFF06B6D4),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  widget.badgeTitle,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF06B6D4),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    widget.badgeDescription,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Color(0xFF9CA3AF),
-                      fontSize: 13,
-                    ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  widget.badgeDescription,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF9CA3AF),
+                    fontSize: 13,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
 }

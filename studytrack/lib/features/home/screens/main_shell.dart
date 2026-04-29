@@ -70,52 +70,52 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'StudyTrack',
-                  style: GoogleFonts.inter(
-                    color: AppColors.textMuted,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
+    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'StudyTrack',
+                style: GoogleFonts.inter(
+                  color: AppColors.textMuted,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  title,
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                  ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          IconButton(
-            onPressed: onNotificationTap,
-            icon: const Icon(
-              Icons.notifications_none_rounded,
-              color: Colors.white,
-            ),
+        ),
+        IconButton(
+          onPressed: onNotificationTap,
+          icon: const Icon(
+            Icons.notifications_none_rounded,
+            color: Colors.white,
           ),
-          GestureDetector(
-            onTap: onProfileTap,
-            child: const CircleAvatar(
-              radius: 18,
-              backgroundColor: AppColors.cardDark,
-              child: Icon(Icons.person_rounded, color: Colors.white, size: 18),
-            ),
+        ),
+        GestureDetector(
+          onTap: onProfileTap,
+          child: const CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.cardDark,
+            child: Icon(Icons.person_rounded, color: Colors.white, size: 18),
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 }
 
 class _BottomNavBar extends StatelessWidget {
@@ -133,69 +133,69 @@ class _BottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: List.generate(_items.length, (index) {
-          final selected = index == currentIndex;
-          final item = _items[index];
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(
+      color: AppColors.surfaceDark,
+      borderRadius: BorderRadius.circular(24),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.3),
+          blurRadius: 24,
+          offset: const Offset(0, 12),
+        ),
+      ],
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: List.generate(_items.length, (index) {
+        final selected = index == currentIndex;
+        final item = _items[index];
 
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => onTap(index),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  AnimatedScale(
-                    duration: const Duration(milliseconds: 240),
-                    curve: Curves.easeOutBack,
-                    scale: selected ? 1.1 : 1.0,
-                    child: Icon(
-                      item.$1,
-                      color: selected ? AppColors.accent : AppColors.textMuted,
-                    ),
+        return Expanded(
+          child: GestureDetector(
+            onTap: () => onTap(index),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedScale(
+                  duration: const Duration(milliseconds: 240),
+                  curve: Curves.easeOutBack,
+                  scale: selected ? 1.1 : 1.0,
+                  child: Icon(
+                    item.$1,
+                    color: selected ? AppColors.accent : AppColors.textMuted,
                   ),
-                  const SizedBox(height: 4),
-                  if (selected)
-                    Text(
-                      item.$2,
-                      style: GoogleFonts.inter(
-                        color: AppColors.primary,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    )
-                  else
-                    const SizedBox(height: 12),
-                  const SizedBox(height: 3),
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
-                    height: 4,
-                    width: selected ? 14 : 6,
-                    decoration: BoxDecoration(
-                      gradient: selected ? AppColors.primaryGradient : null,
-                      color: selected ? null : Colors.transparent,
-                      borderRadius: BorderRadius.circular(99),
+                ),
+                const SizedBox(height: 4),
+                if (selected)
+                  Text(
+                    item.$2,
+                    style: GoogleFonts.inter(
+                      color: AppColors.primary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
                     ),
+                  )
+                else
+                  const SizedBox(height: 12),
+                const SizedBox(height: 3),
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  height: 4,
+                  width: selected ? 14 : 6,
+                  decoration: BoxDecoration(
+                    gradient: selected ? AppColors.primaryGradient : null,
+                    color: selected ? null : Colors.transparent,
+                    borderRadius: BorderRadius.circular(99),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          );
-        }),
-      ),
-    );
+          ),
+        );
+      }),
+    ),
+  );
 }
 
 class _StudyNowFab extends StatelessWidget {
@@ -205,34 +205,34 @@ class _StudyNowFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.primary.withValues(alpha: 0.4),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.play_arrow_rounded, color: Colors.white),
-            const SizedBox(width: 6),
-            Text(
-              'Study Now',
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      decoration: BoxDecoration(
+        gradient: AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.4),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-    );
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.play_arrow_rounded, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            'Study Now',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

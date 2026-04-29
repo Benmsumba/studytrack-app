@@ -3,7 +3,6 @@ import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
 class CustomTextField extends StatefulWidget {
-
   const CustomTextField({
     super.key,
     this.controller,
@@ -52,48 +51,45 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
   @override
   Widget build(BuildContext context) => Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (widget.label != null) ...[
-          Text(
-            widget.label!,
-            style: AppTextStyles.label,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      if (widget.label != null) ...[
+        Text(widget.label!, style: AppTextStyles.label),
+        const SizedBox(height: 8),
+      ],
+      Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _isFocused ? AppColors.neonCyan : AppColors.border,
+            width: _isFocused ? 2 : 1.5,
           ),
-          const SizedBox(height: 8),
-        ],
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: _isFocused ? AppColors.neonCyan : AppColors.border,
-              width: _isFocused ? 2 : 1.5,
-            ),
-            boxShadow: _isFocused
-                ? [
-                    const BoxShadow(
-                      color: AppColors.cyanGlow,
-                      blurRadius: 12,
-                      spreadRadius: 0,
-                    ),
-                  ]
-                : [],
-          ),
-          child: TextField(
-            controller: widget.controller,
-            focusNode: _focusNode,
-            keyboardType: widget.keyboardType,
-            obscureText: widget.obscureText,
-            maxLines: widget.obscureText ? 1 : widget.maxLines,
-            onChanged: widget.onChanged,
-            style: AppTextStyles.bodyMedium,
-            decoration: InputDecoration(
-              hintText: widget.hintText,
-              hintStyle: AppTextStyles.bodyMediumSecondary,
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(12),
-            ),
+          boxShadow: _isFocused
+              ? [
+                  const BoxShadow(
+                    color: AppColors.cyanGlow,
+                    blurRadius: 12,
+                    spreadRadius: 0,
+                  ),
+                ]
+              : [],
+        ),
+        child: TextField(
+          controller: widget.controller,
+          focusNode: _focusNode,
+          keyboardType: widget.keyboardType,
+          obscureText: widget.obscureText,
+          maxLines: widget.obscureText ? 1 : widget.maxLines,
+          onChanged: widget.onChanged,
+          style: AppTextStyles.bodyMedium,
+          decoration: InputDecoration(
+            hintText: widget.hintText,
+            hintStyle: AppTextStyles.bodyMediumSecondary,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.all(12),
           ),
         ),
-      ],
-    );
+      ),
+    ],
+  );
 }

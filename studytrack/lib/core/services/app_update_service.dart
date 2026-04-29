@@ -88,10 +88,9 @@ class AppUpdateService {
   }
 
   Future<void> installApk(String filePath) async {
-    await _channel.invokeMethod<void>(
-      'installApk',
-      <String, String>{'filePath': filePath},
-    );
+    await _channel.invokeMethod<void>('installApk', <String, String>{
+      'filePath': filePath,
+    });
   }
 
   Future<String> get apkSavePath async {

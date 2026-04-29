@@ -73,13 +73,13 @@ void main() {
 }
 
 ExamModel _exam({required DateTime examDate}) => ExamModel(
-    id: 'exam-1',
-    userId: 'user-1',
-    moduleId: 'module-1',
-    title: 'Final Exam',
-    examDate: examDate,
-    examTime: '10:30',
-    venue: 'Hall A',
-    examType: 'final',
-    createdAt: DateTime.parse('2026-04-20T10:00:00.000Z'),
-  );
+  id: 'exam-1',
+  userId: 'user-1',
+  moduleId: 'module-1',
+  title: 'Final Exam',
+  examDate: examDate,
+  examTime: '10:30',
+  venue: 'Hall A',
+  examType: 'final',
+  createdAt: DateTime.parse('2026-04-20T10:00:00.000Z'),
+);

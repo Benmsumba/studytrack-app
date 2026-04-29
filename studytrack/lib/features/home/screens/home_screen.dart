@@ -351,98 +351,98 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildStudySessionCard() => Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          Text(
-            'START STUDY SESSION',
-            style: AppTextStyles.labelSecondary.copyWith(
-              letterSpacing: 1.5,
-              color: AppColors.textMuted,
-            ),
+    width: double.infinity,
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      children: [
+        Text(
+          'START STUDY SESSION',
+          style: AppTextStyles.labelSecondary.copyWith(
+            letterSpacing: 1.5,
+            color: AppColors.textMuted,
           ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: 110,
-            height: 110,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 110,
-                  height: 110,
-                  child: CircularProgressIndicator(
-                    value: _sessionProgress,
-                    strokeWidth: 7,
-                    backgroundColor: AppColors.border,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
-                    ),
-                    strokeCap: StrokeCap.round,
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: 110,
+          height: 110,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 110,
+                height: 110,
+                child: CircularProgressIndicator(
+                  value: _sessionProgress,
+                  strokeWidth: 7,
+                  backgroundColor: AppColors.border,
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    AppColors.primary,
                   ),
-                ),
-                Text(
-                  '${(_sessionProgress * 100).toStringAsFixed(0)}%',
-                  style: AppTextStyles.displayMedium.copyWith(fontSize: 26),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Topic: $_topicName',
-            style: AppTextStyles.headingSmall.copyWith(fontSize: 16),
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 2),
-          Text(
-            'from $_moduleName module',
-            style: AppTextStyles.bodySmallSecondary,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF7C3AED), Color(0xFF9D5CF6)],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TextButton(
-                onPressed: () => context.push('/study-session'),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  'START SESSION',
-                  style: AppTextStyles.button.copyWith(
-                    color: Colors.white,
-                    letterSpacing: 1.2,
-                  ),
+                  strokeCap: StrokeCap.round,
                 ),
               ),
+              Text(
+                '${(_sessionProgress * 100).toStringAsFixed(0)}%',
+                style: AppTextStyles.displayMedium.copyWith(fontSize: 26),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Topic: $_topicName',
+          style: AppTextStyles.headingSmall.copyWith(fontSize: 16),
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'from $_moduleName module',
+          style: AppTextStyles.bodySmallSecondary,
+          textAlign: TextAlign.center,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 18),
+        SizedBox(
+          width: double.infinity,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF7C3AED), Color(0xFF9D5CF6)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TextButton(
+              onPressed: () => context.push('/study-session'),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                'START SESSION',
+                style: AppTextStyles.button.copyWith(
+                  color: Colors.white,
+                  letterSpacing: 1.2,
+                ),
+              ),
             ),
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 
   Widget _buildDailyGoalCard() {
     final progress = _targetHours <= 0

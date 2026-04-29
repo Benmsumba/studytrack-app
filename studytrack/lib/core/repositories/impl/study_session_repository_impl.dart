@@ -8,7 +8,6 @@ import '../study_session_repository.dart';
 
 /// Implementation of StudySessionRepository using SupabaseService
 class StudySessionRepositoryImpl implements StudySessionRepository {
-
   StudySessionRepositoryImpl(this._supabaseService);
   final SupabaseService _supabaseService;
 

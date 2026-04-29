@@ -11,7 +11,8 @@ import 'voice_note_player_widget.dart';
 
 class VoiceNoteRecorderWidget extends StatefulWidget {
   const VoiceNoteRecorderWidget({
-    required this.topicId, super.key,
+    required this.topicId,
+    super.key,
     this.onSaved,
     this.allowUpload = true,
     this.title = 'Voice Notes',

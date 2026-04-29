@@ -9,7 +9,6 @@ import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
 
 class NotificationService {
-
   factory NotificationService() => _instance;
 
   NotificationService._internal();
@@ -27,8 +26,9 @@ class NotificationService {
   Future<void> initialize() async {
     tzdata.initializeTimeZones();
 
-    const androidInitSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInitSettings = AndroidInitializationSettings(
+      '@mipmap/ic_launcher',
+    );
 
     final iosInitSettings = const DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -450,7 +450,8 @@ class NotificationService {
     return sundayEightPM;
   }
 
-  _TimeOfDay _parseTime(String hour, String minute) => _TimeOfDay(int.parse(hour), int.parse(minute));
+  _TimeOfDay _parseTime(String hour, String minute) =>
+      _TimeOfDay(int.parse(hour), int.parse(minute));
 
   _TimeOfDay _parseClock(String value) {
     final parts = value.split(':');
@@ -512,7 +513,6 @@ class NotificationService {
 }
 
 class _TimeOfDay {
-
   _TimeOfDay(this.hour, this.minute);
   final int hour;
   final int minute;

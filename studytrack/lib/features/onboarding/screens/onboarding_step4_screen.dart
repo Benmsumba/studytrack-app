@@ -20,68 +20,65 @@ class _OnboardingStep4ScreenState extends State<OnboardingStep4Screen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildDots(),
-              const SizedBox(height: 32),
-              Text(
-                'YOUR PRIME\nSTUDY TIME',
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  height: 1.1,
+    backgroundColor: const Color(0xFF0F0F1A),
+    body: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildDots(),
+            const SizedBox(height: 32),
+            Text(
+              'YOUR PRIME\nSTUDY TIME',
+              style: GoogleFonts.outfit(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                height: 1.1,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                children: List.generate(_times.length, _buildTimeCard),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Center(
+              child: Text(
+                'Most productive hours: 8 AM - 12 PM',
+                style: GoogleFonts.inter(
+                  color: const Color(0xFF9CA3AF),
+                  fontSize: 13,
                 ),
               ),
-              const SizedBox(height: 32),
-              Expanded(
-                child: GridView.count(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  children: List.generate(
-                    _times.length,
-                    _buildTimeCard,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: Text(
-                  'Most productive hours: 8 AM - 12 PM',
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF),
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              _buildNextButton(),
-            ],
-          ),
+            ),
+            const SizedBox(height: 20),
+            _buildNextButton(),
+          ],
         ),
       ),
-    );
+    ),
+  );
 
   Widget _buildDots() => Row(
-      children: List.generate(
-        6,
-        (i) => Container(
-          margin: const EdgeInsets.only(right: 6),
-          width: i == 3 ? 20 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: i <= 3 ? const Color(0xFF7C3AED) : const Color(0xFF2D2D44),
-            borderRadius: BorderRadius.circular(4),
-          ),
+    children: List.generate(
+      6,
+      (i) => Container(
+        margin: const EdgeInsets.only(right: 6),
+        width: i == 3 ? 20 : 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: i <= 3 ? const Color(0xFF7C3AED) : const Color(0xFF2D2D44),
+          borderRadius: BorderRadius.circular(4),
         ),
       ),
-    );
+    ),
+  );
 
   Widget _buildTimeCard(int index) {
     final time = _times[index];
@@ -128,34 +125,34 @@ class _OnboardingStep4ScreenState extends State<OnboardingStep4Screen> {
   }
 
   Widget _buildNextButton() => SizedBox(
-      width: double.infinity,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF7C3AED), Color(0xFF9D5CF6)],
-          ),
-          borderRadius: BorderRadius.circular(12),
+    width: double.infinity,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF7C3AED), Color(0xFF9D5CF6)],
         ),
-        child: TextButton(
-          onPressed: () {
-            // Placeholder: Navigate to next onboarding step
-          },
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: TextButton(
+        onPressed: () {
+          // Placeholder: Navigate to next onboarding step
+        },
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(
-            'NEXT',
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1.5,
-            ),
+        ),
+        child: Text(
+          'NEXT',
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.5,
           ),
         ),
       ),
-    );
+    ),
+  );
 }

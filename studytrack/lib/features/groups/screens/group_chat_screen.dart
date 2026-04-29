@@ -123,26 +123,26 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) => Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
-          ),
-          child: VoiceNoteRecorderWidget(
-            topicId: null,
-            allowUpload: false,
-            title: 'Record a voice message',
-            subtitle: 'Transcribe, then send to the group chat',
-            onSaved: (result) async {
-              final navigator = Navigator.of(sheetContext);
-              await _sendMessage('🎙 Voice note: ${result.transcription}');
-              if (navigator.mounted) {
-                navigator.pop();
-              }
-            },
-          ),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
         ),
+        child: VoiceNoteRecorderWidget(
+          topicId: null,
+          allowUpload: false,
+          title: 'Record a voice message',
+          subtitle: 'Transcribe, then send to the group chat',
+          onSaved: (result) async {
+            final navigator = Navigator.of(sheetContext);
+            await _sendMessage('🎙 Voice note: ${result.transcription}');
+            if (navigator.mounted) {
+              navigator.pop();
+            }
+          },
+        ),
+      ),
     );
   }
 

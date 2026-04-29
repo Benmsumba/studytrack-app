@@ -67,9 +67,9 @@ class _GroupsScreenState extends State<GroupsScreen> {
     Navigator.of(context).pop();
 
     if (result == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to create group.')), 
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to create group.')));
       return;
     }
 
@@ -105,35 +105,40 @@ class _GroupsScreenState extends State<GroupsScreen> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-          backgroundColor: AppColors.cardDark,
-          title: const Text('Create Group', style: TextStyle(color: Colors.white)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _nameController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Group name'),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _descriptionController,
-                style: const TextStyle(color: Colors.white),
-                decoration: const InputDecoration(labelText: 'Description (optional)'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: _isWorking ? null : () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+        backgroundColor: AppColors.cardDark,
+        title: const Text(
+          'Create Group',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nameController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(labelText: 'Group name'),
             ),
-            FilledButton(
-              onPressed: _isWorking ? null : _createGroup,
-              child: const Text('Create'),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _descriptionController,
+              style: const TextStyle(color: Colors.white),
+              decoration: const InputDecoration(
+                labelText: 'Description (optional)',
+              ),
             ),
           ],
         ),
+        actions: [
+          TextButton(
+            onPressed: _isWorking ? null : () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: _isWorking ? null : _createGroup,
+            child: const Text('Create'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -141,122 +146,128 @@ class _GroupsScreenState extends State<GroupsScreen> {
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-          backgroundColor: AppColors.cardDark,
-          title: const Text('Join Group', style: TextStyle(color: Colors.white)),
-          content: TextField(
-            controller: _inviteCodeController,
-            style: const TextStyle(color: Colors.white),
-            textCapitalization: TextCapitalization.characters,
-            decoration: const InputDecoration(labelText: 'Invite code'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: _isWorking ? null : () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: _isWorking ? null : _joinGroup,
-              child: const Text('Join'),
-            ),
-          ],
+        backgroundColor: AppColors.cardDark,
+        title: const Text('Join Group', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: _inviteCodeController,
+          style: const TextStyle(color: Colors.white),
+          textCapitalization: TextCapitalization.characters,
+          decoration: const InputDecoration(labelText: 'Invite code'),
         ),
+        actions: [
+          TextButton(
+            onPressed: _isWorking ? null : () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: _isWorking ? null : _joinGroup,
+            child: const Text('Join'),
+          ),
+        ],
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadGroups,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: _showCreateDialog,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Create Group'),
-                        ),
+    backgroundColor: AppColors.backgroundDark,
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            onRefresh: _loadGroups,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 120),
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _showCreateDialog,
+                        icon: const Icon(Icons.add),
+                        label: const Text('Create Group'),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _showJoinDialog,
-                          icon: const Icon(Icons.login),
-                          label: const Text('Join by Code'),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'My Study Groups',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
                     ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _showJoinDialog,
+                        icon: const Icon(Icons.login),
+                        label: const Text('Join by Code'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'My Study Groups',
+                  style: GoogleFonts.outfit(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(height: 12),
-                  if (_groups.isEmpty)
-                    Container(
-                      padding: const EdgeInsets.all(16),
+                ),
+                const SizedBox(height: 12),
+                if (_groups.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.cardDark,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      'No groups yet. Create one or join with an invite code.',
+                      style: GoogleFonts.inter(color: AppColors.textSecondary),
+                    ),
+                  )
+                else
+                  ..._groups.map((membership) {
+                    final group =
+                        (membership['study_groups'] ?? {})
+                            as Map<String, dynamic>;
+                    final groupId = group['id']?.toString() ?? '';
+                    final inviteCode = group['invite_code']?.toString() ?? '-';
+                    final title = group['name']?.toString() ?? 'Untitled Group';
+                    final subtitle =
+                        group['description']?.toString() ?? 'No description';
+
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
                       decoration: BoxDecoration(
                         color: AppColors.cardDark,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.border),
                       ),
-                      child: Text(
-                        'No groups yet. Create one or join with an invite code.',
-                        style: GoogleFonts.inter(color: AppColors.textSecondary),
+                      child: ListTile(
+                        title: Text(
+                          title,
+                          style: GoogleFonts.outfit(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '$subtitle\nInvite: $inviteCode',
+                          style: GoogleFonts.inter(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                        isThreeLine: true,
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: groupId.isEmpty
+                            ? null
+                            : () =>
+                                  context.push('/group/$groupId', extra: group),
                       ),
-                    )
-                  else
-                    ..._groups.map((membership) {
-                      final group = (membership['study_groups'] ?? {}) as Map<String, dynamic>;
-                      final groupId = group['id']?.toString() ?? '';
-                      final inviteCode = group['invite_code']?.toString() ?? '-';
-                      final title = group['name']?.toString() ?? 'Untitled Group';
-                      final subtitle = group['description']?.toString() ?? 'No description';
-
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: AppColors.cardDark,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: ListTile(
-                          title: Text(
-                            title,
-                            style: GoogleFonts.outfit(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          subtitle: Text(
-                            '$subtitle\nInvite: $inviteCode',
-                            style: GoogleFonts.inter(color: AppColors.textSecondary),
-                          ),
-                          isThreeLine: true,
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: groupId.isEmpty
-                              ? null
-                              : () => context.push('/group/$groupId', extra: group),
-                        ),
-                      );
-                    }),
-                ],
-              ),
+                    );
+                  }),
+              ],
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showCreateDialog,
-        label: const Text('New Group'),
-        icon: const Icon(Icons.group_add),
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-    );
+          ),
+    floatingActionButton: FloatingActionButton.extended(
+      onPressed: _showCreateDialog,
+      label: const Text('New Group'),
+      icon: const Icon(Icons.group_add),
+    ),
+    floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+  );
 }

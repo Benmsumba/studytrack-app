@@ -9,13 +9,13 @@ class UpdateOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Consumer<UpdateProvider>(
-      builder: (context, update, _) {
-        if (!update.shouldShowOverlay) {
-          return const SizedBox.shrink();
-        }
-        return const _UpdateSheet();
-      },
-    );
+    builder: (context, update, _) {
+      if (!update.shouldShowOverlay) {
+        return const SizedBox.shrink();
+      }
+      return const _UpdateSheet();
+    },
+  );
 }
 
 class _UpdateSheet extends StatelessWidget {
@@ -23,16 +23,16 @@ class _UpdateSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-      color: Colors.black.withAlpha(180),
-      child: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: _UpdateCard(),
-          ),
+    color: Colors.black.withAlpha(180),
+    child: SafeArea(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: _UpdateCard(),
         ),
       ),
-    );
+    ),
+  );
 }
 
 class _UpdateCard extends StatelessWidget {
@@ -64,9 +64,7 @@ class _UpdateCard extends StatelessWidget {
             _UpdateTitle(status: update.status),
             const SizedBox(height: 8),
             if (info != null) ...[
-              _VersionBadge(
-                versionName: info.versionName,
-              ),
+              _VersionBadge(versionName: info.versionName),
               const SizedBox(height: 16),
               if (info.releaseNotes.isNotEmpty)
                 _ReleaseNotes(notes: info.releaseNotes),
@@ -134,14 +132,11 @@ class _UpdateTitle extends StatelessWidget {
     };
     final subtitle = switch (status) {
       UpdateStatus.downloading => 'Please keep the app open',
-      UpdateStatus.readyToInstall =>
-        'Tap below to launch the installer',
+      UpdateStatus.readyToInstall => 'Tap below to launch the installer',
       UpdateStatus.awaitingPermission =>
         'Allow "Install unknown apps" to continue',
-      UpdateStatus.error =>
-        'Something went wrong. Please try again.',
-      _ =>
-        'A new version of StudyTrack is ready',
+      UpdateStatus.error => 'Something went wrong. Please try again.',
+      _ => 'A new version of StudyTrack is ready',
     };
     return Column(
       children: [
@@ -157,10 +152,7 @@ class _UpdateTitle extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           subtitle,
-          style: const TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 14,
-          ),
+          style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
           textAlign: TextAlign.center,
         ),
       ],
@@ -204,37 +196,37 @@ class _ReleaseNotes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            "What's new",
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.8,
-            ),
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.surfaceDark,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "What's new",
+          style: TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.8,
           ),
-          const SizedBox(height: 6),
-          Text(
-            notes,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontSize: 13,
-              height: 1.5,
-            ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          notes,
+          style: const TextStyle(
+            color: AppColors.textPrimary,
+            fontSize: 13,
+            height: 1.5,
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 }
 
 class _ProgressSection extends StatelessWidget {
@@ -252,10 +244,7 @@ class _ProgressSection extends StatelessWidget {
           children: [
             const Text(
               'Downloading...',
-              style: TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-              ),
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
             ),
             Text(
               '$percent%',
@@ -274,9 +263,7 @@ class _ProgressSection extends StatelessWidget {
             value: progress,
             minHeight: 8,
             backgroundColor: AppColors.border,
-            valueColor: const AlwaysStoppedAnimation<Color>(
-              AppColors.neonCyan,
-            ),
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.neonCyan),
           ),
         ),
       ],
@@ -297,17 +284,11 @@ class _ErrorSection extends StatelessWidget {
         if (message != null)
           Text(
             message!,
-            style: const TextStyle(
-              color: AppColors.danger,
-              fontSize: 12,
-            ),
+            style: const TextStyle(color: AppColors.danger, fontSize: 12),
             textAlign: TextAlign.center,
           ),
         const SizedBox(height: 16),
-        _GradientButton(
-          label: 'Try Again',
-          onPressed: update.startDownload,
-        ),
+        _GradientButton(label: 'Try Again', onPressed: update.startDownload),
         const SizedBox(height: 10),
         _DismissLink(onPressed: update.dismiss),
       ],
@@ -345,10 +326,7 @@ class _ActionButton extends StatelessWidget {
     if (status == UpdateStatus.readyToInstall) {
       return Column(
         children: [
-          _GradientButton(
-            label: 'Install Now',
-            onPressed: update.install,
-          ),
+          _GradientButton(label: 'Install Now', onPressed: update.install),
           const SizedBox(height: 10),
           _DismissLink(onPressed: update.dismiss),
         ],
@@ -356,10 +334,7 @@ class _ActionButton extends StatelessWidget {
     }
     return Column(
       children: [
-        _GradientButton(
-          label: 'Update Now',
-          onPressed: update.startDownload,
-        ),
+        _GradientButton(label: 'Update Now', onPressed: update.startDownload),
         const SizedBox(height: 10),
         _DismissLink(onPressed: update.dismiss),
       ],
@@ -368,49 +343,46 @@ class _ActionButton extends StatelessWidget {
 }
 
 class _GradientButton extends StatelessWidget {
-  const _GradientButton({
-    required this.label,
-    required this.onPressed,
-  });
+  const _GradientButton({required this.label, required this.onPressed});
 
   final String label;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) => SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
+    width: double.infinity,
+    height: 50,
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.violetGlowSoft,
+            blurRadius: 12,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
           borderRadius: BorderRadius.circular(14),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.violetGlowSoft,
-              blurRadius: 12,
-              offset: Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onPressed,
-            borderRadius: BorderRadius.circular(14),
-            child: Center(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
+          child: Center(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
         ),
       ),
-    );
+    ),
+  );
 }
 
 class _DismissLink extends StatelessWidget {
@@ -420,13 +392,10 @@ class _DismissLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TextButton(
-      onPressed: onPressed,
-      child: const Text(
-        'Remind me later',
-        style: TextStyle(
-          color: AppColors.textMuted,
-          fontSize: 13,
-        ),
-      ),
-    );
+    onPressed: onPressed,
+    child: const Text(
+      'Remind me later',
+      style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+    ),
+  );
 }

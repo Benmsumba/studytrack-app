@@ -11,13 +11,12 @@ import 'package:permission_handler/permission_handler.dart';
 import '../constants/app_constants.dart';
 
 class UpdateInfo {
-
   factory UpdateInfo.fromJson(Map<String, dynamic> json) => UpdateInfo(
-        version: (json['version'] as String?) ?? '0.0.0',
-        build: (json['build'] as num?)?.toInt() ?? 0,
-        apkUrl: (json['apk_url'] as String?) ?? '',
-        releaseNotes: (json['release_notes'] as String?) ?? '',
-      );
+    version: (json['version'] as String?) ?? '0.0.0',
+    build: (json['build'] as num?)?.toInt() ?? 0,
+    apkUrl: (json['apk_url'] as String?) ?? '',
+    releaseNotes: (json['release_notes'] as String?) ?? '',
+  );
   const UpdateInfo({
     required this.version,
     required this.build,
@@ -89,8 +88,9 @@ class SelfUpdateService {
     _isDownloading = true;
     try {
       final tempDir = await getTemporaryDirectory();
-      final apkFile =
-          File('${tempDir.path}/studytrack_update_${info.build}.apk');
+      final apkFile = File(
+        '${tempDir.path}/studytrack_update_${info.build}.apk',
+      );
 
       // Stream download so we can report progress.
       final client = http.Client();

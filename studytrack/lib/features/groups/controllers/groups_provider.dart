@@ -42,7 +42,8 @@ class GroupsProvider extends ChangeNotifier {
 
   Future<void> createGroup({
     required String name,
-    required String createdBy, String description = '',
+    required String createdBy,
+    String description = '',
   }) async {
     _errorMessage = null;
 
@@ -77,7 +78,9 @@ class GroupsProvider extends ChangeNotifier {
   }
 
   Future<void> sendMessage({
-    required String senderId, required String content, String? groupId,
+    required String senderId,
+    required String content,
+    String? groupId,
     String? topicId,
   }) async {
     final sent = await _supabaseService.sendMessage({

@@ -82,7 +82,9 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
     _scrollToBottom();
 
     final history = _messages
-        .map((m) => {'role': m.isUser ? 'user' : 'assistant', 'content': m.text})
+        .map(
+          (m) => {'role': m.isUser ? 'user' : 'assistant', 'content': m.text},
+        )
         .toList();
 
     final aiText = await _gemini.chatWithTutor(
@@ -226,7 +228,10 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                 if (hasNotes)
                   Container(
                     margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(999),
@@ -269,12 +274,20 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                         scrollDirection: Axis.horizontal,
                         child: Row(
                           children: [
-                            _QuickChip(label: 'Explain this', onTap: _runExplain),
+                            _QuickChip(
+                              label: 'Explain this',
+                              onTap: _runExplain,
+                            ),
                             _QuickChip(
                               label: 'Test me',
-                              onTap: () => context.push('/topics/${widget.topicId}/quiz'),
+                              onTap: () => context.push(
+                                '/topics/${widget.topicId}/quiz',
+                              ),
                             ),
-                            _QuickChip(label: 'Give a mnemonic', onTap: _runMnemonic),
+                            _QuickChip(
+                              label: 'Give a mnemonic',
+                              onTap: _runMnemonic,
+                            ),
                             _QuickChip(
                               label: 'Predict questions',
                               onTap: _runPredictQuestions,
@@ -291,12 +304,16 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                               style: GoogleFonts.inter(color: Colors.white),
                               decoration: InputDecoration(
                                 hintText: 'Ask me anything about $topicName',
-                                hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
+                                hintStyle: GoogleFonts.inter(
+                                  color: AppColors.textMuted,
+                                ),
                                 filled: true,
                                 fillColor: AppColors.cardDark,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(color: AppColors.border),
+                                  borderSide: const BorderSide(
+                                    color: AppColors.border,
+                                  ),
                                 ),
                               ),
                               onSubmitted: _sendUserMessage,
@@ -304,7 +321,8 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                           ),
                           const SizedBox(width: 8),
                           GestureDetector(
-                            onTap: () => _sendUserMessage(_inputController.text),
+                            onTap: () =>
+                                _sendUserMessage(_inputController.text),
                             child: Container(
                               width: 44,
                               height: 44,
@@ -312,7 +330,10 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                                 gradient: AppColors.primaryGradient,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(Icons.send_rounded, color: Colors.white),
+                              child: const Icon(
+                                Icons.send_rounded,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ],
@@ -327,9 +348,10 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
 }
 
 class _ChatMessage {
-
-  factory _ChatMessage.user(String text) => _ChatMessage(text: text, isUser: true);
-  factory _ChatMessage.ai(String text) => _ChatMessage(text: text, isUser: false);
+  factory _ChatMessage.user(String text) =>
+      _ChatMessage(text: text, isUser: true);
+  factory _ChatMessage.ai(String text) =>
+      _ChatMessage(text: text, isUser: false);
   const _ChatMessage({required this.text, required this.isUser});
 
   final String text;
@@ -343,7 +365,9 @@ class _ChatBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alignment = message.isUser ? Alignment.centerRight : Alignment.centerLeft;
+    final alignment = message.isUser
+        ? Alignment.centerRight
+        : Alignment.centerLeft;
     final maxWidth = MediaQuery.of(context).size.width * 0.78;
 
     return Align(
@@ -356,9 +380,7 @@ class _ChatBubble extends StatelessWidget {
           gradient: message.isUser ? AppColors.primaryGradient : null,
           color: message.isUser ? null : AppColors.cardDark,
           borderRadius: BorderRadius.circular(14),
-          border: message.isUser
-              ? null
-              : Border.all(color: AppColors.border),
+          border: message.isUser ? null : Border.all(color: AppColors.border),
         ),
         child: message.isUser
             ? Text(
@@ -379,21 +401,21 @@ class _QuickChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ActionChip(
-        onPressed: onTap,
-        backgroundColor: AppColors.cardDark,
-        side: const BorderSide(color: AppColors.border),
-        label: Text(
-          label,
-          style: GoogleFonts.inter(
-            color: AppColors.textSecondary,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-          ),
+    padding: const EdgeInsets.only(right: 8),
+    child: ActionChip(
+      onPressed: onTap,
+      backgroundColor: AppColors.cardDark,
+      side: const BorderSide(color: AppColors.border),
+      label: Text(
+        label,
+        style: GoogleFonts.inter(
+          color: AppColors.textSecondary,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
         ),
       ),
-    );
+    ),
+  );
 }
 
 class _EmptyTutorState extends StatelessWidget {
@@ -403,32 +425,36 @@ class _EmptyTutorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.psychology_alt_rounded, color: AppColors.accent, size: 50),
-            const SizedBox(height: 14),
-            Text(
-              'Ask me anything about $topicName',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-              ),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.psychology_alt_rounded,
+            color: AppColors.accent,
+            size: 50,
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Ask me anything about $topicName',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 12),
-            Text(
-              'Try: "Explain the core concept", "Give me a mnemonic", or "Predict exam questions"',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(color: AppColors.textSecondary),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Try: "Explain the core concept", "Give me a mnemonic", or "Predict exam questions"',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(color: AppColors.textSecondary),
+          ),
+        ],
       ),
-    );
+    ),
+  );
 }
 
 class _TypingBubble extends StatelessWidget {
@@ -436,27 +462,27 @@ class _TypingBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: AppColors.cardDark,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _Dot(delay: 0),
-            SizedBox(width: 4),
-            _Dot(delay: 180),
-            SizedBox(width: 4),
-            _Dot(delay: 360),
-          ],
-        ),
+    alignment: Alignment.centerLeft,
+    child: Container(
+      margin: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.cardDark,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
       ),
-    );
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _Dot(delay: 0),
+          SizedBox(width: 4),
+          _Dot(delay: 180),
+          SizedBox(width: 4),
+          _Dot(delay: 360),
+        ],
+      ),
+    ),
+  );
 }
 
 class _Dot extends StatefulWidget {
@@ -490,9 +516,12 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) => FadeTransition(
-      opacity: Tween<double>(begin: 0.2, end: 1).animate(_controller),
-      child: const CircleAvatar(radius: 3, backgroundColor: AppColors.textSecondary),
-    );
+    opacity: Tween<double>(begin: 0.2, end: 1).animate(_controller),
+    child: const CircleAvatar(
+      radius: 3,
+      backgroundColor: AppColors.textSecondary,
+    ),
+  );
 }
 
 class _MarkdownText extends StatelessWidget {
@@ -550,7 +579,11 @@ class _MarkdownText extends StatelessWidget {
 
     return RichText(
       text: TextSpan(
-        style: GoogleFonts.inter(color: Colors.white, fontSize: 14, height: 1.4),
+        style: GoogleFonts.inter(
+          color: Colors.white,
+          fontSize: 14,
+          height: 1.4,
+        ),
         children: spans,
       ),
     );

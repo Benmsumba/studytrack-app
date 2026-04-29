@@ -72,7 +72,9 @@ void main() {
 
       test('flatMap stops on first failure', () {
         final error = ValidationException(message: 'Invalid input');
-        final result = const Success<int>(5).flatMap((_) => Failure<int>(error));
+        final result = const Success<int>(
+          5,
+        ).flatMap((_) => Failure<int>(error));
 
         expect(result.isFailure, isTrue);
         expect((result as Failure<int>).error.message, contains('Invalid'));
@@ -248,10 +250,7 @@ void main() {
         final errors = <Exception>[];
 
         for (final result in results) {
-          result.fold(
-            (error) => errors.add(error as Exception),
-            values.add,
-          );
+          result.fold((error) => errors.add(error as Exception), values.add);
         }
 
         expect(values, equals([1, 2, 3]));
