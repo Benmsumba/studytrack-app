@@ -1,6 +1,7 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'dart:math' as math;
 
 class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});

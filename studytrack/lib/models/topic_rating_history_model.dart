@@ -1,14 +1,12 @@
 class TopicRatingHistoryModel {
 
-  factory TopicRatingHistoryModel.fromJson(Map<String, dynamic> json) {
-    return TopicRatingHistoryModel(
+  factory TopicRatingHistoryModel.fromJson(Map<String, dynamic> json) => TopicRatingHistoryModel(
       id: json['id'] as String,
       topicId: json['topic_id'] as String,
       userId: json['user_id'] as String,
       rating: (json['rating'] as num).toInt(),
       ratedAt: DateTime.parse(json['rated_at'] as String),
     );
-  }
   const TopicRatingHistoryModel({
     required this.id,
     required this.topicId,

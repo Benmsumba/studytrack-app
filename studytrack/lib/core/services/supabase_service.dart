@@ -4,19 +4,22 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../models/group_member_model.dart';
+import '../../models/group_message_model.dart';
 import '../../models/module_model.dart';
+import '../../models/study_group_model.dart';
+import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
 import 'offline_sync_service.dart';
 
 class SupabaseService {
+  @visibleForTesting
+  SupabaseService.forTesting();
 
   factory SupabaseService() => _instance;
   SupabaseService._internal();
 
   static final SupabaseService _instance = SupabaseService._internal();
-
-  @visibleForTesting
-  SupabaseService.forTesting();
   RealtimeChannel? _messagesChannel;
   String? _lastAuthError;
   final OfflineSyncService _offlineSync = OfflineSyncService.instance;
@@ -29,7 +32,10 @@ class SupabaseService {
 
   String _queryKey(String entity, String scope) => '$entity::$scope';
 
-  Future<List<Map<String, dynamic>>?> _cachedList(String entity, String scope) => _offlineSync.cachedQuery(_queryKey(entity, scope));
+  Future<List<Map<String, dynamic>>?> _cachedList(
+    String entity,
+    String scope,
+  ) => _offlineSync.cachedQuery(_queryKey(entity, scope));
 
   Future<void> _cacheList(
     String entity,
@@ -43,7 +49,8 @@ class SupabaseService {
     );
   }
 
-  Future<Map<String, dynamic>?> _cachedRecord(String entity, String recordId) => _offlineSync.cachedRecord(entity: entity, recordId: recordId);
+  Future<Map<String, dynamic>?> _cachedRecord(String entity, String recordId) =>
+      _offlineSync.cachedRecord(entity: entity, recordId: recordId);
 
   Future<void> _cacheRecord(
     String entity,
@@ -292,14 +299,14 @@ class SupabaseService {
     required String userId,
     required Map<String, dynamic> data,
   }) async => await client
-        .from('profiles')
-        .upsert({
-          'id': userId,
-          ...data,
-          'updated_at': DateTime.now().toIso8601String(),
-        }, onConflict: 'id')
-        .select()
-        .maybeSingle();
+      .from('profiles')
+      .upsert({
+        'id': userId,
+        ...data,
+        'updated_at': DateTime.now().toIso8601String(),
+      }, onConflict: 'id')
+      .select()
+      .maybeSingle();
 
   Future<void> _ensureProfileExists(User user) async {
     final metadata = user.userMetadata ?? <String, dynamic>{};
@@ -871,11 +878,6 @@ class SupabaseService {
     }
   }
 
-<<<<<<< HEAD
-=======
-  Future<bool?> deleteTopics(String topicId) async => deleteTopic(topicId);
-
->>>>>>> 01219de (fix: align SupabaseService API and tests; convert User->ProfileModel; resolve AuthException conflict)
   // ---------------------------------------------------------------------------
   // TIMETABLE
   // ---------------------------------------------------------------------------
@@ -1325,72 +1327,21 @@ class SupabaseService {
   Future<List<Map<String, dynamic>>?> getMyGroups(String userId) async {
     try {
       if (await _isOnline()) {
-        // 1 query — all memberships for this user
-        final memberships = ((await client
-                .from('group_members')
-                .select()
-                .eq('user_id', userId)
-                .order('joined_at')) as List<dynamic>)
-            .cast<Map<String, dynamic>>();
+        // Fetch all memberships for this user with their groups
+        final memberships =
+            ((await client
+                        .from('group_members')
+                        .select('''
+                          *,
+                          study_groups(*)
+                        ''')
+                        .eq('user_id', userId)
+                        .order('joined_at'))
+                    as List<dynamic>)
+                .cast<Map<String, dynamic>>();
 
-        if (memberships.isEmpty) {
-          await _cacheList('my_groups', userId, const []);
-          return const [];
-        }
-
-        final groupIds = memberships
-            .map((m) => m['group_id']?.toString())
-            .whereType<String>()
-            .toSet()
-            .toList();
-
-        // 1 query — all group details
-        final groupRows = ((await client
-                .from('study_groups')
-                .select()
-                .in_('id', groupIds)) as List<dynamic>)
-            .cast<Map<String, dynamic>>();
-        final groupMap = {
-          for (final g in groupRows) g['id'].toString(): g,
-        };
-
-        // 1 query — member counts for all groups
-        final allMembers = ((await client
-                .from('group_members')
-                .select('group_id')
-                .in_('group_id', groupIds)) as List<dynamic>)
-            .cast<Map<String, dynamic>>();
-        final memberCountMap = <String, int>{};
-        for (final m in allMembers) {
-          final gId = m['group_id'].toString();
-          memberCountMap[gId] = (memberCountMap[gId] ?? 0) + 1;
-        }
-
-        // 1 query — most recent message timestamp per group
-        final recentMessages = ((await client
-                .from('group_messages')
-                .select('group_id, created_at')
-                .in_('group_id', groupIds)
-                .order('created_at', ascending: false)) as List<dynamic>)
-            .cast<Map<String, dynamic>>();
-        final lastMessageMap = <String, String?>{};
-        for (final msg in recentMessages) {
-          final gId = msg['group_id'].toString();
-          lastMessageMap.putIfAbsent(gId, () => msg['created_at']?.toString());
-        }
-
-        final results = memberships.map((membership) {
-          final gId = membership['group_id']?.toString() ?? '';
-          return <String, dynamic>{
-            ...membership,
-            'study_groups': groupMap[gId],
-            'member_count': memberCountMap[gId] ?? 1,
-            'last_activity_at': lastMessageMap[gId],
-          };
-        }).toList();
-
-        await _cacheList('my_groups', userId, results);
-        return results;
+        await _cacheList('my_groups', userId, memberships);
+        return memberships;
       }
 
       return _cachedList('my_groups', userId);
@@ -1656,7 +1607,8 @@ class SupabaseService {
       final raw = await getMyGroups(currentUser.id);
       if (raw == null) return null;
       return raw.map((membership) {
-        final gm = membership['study_groups'] as Map<String, dynamic>? ?? membership;
+        final gm =
+            membership['study_groups'] as Map<String, dynamic>? ?? membership;
         return StudyGroupModel.fromJson(gm);
       }).toList();
     } catch (e) {
@@ -1667,9 +1619,13 @@ class SupabaseService {
 
   Future<StudyGroupModel?> getStudyGroup(String groupId) async {
     try {
-      final response = await client.from('study_groups').select().eq('id', groupId).maybeSingle();
+      final response = await client
+          .from('study_groups')
+          .select()
+          .eq('id', groupId)
+          .maybeSingle();
       if (response == null) return null;
-      return StudyGroupModel.fromJson(response as Map<String, dynamic>);
+      return StudyGroupModel.fromJson(response);
     } catch (e) {
       debugPrint('getStudyGroup error: $e');
       return null;
@@ -1702,7 +1658,7 @@ class SupabaseService {
           .select()
           .maybeSingle();
       if (response == null) return null;
-      return StudyGroupModel.fromJson(response as Map<String, dynamic>);
+      return StudyGroupModel.fromJson(response);
     } catch (e) {
       debugPrint('updateStudyGroup error: $e');
       return null;
@@ -1747,7 +1703,7 @@ class SupabaseService {
     try {
       final rows = await getGroupMembers(groupId);
       if (rows == null) return null;
-      return rows.map((r) => GroupMemberModel.fromJson(r)).toList();
+      return rows.map(GroupMemberModel.fromJson).toList();
     } catch (e) {
       debugPrint('getGroupMembersTyped error: $e');
       return null;
@@ -1758,7 +1714,7 @@ class SupabaseService {
     try {
       final rows = await getGroupMessages(groupId);
       if (rows == null) return null;
-      return rows.map((r) => GroupMessageModel.fromJson(r)).toList();
+      return rows.map(GroupMessageModel.fromJson).toList();
     } catch (e) {
       debugPrint('getGroupMessagesTyped error: $e');
       return null;
@@ -1774,7 +1730,7 @@ class SupabaseService {
       final payload = {
         'group_id': groupId,
         'content': content,
-        if (topicId != null) 'topic_id': topicId,
+        'topic_id': ?topicId,
       };
       final resp = await sendMessage(payload);
       if (resp == null) return null;
@@ -1785,7 +1741,9 @@ class SupabaseService {
     }
   }
 
-  Stream<List<GroupMessageModel>> subscribeToGroupMessagesStream(String groupId) {
+  Stream<List<GroupMessageModel>> subscribeToGroupMessagesStream(
+    String groupId,
+  ) {
     final controller = StreamController<List<GroupMessageModel>>.broadcast();
     // Emit initial snapshot
     getGroupMessagesTyped(groupId).then((initial) {
@@ -1805,7 +1763,10 @@ class SupabaseService {
     return controller.stream;
   }
 
-  Future<void> inviteUserToGroup({required String groupId, required String userEmail}) async {
+  Future<void> inviteUserToGroup({
+    required String groupId,
+    required String userEmail,
+  }) async {
     try {
       await client.from('group_invitations').insert({
         'id': _newId(),
@@ -1818,7 +1779,10 @@ class SupabaseService {
     }
   }
 
-  Future<void> removeGroupMemberWrapper({required String groupId, required String userId}) async {
+  Future<void> removeGroupMemberWrapper({
+    required String groupId,
+    required String userId,
+  }) async {
     await removeGroupMember(groupId, userId);
   }
 
@@ -2096,13 +2060,19 @@ class SupabaseService {
     List<String> chunks,
   ) async {
     try {
-      final payload = chunks.asMap().entries.map((entry) => {
-          'id': _newId(),
-          'note_id': noteId,
-          'chunk_index': entry.key,
-          'content': entry.value,
-          'created_at': DateTime.now().toIso8601String(),
-        }).toList();
+      final payload = chunks
+          .asMap()
+          .entries
+          .map(
+            (entry) => {
+              'id': _newId(),
+              'note_id': noteId,
+              'chunk_index': entry.key,
+              'content': entry.value,
+              'created_at': DateTime.now().toIso8601String(),
+            },
+          )
+          .toList();
 
       if (await _isOnline()) {
         final response = await client

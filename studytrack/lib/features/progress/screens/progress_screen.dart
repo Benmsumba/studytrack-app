@@ -652,7 +652,7 @@ class _TopicLineChart extends StatelessWidget {
             maxY: 10,
             borderData: FlBorderData(show: false),
             gridData: const FlGridData(drawVerticalLine: false),
-            lineTouchData: LineTouchData(enabled: true),
+            lineTouchData: const LineTouchData(enabled: true),
             titlesData: FlTitlesData(
               topTitles: const AxisTitles(
                 sideTitles: SideTitles(showTitles: false),
@@ -667,15 +667,13 @@ class _TopicLineChart extends StatelessWidget {
                 sideTitles: SideTitles(
                   showTitles: true,
                   reservedSize: 28,
-                  getTitlesWidget: (value, meta) {
-                    return Text(
+                  getTitlesWidget: (value, meta) => Text(
                       value.toInt().toString(),
                       style: GoogleFonts.inter(
                         color: AppColors.textMuted,
                         fontSize: 10,
                       ),
-                    );
-                  },
+                    ),
                 ),
               ),
             ),
@@ -687,14 +685,12 @@ class _TopicLineChart extends StatelessWidget {
                 barWidth: 3,
                 dotData: FlDotData(
                   show: true,
-                  getDotPainter: (spot, percent, barData, index) {
-                    return FlDotCirclePainter(
+                  getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
                       radius: 3,
                       color: AppColors.deepViolet,
                       strokeWidth: 1,
                       strokeColor: Colors.white,
-                    );
-                  },
+                    ),
                 ),
                 belowBarData: BarAreaData(
                   show: true,

@@ -1,11 +1,12 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:share_plus/share_plus.dart';
-import 'dart:ui' as ui;
-import 'dart:typed_data';
 import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
-import 'dart:io';
+import 'package:share_plus/share_plus.dart';
 
 class ShareController extends ChangeNotifier {
   bool _isCapturing = false;

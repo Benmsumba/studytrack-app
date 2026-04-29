@@ -13,6 +13,15 @@ class MockSupabaseService extends Mock implements SupabaseService {}
 
 // Mock User
 class MockUser extends Mock implements User {
+
+  MockUser({
+    required this.id,
+    Map<String, dynamic>? userMetadata,
+    String? createdAt,
+    String? updatedAt,
+  }) : userMetadata = userMetadata ?? {},
+       createdAt = createdAt ?? DateTime.now().toIso8601String(),
+       updatedAt = updatedAt ?? DateTime.now().toIso8601String();
   @override
   final String id;
 
@@ -24,15 +33,6 @@ class MockUser extends Mock implements User {
 
   @override
   final Map<String, dynamic> userMetadata;
-
-  MockUser({
-    required this.id,
-    Map<String, dynamic>? userMetadata,
-    String? createdAt,
-    String? updatedAt,
-  }) : userMetadata = userMetadata ?? {},
-       createdAt = createdAt ?? DateTime.now().toIso8601String(),
-       updatedAt = updatedAt ?? DateTime.now().toIso8601String();
 }
 
 void main() {
@@ -90,7 +90,7 @@ void main() {
         expect(result, isA<Success<ProfileModel>>());
         expect((result as Success<ProfileModel>).data.id, equals('user-123'));
         expect(
-          (result as Success<ProfileModel>).data.name,
+          (result).data.name,
           equals('Test User'),
         );
         verify(

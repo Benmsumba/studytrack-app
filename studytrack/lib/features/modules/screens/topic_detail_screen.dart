@@ -1,20 +1,20 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/services/supabase_service.dart';
-import '../../voice_notes/widgets/voice_note_player_widget.dart';
-import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 import '../../../models/uploaded_note_model.dart';
+import '../../voice_notes/widgets/voice_note_player_widget.dart';
+import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 
 class TopicDetailScreen extends StatefulWidget {
   const TopicDetailScreen({required this.topicId, super.key});

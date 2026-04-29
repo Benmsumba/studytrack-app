@@ -4,8 +4,7 @@ import '../core/constants/app_colors.dart';
 
 class ModuleModel {
 
-  factory ModuleModel.fromJson(Map<String, dynamic> json) {
-    return ModuleModel(
+  factory ModuleModel.fromJson(Map<String, dynamic> json) => ModuleModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       name: json['name'] as String,
@@ -14,7 +13,6 @@ class ModuleModel {
       isActive: json['is_active'] as bool? ?? true,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
-  }
   const ModuleModel({
     required this.id,
     required this.userId,

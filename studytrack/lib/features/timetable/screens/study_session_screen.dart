@@ -268,8 +268,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
       context: context,
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
+          builder: (context, setDialogState) => AlertDialog(
               backgroundColor: AppColors.surfaceDark,
               title: Text(
                 'How well do you understand this now?',
@@ -319,8 +318,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                   child: const Text('Save Rating'),
                 ),
               ],
-            );
-          },
+            ),
         ),
     );
 

@@ -48,9 +48,7 @@ Future<void> main() async {
     () async {
       await _bootstrapApp();
     },
-    (error, stack) {
-      CrashReporter.report(error, stack);
-    },
+    CrashReporter.report,
   );
 }
 

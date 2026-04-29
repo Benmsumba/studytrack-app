@@ -497,8 +497,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
             shape: const RoundedRectangleBorder(
               borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
-            builder: (context) {
-              return SafeArea(
+            builder: (context) => SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -523,8 +522,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                     ],
                   ),
                 ),
-              );
-            },
+              ),
           );
         },
         icon: const Icon(Icons.add),

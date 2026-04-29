@@ -1,7 +1,6 @@
 class ExamModel {
 
-  factory ExamModel.fromJson(Map<String, dynamic> json) {
-    return ExamModel(
+  factory ExamModel.fromJson(Map<String, dynamic> json) => ExamModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       moduleId: json['module_id'] as String,
@@ -12,7 +11,6 @@ class ExamModel {
       examType: json['exam_type'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
-  }
   const ExamModel({
     required this.id,
     required this.userId,

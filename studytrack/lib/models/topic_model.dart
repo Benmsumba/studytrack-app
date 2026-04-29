@@ -4,8 +4,7 @@ import '../core/constants/app_colors.dart';
 
 class TopicModel {
 
-  factory TopicModel.fromJson(Map<String, dynamic> json) {
-    return TopicModel(
+  factory TopicModel.fromJson(Map<String, dynamic> json) => TopicModel(
       id: json['id'] as String,
       moduleId: json['module_id'] as String,
       userId: json['user_id'] as String,
@@ -22,7 +21,6 @@ class TopicModel {
       notes: json['notes'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
-  }
   const TopicModel({
     required this.id,
     required this.moduleId,

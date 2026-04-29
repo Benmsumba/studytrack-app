@@ -8,8 +8,7 @@ class UpdateOverlay extends StatelessWidget {
   const UpdateOverlay({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Consumer<UpdateProvider>(
+  Widget build(BuildContext context) => Consumer<UpdateProvider>(
       builder: (context, update, _) {
         if (!update.shouldShowOverlay) {
           return const SizedBox.shrink();
@@ -17,15 +16,13 @@ class UpdateOverlay extends StatelessWidget {
         return const _UpdateSheet();
       },
     );
-  }
 }
 
 class _UpdateSheet extends StatelessWidget {
   const _UpdateSheet();
 
   @override
-  Widget build(BuildContext context) {
-    return Material(
+  Widget build(BuildContext context) => Material(
       color: Colors.black.withAlpha(180),
       child: SafeArea(
         child: Center(
@@ -36,7 +33,6 @@ class _UpdateSheet extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 class _UpdateCard extends StatelessWidget {
@@ -207,8 +203,7 @@ class _ReleaseNotes extends StatelessWidget {
   final String notes;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -240,7 +235,6 @@ class _ReleaseNotes extends StatelessWidget {
         ],
       ),
     );
-  }
 }
 
 class _ProgressSection extends StatelessWidget {
@@ -383,8 +377,7 @@ class _GradientButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) {
-    return SizedBox(
+  Widget build(BuildContext context) => SizedBox(
       width: double.infinity,
       height: 50,
       child: DecoratedBox(
@@ -418,7 +411,6 @@ class _GradientButton extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 class _DismissLink extends StatelessWidget {
@@ -427,8 +419,7 @@ class _DismissLink extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) {
-    return TextButton(
+  Widget build(BuildContext context) => TextButton(
       onPressed: onPressed,
       child: const Text(
         'Remind me later',
@@ -438,5 +429,4 @@ class _DismissLink extends StatelessWidget {
         ),
       ),
     );
-  }
 }

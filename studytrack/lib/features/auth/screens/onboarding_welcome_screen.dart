@@ -102,8 +102,8 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
                       onPressed: _onNext,
                       child: Text(
                         _currentPage == _totalPages - 1
-                            ? "Get Started"
-                            : "Next",
+                            ? 'Get Started'
+                            : 'Next',
                         style: GoogleFonts.inter(
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -124,7 +124,7 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
+          const Icon(
             Icons.auto_stories_rounded,
             size: 88,
             color: AppColors.cyan,
@@ -133,7 +133,7 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
               .fadeIn(duration: 500.ms)
               .scale(
                 begin: const Offset(0.8, 0.8),
-                end: const Offset(1.0, 1.0),
+                end: const Offset(1, 1),
                 duration: 500.ms,
               ),
           const SizedBox(height: 32),

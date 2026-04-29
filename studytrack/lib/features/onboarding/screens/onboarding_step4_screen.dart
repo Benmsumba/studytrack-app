@@ -46,7 +46,7 @@ class _OnboardingStep4ScreenState extends State<OnboardingStep4Screen> {
                   mainAxisSpacing: 12,
                   children: List.generate(
                     _times.length,
-                    (i) => _buildTimeCard(i),
+                    _buildTimeCard,
                   ),
                 ),
               ),

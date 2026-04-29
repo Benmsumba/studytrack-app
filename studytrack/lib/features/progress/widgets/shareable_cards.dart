@@ -7,15 +7,7 @@ import '../../../core/constants/app_colors.dart';
 class WeeklyReportCard extends StatelessWidget {
 
   const WeeklyReportCard({
-    super.key,
-    required this.studentName,
-    required this.course,
-    required this.weekNumber,
-    required this.topicsStudied,
-    required this.averageRating,
-    required this.streak,
-    required this.bestSubject,
-    required this.boundaryKey,
+    required this.studentName, required this.course, required this.weekNumber, required this.topicsStudied, required this.averageRating, required this.streak, required this.bestSubject, required this.boundaryKey, super.key,
   });
   final String studentName;
   final String course;
@@ -32,11 +24,11 @@ class WeeklyReportCard extends StatelessWidget {
       child: Container(
         width: 1080,
         height: 1080,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [const Color(0xFF0F0F1A), const Color(0xFF16213E)],
+            colors: [Color(0xFF0F0F1A), Color(0xFF16213E)],
           ),
         ),
         child: Padding(
@@ -158,13 +150,7 @@ class WeeklyReportCard extends StatelessWidget {
 class TopicMasteredCard extends StatelessWidget {
 
   const TopicMasteredCard({
-    super.key,
-    required this.topicName,
-    required this.moduleName,
-    required this.rating,
-    required this.studyCount,
-    required this.previousRating,
-    required this.boundaryKey,
+    required this.topicName, required this.moduleName, required this.rating, required this.studyCount, required this.previousRating, required this.boundaryKey, super.key,
   });
   final String topicName;
   final String moduleName;
@@ -301,11 +287,7 @@ class TopicMasteredCard extends StatelessWidget {
 class ExamCountdownCard extends StatelessWidget {
 
   const ExamCountdownCard({
-    super.key,
-    required this.examName,
-    required this.daysRemaining,
-    required this.readinessPercent,
-    required this.boundaryKey,
+    required this.examName, required this.daysRemaining, required this.readinessPercent, required this.boundaryKey, super.key,
     this.isUrgent = false,
   });
   final String examName;
@@ -430,10 +412,7 @@ class ExamCountdownCard extends StatelessWidget {
 class StreakCard extends StatelessWidget {
 
   const StreakCard({
-    super.key,
-    required this.studentName,
-    required this.streakCount,
-    required this.boundaryKey,
+    required this.studentName, required this.streakCount, required this.boundaryKey, super.key,
   });
   final String studentName;
   final int streakCount;
@@ -445,11 +424,11 @@ class StreakCard extends StatelessWidget {
       child: Container(
         width: 1080,
         height: 1080,
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [const Color(0xFF0F0F1A), const Color(0xFF16213E)],
+            colors: [Color(0xFF0F0F1A), Color(0xFF16213E)],
           ),
         ),
         child: Padding(

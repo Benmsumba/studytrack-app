@@ -6,8 +6,7 @@ import '../constants/app_text_styles.dart';
 class WrappedCard extends StatelessWidget {
 
   const WrappedCard({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.customBorderColors,
     this.padding = 20.0,
     this.enableGlow = true,
@@ -31,11 +30,11 @@ class WrappedCard extends StatelessWidget {
                   spreadRadius: 2,
                   offset: const Offset(0, 8),
                 ),
-                BoxShadow(
+                const BoxShadow(
                   color: AppColors.cyanGlowSoft,
                   blurRadius: 16,
                   spreadRadius: 1,
-                  offset: const Offset(0, 4),
+                  offset: Offset(0, 4),
                 ),
               ]
             : null,
@@ -75,9 +74,7 @@ class WrappedCard extends StatelessWidget {
 class PremiumButton extends StatefulWidget {
 
   const PremiumButton({
-    super.key,
-    required this.label,
-    required this.onPressed,
+    required this.label, required this.onPressed, super.key,
     this.gradient,
     this.isLoading = false,
     this.width,
@@ -140,9 +137,7 @@ class _PremiumButtonState extends State<PremiumButton> {
 class PremiumTextField extends StatefulWidget {
 
   const PremiumTextField({
-    super.key,
-    required this.label,
-    required this.controller,
+    required this.label, required this.controller, super.key,
     this.hintText,
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
@@ -200,7 +195,7 @@ class _PremiumTextFieldState extends State<PremiumTextField> {
             ),
             boxShadow: _isFocused
                 ? [
-                    BoxShadow(
+                    const BoxShadow(
                       color: AppColors.cyanGlow,
                       blurRadius: 12,
                       spreadRadius: 0,

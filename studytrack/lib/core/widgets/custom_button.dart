@@ -5,8 +5,7 @@ import '../constants/app_text_styles.dart';
 class CustomButton extends StatefulWidget {
 
   const CustomButton({
-    super.key,
-    required this.label,
+    required this.label, super.key,
     this.onPressed,
     this.isLoading = false,
     this.gradient,

@@ -1,7 +1,6 @@
 class UploadedNoteModel {
 
-  factory UploadedNoteModel.fromJson(Map<String, dynamic> json) {
-    return UploadedNoteModel(
+  factory UploadedNoteModel.fromJson(Map<String, dynamic> json) => UploadedNoteModel(
       id: json['id'] as String,
       topicId: json['topic_id'] as String,
       userId: json['user_id'] as String,
@@ -12,7 +11,6 @@ class UploadedNoteModel {
       processingStatus: json['processing_status'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
-  }
   const UploadedNoteModel({
     required this.id,
     required this.topicId,

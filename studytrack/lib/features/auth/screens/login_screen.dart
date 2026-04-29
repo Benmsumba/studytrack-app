@@ -193,8 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _authController,
-          builder: (context, _) {
-            return SingleChildScrollView(
+          builder: (context, _) => SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
               child: Form(
                 key: _formKey,
@@ -371,8 +370,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
               ),
-            );
-          },
+            ),
         ),
       ),
     );

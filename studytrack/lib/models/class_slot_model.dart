@@ -1,7 +1,6 @@
 class ClassSlotModel {
 
-  factory ClassSlotModel.fromJson(Map<String, dynamic> json) {
-    return ClassSlotModel(
+  factory ClassSlotModel.fromJson(Map<String, dynamic> json) => ClassSlotModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       subjectName: json['subject_name'] as String,
@@ -13,7 +12,6 @@ class ClassSlotModel {
       color: json['color'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
-  }
   const ClassSlotModel({
     required this.id,
     required this.userId,

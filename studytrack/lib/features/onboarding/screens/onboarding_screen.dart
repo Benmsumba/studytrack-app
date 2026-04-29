@@ -294,7 +294,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               child: Container(
                 width: 160,
                 height: 160,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: AppColors.primaryGradient,
                 ),
@@ -332,8 +332,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _courseExamples.map((example) {
-              return ActionChip(
+            children: _courseExamples.map((example) => ActionChip(
                 backgroundColor: AppColors.cardDark,
                 side: const BorderSide(color: AppColors.border),
                 label: Text(
@@ -345,8 +344,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _courseController.text = example;
                   });
                 },
-              );
-            }).toList(),
+              )).toList(),
           ),
         ],
       ).animate().fadeIn(duration: 350.ms),

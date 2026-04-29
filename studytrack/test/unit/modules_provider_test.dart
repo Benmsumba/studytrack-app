@@ -82,9 +82,7 @@ ModuleModel _module({
 // ---------------------------------------------------------------------------
 
 void main() {
-  setUpAll(() {
-    TestWidgetsFlutterBinding.ensureInitialized();
-  });
+  setUpAll(TestWidgetsFlutterBinding.ensureInitialized);
 
   late _FakeSupabaseService fake;
   late ModulesProvider provider;

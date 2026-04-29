@@ -1,7 +1,6 @@
 class ProfileModel {
 
-  factory ProfileModel.fromJson(Map<String, dynamic> json) {
-    return ProfileModel(
+  factory ProfileModel.fromJson(Map<String, dynamic> json) => ProfileModel(
       id: json['id'] as String,
       name: json['name'] as String?,
       course: json['course'] as String?,
@@ -17,7 +16,6 @@ class ProfileModel {
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
-  }
   const ProfileModel({
     required this.id,
     required this.streakCount, required this.createdAt, required this.updatedAt, this.name,

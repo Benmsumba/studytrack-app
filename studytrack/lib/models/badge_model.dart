@@ -1,13 +1,11 @@
 class BadgeModel {
 
-  factory BadgeModel.fromJson(Map<String, dynamic> json) {
-    return BadgeModel(
+  factory BadgeModel.fromJson(Map<String, dynamic> json) => BadgeModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       badgeType: json['badge_type'] as String,
       earnedAt: DateTime.parse(json['earned_at'] as String),
     );
-  }
   const BadgeModel({
     required this.id,
     required this.userId,

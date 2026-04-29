@@ -284,7 +284,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      Expanded(
+                      const Expanded(
                         child: Divider(color: AppColors.border, thickness: 1),
                       ),
                       Padding(
@@ -297,7 +297,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                         ),
                       ),
-                      Expanded(
+                      const Expanded(
                         child: Divider(color: AppColors.border, thickness: 1),
                       ),
                     ],

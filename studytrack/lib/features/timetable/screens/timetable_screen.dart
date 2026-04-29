@@ -226,7 +226,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
                               ),
                             ]
                           : _classesForDay
-                                .map((slot) => _buildClassCard(slot))
+                                .map(_buildClassCard)
                                 .toList(),
                     ),
                   ),
@@ -261,7 +261,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
                             ]
                           : _studySessions
                                 .map(
-                                  (session) => _buildStudySessionCard(session),
+                                  _buildStudySessionCard,
                                 )
                                 .toList(),
                     ),

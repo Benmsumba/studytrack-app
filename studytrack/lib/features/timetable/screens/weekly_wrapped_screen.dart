@@ -169,7 +169,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
 
   Widget _buildIntroPage() => Container(
       color: AppColors.backgroundDark,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           colors: [AppColors.primary, AppColors.backgroundDark],
           begin: Alignment.topLeft,
@@ -415,7 +415,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
+              gradient: const LinearGradient(
                 colors: [AppColors.primary, AppColors.accent],
               ),
               borderRadius: BorderRadius.circular(16),

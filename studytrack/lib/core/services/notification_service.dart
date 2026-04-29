@@ -10,9 +10,7 @@ import '../../models/topic_model.dart';
 
 class NotificationService {
 
-  factory NotificationService() {
-    return _instance;
-  }
+  factory NotificationService() => _instance;
 
   NotificationService._internal();
   static final NotificationService _instance = NotificationService._internal();
@@ -32,13 +30,13 @@ class NotificationService {
     const androidInitSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    var iosInitSettings = const DarwinInitializationSettings(
+    final iosInitSettings = const DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
 
-    var initSettings = InitializationSettings(
+    final initSettings = InitializationSettings(
       android: androidInitSettings,
       iOS: iosInitSettings,
     );
@@ -251,7 +249,7 @@ class NotificationService {
         id: _notificationId('review_${topic.id}'),
         title: '🧠 Time to Review: ${topic.name}',
         body: 'You rated it ${topic.currentRating}/10 — let\'s keep it fresh!',
-        scheduledDate: tz.TZDateTime.from(reviewDate! as DateTime, tz.local),
+        scheduledDate: tz.TZDateTime.from(reviewDate!, tz.local),
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             _spacedRepetitionChannel,
