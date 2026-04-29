@@ -15,7 +15,7 @@ class TopicRepositoryImpl implements TopicRepository {
   @override
   Future<Result<List<TopicModel>>> getTopicsByModule(String moduleId) async {
     try {
-      final topics = await _supabaseService.getTopics(moduleId);
+      final topics = await _supabaseService.getTopics(moduleId) ?? const [];
       return Success(topics);
     } catch (e, stack) {
       debugPrint('getTopicsByModule error: $e');
@@ -29,6 +29,9 @@ class TopicRepositoryImpl implements TopicRepository {
   Future<Result<TopicModel?>> getTopicById(String topicId) async {
     try {
       final topic = await _supabaseService.getTopic(topicId);
+      if (topic == null) {
+        throw DataException(message: 'Topic not found');
+      }
       return Success(topic);
     } catch (e, stack) {
       debugPrint('getTopicById error: $e');
@@ -103,8 +106,9 @@ class TopicRepositoryImpl implements TopicRepository {
     String topicId,
   ) async {
     try {
-      final history = await _supabaseService.getTopicRatingHistory(topicId);
-      return Success(history);
+      final history =
+          await _supabaseService.getTopicRatingHistory(topicId) ?? const [];
+      return Success(history.map(TopicRatingHistoryModel.fromJson).toList());
     } catch (e, stack) {
       debugPrint('getTopicRatingHistory error: $e');
       return Failure(

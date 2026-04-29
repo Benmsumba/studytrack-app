@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
           (profile?['study_hours_per_day'] as num?)?.toInt() ?? 3;
       final sessionProgress = targetHours <= 0
           ? 0.0
-          : math.min(completedMinutes / (targetHours * 60), 1);
+          : math.min(completedMinutes.toDouble() / (targetHours * 60), 1.0);
 
       final topicName =
           _firstText(activeSession, ['topic_name', 'title', 'name']) ??
@@ -101,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _topicName = topicName;
         _moduleName = moduleName;
         _targetHours = targetHours;
-        _dailyHoursFilled = completedMinutes / 60;
+        _dailyHoursFilled = completedMinutes.toDouble() / 60.0;
         _sessionProgress = sessionProgress;
         _examName = examName;
         _daysRemaining = daysRemaining;

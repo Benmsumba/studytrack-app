@@ -1730,7 +1730,7 @@ class SupabaseService {
       final payload = {
         'group_id': groupId,
         'content': content,
-        'topic_id': ?topicId,
+        'topic_id': topicId,
       };
       final resp = await sendMessage(payload);
       if (resp == null) return null;
@@ -1795,6 +1795,277 @@ class SupabaseService {
     } catch (error) {
       debugPrint('unsubscribeFromMessages error: $error');
     }
+  }
+
+  Future<List<StudySessionModel>> getSessions() async {
+    final currentUser = getCurrentUser();
+    if (currentUser == null) return const [];
+    final response = await client
+        .from('study_sessions')
+        .select()
+        .eq('user_id', currentUser.id)
+        .order('scheduled_date', ascending: false);
+    return (response as List<dynamic>)
+        .map((item) => StudySessionModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<StudySessionModel>> getSessionsByDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    final currentUser = getCurrentUser();
+    if (currentUser == null) return const [];
+    final response = await client
+        .from('study_sessions')
+        .select()
+        .eq('user_id', currentUser.id)
+        .gte('scheduled_date', startDate.toIso8601String().split('T').first)
+        .lte('scheduled_date', endDate.toIso8601String().split('T').first)
+        .order('scheduled_date', ascending: false);
+    return (response as List<dynamic>)
+        .map((item) => StudySessionModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<StudySessionModel>> getSessionsByTopic(String topicId) async {
+    final response = await client
+        .from('study_sessions')
+        .select()
+        .eq('topic_id', topicId)
+        .order('scheduled_date', ascending: false);
+    return (response as List<dynamic>)
+        .map((item) => StudySessionModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<StudySessionModel> createSession({
+    required String topicId,
+    required int duration,
+    required String focusArea,
+    String? notes,
+  }) async {
+    final currentUser = getCurrentUser();
+    if (currentUser == null) {
+      throw StateError('No authenticated user available');
+    }
+
+    final response = await client
+        .from('study_sessions')
+        .insert({
+          'user_id': currentUser.id,
+          'topic_id': topicId,
+          'title': focusArea,
+          'scheduled_date': DateTime.now().toIso8601String().split('T').first,
+          'duration_minutes': duration,
+          'notes': notes,
+          'status': 'planned',
+          'created_at': DateTime.now().toIso8601String(),
+        })
+        .select()
+        .maybeSingle();
+
+    if (response == null) {
+      throw StateError('Failed to create study session');
+    }
+    return StudySessionModel.fromJson(response);
+  }
+
+  Future<StudySessionModel> updateSession(StudySessionModel session) async {
+    final response = await client
+        .from('study_sessions')
+        .update(session.toJson())
+        .eq('id', session.id)
+        .select()
+        .maybeSingle();
+    if (response == null) {
+      throw StateError('Failed to update study session');
+    }
+    return StudySessionModel.fromJson(response);
+  }
+
+  Future<void> deleteSession(String sessionId) async {
+    await client.from('study_sessions').delete().eq('id', sessionId);
+  }
+
+  Future<StudySessionModel> endSession(String sessionId) async {
+    final response = await client
+        .from('study_sessions')
+        .update({'status': 'completed'})
+        .eq('id', sessionId)
+        .select()
+        .maybeSingle();
+    if (response == null) {
+      throw StateError('Failed to end study session');
+    }
+    return StudySessionModel.fromJson(response);
+  }
+
+  Future<Duration> getTotalStudyTime() async {
+    final currentUser = getCurrentUser();
+    if (currentUser == null) return Duration.zero;
+    final response = await client
+        .from('study_sessions')
+        .select('duration_minutes, actual_duration_minutes')
+        .eq('user_id', currentUser.id);
+    final rows = response as List<dynamic>;
+    final totalMinutes = rows.fold<int>(0, (sum, item) {
+      final session = item as Map<String, dynamic>;
+      return sum +
+          ((session['actual_duration_minutes'] as int?) ??
+              (session['duration_minutes'] as int?) ??
+              0);
+    });
+    return Duration(minutes: totalMinutes);
+  }
+
+  Future<int> getDailyStreak() async {
+    final currentUser = getCurrentUser();
+    if (currentUser == null) return 0;
+    final response = await client
+        .from('study_sessions')
+        .select('scheduled_date')
+        .eq('user_id', currentUser.id)
+        .order('scheduled_date', ascending: false);
+    final distinctDays =
+        (response as List<dynamic>)
+            .map(
+              (item) => DateTime.parse(
+                (item as Map<String, dynamic>)['scheduled_date'] as String,
+              ),
+            )
+            .map((date) => DateTime(date.year, date.month, date.day))
+            .toSet()
+            .toList()
+          ..sort((a, b) => b.compareTo(a));
+
+    var streak = 0;
+    var cursor = DateTime.now();
+    for (final day in distinctDays) {
+      final expected = DateTime(cursor.year, cursor.month, cursor.day);
+      if (day == expected) {
+        streak++;
+        cursor = cursor.subtract(const Duration(days: 1));
+      } else if (day.isBefore(expected)) {
+        break;
+      }
+    }
+    return streak;
+  }
+
+  Future<List<StudySessionModel>> getSessionsToday() async {
+    final currentUser = getCurrentUser();
+    if (currentUser == null) return const [];
+    final today = DateTime.now().toIso8601String().split('T').first;
+    final response = await client
+        .from('study_sessions')
+        .select()
+        .eq('user_id', currentUser.id)
+        .eq('scheduled_date', today)
+        .order('scheduled_date', ascending: false);
+    return (response as List<dynamic>)
+        .map((item) => StudySessionModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<Duration> getAverageSessionDuration() async {
+    final currentUser = getCurrentUser();
+    if (currentUser == null) return Duration.zero;
+    final response = await client
+        .from('study_sessions')
+        .select('duration_minutes, actual_duration_minutes')
+        .eq('user_id', currentUser.id);
+    final rows = response as List<dynamic>;
+    if (rows.isEmpty) return Duration.zero;
+    final totalMinutes = rows.fold<int>(0, (sum, item) {
+      final session = item as Map<String, dynamic>;
+      return sum +
+          ((session['actual_duration_minutes'] as int?) ??
+              (session['duration_minutes'] as int?) ??
+              0);
+    });
+    return Duration(minutes: totalMinutes ~/ rows.length);
+  }
+
+  Future<TopicModel?> getTopic(String topicId) async => getTopicById(topicId);
+
+  Future<TopicModel> createTopic({
+    required String moduleId,
+    required String name,
+    required String description,
+  }) async {
+    final currentUser = getCurrentUser();
+    if (currentUser == null) {
+      throw StateError('No authenticated user available');
+    }
+    final response = await client
+        .from('topics')
+        .insert({
+          'module_id': moduleId,
+          'user_id': currentUser.id,
+          'name': name,
+          'description': description,
+          'is_studied': false,
+          'study_count': 0,
+          'created_at': DateTime.now().toIso8601String(),
+        })
+        .select()
+        .maybeSingle();
+    if (response == null) {
+      throw StateError('Failed to create topic');
+    }
+    return TopicModel.fromJson(response);
+  }
+
+  Future<TopicModel> updateTopic(TopicModel topic) async {
+    final response = await client
+        .from('topics')
+        .update(topic.toJson())
+        .eq('id', topic.id)
+        .select()
+        .maybeSingle();
+    if (response == null) {
+      throw StateError('Failed to update topic');
+    }
+    return TopicModel.fromJson(response);
+  }
+
+  Future<void> rateTopic(String topicId, int rating) async {
+    await updateTopicRating(topicId, rating);
+  }
+
+  Future<List<TopicModel>> getRatedTopics({
+    required int minRating,
+    int? maxRating,
+  }) async {
+    final currentUser = getCurrentUser();
+    if (currentUser == null) return const [];
+    var query = client
+        .from('topics')
+        .select()
+        .eq('user_id', currentUser.id)
+        .gte('current_rating', minRating);
+    if (maxRating != null) {
+      query = query.lte('current_rating', maxRating);
+    }
+    final response = await query;
+    return (response as List<dynamic>)
+        .map((item) => TopicModel.fromJson(item as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<List<TopicModel>> getTopicsDueForReview() async {
+    final currentUser = getCurrentUser();
+    if (currentUser == null) return const [];
+    final topics = await getTopicsNeedingReview(currentUser.id);
+    return topics ?? const [];
+  }
+
+  Future<void> markTopicAsReviewed(String topicId) async {
+    await client
+        .from('topics')
+        .update({'last_studied_at': DateTime.now().toIso8601String()})
+        .eq('id', topicId);
   }
 
   // ---------------------------------------------------------------------------
