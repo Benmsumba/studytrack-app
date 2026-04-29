@@ -124,7 +124,7 @@ class VoiceNoteService {
         return null;
       }
 
-      final model = GenerativeModel(model: 'gemini-1.5-flash', apiKey: apiKey);
+      final model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: apiKey);
 
       final response = await model.generateContent([
         Content.multi([
