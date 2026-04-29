@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:studytrack/core/services/supabase_service.dart';
 import 'package:studytrack/features/auth/controllers/auth_provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 // ---------------------------------------------------------------------------
 // Manual mock

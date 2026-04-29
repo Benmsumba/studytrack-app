@@ -16,9 +16,9 @@ class AuthRepositoryImpl implements AuthRepository {
     if (user == null) return null;
 
     final userData = user.userMetadata ?? {};
-    final createdAt = DateTime.parse(user.createdAt as String);
+    final createdAt = DateTime.parse(user.createdAt);
     final updatedAt = user.updatedAt is String
-        ? DateTime.parse(user.updatedAt! as String)
+        ? DateTime.parse(user.updatedAt!)
         : (user.updatedAt as DateTime?);
 
     return ProfileModel(

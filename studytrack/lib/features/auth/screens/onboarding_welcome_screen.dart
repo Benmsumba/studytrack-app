@@ -119,7 +119,12 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.auto_stories_rounded, size: 88, color: AppColors.cyan)
+        Image.asset(
+              'assets/icon/app_icon.png',
+              width: 88,
+              height: 88,
+              fit: BoxFit.contain,
+            )
             .animate()
             .fadeIn(duration: 500.ms)
             .scale(

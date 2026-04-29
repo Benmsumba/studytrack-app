@@ -11,7 +11,6 @@ void main() {
         '/splash',
         '/login',
         '/signup',
-        '/onboarding-welcome',
       ];
 
       for (final route in publicRoutes) {
