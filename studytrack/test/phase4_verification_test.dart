@@ -1,9 +1,24 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:studytrack/core/constants/app_constants.dart';
 import 'package:studytrack/core/utils/validators.dart';
 import 'package:studytrack/models/module_model.dart';
 import 'package:studytrack/models/user_model.dart';
 
 void main() {
+  // ---------------------------------------------------------------------------
+  // AppConstants
+  // ---------------------------------------------------------------------------
+
+  test('supabase defaults are treated as unconfigured', () {
+    expect(AppConstants.isSupabaseConfigured, isFalse);
+    expect(AppConstants.resolvedSupabaseUrl, 'YOUR_SUPABASE_URL');
+    expect(AppConstants.resolvedSupabaseAnonKey, 'YOUR_SUPABASE_ANON_KEY');
+  });
+
+  // ---------------------------------------------------------------------------
+  // Validators
+  // ---------------------------------------------------------------------------
+
   group('Validators — email', () {
     test('accepts standard email addresses', () {
       expect(Validators.email('user@example.com'), isNull);
@@ -16,7 +31,7 @@ void main() {
       expect(Validators.email(null), isNotNull);
     });
 
-    test('rejects addresses without a domain', () {
+    test('rejects addresses without a proper domain', () {
       expect(Validators.email('no-at-sign'), isNotNull);
       expect(Validators.email('missing@'), isNotNull);
       expect(Validators.email('@nodomain.com'), isNotNull);
@@ -72,6 +87,10 @@ void main() {
     });
   });
 
+  // ---------------------------------------------------------------------------
+  // ModuleModel
+  // ---------------------------------------------------------------------------
+
   group('ModuleModel — serialisation', () {
     test('fromJson / toJson round-trip is stable', () {
       final now = DateTime.now().toUtc();
@@ -110,6 +129,10 @@ void main() {
     });
   });
 
+  // ---------------------------------------------------------------------------
+  // ProfileModel
+  // ---------------------------------------------------------------------------
+
   group('ProfileModel — serialisation', () {
     test('fromJson handles optional fields gracefully', () {
       final json = {
@@ -125,6 +148,42 @@ void main() {
       expect(profile.streakCount, 3);
       expect(profile.name, isNull);
       expect(profile.course, isNull);
+    });
+
+    test('fromJson maps all fields and toJson round-trips correctly', () {
+      final payload = {
+        'id': 'user-1',
+        'name': 'Test Student',
+        'course': 'MBBS',
+        'year_level': 3,
+        'prime_study_time': 'night',
+        'study_hours_per_day': 4,
+        'study_preference': 'alone',
+        'avatar_url': 'https://example.com/avatar.png',
+        'streak_count': 7,
+        'last_study_date': '2026-04-29',
+        'created_at': '2026-04-28T10:00:00.000Z',
+        'updated_at': '2026-04-29T10:00:00.000Z',
+      };
+
+      final profile = ProfileModel.fromJson(payload);
+
+      expect(profile.id, 'user-1');
+      expect(profile.name, 'Test Student');
+      expect(profile.course, 'MBBS');
+      expect(profile.yearLevel, 3);
+      expect(profile.primeStudyTime, 'night');
+      expect(profile.studyHoursPerDay, 4);
+      expect(profile.studyPreference, 'alone');
+      expect(profile.avatarUrl, 'https://example.com/avatar.png');
+      expect(profile.streakCount, 7);
+      expect(profile.lastStudyDate, DateTime.parse('2026-04-29'));
+
+      final encoded = profile.toJson();
+      expect(encoded['id'], 'user-1');
+      expect(encoded['name'], 'Test Student');
+      expect(encoded['streak_count'], 7);
+      expect(encoded['last_study_date'], '2026-04-29');
     });
   });
 }
