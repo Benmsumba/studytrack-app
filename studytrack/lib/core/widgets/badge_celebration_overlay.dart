@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 
 class BadgeCelebrationOverlay extends StatefulWidget {
   const BadgeCelebrationOverlay({
-    super.key,
-    required this.badgeTitle,
-    required this.badgeDescription,
+    required this.badgeTitle, required this.badgeDescription, super.key,
     this.onDismiss,
   });
 
@@ -41,8 +39,7 @@ class _BadgeCelebrationOverlayState extends State<BadgeCelebrationOverlay> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
+  Widget build(BuildContext context) => GestureDetector(
       onTap: _dismiss,
       child: Material(
         color: Colors.black.withValues(alpha: 0.75),
@@ -105,5 +102,4 @@ class _BadgeCelebrationOverlayState extends State<BadgeCelebrationOverlay> {
         ),
       ),
     );
-  }
 }

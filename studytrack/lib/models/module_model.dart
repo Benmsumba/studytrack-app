@@ -3,14 +3,24 @@ import 'package:flutter/material.dart';
 import '../core/constants/app_colors.dart';
 
 class ModuleModel {
+
+  factory ModuleModel.fromJson(Map<String, dynamic> json) {
+    return ModuleModel(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      name: json['name'] as String,
+      color: json['color'] as String?,
+      semester: json['semester'] as String?,
+      isActive: json['is_active'] as bool? ?? true,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
   const ModuleModel({
     required this.id,
     required this.userId,
     required this.name,
-    this.color,
+    required this.isActive, required this.createdAt, this.color,
     this.semester,
-    required this.isActive,
-    required this.createdAt,
   });
 
   final String id;
@@ -26,20 +36,7 @@ class ModuleModel {
     return AppColors.subjectColors[key] ?? AppColors.accent;
   }
 
-  factory ModuleModel.fromJson(Map<String, dynamic> json) {
-    return ModuleModel(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      name: json['name'] as String,
-      color: json['color'] as String?,
-      semester: json['semester'] as String?,
-      isActive: json['is_active'] as bool? ?? true,
-      createdAt: DateTime.parse(json['created_at'] as String),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
+  Map<String, dynamic> toJson() => {
       'id': id,
       'user_id': userId,
       'name': name,
@@ -48,7 +45,6 @@ class ModuleModel {
       'is_active': isActive,
       'created_at': createdAt.toIso8601String(),
     };
-  }
 
   ModuleModel copyWith({
     String? id,
@@ -58,8 +54,7 @@ class ModuleModel {
     String? semester,
     bool? isActive,
     DateTime? createdAt,
-  }) {
-    return ModuleModel(
+  }) => ModuleModel(
       id: id ?? this.id,
       userId: userId ?? this.userId,
       name: name ?? this.name,
@@ -68,5 +63,4 @@ class ModuleModel {
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
     );
-  }
 }

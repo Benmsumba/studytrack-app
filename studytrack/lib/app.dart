@@ -194,9 +194,7 @@ class StudyTrackApp extends StatelessWidget {
       ),
       GoRoute(path: '/home', redirect: (context, state) => '/home/timetable'),
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) {
-          return MainShell(navigationShell: navigationShell);
-        },
+        builder: (context, state, navigationShell) => MainShell(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(
             routes: [
@@ -306,8 +304,7 @@ class StudyTrackApp extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp.router(
+  Widget build(BuildContext context) => MaterialApp.router(
       debugShowCheckedModeBanner: false,
       routerConfig: _router,
       title: 'StudyTrack',
@@ -323,5 +320,4 @@ class StudyTrackApp extends StatelessWidget {
         );
       },
     );
-  }
 }

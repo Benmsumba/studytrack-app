@@ -167,8 +167,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     );
   }
 
-  Widget _buildIntroPage() {
-    return Container(
+  Widget _buildIntroPage() => Container(
       color: AppColors.backgroundDark,
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -229,10 +228,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildTopicsPage() {
-    return Container(
+  Widget _buildTopicsPage() => Container(
       color: AppColors.accent,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -258,10 +255,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildBestPage() {
-    return Container(
+  Widget _buildBestPage() => Container(
       color: AppColors.backgroundDark,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -296,10 +291,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildWeakestPage() {
-    return Container(
+  Widget _buildWeakestPage() => Container(
       color: AppColors.backgroundDark,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -330,10 +323,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildStreakPage() {
-    return Container(
+  Widget _buildStreakPage() => Container(
       color: AppColors.backgroundDark,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -359,7 +350,6 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 
   Widget _buildSessionsPage() {
     final total = sessionsCompleted + sessionsMissed;
@@ -392,8 +382,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     );
   }
 
-  Widget _buildSummaryPage() {
-    return Container(
+  Widget _buildSummaryPage() => Container(
       color: AppColors.backgroundDark,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -417,10 +406,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildSharePage() {
-    return Container(
+  Widget _buildSharePage() => Container(
       color: AppColors.backgroundDark,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -471,5 +458,4 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 }

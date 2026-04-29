@@ -3,13 +3,6 @@ import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
 class CustomTextField extends StatefulWidget {
-  final TextEditingController? controller;
-  final String? hintText;
-  final String? label;
-  final TextInputType keyboardType;
-  final bool obscureText;
-  final int maxLines;
-  final Function(String)? onChanged;
 
   const CustomTextField({
     super.key,
@@ -21,6 +14,13 @@ class CustomTextField extends StatefulWidget {
     this.maxLines = 1,
     this.onChanged,
   });
+  final TextEditingController? controller;
+  final String? hintText;
+  final String? label;
+  final TextInputType keyboardType;
+  final bool obscureText;
+  final int maxLines;
+  final Function(String)? onChanged;
 
   @override
   State<CustomTextField> createState() => _CustomTextFieldState();
@@ -51,8 +51,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
+  Widget build(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (widget.label != null) ...[
@@ -97,5 +96,4 @@ class _CustomTextFieldState extends State<CustomTextField> {
         ),
       ],
     );
-  }
 }

@@ -3,14 +3,6 @@ import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
 class EmptyStateWidget extends StatelessWidget {
-  final String? message;
-  final String? title;
-  final String? subtitle;
-  final IconData? icon;
-  final String? illustrationName;
-  final VoidCallback? onRetry;
-  final VoidCallback? onAction;
-  final String? actionLabel;
 
   const EmptyStateWidget({
     super.key,
@@ -23,10 +15,17 @@ class EmptyStateWidget extends StatelessWidget {
     this.onAction,
     this.actionLabel,
   });
+  final String? message;
+  final String? title;
+  final String? subtitle;
+  final IconData? icon;
+  final String? illustrationName;
+  final VoidCallback? onRetry;
+  final VoidCallback? onAction;
+  final String? actionLabel;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
+  Widget build(BuildContext context) => Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -87,5 +86,4 @@ class EmptyStateWidget extends StatelessWidget {
         ),
       ),
     );
-  }
 }

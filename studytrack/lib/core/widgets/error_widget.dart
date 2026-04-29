@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class StudyTrackErrorWidget extends StatelessWidget {
-  const StudyTrackErrorWidget({super.key, required this.message, this.onRetry});
+  const StudyTrackErrorWidget({required this.message, super.key, this.onRetry});
 
   final String message;
   final VoidCallback? onRetry;
@@ -21,8 +21,7 @@ class StudyTrackErrorWidget extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
+  Widget build(BuildContext context) => Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -61,5 +60,4 @@ class StudyTrackErrorWidget extends StatelessWidget {
         ),
       ),
     );
-  }
 }

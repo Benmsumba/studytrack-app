@@ -86,8 +86,7 @@ void main() {
   });
 }
 
-TopicModel _topic({required int? currentRating}) {
-  return TopicModel(
+TopicModel _topic({required int? currentRating}) => TopicModel(
     id: 'topic-1',
     moduleId: 'module-1',
     userId: 'user-1',
@@ -97,4 +96,3 @@ TopicModel _topic({required int? currentRating}) {
     studyCount: 0,
     createdAt: DateTime.parse('2026-04-29T00:00:00.000Z'),
   );
-}

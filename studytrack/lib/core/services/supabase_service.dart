@@ -9,15 +9,14 @@ import '../../models/topic_model.dart';
 import 'offline_sync_service.dart';
 
 class SupabaseService {
+
+  factory SupabaseService() => _instance;
   SupabaseService._internal();
 
   static final SupabaseService _instance = SupabaseService._internal();
 
-  factory SupabaseService() => _instance;
-
   @visibleForTesting
   SupabaseService.forTesting();
-
   RealtimeChannel? _messagesChannel;
   String? _lastAuthError;
   final OfflineSyncService _offlineSync = OfflineSyncService.instance;
@@ -30,9 +29,7 @@ class SupabaseService {
 
   String _queryKey(String entity, String scope) => '$entity::$scope';
 
-  Future<List<Map<String, dynamic>>?> _cachedList(String entity, String scope) {
-    return _offlineSync.cachedQuery(_queryKey(entity, scope));
-  }
+  Future<List<Map<String, dynamic>>?> _cachedList(String entity, String scope) => _offlineSync.cachedQuery(_queryKey(entity, scope));
 
   Future<void> _cacheList(
     String entity,
@@ -46,9 +43,7 @@ class SupabaseService {
     );
   }
 
-  Future<Map<String, dynamic>?> _cachedRecord(String entity, String recordId) {
-    return _offlineSync.cachedRecord(entity: entity, recordId: recordId);
-  }
+  Future<Map<String, dynamic>?> _cachedRecord(String entity, String recordId) => _offlineSync.cachedRecord(entity: entity, recordId: recordId);
 
   Future<void> _cacheRecord(
     String entity,
@@ -296,8 +291,7 @@ class SupabaseService {
   Future<Map<String, dynamic>?> _upsertProfile({
     required String userId,
     required Map<String, dynamic> data,
-  }) async {
-    return await client
+  }) async => await client
         .from('profiles')
         .upsert({
           'id': userId,
@@ -306,7 +300,6 @@ class SupabaseService {
         }, onConflict: 'id')
         .select()
         .maybeSingle();
-  }
 
   Future<void> _ensureProfileExists(User user) async {
     final metadata = user.userMetadata ?? <String, dynamic>{};
@@ -878,6 +871,11 @@ class SupabaseService {
     }
   }
 
+<<<<<<< HEAD
+=======
+  Future<bool?> deleteTopics(String topicId) async => deleteTopic(topicId);
+
+>>>>>>> 01219de (fix: align SupabaseService API and tests; convert User->ProfileModel; resolve AuthException conflict)
   // ---------------------------------------------------------------------------
   // TIMETABLE
   // ---------------------------------------------------------------------------
@@ -1924,15 +1922,13 @@ class SupabaseService {
     List<String> chunks,
   ) async {
     try {
-      final payload = chunks.asMap().entries.map((entry) {
-        return {
+      final payload = chunks.asMap().entries.map((entry) => {
           'id': _newId(),
           'note_id': noteId,
           'chunk_index': entry.key,
           'content': entry.value,
           'created_at': DateTime.now().toIso8601String(),
-        };
-      }).toList();
+        }).toList();
 
       if (await _isOnline()) {
         final response = await client

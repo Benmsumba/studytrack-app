@@ -10,7 +10,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
 
 class GroupDetailScreen extends StatefulWidget {
-  const GroupDetailScreen({super.key, required this.groupId, this.group});
+  const GroupDetailScreen({required this.groupId, super.key, this.group});
 
   final String groupId;
   final Map<String, dynamic>? group;
@@ -53,7 +53,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
 
     // Schema limitation: uploaded_notes has no direct group_id.
     // We show globally shared notes as a practical fallback.
-    List<Map<String, dynamic>> sharedNotes = [];
+    var sharedNotes = <Map<String, dynamic>>[];
     try {
       final notes = await _service.client
           .from('uploaded_notes')
@@ -78,7 +78,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       }
     }
 
-    List<Map<String, dynamic>> sessions = [];
+    var sessions = <Map<String, dynamic>>[];
     final user = _service.getCurrentUser();
     if (user != null) {
       try {
@@ -569,8 +569,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     );
   }
 
-  Widget _chatTab() {
-    return Center(
+  Widget _chatTab() => Center(
       child: FilledButton.icon(
         onPressed: () =>
             context.push('/group/${widget.groupId}/chat', extra: widget.group),
@@ -578,5 +577,4 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         label: const Text('Open Group Chat'),
       ),
     );
-  }
 }

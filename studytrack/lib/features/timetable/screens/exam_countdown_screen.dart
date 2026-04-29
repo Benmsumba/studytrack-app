@@ -82,8 +82,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: RefreshIndicator(
@@ -243,5 +242,4 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
         ),
       ),
     );
-  }
 }

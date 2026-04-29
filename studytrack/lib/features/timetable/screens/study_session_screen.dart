@@ -267,8 +267,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
     final result = await showDialog<int>(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
-        return StatefulBuilder(
+      builder: (context) => StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
               backgroundColor: AppColors.surfaceDark,
@@ -322,8 +321,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
               ],
             );
           },
-        );
-      },
+        ),
     );
 
     if (result != null) {
@@ -450,8 +448,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                       TweenAnimationBuilder<double>(
                         duration: const Duration(milliseconds: 400),
                         tween: Tween<double>(begin: 0, end: progress),
-                        builder: (context, value, _) {
-                          return SizedBox(
+                        builder: (context, value, _) => SizedBox(
                             width: 240,
                             height: 240,
                             child: CircularProgressIndicator(
@@ -462,8 +459,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                                   : AppColors.primary,
                               backgroundColor: AppColors.border,
                             ),
-                          );
-                        },
+                          ),
                       ),
                       Column(
                         mainAxisSize: MainAxisSize.min,

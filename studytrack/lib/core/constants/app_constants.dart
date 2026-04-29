@@ -39,12 +39,10 @@ class AppConstants {
     return fromEnv.isNotEmpty ? fromEnv : geminiApiKey;
   }
 
-  static bool get isSupabaseConfigured {
-    return resolvedSupabaseUrl.isNotEmpty &&
+  static bool get isSupabaseConfigured => resolvedSupabaseUrl.isNotEmpty &&
         resolvedSupabaseAnonKey.isNotEmpty &&
         resolvedSupabaseUrl != 'YOUR_SUPABASE_URL' &&
         resolvedSupabaseAnonKey != 'YOUR_SUPABASE_ANON_KEY';
-  }
 
   static bool get isGeminiConfigured {
     final key = resolvedGeminiApiKey;

@@ -186,8 +186,7 @@ class OfflineDataStore {
       'SELECT id, entity, operation, record_id, payload, created_at FROM pending_changes ORDER BY id ASC',
     );
 
-    return rows.map((row) {
-      return OfflinePendingChange(
+    return rows.map((row) => OfflinePendingChange(
         id: row['id'] as int,
         entity: row['entity'] as String,
         operation: row['operation'] as String,
@@ -197,8 +196,7 @@ class OfflineDataStore {
         createdAt:
             DateTime.tryParse(row['created_at'] as String? ?? '') ??
             DateTime.now(),
-      );
-    }).toList();
+      )).toList();
   }
 
   Future<void> removePendingChange(int id) async {

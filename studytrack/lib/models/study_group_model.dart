@@ -1,19 +1,4 @@
 class StudyGroupModel {
-  const StudyGroupModel({
-    required this.id,
-    required this.name,
-    this.description,
-    required this.createdBy,
-    required this.inviteCode,
-    required this.createdAt,
-  });
-
-  final String id;
-  final String name;
-  final String? description;
-  final String createdBy;
-  final String inviteCode;
-  final DateTime createdAt;
 
   factory StudyGroupModel.fromJson(Map<String, dynamic> json) {
     return StudyGroupModel(
@@ -25,9 +10,20 @@ class StudyGroupModel {
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
+  const StudyGroupModel({
+    required this.id,
+    required this.name,
+    required this.createdBy, required this.inviteCode, required this.createdAt, this.description,
+  });
 
-  Map<String, dynamic> toJson() {
-    return {
+  final String id;
+  final String name;
+  final String? description;
+  final String createdBy;
+  final String inviteCode;
+  final DateTime createdAt;
+
+  Map<String, dynamic> toJson() => {
       'id': id,
       'name': name,
       'description': description,
@@ -35,7 +31,6 @@ class StudyGroupModel {
       'invite_code': inviteCode,
       'created_at': createdAt.toIso8601String(),
     };
-  }
 
   StudyGroupModel copyWith({
     String? id,
@@ -44,8 +39,7 @@ class StudyGroupModel {
     String? createdBy,
     String? inviteCode,
     DateTime? createdAt,
-  }) {
-    return StudyGroupModel(
+  }) => StudyGroupModel(
       id: id ?? this.id,
       name: name ?? this.name,
       description: description ?? this.description,
@@ -53,5 +47,4 @@ class StudyGroupModel {
       inviteCode: inviteCode ?? this.inviteCode,
       createdAt: createdAt ?? this.createdAt,
     );
-  }
 }

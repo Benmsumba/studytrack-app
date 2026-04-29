@@ -12,8 +12,7 @@ class _OnboardingStep2ScreenState extends State<OnboardingStep2Screen> {
   final int _selectedCoursesCount = 0;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       body: SafeArea(
         child: Padding(
@@ -118,10 +117,8 @@ class _OnboardingStep2ScreenState extends State<OnboardingStep2Screen> {
         ),
       ),
     );
-  }
 
-  Widget _buildDots() {
-    return Row(
+  Widget _buildDots() => Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
         6,
@@ -138,10 +135,8 @@ class _OnboardingStep2ScreenState extends State<OnboardingStep2Screen> {
         ),
       ),
     );
-  }
 
-  Widget _buildCourseCheckbox(String name, IconData icon) {
-    return Padding(
+  Widget _buildCourseCheckbox(String name, IconData icon) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         padding: const EdgeInsets.all(12),
@@ -175,5 +170,4 @@ class _OnboardingStep2ScreenState extends State<OnboardingStep2Screen> {
         ),
       ),
     );
-  }
 }

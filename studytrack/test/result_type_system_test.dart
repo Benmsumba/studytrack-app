@@ -6,8 +6,8 @@ void main() {
   group('Result Type System Tests', () {
     group('Success type', () {
       test('constructor and equality', () {
-        final result1 = Success<String>('value');
-        final result2 = Success<String>('value');
+        const result1 = Success<String>('value');
+        const result2 = Success<String>('value');
 
         expect(result1.data, equals('value'));
         expect(result1.isSuccess, isTrue);
@@ -15,7 +15,7 @@ void main() {
       });
 
       test('toString representation', () {
-        final result = Success<String>('test data');
+        const result = Success<String>('test data');
         expect(result.toString(), contains('Success'));
       });
     });
@@ -39,7 +39,7 @@ void main() {
 
     group('map transformation', () {
       test('Success.map applies transformation', () {
-        final result = Success<int>(5).map((x) => x * 2);
+        final result = const Success<int>(5).map((x) => x * 2);
 
         expect(result.isSuccess, isTrue);
         expect((result as Success<int>).data, equals(10));
@@ -54,7 +54,7 @@ void main() {
       });
 
       test('map chain works correctly', () {
-        final result = Success<int>(
+        final result = const Success<int>(
           2,
         ).map((x) => x + 3).map((x) => x * 2).map((x) => x - 1);
 
@@ -64,7 +64,7 @@ void main() {
 
     group('flatMap (monadic bind)', () {
       test('flatMap chains operations', () {
-        final result = Success<int>(5).flatMap((x) => Success(x * 2));
+        final result = const Success<int>(5).flatMap((x) => Success(x * 2));
 
         expect(result.isSuccess, isTrue);
         expect((result as Success<int>).data, equals(10));
@@ -72,7 +72,7 @@ void main() {
 
       test('flatMap stops on first failure', () {
         final error = ValidationException(message: 'Invalid input');
-        final result = Success<int>(5).flatMap((_) => Failure<int>(error));
+        final result = const Success<int>(5).flatMap((_) => Failure<int>(error));
 
         expect(result.isFailure, isTrue);
         expect((result as Failure<int>).error.message, contains('Invalid'));
@@ -86,8 +86,8 @@ void main() {
           return Success(value * 2);
         }
 
-        final successResult = Success<int>(5).flatMap(validate);
-        final failureResult = Success<int>(-5).flatMap(validate);
+        final successResult = const Success<int>(5).flatMap(validate);
+        final failureResult = const Success<int>(-5).flatMap(validate);
 
         expect(successResult.isSuccess, isTrue);
         expect(failureResult.isFailure, isTrue);
@@ -96,7 +96,7 @@ void main() {
 
     group('fold pattern matching', () {
       test('fold for Success calls success branch', () {
-        final result = Success<String>('hello');
+        const result = Success<String>('hello');
 
         final value = result.fold(
           (error) => 'Error: ${error.message}',
@@ -119,7 +119,7 @@ void main() {
       });
 
       test('fold converts result to different type', () {
-        final result = Success<int>(42);
+        const result = Success<int>(42);
 
         final httpStatus = result.fold((error) => 500, (data) => 200);
 
@@ -132,7 +132,7 @@ void main() {
         var called = false;
         var value = 0;
 
-        Success<int>(42).onSuccess((data) {
+        const Success<int>(42).onSuccess((data) {
           called = true;
           value = data;
         });
@@ -167,7 +167,7 @@ void main() {
       test('onFailure does not call on Success', () {
         var called = false;
 
-        Success<int>(42).onFailure((error) {
+        const Success<int>(42).onFailure((error) {
           called = true;
         });
 
@@ -178,7 +178,7 @@ void main() {
         var successCalled = false;
         var failureCalled = false;
 
-        final result = Success<int>(42)
+        final result = const Success<int>(42)
             .onSuccess((_) => successCalled = true)
             .onFailure((_) => failureCalled = true);
 
@@ -210,7 +210,7 @@ void main() {
       });
 
       test('Custom exception message preserved', () {
-        final message = 'Custom error message';
+        const message = 'Custom error message';
         final exc = AppGenericException(message: message);
         expect(exc.toString(), equals(message));
       });
@@ -227,21 +227,21 @@ void main() {
 
     group('Result error handling patterns', () {
       test('getOrThrow on Success returns value', () {
-        final result = Success<String>('data');
+        const result = Success<String>('data');
         expect(result.getOrThrow(), equals('data'));
       });
 
       test('getOrThrow on Failure throws exception', () {
         final result = Failure<String>(AppGenericException(message: 'error'));
-        expect(() => result.getOrThrow(), throwsException);
+        expect(result.getOrThrow, throwsException);
       });
 
       test('Safe extraction with fold', () {
         final results = <Result<int>>[
-          Success<int>(1),
-          Success<int>(2),
+          const Success<int>(1),
+          const Success<int>(2),
           Failure<int>(AppGenericException(message: 'error')),
-          Success<int>(3),
+          const Success<int>(3),
         ];
 
         final values = <int>[];
@@ -250,7 +250,7 @@ void main() {
         for (final result in results) {
           result.fold(
             (error) => errors.add(error as Exception),
-            (data) => values.add(data),
+            values.add,
           );
         }
 
@@ -259,7 +259,7 @@ void main() {
       });
 
       test('Combined operations with error propagation', () {
-        final result = Success<int>(5).map((x) => x + 3).flatMap((x) {
+        final result = const Success<int>(5).map((x) => x + 3).flatMap((x) {
           if (x > 10) {
             return Failure(ValidationException(message: 'Too large'));
           }

@@ -54,7 +54,7 @@ class StorageService {
           .uploadBinary(
             storagePath,
             bytes,
-            fileOptions: FileOptions(
+            fileOptions: const FileOptions(
               cacheControl: '3600',
               upsert: false,
             ),

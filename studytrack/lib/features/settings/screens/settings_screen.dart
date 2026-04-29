@@ -30,23 +30,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Study Preferences
-              _SectionHeader(title: 'Study Preferences'),
+              const _SectionHeader(title: 'Study Preferences'),
               const SizedBox(height: 16),
-              _SettingsCard(
+              const _SettingsCard(
                 title: 'Daily Study Goal',
                 subtitle: '5 hours per day',
-                trailing: const Icon(Icons.arrow_forward),
+                trailing: Icon(Icons.arrow_forward),
               ),
               const SizedBox(height: 12),
-              _SettingsCard(
+              const _SettingsCard(
                 title: 'Pomodoro Duration',
                 subtitle: '25 minutes',
-                trailing: const Icon(Icons.arrow_forward),
+                trailing: Icon(Icons.arrow_forward),
               ),
               const SizedBox(height: 32),
 
               // Notifications
-              _SectionHeader(title: 'Notifications'),
+              const _SectionHeader(title: 'Notifications'),
               const SizedBox(height: 16),
               _SettingsToggle(
                 title: 'Daily Briefing',
@@ -78,7 +78,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 32),
 
               // Appearance
-              _SectionHeader(title: 'Appearance'),
+              const _SectionHeader(title: 'Appearance'),
               const SizedBox(height: 16),
               _SettingsToggle(
                 title: 'Dark Mode',
@@ -89,7 +89,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 32),
 
               // Account
-              _SectionHeader(title: 'Account'),
+              const _SectionHeader(title: 'Account'),
               const SizedBox(height: 16),
               _SettingsCard(
                 title: 'Edit Profile',
@@ -98,21 +98,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: () => context.push('/profile'),
               ),
               const SizedBox(height: 12),
-              _SettingsCard(
+              const _SettingsCard(
                 title: 'Change Password',
                 subtitle: 'Update your password',
-                trailing: const Icon(Icons.arrow_forward),
+                trailing: Icon(Icons.arrow_forward),
               ),
               const SizedBox(height: 12),
-              _SettingsCard(
+              const _SettingsCard(
                 title: 'Export Data',
                 subtitle: 'Download as JSON',
-                trailing: const Icon(Icons.download),
+                trailing: Icon(Icons.download),
               ),
               const SizedBox(height: 32),
 
               // About
-              _SectionHeader(title: 'About'),
+              const _SectionHeader(title: 'About'),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -184,13 +184,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 }
 
 class _SectionHeader extends StatelessWidget {
-  final String title;
 
   const _SectionHeader({required this.title});
+  final String title;
 
   @override
-  Widget build(BuildContext context) {
-    return Text(
+  Widget build(BuildContext context) => Text(
       title,
       style: GoogleFonts.outfit(
         fontSize: 16,
@@ -198,14 +197,9 @@ class _SectionHeader extends StatelessWidget {
         color: Colors.white,
       ),
     );
-  }
 }
 
 class _SettingsCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final Widget trailing;
-  final VoidCallback? onTap;
 
   const _SettingsCard({
     required this.title,
@@ -213,10 +207,13 @@ class _SettingsCard extends StatelessWidget {
     required this.trailing,
     this.onTap,
   });
+  final String title;
+  final String subtitle;
+  final Widget trailing;
+  final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
+  Widget build(BuildContext context) => GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -254,14 +251,9 @@ class _SettingsCard extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 class _SettingsToggle extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final bool value;
-  final Function(bool) onChanged;
 
   const _SettingsToggle({
     required this.title,
@@ -269,10 +261,13 @@ class _SettingsToggle extends StatelessWidget {
     required this.value,
     required this.onChanged,
   });
+  final String title;
+  final String subtitle;
+  final bool value;
+  final Function(bool) onChanged;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cardDark,
@@ -311,5 +306,4 @@ class _SettingsToggle extends StatelessWidget {
         ],
       ),
     );
-  }
 }

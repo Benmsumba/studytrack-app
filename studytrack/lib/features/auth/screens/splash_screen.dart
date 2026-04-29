@@ -96,7 +96,7 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _handleRedirect() async {
     if (!mounted) return;
 
-    bool isLoggedIn = false;
+    var isLoggedIn = false;
     try {
       isLoggedIn = SupabaseService().isLoggedIn();
     } catch (_) {
@@ -119,8 +119,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: Center(
@@ -176,5 +175,4 @@ class _SplashScreenState extends State<SplashScreen> {
         ),
       ),
     );
-  }
 }

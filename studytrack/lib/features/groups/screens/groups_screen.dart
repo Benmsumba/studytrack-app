@@ -49,8 +49,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (sheetContext) {
-        return Padding(
+      builder: (sheetContext) => Padding(
           padding: EdgeInsets.fromLTRB(
             16,
             16,
@@ -189,8 +188,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
               ),
             ],
           ),
-        );
-      },
+        ),
     );
   }
 
@@ -204,8 +202,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
-        return Padding(
+      builder: (context) => Padding(
           padding: EdgeInsets.fromLTRB(
             16,
             16,
@@ -286,8 +283,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
               ),
             ],
           ),
-        );
-      },
+        ),
     );
   }
 
@@ -322,8 +318,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -536,5 +531,4 @@ class _GroupsScreenState extends State<GroupsScreen> {
         label: const Text('Group'),
       ),
     );
-  }
 }

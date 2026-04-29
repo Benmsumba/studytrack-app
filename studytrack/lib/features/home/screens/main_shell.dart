@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 
 class MainShell extends StatelessWidget {
-  const MainShell({super.key, required this.navigationShell});
+  const MainShell({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
 
@@ -69,8 +69,7 @@ class _Header extends StatelessWidget {
   final VoidCallback onNotificationTap;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
+  Widget build(BuildContext context) => Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,7 +116,6 @@ class _Header extends StatelessWidget {
         ],
       ),
     );
-  }
 }
 
 class _BottomNavBar extends StatelessWidget {
@@ -134,8 +132,7 @@ class _BottomNavBar extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surfaceDark,
@@ -199,7 +196,6 @@ class _BottomNavBar extends StatelessWidget {
         }),
       ),
     );
-  }
 }
 
 class _StudyNowFab extends StatelessWidget {
@@ -208,8 +204,7 @@ class _StudyNowFab extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
+  Widget build(BuildContext context) => GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -240,5 +235,4 @@ class _StudyNowFab extends StatelessWidget {
         ),
       ),
     );
-  }
 }

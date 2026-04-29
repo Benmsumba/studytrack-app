@@ -1,31 +1,4 @@
 class ProfileModel {
-  const ProfileModel({
-    required this.id,
-    this.name,
-    this.course,
-    this.yearLevel,
-    this.primeStudyTime,
-    this.studyHoursPerDay,
-    this.studyPreference,
-    this.avatarUrl,
-    required this.streakCount,
-    this.lastStudyDate,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-
-  final String id;
-  final String? name;
-  final String? course;
-  final int? yearLevel;
-  final String? primeStudyTime;
-  final int? studyHoursPerDay;
-  final String? studyPreference;
-  final String? avatarUrl;
-  final int streakCount;
-  final DateTime? lastStudyDate;
-  final DateTime createdAt;
-  final DateTime updatedAt;
 
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
     return ProfileModel(
@@ -45,9 +18,32 @@ class ProfileModel {
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
   }
+  const ProfileModel({
+    required this.id,
+    required this.streakCount, required this.createdAt, required this.updatedAt, this.name,
+    this.course,
+    this.yearLevel,
+    this.primeStudyTime,
+    this.studyHoursPerDay,
+    this.studyPreference,
+    this.avatarUrl,
+    this.lastStudyDate,
+  });
 
-  Map<String, dynamic> toJson() {
-    return {
+  final String id;
+  final String? name;
+  final String? course;
+  final int? yearLevel;
+  final String? primeStudyTime;
+  final int? studyHoursPerDay;
+  final String? studyPreference;
+  final String? avatarUrl;
+  final int streakCount;
+  final DateTime? lastStudyDate;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  Map<String, dynamic> toJson() => {
       'id': id,
       'name': name,
       'course': course,
@@ -61,7 +57,6 @@ class ProfileModel {
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
     };
-  }
 
   ProfileModel copyWith({
     String? id,
@@ -76,8 +71,7 @@ class ProfileModel {
     DateTime? lastStudyDate,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) {
-    return ProfileModel(
+  }) => ProfileModel(
       id: id ?? this.id,
       name: name ?? this.name,
       course: course ?? this.course,
@@ -91,5 +85,4 @@ class ProfileModel {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
-  }
 }

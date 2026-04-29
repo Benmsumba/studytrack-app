@@ -100,8 +100,7 @@ void main() {
 StudySessionModel _session({
   required DateTime scheduledDate,
   required String status,
-}) {
-  return StudySessionModel(
+}) => StudySessionModel(
     id: 'session-1',
     userId: 'user-1',
     topicId: 'topic-1',
@@ -115,4 +114,3 @@ StudySessionModel _session({
     actualDurationMinutes: 50,
     createdAt: DateTime.parse('2026-04-20T10:00:00.000Z'),
   );
-}

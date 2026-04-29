@@ -129,11 +129,9 @@ class TimetableProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool _isSameDate(DateTime first, DateTime second) {
-    return first.year == second.year &&
+  bool _isSameDate(DateTime first, DateTime second) => first.year == second.year &&
         first.month == second.month &&
         first.day == second.day;
-  }
 
   void _setLoading(bool value) {
     _isLoading = value;

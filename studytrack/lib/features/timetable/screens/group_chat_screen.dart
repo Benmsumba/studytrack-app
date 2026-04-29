@@ -5,7 +5,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
 
 class GroupChatScreen extends StatefulWidget {
-  const GroupChatScreen({super.key, required this.groupId, this.group});
+  const GroupChatScreen({required this.groupId, super.key, this.group});
 
   final String groupId;
   final Map<String, dynamic>? group;
@@ -186,7 +186,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     child: TextField(
                       controller: _messageController,
                       style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: 'Write a message...',
                         hintStyle: TextStyle(color: AppColors.textMuted),
                       ),

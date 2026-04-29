@@ -37,8 +37,7 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: Column(
@@ -119,10 +118,8 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
         ),
       ),
     );
-  }
 
-  Widget _buildWelcomeStep() {
-    return Padding(
+  Widget _buildWelcomeStep() => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 28),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -170,10 +167,8 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
         ],
       ),
     );
-  }
 
-  Widget _featureRow(IconData icon, String label) {
-    return Row(
+  Widget _featureRow(IconData icon, String label) => Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, color: AppColors.accent, size: 20),
@@ -187,10 +182,8 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
         ),
       ],
     ).animate().fadeIn(duration: 400.ms, delay: 250.ms);
-  }
 
-  Widget _buildPrimeTimeStep() {
-    return Padding(
+  Widget _buildPrimeTimeStep() => Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -231,10 +224,8 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildTimeOption(String title, IconData icon, String subtitle) {
-    return WrappedCard(
+  Widget _buildTimeOption(String title, IconData icon, String subtitle) => WrappedCard(
       padding: 12,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -261,5 +252,4 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
         ],
       ),
     );
-  }
 }

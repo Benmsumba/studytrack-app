@@ -131,8 +131,7 @@ class _SignupScreenState extends State<SignupScreen> {
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _authController,
-          builder: (context, _) {
-            return SingleChildScrollView(
+          builder: (context, _) => SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -336,8 +335,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ).animate().fadeIn(duration: 500.ms, delay: 400.ms),
                 ],
               ),
-            );
-          },
+            ),
         ),
       ),
     );
@@ -402,8 +400,7 @@ class _SignupScreenState extends State<SignupScreen> {
     bool obscureText = false,
     Widget? suffixIcon,
     void Function(String)? onChanged,
-  }) {
-    return TextFormField(
+  }) => TextFormField(
       controller: controller,
       validator: validator,
       keyboardType: keyboardType,
@@ -434,7 +431,6 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
       ),
     );
-  }
 
   Widget _buildPasswordStrengthIndicator({
     required double value,
@@ -480,8 +476,7 @@ class _SignupScreenState extends State<SignupScreen> {
     required String label,
     required bool isLoading,
     required VoidCallback? onTap,
-  }) {
-    return GestureDetector(
+  }) => GestureDetector(
       onTap: onTap,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 200),
@@ -515,5 +510,4 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
       ),
     );
-  }
 }

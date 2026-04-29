@@ -1,17 +1,30 @@
 class StudySessionModel {
+
+  factory StudySessionModel.fromJson(Map<String, dynamic> json) {
+    return StudySessionModel(
+      id: json['id'] as String,
+      userId: json['user_id'] as String,
+      topicId: json['topic_id'] as String?,
+      moduleId: json['module_id'] as String?,
+      title: json['title'] as String,
+      scheduledDate: DateTime.parse(json['scheduled_date'] as String),
+      startTime: json['start_time'] as String?,
+      endTime: json['end_time'] as String?,
+      durationMinutes: (json['duration_minutes'] as num?)?.toInt(),
+      status: json['status'] as String,
+      actualDurationMinutes: (json['actual_duration_minutes'] as num?)?.toInt(),
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
   const StudySessionModel({
     required this.id,
     required this.userId,
-    this.topicId,
+    required this.title, required this.scheduledDate, required this.status, required this.createdAt, this.topicId,
     this.moduleId,
-    required this.title,
-    required this.scheduledDate,
     this.startTime,
     this.endTime,
     this.durationMinutes,
-    required this.status,
     this.actualDurationMinutes,
-    required this.createdAt,
   });
 
   final String id;
@@ -40,25 +53,7 @@ class StudySessionModel {
 
   bool get isOverdue => isOverdueAt();
 
-  factory StudySessionModel.fromJson(Map<String, dynamic> json) {
-    return StudySessionModel(
-      id: json['id'] as String,
-      userId: json['user_id'] as String,
-      topicId: json['topic_id'] as String?,
-      moduleId: json['module_id'] as String?,
-      title: json['title'] as String,
-      scheduledDate: DateTime.parse(json['scheduled_date'] as String),
-      startTime: json['start_time'] as String?,
-      endTime: json['end_time'] as String?,
-      durationMinutes: (json['duration_minutes'] as num?)?.toInt(),
-      status: json['status'] as String,
-      actualDurationMinutes: (json['actual_duration_minutes'] as num?)?.toInt(),
-      createdAt: DateTime.parse(json['created_at'] as String),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
+  Map<String, dynamic> toJson() => {
       'id': id,
       'user_id': userId,
       'topic_id': topicId,
@@ -72,7 +67,6 @@ class StudySessionModel {
       'actual_duration_minutes': actualDurationMinutes,
       'created_at': createdAt.toIso8601String(),
     };
-  }
 
   StudySessionModel copyWith({
     String? id,
@@ -87,8 +81,7 @@ class StudySessionModel {
     String? status,
     int? actualDurationMinutes,
     DateTime? createdAt,
-  }) {
-    return StudySessionModel(
+  }) => StudySessionModel(
       id: id ?? this.id,
       userId: userId ?? this.userId,
       topicId: topicId ?? this.topicId,
@@ -103,5 +96,4 @@ class StudySessionModel {
           actualDurationMinutes ?? this.actualDurationMinutes,
       createdAt: createdAt ?? this.createdAt,
     );
-  }
 }

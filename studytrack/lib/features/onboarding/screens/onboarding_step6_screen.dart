@@ -5,8 +5,7 @@ class OnboardingStep6Screen extends StatelessWidget {
   const OnboardingStep6Screen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       body: SafeArea(
         child: Padding(
@@ -117,10 +116,8 @@ class OnboardingStep6Screen extends StatelessWidget {
         ),
       ),
     );
-  }
 
-  Widget _buildDots() {
-    return Row(
+  Widget _buildDots() => Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
         6,
@@ -137,14 +134,12 @@ class OnboardingStep6Screen extends StatelessWidget {
         ),
       ),
     );
-  }
 
   Widget _buildFeature({
     required IconData icon,
     required String title,
     required String subtitle,
-  }) {
-    return Row(
+  }) => Row(
       children: [
         Container(
           width: 40,
@@ -181,5 +176,4 @@ class OnboardingStep6Screen extends StatelessWidget {
         ),
       ],
     );
-  }
 }

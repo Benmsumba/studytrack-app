@@ -153,9 +153,7 @@ class AchievementService {
     }
   }
 
-  bool _sameDate(DateTime first, DateTime second) {
-    return first.year == second.year &&
+  bool _sameDate(DateTime first, DateTime second) => first.year == second.year &&
         first.month == second.month &&
         first.day == second.day;
-  }
 }

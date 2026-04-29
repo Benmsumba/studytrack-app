@@ -7,8 +7,7 @@ import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 
 class TopicChatScreen extends StatefulWidget {
   const TopicChatScreen({
-    super.key,
-    required this.topicId,
+    required this.topicId, super.key,
     this.topicName,
     this.moduleName,
     this.groupName,
@@ -175,8 +174,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (sheetContext) {
-        return Padding(
+      builder: (sheetContext) => Padding(
           padding: EdgeInsets.only(
             left: 16,
             right: 16,
@@ -193,8 +191,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
               }
             },
           ),
-        );
-      },
+        ),
     );
   }
 
@@ -404,7 +401,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                         child: TextField(
                           controller: _messageController,
                           style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             hintText: 'Ask or share something...',
                             hintStyle: TextStyle(color: AppColors.textMuted),
                           ),
@@ -450,13 +447,11 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
     );
   }
 
-  Widget _promptChip(String text) {
-    return ActionChip(
+  Widget _promptChip(String text) => ActionChip(
       label: Text(text),
       onPressed: () => _sendMessage(text),
       backgroundColor: AppColors.surfaceDark,
       labelStyle: GoogleFonts.inter(color: Colors.white, fontSize: 12),
       side: BorderSide(color: AppColors.border),
     );
-  }
 }

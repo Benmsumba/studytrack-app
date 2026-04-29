@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
-
+import 'package:gotrue/gotrue.dart' hide AuthException;
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 import '../../../models/user_model.dart';
 import '../../services/supabase_service.dart';
 import '../../utils/app_exception.dart';
@@ -8,9 +9,34 @@ import '../auth_repository.dart';
 
 /// Implementation of AuthRepository using SupabaseService
 class AuthRepositoryImpl implements AuthRepository {
+  AuthRepositoryImpl(this._supabaseService);
   final SupabaseService _supabaseService;
 
-  AuthRepositoryImpl(this._supabaseService);
+  /// Convert User from Gotrue to ProfileModel
+  ProfileModel? _userToProfileModel(User? user) {
+    if (user == null) return null;
+
+    final userData = user.userMetadata ?? {};
+    final createdAt = user.createdAt is String
+        ? DateTime.parse(user.createdAt as String)
+        : (user.createdAt as DateTime?);
+    final updatedAt = user.updatedAt is String
+        ? DateTime.parse(user.updatedAt as String)
+        : (user.updatedAt as DateTime?);
+
+    return ProfileModel(
+      id: user.id,
+      name: userData['name'] as String?,
+      course: userData['course'] as String?,
+      yearLevel: (userData['year_level'] as num?)?.toInt(),
+      primeStudyTime: userData['prime_study_time'] as String?,
+      studyHoursPerDay: (userData['study_hours_per_day'] as num?)?.toInt(),
+      studyPreference: userData['study_preference'] as String?,
+      streakCount: 0,
+      createdAt: createdAt ?? DateTime.now(),
+      updatedAt: updatedAt ?? DateTime.now(),
+    );
+  }
 
   @override
   Future<Result<ProfileModel>> signUpWithEmail({
@@ -44,7 +70,14 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      return Success(user);
+      final profile = _userToProfileModel(user);
+      if (profile == null) {
+        return Failure(
+          AuthException(message: 'Unable to convert user to profile'),
+        );
+      }
+
+      return Success(profile);
     } catch (e, stack) {
       debugPrint('SignUp error: $e');
       return Failure(
@@ -69,7 +102,14 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
 
-      return Success(user);
+      final profile = _userToProfileModel(user);
+      if (profile == null) {
+        return Failure(
+          AuthException(message: 'Unable to convert user to profile'),
+        );
+      }
+
+      return Success(profile);
     } catch (e, stack) {
       debugPrint('SignIn error: $e');
       return Failure(
@@ -94,8 +134,9 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<ProfileModel?>> getCurrentUser() async {
     try {
-      final user = await _supabaseService.getCurrentUser();
-      return Success(user);
+      final user = _supabaseService.getCurrentUser();
+      final profile = _userToProfileModel(user);
+      return Success(profile);
     } catch (e, stack) {
       debugPrint('GetCurrentUser error: $e');
       return Failure(
@@ -110,7 +151,15 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<void>> resetPassword(String email) async {
     try {
-      await _supabaseService.resetPassword(email);
+      final success = await _supabaseService.resetPasswordForEmail(email);
+      if (!success) {
+        return Failure(
+          AuthException(
+            message:
+                _supabaseService.lastAuthError ?? 'Failed to reset password',
+          ),
+        );
+      }
       return const Success(null);
     } catch (e, stack) {
       debugPrint('ResetPassword error: $e');
@@ -126,17 +175,11 @@ class AuthRepositoryImpl implements AuthRepository {
     required String otp,
   }) async {
     try {
-      final user = await _supabaseService.verifyOtp(email: email, otp: otp);
-
-      if (user == null) {
-        return Failure(
-          AuthException(
-            message: _supabaseService.lastAuthError ?? 'Unable to verify OTP',
-          ),
-        );
-      }
-
-      return Success(user);
+      // Note: verifyOtp is not currently implemented in SupabaseService
+      // This is a placeholder for future implementation
+      return Failure(
+        AuthException(message: 'OTP verification not yet implemented'),
+      );
     } catch (e, stack) {
       debugPrint('VerifyOtp error: $e');
       return Failure(
@@ -151,13 +194,50 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<ProfileModel>> updateProfile(ProfileModel profile) async {
     try {
-      final updated = await _supabaseService.updateProfile(profile);
+      final user = _supabaseService.getCurrentUser();
+      if (user == null) {
+        return Failure(AuthException(message: 'No authenticated user found'));
+      }
+
+      final data = {
+        'name': profile.name,
+        'course': profile.course,
+        'year_level': profile.yearLevel,
+        'prime_study_time': profile.primeStudyTime,
+        'study_hours_per_day': profile.studyHoursPerDay,
+        'study_preference': profile.studyPreference,
+        'avatar_url': profile.avatarUrl,
+      };
+
+      final updated = await _supabaseService.updateProfile(user.id, data);
 
       if (updated == null) {
         return Failure(DataException(message: 'Failed to update profile'));
       }
 
-      return Success(updated);
+      // Merge updated profile data with original
+      final updatedProfile = ProfileModel(
+        id: profile.id,
+        name: updated['name'] as String? ?? profile.name,
+        course: updated['course'] as String? ?? profile.course,
+        yearLevel:
+            (updated['year_level'] as num?)?.toInt() ?? profile.yearLevel,
+        primeStudyTime:
+            updated['prime_study_time'] as String? ?? profile.primeStudyTime,
+        studyHoursPerDay:
+            (updated['study_hours_per_day'] as num?)?.toInt() ??
+            profile.studyHoursPerDay,
+        studyPreference:
+            updated['study_preference'] as String? ?? profile.studyPreference,
+        avatarUrl: updated['avatar_url'] as String? ?? profile.avatarUrl,
+        streakCount:
+            (updated['streak_count'] as num?)?.toInt() ?? profile.streakCount,
+        lastStudyDate: profile.lastStudyDate,
+        createdAt: profile.createdAt,
+        updatedAt: DateTime.now(),
+      );
+
+      return Success(updatedProfile);
     } catch (e, stack) {
       debugPrint('UpdateProfile error: $e');
       return Failure(
@@ -167,7 +247,7 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  bool get isAuthenticated => _supabaseService.isAuthenticated;
+  bool get isAuthenticated => _supabaseService.isLoggedIn();
 
   @override
   String? get lastAuthError => _supabaseService.lastAuthError;

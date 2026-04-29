@@ -71,11 +71,9 @@ class _TimetableScreenState extends State<TimetableScreen> {
     return DateTime(now.year, now.month, now.day).add(Duration(days: offset));
   }
 
-  List<Map<String, dynamic>> get _classesForDay {
-    return _classSlots
+  List<Map<String, dynamic>> get _classesForDay => _classSlots
         .where((item) => (item['day_of_week'] as int?) == _selectedDay)
         .toList();
-  }
 
   String _displayTitleForSelectedDay() {
     final today = DateTime.now().weekday;
@@ -141,8 +139,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -278,10 +275,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
         child: const Icon(Icons.add, color: Colors.white),
       ),
     );
-  }
 
-  Widget _buildSectionHeader(String title, int count) {
-    return Row(
+  Widget _buildSectionHeader(String title, int count) => Row(
       children: [
         Text(
           title,
@@ -309,10 +304,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
         ),
       ],
     );
-  }
 
-  Widget _buildEmptyTile(String message) {
-    return Padding(
+  Widget _buildEmptyTile(String message) => Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Container(
         width: double.infinity,
@@ -331,7 +324,6 @@ class _TimetableScreenState extends State<TimetableScreen> {
         ),
       ),
     );
-  }
 
   Widget _buildClassCard(Map<String, dynamic> slot) {
     final color = _safeColor(slot['color'] as String?);
@@ -787,8 +779,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     );
   }
 
-  Widget _buildAddClassTab() {
-    return ListView(
+  Widget _buildAddClassTab() => ListView(
       children: [
         _buildInput(_subjectController, 'Subject name'),
         const SizedBox(height: 10),
@@ -819,10 +810,8 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
         _buildInput(_lecturerController, 'Lecturer (optional)'),
       ],
     );
-  }
 
-  Widget _buildAddStudyTab() {
-    return ListView(
+  Widget _buildAddStudyTab() => ListView(
       children: [
         _buildInput(_sessionTitleController, 'Session title'),
         const SizedBox(height: 10),
@@ -851,10 +840,8 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
         _buildTopicDropdown(),
       ],
     );
-  }
 
-  Widget _buildInput(TextEditingController controller, String hint) {
-    return TextField(
+  Widget _buildInput(TextEditingController controller, String hint) => TextField(
       controller: controller,
       style: GoogleFonts.inter(color: AppColors.textPrimary),
       decoration: InputDecoration(
@@ -872,7 +859,6 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
         ),
       ),
     );
-  }
 
   Widget _buildDayDropdown() {
     const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -908,8 +894,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     );
   }
 
-  Widget _buildDatePicker() {
-    return InkWell(
+  Widget _buildDatePicker() => InkWell(
       onTap: _pickDate,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -934,14 +919,12 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
         ),
       ),
     );
-  }
 
   Widget _buildTimePicker({
     required String label,
     required TimeOfDay? value,
     required VoidCallback onTap,
-  }) {
-    return InkWell(
+  }) => InkWell(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
@@ -972,10 +955,8 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
         ),
       ),
     );
-  }
 
-  Widget _buildTopicDropdown() {
-    return DropdownButtonFormField<String>(
+  Widget _buildTopicDropdown() => DropdownButtonFormField<String>(
       initialValue: _selectedTopicId,
       dropdownColor: AppColors.surfaceDark,
       style: GoogleFonts.inter(color: AppColors.textPrimary),
@@ -1011,5 +992,4 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
         });
       },
     );
-  }
 }

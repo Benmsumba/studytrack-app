@@ -81,11 +81,11 @@ class ShareController extends ChangeNotifier {
   /// Internal method to capture widget as image
   Future<Uint8List?> _captureWidget(GlobalKey key) async {
     try {
-      final RenderRepaintBoundary boundary =
-          key.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      final boundary =
+          key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
 
-      final ui.Image image = await boundary.toImage(pixelRatio: 1.0);
-      final ByteData? byteData = await image.toByteData(
+      final image = await boundary.toImage(pixelRatio: 1);
+      final byteData = await image.toByteData(
         format: ui.ImageByteFormat.png,
       );
 

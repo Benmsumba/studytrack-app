@@ -9,11 +9,10 @@ class OnboardingStep5Screen extends StatefulWidget {
 }
 
 class _OnboardingStep5ScreenState extends State<OnboardingStep5Screen> {
-  double _dailyTarget = 6.0;
+  double _dailyTarget = 6;
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       body: SafeArea(
         child: Padding(
@@ -163,10 +162,8 @@ class _OnboardingStep5ScreenState extends State<OnboardingStep5Screen> {
         ),
       ),
     );
-  }
 
-  Widget _buildDots() {
-    return Row(
+  Widget _buildDots() => Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
         6,
@@ -183,5 +180,4 @@ class _OnboardingStep5ScreenState extends State<OnboardingStep5Screen> {
         ),
       ),
     );
-  }
 }

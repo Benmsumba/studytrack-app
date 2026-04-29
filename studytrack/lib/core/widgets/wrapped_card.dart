@@ -4,11 +4,6 @@ import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
 class WrappedCard extends StatelessWidget {
-  final Widget child;
-  final List<Color>? customBorderColors;
-  final double padding;
-  final bool enableGlow;
-  final Color? glowColor;
 
   const WrappedCard({
     super.key,
@@ -18,10 +13,14 @@ class WrappedCard extends StatelessWidget {
     this.enableGlow = true,
     this.glowColor,
   });
+  final Widget child;
+  final List<Color>? customBorderColors;
+  final double padding;
+  final bool enableGlow;
+  final Color? glowColor;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
         boxShadow: enableGlow
@@ -70,16 +69,10 @@ class WrappedCard extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 /// Premium button with gradient and neon glow
 class PremiumButton extends StatefulWidget {
-  final String label;
-  final VoidCallback onPressed;
-  final LinearGradient? gradient;
-  final bool isLoading;
-  final double? width;
 
   const PremiumButton({
     super.key,
@@ -89,6 +82,11 @@ class PremiumButton extends StatefulWidget {
     this.isLoading = false,
     this.width,
   });
+  final String label;
+  final VoidCallback onPressed;
+  final LinearGradient? gradient;
+  final bool isLoading;
+  final double? width;
 
   @override
   State<PremiumButton> createState() => _PremiumButtonState();
@@ -96,8 +94,7 @@ class PremiumButton extends StatefulWidget {
 
 class _PremiumButtonState extends State<PremiumButton> {
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       width: widget.width,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -137,18 +134,10 @@ class _PremiumButtonState extends State<PremiumButton> {
         ),
       ),
     );
-  }
 }
 
 /// Premium input field with gradient border and neon focus state
 class PremiumTextField extends StatefulWidget {
-  final String label;
-  final TextEditingController controller;
-  final String? hintText;
-  final TextInputType keyboardType;
-  final bool obscureText;
-  final int maxLines;
-  final Function(String)? onChanged;
 
   const PremiumTextField({
     super.key,
@@ -160,6 +149,13 @@ class PremiumTextField extends StatefulWidget {
     this.maxLines = 1,
     this.onChanged,
   });
+  final String label;
+  final TextEditingController controller;
+  final String? hintText;
+  final TextInputType keyboardType;
+  final bool obscureText;
+  final int maxLines;
+  final Function(String)? onChanged;
 
   @override
   State<PremiumTextField> createState() => _PremiumTextFieldState();
@@ -190,8 +186,7 @@ class _PremiumTextFieldState extends State<PremiumTextField> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Column(
+  Widget build(BuildContext context) => Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(widget.label, style: AppTextStyles.label),
@@ -231,5 +226,4 @@ class _PremiumTextFieldState extends State<PremiumTextField> {
         ),
       ],
     );
-  }
 }

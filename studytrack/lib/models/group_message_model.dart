@@ -1,21 +1,4 @@
 class GroupMessageModel {
-  const GroupMessageModel({
-    required this.id,
-    this.groupId,
-    this.topicId,
-    required this.senderId,
-    required this.content,
-    required this.messageType,
-    required this.createdAt,
-  });
-
-  final String id;
-  final String? groupId;
-  final String? topicId;
-  final String senderId;
-  final String content;
-  final String messageType;
-  final DateTime createdAt;
 
   factory GroupMessageModel.fromJson(Map<String, dynamic> json) {
     return GroupMessageModel(
@@ -28,9 +11,21 @@ class GroupMessageModel {
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
+  const GroupMessageModel({
+    required this.id,
+    required this.senderId, required this.content, required this.messageType, required this.createdAt, this.groupId,
+    this.topicId,
+  });
 
-  Map<String, dynamic> toJson() {
-    return {
+  final String id;
+  final String? groupId;
+  final String? topicId;
+  final String senderId;
+  final String content;
+  final String messageType;
+  final DateTime createdAt;
+
+  Map<String, dynamic> toJson() => {
       'id': id,
       'group_id': groupId,
       'topic_id': topicId,
@@ -39,7 +34,6 @@ class GroupMessageModel {
       'message_type': messageType,
       'created_at': createdAt.toIso8601String(),
     };
-  }
 
   GroupMessageModel copyWith({
     String? id,
@@ -49,8 +43,7 @@ class GroupMessageModel {
     String? content,
     String? messageType,
     DateTime? createdAt,
-  }) {
-    return GroupMessageModel(
+  }) => GroupMessageModel(
       id: id ?? this.id,
       groupId: groupId ?? this.groupId,
       topicId: topicId ?? this.topicId,
@@ -59,5 +52,4 @@ class GroupMessageModel {
       messageType: messageType ?? this.messageType,
       createdAt: createdAt ?? this.createdAt,
     );
-  }
 }

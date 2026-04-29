@@ -74,7 +74,7 @@ Future<void> _bootstrapApp() async {
     );
   }
 
-  await _safeInit(() => OfflineSyncService.instance.initialize());
+  await _safeInit(OfflineSyncService.instance.initialize);
 
   final notificationService = NotificationService();
   await _safeInit(notificationService.initialize);

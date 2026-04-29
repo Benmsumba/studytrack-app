@@ -1,35 +1,4 @@
 class WeeklyReportModel {
-  const WeeklyReportModel({
-    required this.id,
-    required this.userId,
-    required this.weekStart,
-    required this.weekEnd,
-    required this.topicsStudied,
-    required this.topicsPlanned,
-    required this.sessionsCompleted,
-    required this.sessionsPlanned,
-    this.averageRating,
-    this.bestSubject,
-    this.weakestSubject,
-    required this.streakAtEnd,
-    this.aiSummary,
-    required this.createdAt,
-  });
-
-  final String id;
-  final String userId;
-  final DateTime weekStart;
-  final DateTime weekEnd;
-  final int topicsStudied;
-  final int topicsPlanned;
-  final int sessionsCompleted;
-  final int sessionsPlanned;
-  final double? averageRating;
-  final String? bestSubject;
-  final String? weakestSubject;
-  final int streakAtEnd;
-  final String? aiSummary;
-  final DateTime createdAt;
 
   factory WeeklyReportModel.fromJson(Map<String, dynamic> json) {
     return WeeklyReportModel(
@@ -49,9 +18,37 @@ class WeeklyReportModel {
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
+  const WeeklyReportModel({
+    required this.id,
+    required this.userId,
+    required this.weekStart,
+    required this.weekEnd,
+    required this.topicsStudied,
+    required this.topicsPlanned,
+    required this.sessionsCompleted,
+    required this.sessionsPlanned,
+    required this.streakAtEnd, required this.createdAt, this.averageRating,
+    this.bestSubject,
+    this.weakestSubject,
+    this.aiSummary,
+  });
 
-  Map<String, dynamic> toJson() {
-    return {
+  final String id;
+  final String userId;
+  final DateTime weekStart;
+  final DateTime weekEnd;
+  final int topicsStudied;
+  final int topicsPlanned;
+  final int sessionsCompleted;
+  final int sessionsPlanned;
+  final double? averageRating;
+  final String? bestSubject;
+  final String? weakestSubject;
+  final int streakAtEnd;
+  final String? aiSummary;
+  final DateTime createdAt;
+
+  Map<String, dynamic> toJson() => {
       'id': id,
       'user_id': userId,
       'week_start': weekStart.toIso8601String().split('T').first,
@@ -67,7 +64,6 @@ class WeeklyReportModel {
       'ai_summary': aiSummary,
       'created_at': createdAt.toIso8601String(),
     };
-  }
 
   WeeklyReportModel copyWith({
     String? id,
@@ -84,8 +80,7 @@ class WeeklyReportModel {
     int? streakAtEnd,
     String? aiSummary,
     DateTime? createdAt,
-  }) {
-    return WeeklyReportModel(
+  }) => WeeklyReportModel(
       id: id ?? this.id,
       userId: userId ?? this.userId,
       weekStart: weekStart ?? this.weekStart,
@@ -101,5 +96,4 @@ class WeeklyReportModel {
       aiSummary: aiSummary ?? this.aiSummary,
       createdAt: createdAt ?? this.createdAt,
     );
-  }
 }

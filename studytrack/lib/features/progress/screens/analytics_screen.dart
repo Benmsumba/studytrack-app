@@ -6,8 +6,7 @@ class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -27,10 +26,8 @@ class AnalyticsScreen extends StatelessWidget {
         ),
       ),
     );
-  }
 
-  Widget _buildHeader() {
-    return Row(
+  Widget _buildHeader() => Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(
@@ -68,7 +65,6 @@ class AnalyticsScreen extends StatelessWidget {
         ),
       ],
     );
-  }
 
   Widget _buildStatsRow() {
     // Placeholder: Replace with dynamic data from analytics provider
@@ -80,8 +76,7 @@ class AnalyticsScreen extends StatelessWidget {
     ];
 
     return Row(
-      children: stats.map((s) {
-        return Expanded(
+      children: stats.map((s) => Expanded(
           child: Container(
             margin: EdgeInsets.only(right: s != stats.last ? 8 : 0),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
@@ -114,13 +109,11 @@ class AnalyticsScreen extends StatelessWidget {
               ],
             ),
           ),
-        );
-      }).toList(),
+        )).toList(),
     );
   }
 
-  Widget _buildRadarChartCard() {
-    return Container(
+  Widget _buildRadarChartCard() => Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF16213E),
@@ -149,10 +142,8 @@ class AnalyticsScreen extends StatelessWidget {
         ],
       ),
     );
-  }
 
-  Widget _buildHeatmapCard() {
-    return Container(
+  Widget _buildHeatmapCard() => Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF16213E),
@@ -202,7 +193,6 @@ class AnalyticsScreen extends StatelessWidget {
         ],
       ),
     );
-  }
 }
 
 class _HeatmapGrid extends StatelessWidget {
@@ -216,8 +206,7 @@ class _HeatmapGrid extends StatelessWidget {
     ];
 
     return Row(
-      children: List.generate(weeks, (w) {
-        return Expanded(
+      children: List.generate(weeks, (w) => Expanded(
           child: Column(
             children: List.generate(days, (d) {
               final intensity = random[w][d];
@@ -237,8 +226,7 @@ class _HeatmapGrid extends StatelessWidget {
               );
             }),
           ),
-        );
-      }),
+        )),
     );
   }
 }
@@ -264,10 +252,10 @@ class _RadarChartPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1;
 
-    for (int ring = 1; ring <= 4; ring++) {
+    for (var ring = 1; ring <= 4; ring++) {
       final r = radius * ring / 4;
       final path = Path();
-      for (int i = 0; i < subjects.length; i++) {
+      for (var i = 0; i < subjects.length; i++) {
         final angle = (i * 2 * math.pi / subjects.length) - math.pi / 2;
         final x = center.dx + r * math.cos(angle);
         final y = center.dy + r * math.sin(angle);
@@ -282,7 +270,7 @@ class _RadarChartPainter extends CustomPainter {
     }
 
     // Draw spoke lines
-    for (int i = 0; i < subjects.length; i++) {
+    for (var i = 0; i < subjects.length; i++) {
       final angle = (i * 2 * math.pi / subjects.length) - math.pi / 2;
       canvas.drawLine(
         center,
@@ -304,7 +292,7 @@ class _RadarChartPainter extends CustomPainter {
       ..strokeWidth = 2;
 
     final dataPath = Path();
-    for (int i = 0; i < subjects.length; i++) {
+    for (var i = 0; i < subjects.length; i++) {
       final angle = (i * 2 * math.pi / subjects.length) - math.pi / 2;
       final r = radius * values[i];
       final x = center.dx + r * math.cos(angle);
@@ -323,7 +311,7 @@ class _RadarChartPainter extends CustomPainter {
     final dotPaint = Paint()
       ..color = const Color(0xFF7C3AED)
       ..style = PaintingStyle.fill;
-    for (int i = 0; i < subjects.length; i++) {
+    for (var i = 0; i < subjects.length; i++) {
       final angle = (i * 2 * math.pi / subjects.length) - math.pi / 2;
       final r = radius * values[i];
       final x = center.dx + r * math.cos(angle);

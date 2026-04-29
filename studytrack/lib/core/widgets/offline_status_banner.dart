@@ -6,7 +6,7 @@ import '../constants/app_colors.dart';
 import '../services/offline_sync_service.dart';
 
 class OfflineStatusBanner extends StatelessWidget {
-  const OfflineStatusBanner({super.key, required this.child});
+  const OfflineStatusBanner({required this.child, super.key});
 
   final Widget child;
 

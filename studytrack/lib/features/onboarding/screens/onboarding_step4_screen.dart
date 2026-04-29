@@ -19,8 +19,7 @@ class _OnboardingStep4ScreenState extends State<OnboardingStep4Screen> {
   ];
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       body: SafeArea(
         child: Padding(
@@ -68,10 +67,8 @@ class _OnboardingStep4ScreenState extends State<OnboardingStep4Screen> {
         ),
       ),
     );
-  }
 
-  Widget _buildDots() {
-    return Row(
+  Widget _buildDots() => Row(
       children: List.generate(
         6,
         (i) => Container(
@@ -85,7 +82,6 @@ class _OnboardingStep4ScreenState extends State<OnboardingStep4Screen> {
         ),
       ),
     );
-  }
 
   Widget _buildTimeCard(int index) {
     final time = _times[index];
@@ -131,8 +127,7 @@ class _OnboardingStep4ScreenState extends State<OnboardingStep4Screen> {
     );
   }
 
-  Widget _buildNextButton() {
-    return SizedBox(
+  Widget _buildNextButton() => SizedBox(
       width: double.infinity,
       child: DecoratedBox(
         decoration: BoxDecoration(
@@ -163,5 +158,4 @@ class _OnboardingStep4ScreenState extends State<OnboardingStep4Screen> {
         ),
       ),
     );
-  }
 }

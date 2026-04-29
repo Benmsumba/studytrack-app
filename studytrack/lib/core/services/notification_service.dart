@@ -9,6 +9,12 @@ import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
 
 class NotificationService {
+
+  factory NotificationService() {
+    return _instance;
+  }
+
+  NotificationService._internal();
   static final NotificationService _instance = NotificationService._internal();
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
@@ -20,25 +26,19 @@ class NotificationService {
   static const String _weeklyReportChannel = 'weekly_report';
   static const String _spacedRepetitionChannel = 'spaced_repetition';
 
-  factory NotificationService() {
-    return _instance;
-  }
-
-  NotificationService._internal();
-
   Future<void> initialize() async {
     tzdata.initializeTimeZones();
 
-    const AndroidInitializationSettings androidInitSettings =
+    const androidInitSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    DarwinInitializationSettings iosInitSettings = DarwinInitializationSettings(
+    var iosInitSettings = const DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
 
-    InitializationSettings initSettings = InitializationSettings(
+    var initSettings = InitializationSettings(
       android: androidInitSettings,
       iOS: iosInitSettings,
     );
@@ -163,7 +163,7 @@ class NotificationService {
 
   Future<void> scheduleWeeklyReport() async {
     try {
-      var sundayEightPM = _getNextSunday8PM();
+      final sundayEightPM = _getNextSunday8PM();
 
       await _plugin.zonedSchedule(
         id: 1,
@@ -244,14 +244,14 @@ class NotificationService {
       if (topic.nextReviewAt == null) return;
 
       final reviewDate = topic.nextReviewAt is String
-          ? DateTime.parse(topic.nextReviewAt as String)
+          ? DateTime.parse(topic.nextReviewAt! as String)
           : topic.nextReviewAt;
 
       await _plugin.zonedSchedule(
         id: _notificationId('review_${topic.id}'),
         title: '🧠 Time to Review: ${topic.name}',
         body: 'You rated it ${topic.currentRating}/10 — let\'s keep it fresh!',
-        scheduledDate: tz.TZDateTime.from(reviewDate as DateTime, tz.local),
+        scheduledDate: tz.TZDateTime.from(reviewDate! as DateTime, tz.local),
         notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             _spacedRepetitionChannel,
@@ -452,9 +452,7 @@ class NotificationService {
     return sundayEightPM;
   }
 
-  _TimeOfDay _parseTime(String hour, String minute) {
-    return _TimeOfDay(int.parse(hour), int.parse(minute));
-  }
+  _TimeOfDay _parseTime(String hour, String minute) => _TimeOfDay(int.parse(hour), int.parse(minute));
 
   _TimeOfDay _parseClock(String value) {
     final parts = value.split(':');
@@ -467,9 +465,7 @@ class NotificationService {
     return _TimeOfDay(hour.clamp(0, 23), minute.clamp(0, 59));
   }
 
-  int _notificationId(String seed) {
-    return seed.hashCode & 0x7fffffff;
-  }
+  int _notificationId(String seed) => seed.hashCode & 0x7fffffff;
 
   Future<void> _createAndroidChannels(
     AndroidFlutterLocalNotificationsPlugin? androidPlugin,
@@ -518,8 +514,8 @@ class NotificationService {
 }
 
 class _TimeOfDay {
-  final int hour;
-  final int minute;
 
   _TimeOfDay(this.hour, this.minute);
+  final int hour;
+  final int minute;
 }

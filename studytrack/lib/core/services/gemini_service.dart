@@ -15,17 +15,6 @@ class _CacheEntry {
 }
 
 class QuizQuestion {
-  const QuizQuestion({
-    required this.question,
-    required this.options,
-    required this.correctIndex,
-    required this.explanation,
-  });
-
-  final String question;
-  final List<String> options;
-  final int correctIndex;
-  final String explanation;
 
   factory QuizQuestion.fromJson(Map<String, dynamic> json) {
     final rawOptions = (json['options'] as List<dynamic>? ?? const <dynamic>[])
@@ -41,23 +30,32 @@ class QuizQuestion {
       explanation: (json['explanation'] ?? '').toString(),
     );
   }
+  const QuizQuestion({
+    required this.question,
+    required this.options,
+    required this.correctIndex,
+    required this.explanation,
+  });
 
-  Map<String, dynamic> toJson() {
-    return {
+  final String question;
+  final List<String> options;
+  final int correctIndex;
+  final String explanation;
+
+  Map<String, dynamic> toJson() => {
       'question': question,
       'options': options,
       'correctIndex': correctIndex,
       'explanation': explanation,
     };
-  }
 }
 
 class GeminiService {
+
+  factory GeminiService() => _instance;
   GeminiService._internal();
 
   static final GeminiService _instance = GeminiService._internal();
-
-  factory GeminiService() => _instance;
 
   late final GenerativeModel _model = GenerativeModel(
     model: 'gemini-2.0-flash',
@@ -382,8 +380,7 @@ $message
     return output.substring(firstBrace, lastBrace + 1);
   }
 
-  List<QuizQuestion> _fallbackQuiz(String message) {
-    return List<QuizQuestion>.generate(5, (index) {
+  List<QuizQuestion> _fallbackQuiz(String message) => List<QuizQuestion>.generate(5, (index) {
       return QuizQuestion(
         question: 'Quiz unavailable (${index + 1}/5)',
         options: const ['A', 'B', 'C', 'D'],
@@ -391,5 +388,4 @@ $message
         explanation: message,
       );
     });
-  }
 }

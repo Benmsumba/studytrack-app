@@ -104,8 +104,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
   void _showCreateDialog() {
     showDialog<void>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
+      builder: (context) => AlertDialog(
           backgroundColor: AppColors.cardDark,
           title: const Text('Create Group', style: TextStyle(color: Colors.white)),
           content: Column(
@@ -134,16 +133,14 @@ class _GroupsScreenState extends State<GroupsScreen> {
               child: const Text('Create'),
             ),
           ],
-        );
-      },
+        ),
     );
   }
 
   void _showJoinDialog() {
     showDialog<void>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
+      builder: (context) => AlertDialog(
           backgroundColor: AppColors.cardDark,
           title: const Text('Join Group', style: TextStyle(color: Colors.white)),
           content: TextField(
@@ -162,14 +159,12 @@ class _GroupsScreenState extends State<GroupsScreen> {
               child: const Text('Join'),
             ),
           ],
-        );
-      },
+        ),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -264,5 +259,4 @@ class _GroupsScreenState extends State<GroupsScreen> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
-  }
 }

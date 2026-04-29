@@ -54,9 +54,9 @@ sealed class Result<T> {
 
 /// Success variant of Result
 class Success<T> extends Result<T> {
-  final T data;
 
   const Success(this.data);
+  final T data;
 
   @override
   String toString() => 'Success($data)';
@@ -64,9 +64,9 @@ class Success<T> extends Result<T> {
 
 /// Failure variant of Result
 class Failure<T> extends Result<T> {
-  final AppException error;
 
   const Failure(this.error);
+  final AppException error;
 
   @override
   String toString() => 'Failure(${error.message})';

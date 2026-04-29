@@ -41,9 +41,7 @@ class Helpers {
     }
   }
 
-  static String formatDate(DateTime date) {
-    return DateFormat('EEE, d MMM').format(date);
-  }
+  static String formatDate(DateTime date) => DateFormat('EEE, d MMM').format(date);
 
   static String formatTime(TimeOfDay time) {
     final date = DateTime(2000, 1, 1, time.hour, time.minute);
