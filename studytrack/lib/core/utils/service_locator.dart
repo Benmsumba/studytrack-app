@@ -1,5 +1,5 @@
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../repositories/auth_repository.dart';
 import '../repositories/impl/auth_repository_impl.dart';
@@ -21,25 +21,23 @@ import '../services/storage_service.dart';
 import '../services/supabase_service.dart';
 import '../services/voice_note_service.dart';
 
-/// Service locator singleton for dependency injection
 final getIt = GetIt.instance;
 
-/// Initialize all service dependencies
-/// Call this in main.dart before runApp()
 Future<void> setupServiceLocator() async {
-  // Initialize core Supabase service
   final supabaseService = SupabaseService();
   getIt.registerSingleton<SupabaseService>(supabaseService);
 
-  // Initialize offline services
   final offlineDataStore = OfflineDataStore();
-  await offlineDataStore.initialize();
+  try {
+    await offlineDataStore.initialize();
+  } catch (e) {
+    debugPrint('OfflineDataStore init failed: $e');
+  }
   getIt.registerSingleton<OfflineDataStore>(offlineDataStore);
 
   final offlineSyncService = OfflineSyncService.instance;
   getIt.registerSingleton<OfflineSyncService>(offlineSyncService);
 
-  // Register repositories
   getIt.registerSingleton<AuthRepository>(AuthRepositoryImpl(supabaseService));
   getIt.registerSingleton<ModuleRepository>(
     ModuleRepositoryImpl(supabaseService),
@@ -54,25 +52,21 @@ Future<void> setupServiceLocator() async {
     StudySessionRepositoryImpl(supabaseService),
   );
 
-  // Initialize platform services
   final notificationService = NotificationService();
-  await notificationService.initialize();
+  try {
+    await notificationService.initialize();
+  } catch (e) {
+    debugPrint('NotificationService init failed: $e');
+  }
   getIt.registerSingleton<NotificationService>(notificationService);
 
-  final achievementService = AchievementService(supabaseService);
-  getIt.registerSingleton<AchievementService>(achievementService);
-
-  final exportService = ExportService();
-  getIt.registerSingleton<ExportService>(exportService);
-
-  final geminiService = GeminiService();
-  getIt.registerSingleton<GeminiService>(geminiService);
-
-  final storageService = StorageService();
-  getIt.registerSingleton<StorageService>(storageService);
-
-  final voiceNoteService = VoiceNoteService();
-  getIt.registerSingleton<VoiceNoteService>(voiceNoteService);
+  getIt.registerSingleton<AchievementService>(
+    AchievementService(supabaseService),
+  );
+  getIt.registerSingleton<ExportService>(ExportService());
+  getIt.registerSingleton<GeminiService>(GeminiService());
+  getIt.registerSingleton<StorageService>(StorageService());
+  getIt.registerSingleton<VoiceNoteService>(VoiceNoteService());
 }
 
 /// Reset the service locator (useful for testing)

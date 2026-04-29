@@ -15,6 +15,9 @@ class SupabaseService {
 
   factory SupabaseService() => _instance;
 
+  @visibleForTesting
+  SupabaseService.forTesting();
+
   RealtimeChannel? _messagesChannel;
   String? _lastAuthError;
   final OfflineSyncService _offlineSync = OfflineSyncService.instance;
@@ -875,10 +878,6 @@ class SupabaseService {
     }
   }
 
-  Future<bool?> deleteTopics(String topicId) async {
-    return deleteTopic(topicId);
-  }
-
   // ---------------------------------------------------------------------------
   // TIMETABLE
   // ---------------------------------------------------------------------------
@@ -1328,54 +1327,69 @@ class SupabaseService {
   Future<List<Map<String, dynamic>>?> getMyGroups(String userId) async {
     try {
       if (await _isOnline()) {
-        final memberships = await client
-            .from('group_members')
-            .select()
-            .eq('user_id', userId)
-            .order('joined_at');
+        // 1 query — all memberships for this user
+        final memberships = ((await client
+                .from('group_members')
+                .select()
+                .eq('user_id', userId)
+                .order('joined_at')) as List<dynamic>)
+            .cast<Map<String, dynamic>>();
 
-        final results = <Map<String, dynamic>>[];
-
-        for (final item in memberships as List<dynamic>) {
-          final membership = item as Map<String, dynamic>;
-          final group = await client
-              .from('study_groups')
-              .select()
-              .eq('id', membership['group_id'])
-              .maybeSingle();
-
-          var memberCount = 1;
-          String? lastActivityAt;
-
-          try {
-            final groupId = membership['group_id']?.toString();
-            if (groupId != null && groupId.isNotEmpty) {
-              final members = await client
-                  .from('group_members')
-                  .select('id')
-                  .eq('group_id', groupId);
-              memberCount = (members as List<dynamic>).length;
-
-              final lastMessage = await client
-                  .from('group_messages')
-                  .select('created_at')
-                  .eq('group_id', groupId)
-                  .order('created_at', ascending: false)
-                  .limit(1)
-                  .maybeSingle();
-              lastActivityAt = lastMessage?['created_at']?.toString();
-            }
-          } catch (error) {
-            debugPrint('getMyGroups metadata error: $error');
-          }
-
-          results.add({
-            ...membership,
-            'study_groups': group,
-            'member_count': memberCount,
-            'last_activity_at': lastActivityAt,
-          });
+        if (memberships.isEmpty) {
+          await _cacheList('my_groups', userId, const []);
+          return const [];
         }
+
+        final groupIds = memberships
+            .map((m) => m['group_id']?.toString())
+            .whereType<String>()
+            .toSet()
+            .toList();
+
+        // 1 query — all group details
+        final groupRows = ((await client
+                .from('study_groups')
+                .select()
+                .in_('id', groupIds)) as List<dynamic>)
+            .cast<Map<String, dynamic>>();
+        final groupMap = {
+          for (final g in groupRows) g['id'].toString(): g,
+        };
+
+        // 1 query — member counts for all groups
+        final allMembers = ((await client
+                .from('group_members')
+                .select('group_id')
+                .in_('group_id', groupIds)) as List<dynamic>)
+            .cast<Map<String, dynamic>>();
+        final memberCountMap = <String, int>{};
+        for (final m in allMembers) {
+          final gId = m['group_id'].toString();
+          memberCountMap[gId] = (memberCountMap[gId] ?? 0) + 1;
+        }
+
+        // 1 query — most recent message timestamp per group
+        final recentMessages = ((await client
+                .from('group_messages')
+                .select('group_id, created_at')
+                .in_('group_id', groupIds)
+                .order('created_at', ascending: false)) as List<dynamic>)
+            .cast<Map<String, dynamic>>();
+        final lastMessageMap = <String, String?>{};
+        for (final msg in recentMessages) {
+          final gId = msg['group_id'].toString();
+          lastMessageMap.putIfAbsent(gId, () => msg['created_at']?.toString());
+        }
+
+        final results = memberships.map((membership) {
+          final gId = membership['group_id']?.toString() ?? '';
+          return <String, dynamic>{
+            ...membership,
+            'study_groups': groupMap[gId],
+            'member_count': memberCountMap[gId] ?? 1,
+            'last_activity_at': lastMessageMap[gId],
+          };
+        }).toList();
 
         await _cacheList('my_groups', userId, results);
         return results;
