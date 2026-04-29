@@ -273,40 +273,51 @@ class SupabaseService {
     String userId,
     Map<String, dynamic> data,
   ) async {
+    final payload = {
+      'id': userId,
+      ...data,
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+
     try {
-      final payload = {'id': userId, ...data};
       if (await _isOnline()) {
-        final response = await _upsertProfile(userId: userId, data: data);
-        if (response != null) {
-          await _cacheRecord('profiles', userId, response);
-        }
-        return response;
+        await _upsertProfile(userId: userId, data: data);
+        await _cacheRecord('profiles', userId, payload);
+        return payload;
       }
 
       await _queueChange('profiles', 'upsert', payload, recordId: userId);
       final existing =
           await _cachedRecord('profiles', userId) ?? {'id': userId};
-      final optimistic = {...existing, ...data, 'id': userId};
+      final optimistic = {...existing, ...payload};
       await _cacheRecord('profiles', userId, optimistic);
       return optimistic;
     } catch (error) {
       debugPrint('updateProfile error: $error');
-      return null;
+      try {
+        await _queueChange('profiles', 'upsert', payload, recordId: userId);
+        final existing =
+            await _cachedRecord('profiles', userId) ?? {'id': userId};
+        final optimistic = {...existing, ...payload};
+        await _cacheRecord('profiles', userId, optimistic);
+        return optimistic;
+      } catch (queueError) {
+        debugPrint('updateProfile queue fallback error: $queueError');
+        return null;
+      }
     }
   }
 
-  Future<Map<String, dynamic>?> _upsertProfile({
+  Future<void> _upsertProfile({
     required String userId,
     required Map<String, dynamic> data,
-  }) async => await client
-      .from('profiles')
-      .upsert({
-        'id': userId,
-        ...data,
-        'updated_at': DateTime.now().toIso8601String(),
-      }, onConflict: 'id')
-      .select()
-      .maybeSingle();
+  }) async {
+    await client.from('profiles').upsert({
+      'id': userId,
+      ...data,
+      'updated_at': DateTime.now().toIso8601String(),
+    }, onConflict: 'id');
+  }
 
   Future<void> _ensureProfileExists(User user) async {
     final metadata = user.userMetadata ?? <String, dynamic>{};

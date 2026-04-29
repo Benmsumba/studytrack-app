@@ -7,14 +7,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/constants/app_colors.dart';
-import 'core/constants/app_text_styles.dart';
 import 'core/constants/app_constants.dart';
+import 'core/constants/app_text_styles.dart';
+import 'core/widgets/offline_status_banner.dart';
+import 'features/ai_tutor/screens/ai_tutor_screen.dart';
+import 'features/ai_tutor/screens/quiz_screen.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/onboarding_welcome_screen.dart';
 import 'features/auth/screens/signup_screen.dart';
 import 'features/auth/screens/splash_screen.dart';
-import 'features/ai_tutor/screens/ai_tutor_screen.dart';
-import 'features/ai_tutor/screens/quiz_screen.dart';
 import 'features/groups/screens/group_chat_screen.dart';
 import 'features/groups/screens/group_detail_screen.dart';
 import 'features/groups/screens/groups_screen.dart';
@@ -23,20 +24,19 @@ import 'features/home/screens/main_shell.dart';
 import 'features/modules/screens/module_detail_screen.dart';
 import 'features/modules/screens/modules_screen.dart';
 import 'features/modules/screens/topic_detail_screen.dart';
+import 'features/notifications/screens/notifications_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
 import 'features/onboarding/screens/onboarding_steps_2356.dart';
 import 'features/profile/screens/profile_screen.dart';
-import 'features/notifications/screens/notifications_screen.dart';
 import 'features/progress/screens/progress_screen.dart';
 import 'features/progress/screens/weekly_wrapped_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
 import 'features/timetable/screens/exam_countdown_screen.dart';
 import 'features/timetable/screens/study_session_screen.dart';
 import 'features/timetable/screens/timetable_screen.dart';
-import 'core/widgets/offline_status_banner.dart';
 import 'features/update/widgets/update_overlay.dart';
 
-const _publicRoutes = {'/splash', '/login', '/signup', '/onboarding-welcome'};
+const _publicRoutes = {'/splash', '/login', '/signup'};
 
 String? resolveAppRedirect({
   required String location,

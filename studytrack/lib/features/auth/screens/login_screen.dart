@@ -203,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 24),
-                Center(
+                const Center(
                       child: Icon(
                         Icons.auto_stories_rounded,
                         size: 64,
@@ -214,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     .fadeIn(duration: 500.ms)
                     .scale(
                       begin: const Offset(0.8, 0.8),
-                      end: const Offset(1.0, 1.0),
+                      end: const Offset(1, 1),
                       duration: 500.ms,
                     ),
                 const SizedBox(height: 20),
@@ -317,7 +317,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    Expanded(
+                    const Expanded(
                       child: Divider(color: AppColors.border, thickness: 1),
                     ),
                     Padding(
@@ -330,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
-                    Expanded(
+                    const Expanded(
                       child: Divider(color: AppColors.border, thickness: 1),
                     ),
                   ],

@@ -8,11 +8,11 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/constants/app_constants.dart';
+import 'core/services/app_update_service.dart';
 import 'core/services/crash_reporter.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/offline_sync_service.dart';
 import 'core/utils/service_locator.dart';
-import 'core/services/app_update_service.dart';
 import 'features/auth/controllers/auth_provider.dart';
 import 'features/groups/controllers/groups_provider.dart';
 import 'features/modules/controllers/modules_provider.dart';

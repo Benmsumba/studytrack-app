@@ -88,7 +88,7 @@ void main() {
         // Assert
         expect(result, isA<Success<ProfileModel>>());
         expect((result as Success<ProfileModel>).data.id, equals('user-123'));
-        expect((result).data.name, equals('Test User'));
+        expect(result.data.name, equals('Test User'));
         verify(
           () => mockSupabaseService.signUpWithEmail(
             'test@example.com',
