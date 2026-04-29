@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -16,6 +16,29 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
+  static const String _brandSvg = '''
+<svg width="120" height="110" viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M18 100 L18 76 Q18 72 22 70 L78 62 L78 88 Q54 90 22 104 Z"
+        fill="white" fill-opacity="0.15" stroke="white" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M142 100 L142 76 Q142 72 138 70 L82 62 L82 88 Q106 90 138 104 Z"
+        fill="white" fill-opacity="0.15" stroke="white" stroke-width="2.2" stroke-linejoin="round"/>
+  <line x1="80" y1="62" x2="80" y2="90" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+  <g stroke="white" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M80 28 C80 18 56 14 48 24 C38 28 34 40 38 50 C36 60 42 68 52 68 L80 64 Z"/>
+    <path d="M64 26 C58 30 55 36 57 42"/>
+    <path d="M56 38 C52 42 51 50 55 56"/>
+    <path d="M70 20 C65 24 63 32 66 38"/>
+  </g>
+  <g stroke="white" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.75">
+    <path d="M80 28 C80 18 104 14 112 24 C122 28 126 40 122 50 C124 60 118 68 108 68 L80 64 Z"/>
+    <path d="M96 26 C102 30 105 36 103 42"/>
+    <path d="M104 38 C108 42 109 50 105 56"/>
+    <path d="M90 20 C95 24 97 32 94 38"/>
+  </g>
+  <line x1="80" y1="26" x2="80" y2="66" stroke="white" stroke-width="1.8" stroke-linecap="round" opacity="0.5"/>
+</svg>
+''';
+
   static const int _steps = 6;
   static const List<String> _courseExamples = [
     'Pharmacy',
@@ -273,10 +296,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: Center(
-              child: Lottie.network(
-                'https://assets3.lottiefiles.com/packages/lf20_jcikwtux.json',
-                fit: BoxFit.contain,
-              ),
+              child: Container(
+                width: 160,
+                height: 160,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: AppColors.primaryGradient,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: SvgPicture.string(_brandSvg, fit: BoxFit.contain),
+                ),
+              )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scale(
+                    begin: const Offset(0.95, 0.95),
+                    end: const Offset(1.05, 1.05),
+                    duration: 1800.ms,
+                    curve: Curves.easeInOut,
+                  ),
             ),
           ),
           const SizedBox(height: 10),
