@@ -50,7 +50,7 @@ class GeminiService {
   factory GeminiService() => _instance;
 
   late final GenerativeModel _model = GenerativeModel(
-    model: 'gemini-1.5-flash',
+    model: 'gemini-2.0-flash',
     apiKey: _resolvedApiKey,
   );
 
