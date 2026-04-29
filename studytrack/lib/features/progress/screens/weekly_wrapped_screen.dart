@@ -447,14 +447,12 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                 begin: 0,
                 end: (averageRating / 10).clamp(0, 1),
               ),
-              builder: (context, value, child) {
-                return LinearProgressIndicator(
+              builder: (context, value, child) => LinearProgressIndicator(
                   value: value,
                   minHeight: 10,
                   backgroundColor: Colors.white24,
                   color: AppColors.accent,
-                );
-              },
+                ),
             ),
           ),
         ],

@@ -1,14 +1,12 @@
 class GroupMemberModel {
 
-  factory GroupMemberModel.fromJson(Map<String, dynamic> json) {
-    return GroupMemberModel(
+  factory GroupMemberModel.fromJson(Map<String, dynamic> json) => GroupMemberModel(
       id: json['id'] as String,
       groupId: json['group_id'] as String,
       userId: json['user_id'] as String,
       role: json['role'] as String,
       joinedAt: DateTime.parse(json['joined_at'] as String),
     );
-  }
   const GroupMemberModel({
     required this.id,
     required this.groupId,

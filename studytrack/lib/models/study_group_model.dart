@@ -1,7 +1,6 @@
 class StudyGroupModel {
 
-  factory StudyGroupModel.fromJson(Map<String, dynamic> json) {
-    return StudyGroupModel(
+  factory StudyGroupModel.fromJson(Map<String, dynamic> json) => StudyGroupModel(
       id: json['id'] as String,
       name: json['name'] as String,
       description: json['description'] as String?,
@@ -9,7 +8,6 @@ class StudyGroupModel {
       inviteCode: json['invite_code'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
-  }
   const StudyGroupModel({
     required this.id,
     required this.name,

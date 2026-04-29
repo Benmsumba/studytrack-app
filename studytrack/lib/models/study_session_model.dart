@@ -1,7 +1,6 @@
 class StudySessionModel {
 
-  factory StudySessionModel.fromJson(Map<String, dynamic> json) {
-    return StudySessionModel(
+  factory StudySessionModel.fromJson(Map<String, dynamic> json) => StudySessionModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       topicId: json['topic_id'] as String?,
@@ -15,7 +14,6 @@ class StudySessionModel {
       actualDurationMinutes: (json['actual_duration_minutes'] as num?)?.toInt(),
       createdAt: DateTime.parse(json['created_at'] as String),
     );
-  }
   const StudySessionModel({
     required this.id,
     required this.userId,

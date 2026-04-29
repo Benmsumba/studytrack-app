@@ -11,6 +11,13 @@ import 'package:permission_handler/permission_handler.dart';
 import '../constants/app_constants.dart';
 
 class UpdateInfo {
+
+  factory UpdateInfo.fromJson(Map<String, dynamic> json) => UpdateInfo(
+        version: (json['version'] as String?) ?? '0.0.0',
+        build: (json['build'] as num?)?.toInt() ?? 0,
+        apkUrl: (json['apk_url'] as String?) ?? '',
+        releaseNotes: (json['release_notes'] as String?) ?? '',
+      );
   const UpdateInfo({
     required this.version,
     required this.build,
@@ -22,13 +29,6 @@ class UpdateInfo {
   final int build;
   final String apkUrl;
   final String releaseNotes;
-
-  factory UpdateInfo.fromJson(Map<String, dynamic> json) => UpdateInfo(
-        version: (json['version'] as String?) ?? '0.0.0',
-        build: (json['build'] as num?)?.toInt() ?? 0,
-        apkUrl: (json['apk_url'] as String?) ?? '',
-        releaseNotes: (json['release_notes'] as String?) ?? '',
-      );
 }
 
 class SelfUpdateService {
@@ -117,7 +117,7 @@ class SelfUpdateService {
         client.close();
       }
 
-      onProgress?.call(1.0);
+      onProgress?.call(1);
 
       final result = await OpenFile.open(apkFile.path);
       return result.type == ResultType.done;

@@ -380,12 +380,10 @@ $message
     return output.substring(firstBrace, lastBrace + 1);
   }
 
-  List<QuizQuestion> _fallbackQuiz(String message) => List<QuizQuestion>.generate(5, (index) {
-      return QuizQuestion(
+  List<QuizQuestion> _fallbackQuiz(String message) => List<QuizQuestion>.generate(5, (index) => QuizQuestion(
         question: 'Quiz unavailable (${index + 1}/5)',
         options: const ['A', 'B', 'C', 'D'],
         correctIndex: 0,
         explanation: message,
-      );
-    });
+      ));
 }

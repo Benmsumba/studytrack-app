@@ -70,7 +70,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
             ),
             boxShadow: _isFocused
                 ? [
-                    BoxShadow(
+                    const BoxShadow(
                       color: AppColors.cyanGlow,
                       blurRadius: 12,
                       spreadRadius: 0,

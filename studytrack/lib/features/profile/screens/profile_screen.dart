@@ -483,9 +483,7 @@ class _BadgeWidget extends StatelessWidget {
       tween: Tween<double>(begin: 0.96, end: earned ? 1 : 0.98),
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutBack,
-      builder: (context, scale, child) {
-        return Transform.scale(scale: scale, child: child);
-      },
+      builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
       child: Container(
         decoration: BoxDecoration(
           color: earned

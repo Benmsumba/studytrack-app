@@ -452,6 +452,6 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
       onPressed: () => _sendMessage(text),
       backgroundColor: AppColors.surfaceDark,
       labelStyle: GoogleFonts.inter(color: Colors.white, fontSize: 12),
-      side: BorderSide(color: AppColors.border),
+      side: const BorderSide(color: AppColors.border),
     );
 }

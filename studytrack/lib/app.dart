@@ -309,15 +309,13 @@ class StudyTrackApp extends StatelessWidget {
       routerConfig: _router,
       title: 'StudyTrack',
       theme: _buildTheme(),
-      builder: (context, child) {
-        return Stack(
+      builder: (context, child) => Stack(
           children: [
             OfflineStatusBanner(
               child: child ?? const SizedBox.shrink(),
             ),
             const UpdateOverlay(),
           ],
-        );
-      },
+        ),
     );
 }

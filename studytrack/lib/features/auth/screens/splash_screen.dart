@@ -132,13 +132,13 @@ class _SplashScreenState extends State<SplashScreen> {
                   .fadeIn(duration: 700.ms, curve: Curves.easeOut)
                   .scale(
                     begin: const Offset(0.92, 0.92),
-                    end: const Offset(1.0, 1.0),
+                    end: const Offset(1, 1),
                     duration: 900.ms,
                     curve: Curves.easeOut,
                   )
                   .then()
                   .scale(
-                    begin: const Offset(1.0, 1.0),
+                    begin: const Offset(1, 1),
                     end: const Offset(1.03, 1.03),
                     duration: 1200.ms,
                     curve: Curves.easeInOut,
@@ -155,7 +155,7 @@ class _SplashScreenState extends State<SplashScreen> {
               )
                   .animate()
                   .fadeIn(duration: 700.ms, delay: 200.ms, curve: Curves.easeOut)
-                  .slideY(begin: 0.12, end: 0.0, duration: 700.ms, curve: Curves.easeOut),
+                  .slideY(begin: 0.12, end: 0, duration: 700.ms, curve: Curves.easeOut),
               const SizedBox(height: 8),
               Text(
                 'Study smarter. Know where you stand.',
@@ -169,7 +169,7 @@ class _SplashScreenState extends State<SplashScreen> {
               )
                   .animate()
                   .fadeIn(duration: 700.ms, delay: 350.ms, curve: Curves.easeOut)
-                  .slideY(begin: 0.12, end: 0.0, duration: 700.ms, curve: Curves.easeOut),
+                  .slideY(begin: 0.12, end: 0, duration: 700.ms, curve: Curves.easeOut),
             ],
           ),
         ),

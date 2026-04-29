@@ -1,7 +1,6 @@
 class GroupMessageModel {
 
-  factory GroupMessageModel.fromJson(Map<String, dynamic> json) {
-    return GroupMessageModel(
+  factory GroupMessageModel.fromJson(Map<String, dynamic> json) => GroupMessageModel(
       id: json['id'] as String,
       groupId: json['group_id'] as String?,
       topicId: json['topic_id'] as String?,
@@ -10,7 +9,6 @@ class GroupMessageModel {
       messageType: json['message_type'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
-  }
   const GroupMessageModel({
     required this.id,
     required this.senderId, required this.content, required this.messageType, required this.createdAt, this.groupId,

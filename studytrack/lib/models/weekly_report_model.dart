@@ -1,7 +1,6 @@
 class WeeklyReportModel {
 
-  factory WeeklyReportModel.fromJson(Map<String, dynamic> json) {
-    return WeeklyReportModel(
+  factory WeeklyReportModel.fromJson(Map<String, dynamic> json) => WeeklyReportModel(
       id: json['id'] as String,
       userId: json['user_id'] as String,
       weekStart: DateTime.parse(json['week_start'] as String),
@@ -17,7 +16,6 @@ class WeeklyReportModel {
       aiSummary: json['ai_summary'] as String?,
       createdAt: DateTime.parse(json['created_at'] as String),
     );
-  }
   const WeeklyReportModel({
     required this.id,
     required this.userId,
