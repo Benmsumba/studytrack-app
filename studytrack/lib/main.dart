@@ -11,6 +11,7 @@ import 'core/constants/app_constants.dart';
 import 'core/services/crash_reporter.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/offline_sync_service.dart';
+import 'core/utils/service_locator.dart';
 import 'features/auth/controllers/auth_provider.dart';
 import 'features/groups/controllers/groups_provider.dart';
 import 'features/modules/controllers/modules_provider.dart';
@@ -52,6 +53,9 @@ Future<void> main() async {
 }
 
 Future<void> _bootstrapApp() async {
+  // Initialize service locator for dependency injection
+  await setupServiceLocator();
+
   if (AppConstants.isSupabaseConfigured) {
     try {
       await Supabase.initialize(
