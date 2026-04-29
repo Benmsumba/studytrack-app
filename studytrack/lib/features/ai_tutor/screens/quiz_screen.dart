@@ -7,7 +7,7 @@ import '../../../core/services/supabase_service.dart';
 import '../../../models/topic_model.dart';
 
 class QuizScreen extends StatefulWidget {
-  const QuizScreen({super.key, required this.topicId});
+  const QuizScreen({required this.topicId, super.key});
 
   final String topicId;
 
@@ -46,7 +46,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
     final topic = await _supabase.getTopicById(widget.topicId);
 
-    String course = 'Health Sciences';
+    var course = 'Health Sciences';
     final user = _supabase.getCurrentUser();
     if (user != null) {
       final profile = await _supabase.getProfile(user.id);
@@ -303,8 +303,8 @@ class _OptionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Color bg = AppColors.cardDark;
-    Color border = AppColors.border;
+    var bg = AppColors.cardDark;
+    var border = AppColors.border;
     IconData? trailing;
 
     switch (state) {
@@ -398,8 +398,7 @@ class _ResultsView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(backgroundColor: AppColors.backgroundDark),
       body: Padding(
@@ -442,7 +441,6 @@ class _ResultsView extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 class _PrimaryButton extends StatelessWidget {
@@ -452,8 +450,7 @@ class _PrimaryButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
+  Widget build(BuildContext context) => GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
@@ -469,7 +466,6 @@ class _PrimaryButton extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 class _SecondaryButton extends StatelessWidget {
@@ -479,8 +475,7 @@ class _SecondaryButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return OutlinedButton(
+  Widget build(BuildContext context) => OutlinedButton(
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
         minimumSize: const Size.fromHeight(48),
@@ -491,5 +486,4 @@ class _SecondaryButton extends StatelessWidget {
         style: GoogleFonts.inter(color: AppColors.textSecondary),
       ),
     );
-  }
 }

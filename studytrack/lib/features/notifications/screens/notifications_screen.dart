@@ -197,8 +197,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: Column(
@@ -270,7 +269,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ),
       ),
     );
-  }
 }
 
 class _NotificationTileData {
@@ -309,8 +307,7 @@ class _NotificationTile extends StatelessWidget {
   final bool unread;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -369,5 +366,4 @@ class _NotificationTile extends StatelessWidget {
         ],
       ),
     );
-  }
 }

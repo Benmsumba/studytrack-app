@@ -8,9 +8,9 @@ import '../study_session_repository.dart';
 
 /// Implementation of StudySessionRepository using SupabaseService
 class StudySessionRepositoryImpl implements StudySessionRepository {
-  final SupabaseService _supabaseService;
 
   StudySessionRepositoryImpl(this._supabaseService);
+  final SupabaseService _supabaseService;
 
   @override
   Future<Result<List<StudySessionModel>>> getAllSessions() async {

@@ -188,8 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: AnimatedBuilder(
@@ -377,7 +376,6 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
-  }
 
   Widget _buildGoogleButton() {
     final busy = _googleLoading || _authController.isLoading;
@@ -439,8 +437,7 @@ class _LoginScreenState extends State<LoginScreen> {
     bool obscureText = false,
     Widget? suffixIcon,
     void Function(String)? onChanged,
-  }) {
-    return TextFormField(
+  }) => TextFormField(
       controller: controller,
       validator: validator,
       keyboardType: keyboardType,
@@ -480,14 +477,12 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
-  }
 
   Widget _buildGradientButton({
     required String label,
     required bool isLoading,
     required VoidCallback? onTap,
-  }) {
-    return GestureDetector(
+  }) => GestureDetector(
       onTap: onTap,
       child: AnimatedOpacity(
         duration: const Duration(milliseconds: 200),
@@ -521,5 +516,4 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
-  }
 }

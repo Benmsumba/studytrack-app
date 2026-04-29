@@ -90,8 +90,7 @@ TopicModel _topic({
   required int? currentRating,
   bool isStudied = false,
   int studyCount = 0,
-}) {
-  return TopicModel(
+}) => TopicModel(
     id: 'topic-1',
     moduleId: 'module-1',
     userId: 'user-1',
@@ -101,4 +100,3 @@ TopicModel _topic({
     studyCount: studyCount,
     createdAt: DateTime.parse('2026-04-20T08:00:00.000Z'),
   );
-}

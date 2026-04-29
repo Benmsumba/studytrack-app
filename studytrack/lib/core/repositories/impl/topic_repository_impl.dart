@@ -9,9 +9,9 @@ import '../topic_repository.dart';
 
 /// Implementation of TopicRepository using SupabaseService
 class TopicRepositoryImpl implements TopicRepository {
-  final SupabaseService _supabaseService;
 
   TopicRepositoryImpl(this._supabaseService);
+  final SupabaseService _supabaseService;
 
   @override
   Future<Result<List<TopicModel>>> getTopicsByModule(String moduleId) async {

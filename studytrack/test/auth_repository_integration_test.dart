@@ -1,13 +1,39 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gotrue/gotrue.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:studytrack/core/repositories/auth_repository.dart';
 import 'package:studytrack/core/repositories/impl/auth_repository_impl.dart';
 import 'package:studytrack/core/services/supabase_service.dart';
+import 'package:studytrack/core/utils/app_exception.dart';
 import 'package:studytrack/core/utils/result.dart';
 import 'package:studytrack/models/user_model.dart';
 
 // Mock Supabase service
 class MockSupabaseService extends Mock implements SupabaseService {}
+
+// Mock User
+class MockUser extends Mock implements User {
+  @override
+  final String id;
+
+  @override
+  final String createdAt;
+
+  @override
+  final String updatedAt;
+
+  @override
+  final Map<String, dynamic> userMetadata;
+
+  MockUser({
+    required this.id,
+    Map<String, dynamic>? userMetadata,
+    String? createdAt,
+    String? updatedAt,
+  }) : userMetadata = userMetadata ?? {},
+       createdAt = createdAt ?? DateTime.now().toIso8601String(),
+       updatedAt = updatedAt ?? DateTime.now().toIso8601String();
+}
 
 void main() {
   group('AuthRepository Integration Tests', () {
@@ -26,12 +52,13 @@ void main() {
     group('signUpWithEmail', () {
       test('returns Success with ProfileModel on successful signup', () async {
         // Arrange
-        final expectedUser = ProfileModel(
+        final mockUser = MockUser(
           id: 'user-123',
-          email: 'test@example.com',
-          fullName: 'Test User',
-          course: 'Computer Science',
-          yearLevel: 2,
+          userMetadata: {
+            'name': 'Test User',
+            'course': 'Computer Science',
+            'year_level': 2,
+          },
         );
 
         when(
@@ -45,7 +72,7 @@ void main() {
             any(),
             any(),
           ),
-        ).thenAnswer((_) async => expectedUser);
+        ).thenAnswer((_) async => mockUser);
 
         // Act
         final result = await authRepository.signUpWithEmail(
@@ -61,7 +88,11 @@ void main() {
 
         // Assert
         expect(result, isA<Success<ProfileModel>>());
-        expect((result as Success<ProfileModel>).data, equals(expectedUser));
+        expect((result as Success<ProfileModel>).data.id, equals('user-123'));
+        expect(
+          (result as Success<ProfileModel>).data.name,
+          equals('Test User'),
+        );
         verify(
           () => mockSupabaseService.signUpWithEmail(
             'test@example.com',
@@ -148,17 +179,18 @@ void main() {
     group('signInWithEmail', () {
       test('returns Success with ProfileModel on successful signin', () async {
         // Arrange
-        final expectedUser = ProfileModel(
+        final mockUser = MockUser(
           id: 'user-123',
-          email: 'test@example.com',
-          fullName: 'Test User',
-          course: 'Computer Science',
-          yearLevel: 2,
+          userMetadata: {
+            'name': 'Test User',
+            'course': 'Computer Science',
+            'year_level': 2,
+          },
         );
 
         when(
           () => mockSupabaseService.signInWithEmail(any(), any()),
-        ).thenAnswer((_) async => expectedUser);
+        ).thenAnswer((_) async => mockUser);
 
         // Act
         final result = await authRepository.signInWithEmail(
@@ -168,7 +200,7 @@ void main() {
 
         // Assert
         expect(result, isA<Success<ProfileModel>>());
-        expect((result as Success<ProfileModel>).data, equals(expectedUser));
+        expect((result as Success<ProfileModel>).data.id, equals('user-123'));
       });
 
       test('returns Failure on signin error', () async {
@@ -192,7 +224,7 @@ void main() {
     group('signOut', () {
       test('returns Success on successful signout', () async {
         // Arrange
-        when(() => mockSupabaseService.signOut()).thenAnswer((_) async => {});
+        when(() => mockSupabaseService.signOut()).thenAnswer((_) async => null);
 
         // Act
         final result = await authRepository.signOut();
@@ -221,7 +253,7 @@ void main() {
     group('Result pattern functionality', () {
       test('Success.getOrThrow returns data', () {
         // Arrange
-        final result = Success<String>('test data');
+        const result = Success<String>('test data');
 
         // Act
         final data = result.getOrThrow();
@@ -232,16 +264,17 @@ void main() {
 
       test('Failure.getOrThrow throws exception', () {
         // Arrange
-        final exception = Exception('Test error');
-        final result = Failure<String>(Exception('Test error'));
+        final result = Failure<String>(
+          AppGenericException(message: 'Test error'),
+        );
 
         // Act & Assert
-        expect(() => result.getOrThrow(), throwsException);
+        expect(result.getOrThrow, throwsException);
       });
 
       test('Success.map transforms data', () {
         // Arrange
-        final result = Success<int>(5);
+        const result = Success<int>(5);
 
         // Act
         final mapped = result.map((value) => value * 2);
@@ -253,7 +286,7 @@ void main() {
 
       test('Failure.map preserves error', () {
         // Arrange
-        final error = Exception('Test error');
+        final error = AppGenericException(message: 'Test error');
         final result = Failure<int>(error);
 
         // Act
@@ -265,7 +298,7 @@ void main() {
 
       test('fold works correctly for Success', () {
         // Arrange
-        final result = Success<String>('success');
+        const result = Success<String>('success');
 
         // Act
         final value = result.fold(
@@ -279,7 +312,9 @@ void main() {
 
       test('fold works correctly for Failure', () {
         // Arrange
-        final result = Failure<String>(Exception('test error'));
+        final result = Failure<String>(
+          AppGenericException(message: 'test error'),
+        );
 
         // Act
         final value = result.fold(

@@ -64,8 +64,7 @@ ModuleModel _module({
   String? color,
   String? semester,
   bool isActive = true,
-}) {
-  return ModuleModel(
+}) => ModuleModel(
     id: 'module-1',
     userId: 'user-1',
     name: name,
@@ -74,4 +73,3 @@ ModuleModel _module({
     isActive: isActive,
     createdAt: DateTime.parse('2026-04-01T00:00:00.000Z'),
   );
-}

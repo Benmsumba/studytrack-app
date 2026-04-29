@@ -5,7 +5,7 @@ import 'package:studytrack/app.dart';
 void main() {
   group('StudyTrackApp Navigation', () {
     testWidgets('resolveAppRedirect allows public routes without auth', (
-      WidgetTester tester,
+      tester,
     ) async {
       const publicRoutes = [
         '/splash',

@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
           (profile?['study_hours_per_day'] as num?)?.toInt() ?? 3;
       final sessionProgress = targetHours <= 0
           ? 0.0
-          : math.min(completedMinutes / (targetHours * 60), 1.0);
+          : math.min(completedMinutes / (targetHours * 60), 1);
 
       final topicName =
           _firstText(activeSession, ['topic_name', 'title', 'name']) ??
@@ -350,8 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildStudySessionCard() {
-    return Container(
+  Widget _buildStudySessionCard() => Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -444,7 +443,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
-  }
 
   Widget _buildDailyGoalCard() {
     final progress = _targetHours <= 0

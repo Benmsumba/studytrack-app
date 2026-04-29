@@ -97,8 +97,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
-        return SafeArea(
+      builder: (context) => SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -138,14 +137,12 @@ class _ModulesScreenState extends State<ModulesScreen> {
               ),
             ],
           ),
-        );
-      },
+        ),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -244,7 +241,6 @@ class _ModulesScreenState extends State<ModulesScreen> {
               ),
             ),
     );
-  }
 }
 
 class _ModuleCard extends StatelessWidget {
@@ -353,20 +349,6 @@ class _ModuleCard extends StatelessWidget {
 }
 
 class _ModuleStats {
-  const _ModuleStats({
-    required this.totalTopics,
-    required this.studiedTopics,
-    required this.mastery,
-  });
-
-  final int totalTopics;
-  final int studiedTopics;
-  final double mastery;
-
-  double get studiedProgress {
-    if (totalTopics == 0) return 0;
-    return studiedTopics / totalTopics;
-  }
 
   factory _ModuleStats.fromTopics(List<TopicModel> topics) {
     if (topics.isEmpty) {
@@ -381,6 +363,20 @@ class _ModuleStats {
       studiedTopics: studied,
       mastery: mastered / topics.length,
     );
+  }
+  const _ModuleStats({
+    required this.totalTopics,
+    required this.studiedTopics,
+    required this.mastery,
+  });
+
+  final int totalTopics;
+  final int studiedTopics;
+  final double mastery;
+
+  double get studiedProgress {
+    if (totalTopics == 0) return 0;
+    return studiedTopics / totalTopics;
   }
 }
 
@@ -399,9 +395,7 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
   late Color _selectedColor;
   bool _isSaving = false;
 
-  List<Color> get _palette {
-    return AppColors.subjectColors.values.toSet().toList();
-  }
+  List<Color> get _palette => AppColors.subjectColors.values.toSet().toList();
 
   @override
   void initState() {

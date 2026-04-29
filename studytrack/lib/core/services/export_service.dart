@@ -13,18 +13,14 @@ class ExportService {
     required String studentName,
     required String course,
     required int yearLevel,
-    WeeklyReportModel? weeklyReport,
-    required int totalTopics,
-    required int masteredTopics,
-    required int streakCount,
+    required int totalTopics, required int masteredTopics, required int streakCount, WeeklyReportModel? weeklyReport,
   }) async {
     final pdf = pw.Document();
     final now = DateTime.now();
 
     pdf.addPage(
       pw.Page(
-        build: (context) {
-          return pw.Column(
+        build: (context) => pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
@@ -85,8 +81,7 @@ class ExportService {
                   ),
               ],
             ],
-          );
-        },
+          ),
       ),
     );
 

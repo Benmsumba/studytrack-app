@@ -7,9 +7,9 @@ import '../../utils/result.dart';
 import '../module_repository.dart';
 
 class ModuleRepositoryImpl implements ModuleRepository {
-  final SupabaseService _supabaseService;
 
   ModuleRepositoryImpl(this._supabaseService);
+  final SupabaseService _supabaseService;
 
   String? get _userId => _supabaseService.getCurrentUser()?.id;
 

@@ -72,8 +72,7 @@ void main() {
   });
 }
 
-ExamModel _exam({required DateTime examDate}) {
-  return ExamModel(
+ExamModel _exam({required DateTime examDate}) => ExamModel(
     id: 'exam-1',
     userId: 'user-1',
     moduleId: 'module-1',
@@ -84,4 +83,3 @@ ExamModel _exam({required DateTime examDate}) {
     examType: 'final',
     createdAt: DateTime.parse('2026-04-20T10:00:00.000Z'),
   );
-}

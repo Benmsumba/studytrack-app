@@ -8,7 +8,7 @@ import '../../../core/services/supabase_service.dart';
 import '../../../models/topic_model.dart';
 
 class AiTutorScreen extends StatefulWidget {
-  const AiTutorScreen({super.key, required this.topicId});
+  const AiTutorScreen({required this.topicId, super.key});
 
   final String topicId;
 
@@ -45,14 +45,14 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
 
   Future<void> _loadContext() async {
     final topic = await _supabase.getTopicById(widget.topicId);
-    String moduleName = 'General';
+    var moduleName = 'General';
     if (topic != null) {
       final module = await _supabase.getModuleById(topic.moduleId);
       moduleName = module?.name ?? 'General';
     }
 
     final user = _supabase.getCurrentUser();
-    String course = 'Health Sciences';
+    var course = 'Health Sciences';
     if (user != null) {
       final profile = await _supabase.getProfile(user.id);
       final profileCourse = profile?['course']?.toString();
@@ -184,7 +184,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
   @override
   Widget build(BuildContext context) {
     final topicName = _topic?.name ?? 'Topic';
-    final hasNotes = (_topic?.notes?.trim().isNotEmpty ?? false);
+    final hasNotes = _topic?.notes?.trim().isNotEmpty ?? false;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
@@ -327,13 +327,13 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
 }
 
 class _ChatMessage {
+
+  factory _ChatMessage.user(String text) => _ChatMessage(text: text, isUser: true);
+  factory _ChatMessage.ai(String text) => _ChatMessage(text: text, isUser: false);
   const _ChatMessage({required this.text, required this.isUser});
 
   final String text;
   final bool isUser;
-
-  factory _ChatMessage.user(String text) => _ChatMessage(text: text, isUser: true);
-  factory _ChatMessage.ai(String text) => _ChatMessage(text: text, isUser: false);
 }
 
 class _ChatBubble extends StatelessWidget {
@@ -378,8 +378,7 @@ class _QuickChip extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
+  Widget build(BuildContext context) => Padding(
       padding: const EdgeInsets.only(right: 8),
       child: ActionChip(
         onPressed: onTap,
@@ -395,7 +394,6 @@ class _QuickChip extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 class _EmptyTutorState extends StatelessWidget {
@@ -404,8 +402,7 @@ class _EmptyTutorState extends StatelessWidget {
   final String topicName;
 
   @override
-  Widget build(BuildContext context) {
-    return Center(
+  Widget build(BuildContext context) => Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Column(
@@ -432,15 +429,13 @@ class _EmptyTutorState extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 class _TypingBubble extends StatelessWidget {
   const _TypingBubble();
 
   @override
-  Widget build(BuildContext context) {
-    return Align(
+  Widget build(BuildContext context) => Align(
       alignment: Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6),
@@ -462,7 +457,6 @@ class _TypingBubble extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 class _Dot extends StatefulWidget {
@@ -495,12 +489,10 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return FadeTransition(
+  Widget build(BuildContext context) => FadeTransition(
       opacity: Tween<double>(begin: 0.2, end: 1).animate(_controller),
       child: const CircleAvatar(radius: 3, backgroundColor: AppColors.textSecondary),
     );
-  }
 }
 
 class _MarkdownText extends StatelessWidget {

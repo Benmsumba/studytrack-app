@@ -9,7 +9,7 @@ import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 
 class ModuleDetailScreen extends StatefulWidget {
-  const ModuleDetailScreen({super.key, required this.moduleId});
+  const ModuleDetailScreen({required this.moduleId, super.key});
 
   final String moduleId;
 
@@ -434,8 +434,7 @@ class _StatChip extends StatelessWidget {
   final String label;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.12),
@@ -450,7 +449,6 @@ class _StatChip extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 enum _TopicFilter {

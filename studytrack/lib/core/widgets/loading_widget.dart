@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
 class LoadingWidget extends StatefulWidget {
-  final String? label;
-  final double size;
-  final bool fullscreen;
-  final bool inline;
 
   const LoadingWidget({
     super.key,
@@ -22,6 +18,10 @@ class LoadingWidget extends StatefulWidget {
   const LoadingWidget.inline({super.key, this.label, this.size = 22})
     : fullscreen = false,
       inline = true;
+  final String? label;
+  final double size;
+  final bool fullscreen;
+  final bool inline;
 
   @override
   State<LoadingWidget> createState() => _LoadingWidgetState();
@@ -80,7 +80,7 @@ class _LoadingWidgetState extends State<LoadingWidget>
                     child: Container(
                       width: 8,
                       height: 8,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         shape: BoxShape.circle,
                         color: AppColors.neonViolet,
                       ),
@@ -94,7 +94,7 @@ class _LoadingWidgetState extends State<LoadingWidget>
             const SizedBox(height: 16),
             Text(
               widget.label!,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: AppColors.textSecondary,

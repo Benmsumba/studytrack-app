@@ -6,7 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
 
 class GroupDetailScreen extends StatefulWidget {
-  const GroupDetailScreen({super.key, required this.groupId, this.group});
+  const GroupDetailScreen({required this.groupId, super.key, this.group});
 
   final String groupId;
   final Map<String, dynamic>? group;

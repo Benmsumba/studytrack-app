@@ -128,8 +128,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -175,10 +174,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
             ),
     );
-  }
 
-  Widget _buildQuickStats() {
-    return GridView.count(
+  Widget _buildQuickStats() => GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       crossAxisCount: 2,
@@ -204,10 +201,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
         ),
       ],
     );
-  }
 
-  Widget _statCard(String label, String value, IconData icon) {
-    return Container(
+  Widget _statCard(String label, String value, IconData icon) => Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.cardDark,
@@ -246,10 +241,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildSectionShell(String title, Widget child, {double? fixedHeight}) {
-    return Container(
+  Widget _buildSectionShell(String title, Widget child, {double? fixedHeight}) => Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.cardDark,
@@ -274,7 +267,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
         ],
       ),
     );
-  }
 
   Widget _buildWeeklyBarChart() {
     final maxValue = _weeklyTopicCounts.values.fold<int>(
@@ -292,15 +284,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
           barTouchData: BarTouchData(
             enabled: true,
             touchTooltipData: BarTouchTooltipData(
-              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                return BarTooltipItem(
+              getTooltipItem: (group, groupIndex, rod, rodIndex) => BarTooltipItem(
                   '${rod.toY.toInt()} topics',
                   GoogleFonts.inter(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
                   ),
-                );
-              },
+                ),
             ),
           ),
           barGroups: List.generate(7, (index) {
@@ -333,15 +323,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
               sideTitles: SideTitles(
                 showTitles: true,
                 reservedSize: 26,
-                getTitlesWidget: (value, meta) {
-                  return Text(
+                getTitlesWidget: (value, meta) => Text(
                     value.toInt().toString(),
                     style: GoogleFonts.inter(
                       fontSize: 10,
                       color: AppColors.textMuted,
                     ),
-                  );
-                },
+                  ),
               ),
             ),
             bottomTitles: AxisTitles(
@@ -404,7 +392,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           )
           .toList();
       if (moduleTopics.isEmpty) {
-        return const RadarEntry(value: 0.0);
+        return const RadarEntry(value: 0);
       }
       final avg =
           moduleTopics
@@ -477,8 +465,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: List.generate(12, (index) {
-              return Expanded(
+            children: List.generate(12, (index) => Expanded(
                 child: Text(
                   monthLabels[index],
                   textAlign: TextAlign.center,
@@ -487,8 +474,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     color: AppColors.textMuted,
                   ),
                 ),
-              );
-            }),
+              )),
           ),
           const SizedBox(height: 6),
           Row(
@@ -543,8 +529,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return labels[month - 1];
   }
 
-  Widget _buildTopicRatingHistory() {
-    return _buildSectionShell(
+  Widget _buildTopicRatingHistory() => _buildSectionShell(
       'Topic Rating History',
       _topics.isEmpty
           ? Padding(
@@ -596,10 +581,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ],
             ),
     );
-  }
 
-  Widget _buildModuleDonuts() {
-    return _buildSectionShell(
+  Widget _buildModuleDonuts() => _buildSectionShell(
       'Module Progress Donut Charts',
       _modules.isEmpty
           ? Padding(
@@ -636,7 +619,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
             ),
     );
-  }
 }
 
 class _TopicLineChart extends StatelessWidget {
@@ -646,8 +628,7 @@ class _TopicLineChart extends StatelessWidget {
   final SupabaseService service;
 
   @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<List<Map<String, dynamic>>?>(
+  Widget build(BuildContext context) => FutureBuilder<List<Map<String, dynamic>>?>(
       future: service.getTopicRatingHistory(topic.id, limit: 20),
       builder: (context, snapshot) {
         final values = snapshot.data ?? [];
@@ -725,7 +706,6 @@ class _TopicLineChart extends StatelessWidget {
         );
       },
     );
-  }
 }
 
 class _ModuleDonutCard extends StatelessWidget {

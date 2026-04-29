@@ -12,8 +12,7 @@ class _OnboardingStep3ScreenState extends State<OnboardingStep3Screen> {
   String _selectedStudyGoal = 'balanced';
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       body: SafeArea(
         child: Padding(
@@ -110,10 +109,8 @@ class _OnboardingStep3ScreenState extends State<OnboardingStep3Screen> {
         ),
       ),
     );
-  }
 
-  Widget _buildDots() {
-    return Row(
+  Widget _buildDots() => Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(
         6,
@@ -130,7 +127,6 @@ class _OnboardingStep3ScreenState extends State<OnboardingStep3Screen> {
         ),
       ),
     );
-  }
 
   Widget _buildGoalCard({
     required String title,

@@ -6,8 +6,7 @@ import '../../../core/constants/app_colors.dart';
 
 class VoiceNotePlayerWidget extends StatefulWidget {
   const VoiceNotePlayerWidget({
-    super.key,
-    required this.source,
+    required this.source, super.key,
     this.title = 'Voice note',
     this.subtitle,
   });
@@ -51,8 +50,7 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         gradient: AppColors.cardGradient,
@@ -116,5 +114,4 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
         ],
       ),
     );
-  }
 }

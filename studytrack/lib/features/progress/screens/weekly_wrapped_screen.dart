@@ -138,9 +138,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     }
   }
 
-  Future<Uint8List?> _captureShareCard() async {
-    return _screenshotController.capture(pixelRatio: 2.5);
-  }
+  Future<Uint8List?> _captureShareCard() async => _screenshotController.capture(pixelRatio: 2.5);
 
   Future<void> _saveToGallery() async {
     final bytes = await _captureShareCard();
@@ -253,8 +251,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     );
   }
 
-  Widget _animatedPage({required int index, required Widget child}) {
-    return AnimatedBuilder(
+  Widget _animatedPage({required int index, required Widget child}) => AnimatedBuilder(
       animation: _pageController,
       builder: (context, _) {
         var currentPage = 0.0;
@@ -273,10 +270,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         );
       },
     );
-  }
 
-  Widget _introPage() {
-    return Container(
+  Widget _introPage() => Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -370,10 +365,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ),
       ),
     );
-  }
 
-  Widget _topicsPage() {
-    return _solidPage(
+  Widget _topicsPage() => _solidPage(
       color: const Color(0xFF06B6D4),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -405,10 +398,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 
-  Widget _bestSubjectPage() {
-    return _gradientPage(
+  Widget _bestSubjectPage() => _gradientPage(
       colors: const [Color(0xFF7C3AED), Color(0xFF1F1B4D)],
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -469,10 +460,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 
-  Widget _needsAttentionPage() {
-    return _gradientPage(
+  Widget _needsAttentionPage() => _gradientPage(
       colors: const [Color(0xFFF59E0B), Color(0xFF4D2E07)],
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -501,10 +490,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 
-  Widget _streakPage() {
-    return _solidPage(
+  Widget _streakPage() => _solidPage(
       color: const Color(0xFF121224),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -531,7 +518,6 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 
   Widget _sessionsPage() {
     final completed = sessionsCompleted;
@@ -586,8 +572,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     );
   }
 
-  Widget _aiSummaryPage() {
-    return _solidPage(
+  Widget _aiSummaryPage() => _solidPage(
       color: const Color(0xFF0F0F1A),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 28),
@@ -634,10 +619,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ),
       ),
     );
-  }
 
-  Widget _finalSharePage() {
-    return _solidPage(
+  Widget _finalSharePage() => _solidPage(
       color: const Color(0xFF121224),
       child: SafeArea(
         child: Padding(
@@ -743,10 +726,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ),
       ),
     );
-  }
 
-  Widget _shareStat(String label, String value) {
-    return Container(
+  Widget _shareStat(String label, String value) => Container(
       width: 130,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -772,17 +753,13 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ],
       ),
     );
-  }
 
-  Widget _solidPage({required Color color, required Widget child}) {
-    return Container(
+  Widget _solidPage({required Color color, required Widget child}) => Container(
       color: color,
       child: SafeArea(child: child),
     );
-  }
 
-  Widget _gradientPage({required List<Color> colors, required Widget child}) {
-    return Container(
+  Widget _gradientPage({required List<Color> colors, required Widget child}) => Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -792,5 +769,4 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
       ),
       child: SafeArea(child: child),
     );
-  }
 }

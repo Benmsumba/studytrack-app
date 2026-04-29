@@ -44,10 +44,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final modules = await _service.getModules(user.id) ?? [];
       final lastReport = await _service.getLastWeekReport(user.id);
 
-      int total = 0;
-      int mastered = 0;
+      var total = 0;
+      var mastered = 0;
 
-      for (var module in modules) {
+      for (final module in modules) {
         final topics = await _service.getTopics(module.id) ?? [];
         total += topics.length;
         mastered += topics.where((t) => (t.currentRating ?? 0) >= 7).length;
@@ -95,7 +95,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Container(
                 width: 80,
                 height: 80,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [AppColors.primary, AppColors.accent],
                   ),
@@ -185,7 +185,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
                 children: [
-                  _BadgeWidget(emoji: '🌱', label: 'First Step', earned: true),
+                  const _BadgeWidget(emoji: '🌱', label: 'First Step', earned: true),
                   _BadgeWidget(
                     emoji: '🔥',
                     label: 'Week Warrior',
@@ -385,8 +385,7 @@ class _SocialCard extends StatelessWidget {
   final VoidCallback onShare;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -428,18 +427,16 @@ class _SocialCard extends StatelessWidget {
         ],
       ),
     );
-  }
 }
 
 class _StatCard extends StatelessWidget {
+
+  const _StatCard({required this.label, required this.value});
   final String label;
   final String value;
 
-  const _StatCard({required this.label, required this.value});
-
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.cardDark,
@@ -468,23 +465,21 @@ class _StatCard extends StatelessWidget {
         ],
       ),
     );
-  }
 }
 
 class _BadgeWidget extends StatelessWidget {
-  final String emoji;
-  final String label;
-  final bool earned;
 
   const _BadgeWidget({
     required this.emoji,
     required this.label,
     required this.earned,
   });
+  final String emoji;
+  final String label;
+  final bool earned;
 
   @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
+  Widget build(BuildContext context) => TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.96, end: earned ? 1 : 0.98),
       duration: const Duration(milliseconds: 280),
       curve: Curves.easeOutBack,
@@ -527,5 +522,4 @@ class _BadgeWidget extends StatelessWidget {
         ),
       ),
     );
-  }
 }

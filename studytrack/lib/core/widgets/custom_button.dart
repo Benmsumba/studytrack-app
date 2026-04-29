@@ -3,11 +3,6 @@ import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
 class CustomButton extends StatefulWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final bool isLoading;
-  final LinearGradient? gradient;
-  final double? width;
 
   const CustomButton({
     super.key,
@@ -17,6 +12,11 @@ class CustomButton extends StatefulWidget {
     this.gradient,
     this.width,
   });
+  final String label;
+  final VoidCallback? onPressed;
+  final bool isLoading;
+  final LinearGradient? gradient;
+  final double? width;
 
   @override
   State<CustomButton> createState() => _CustomButtonState();
@@ -26,8 +26,7 @@ class _CustomButtonState extends State<CustomButton> {
   bool _isPressed = false;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       width: widget.width,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
@@ -74,5 +73,4 @@ class _CustomButtonState extends State<CustomButton> {
         ),
       ),
     );
-  }
 }

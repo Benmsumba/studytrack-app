@@ -1,27 +1,4 @@
 class ClassSlotModel {
-  const ClassSlotModel({
-    required this.id,
-    required this.userId,
-    required this.subjectName,
-    required this.dayOfWeek,
-    required this.startTime,
-    required this.endTime,
-    this.room,
-    this.lecturer,
-    this.color,
-    required this.createdAt,
-  });
-
-  final String id;
-  final String userId;
-  final String subjectName;
-  final int dayOfWeek;
-  final String startTime;
-  final String endTime;
-  final String? room;
-  final String? lecturer;
-  final String? color;
-  final DateTime createdAt;
 
   factory ClassSlotModel.fromJson(Map<String, dynamic> json) {
     return ClassSlotModel(
@@ -37,9 +14,30 @@ class ClassSlotModel {
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
+  const ClassSlotModel({
+    required this.id,
+    required this.userId,
+    required this.subjectName,
+    required this.dayOfWeek,
+    required this.startTime,
+    required this.endTime,
+    required this.createdAt, this.room,
+    this.lecturer,
+    this.color,
+  });
 
-  Map<String, dynamic> toJson() {
-    return {
+  final String id;
+  final String userId;
+  final String subjectName;
+  final int dayOfWeek;
+  final String startTime;
+  final String endTime;
+  final String? room;
+  final String? lecturer;
+  final String? color;
+  final DateTime createdAt;
+
+  Map<String, dynamic> toJson() => {
       'id': id,
       'user_id': userId,
       'subject_name': subjectName,
@@ -51,7 +49,6 @@ class ClassSlotModel {
       'color': color,
       'created_at': createdAt.toIso8601String(),
     };
-  }
 
   ClassSlotModel copyWith({
     String? id,
@@ -64,8 +61,7 @@ class ClassSlotModel {
     String? lecturer,
     String? color,
     DateTime? createdAt,
-  }) {
-    return ClassSlotModel(
+  }) => ClassSlotModel(
       id: id ?? this.id,
       userId: userId ?? this.userId,
       subjectName: subjectName ?? this.subjectName,
@@ -77,5 +73,4 @@ class ClassSlotModel {
       color: color ?? this.color,
       createdAt: createdAt ?? this.createdAt,
     );
-  }
 }

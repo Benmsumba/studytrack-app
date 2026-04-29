@@ -17,7 +17,7 @@ import '../../../models/topic_model.dart';
 import '../../../models/uploaded_note_model.dart';
 
 class TopicDetailScreen extends StatefulWidget {
-  const TopicDetailScreen({super.key, required this.topicId});
+  const TopicDetailScreen({required this.topicId, super.key});
 
   final String topicId;
 
@@ -324,8 +324,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     );
   }
 
-  Widget _buildHeader(TopicModel topic) {
-    return Container(
+  Widget _buildHeader(TopicModel topic) => Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         gradient: AppColors.cardGradient,
@@ -427,7 +426,6 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
         ],
       ),
     );
-  }
 
   Widget _buildActionsGrid() {
     final actions = [
@@ -494,8 +492,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     );
   }
 
-  Widget _buildNotesSection(TopicModel topic) {
-    return Container(
+  Widget _buildNotesSection(TopicModel topic) => Container(
       decoration: BoxDecoration(
         color: AppColors.cardDark,
         borderRadius: BorderRadius.circular(14),
@@ -584,10 +581,8 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildUploadsSection() {
-    return Container(
+  Widget _buildUploadsSection() => Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.cardDark,
@@ -721,10 +716,8 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
         ],
       ),
     );
-  }
 
-  Widget _buildRatingSection() {
-    return Container(
+  Widget _buildRatingSection() => Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.cardDark,
@@ -801,5 +794,4 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
         ],
       ),
     );
-  }
 }

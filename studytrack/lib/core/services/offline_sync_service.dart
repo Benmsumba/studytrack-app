@@ -117,13 +117,9 @@ class OfflineSyncService extends ChangeNotifier {
   Future<Map<String, dynamic>?> cachedRecord({
     required String entity,
     required String recordId,
-  }) async {
-    return _store.readRecord(entity: entity, recordId: recordId);
-  }
+  }) async => _store.readRecord(entity: entity, recordId: recordId);
 
-  Future<List<Map<String, dynamic>>?> cachedQuery(String queryKey) async {
-    return _store.readQueryResults(queryKey);
-  }
+  Future<List<Map<String, dynamic>>?> cachedQuery(String queryKey) async => _store.readQueryResults(queryKey);
 
   Future<void> queueChange({
     required String entity,

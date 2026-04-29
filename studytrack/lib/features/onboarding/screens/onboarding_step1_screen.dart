@@ -5,8 +5,7 @@ class OnboardingStep1Screen extends StatelessWidget {
   const OnboardingStep1Screen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       body: SafeArea(
         child: Padding(
@@ -127,5 +126,4 @@ class OnboardingStep1Screen extends StatelessWidget {
         ),
       ),
     );
-  }
 }

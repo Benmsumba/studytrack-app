@@ -5,14 +5,6 @@ import '../../../core/constants/app_colors.dart';
 
 /// Weekly Report Card - Shows student's weekly statistics
 class WeeklyReportCard extends StatelessWidget {
-  final String studentName;
-  final String course;
-  final int weekNumber;
-  final int topicsStudied;
-  final double averageRating;
-  final int streak;
-  final String bestSubject;
-  final GlobalKey boundaryKey;
 
   const WeeklyReportCard({
     super.key,
@@ -25,10 +17,17 @@ class WeeklyReportCard extends StatelessWidget {
     required this.bestSubject,
     required this.boundaryKey,
   });
+  final String studentName;
+  final String course;
+  final int weekNumber;
+  final int topicsStudied;
+  final double averageRating;
+  final int streak;
+  final String bestSubject;
+  final GlobalKey boundaryKey;
 
   @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
+  Widget build(BuildContext context) => RepaintBoundary(
       key: boundaryKey,
       child: Container(
         width: 1080,
@@ -129,10 +128,8 @@ class WeeklyReportCard extends StatelessWidget {
         ),
       ),
     );
-  }
 
-  Widget _buildStatBox(String label, String value) {
-    return Column(
+  Widget _buildStatBox(String label, String value) => Column(
       children: [
         Text(
           label,
@@ -155,17 +152,10 @@ class WeeklyReportCard extends StatelessWidget {
         ),
       ],
     );
-  }
 }
 
 /// Topic Mastered Card - Celebrates mastering a topic
 class TopicMasteredCard extends StatelessWidget {
-  final String topicName;
-  final String moduleName;
-  final int rating;
-  final int studyCount;
-  final int previousRating;
-  final GlobalKey boundaryKey;
 
   const TopicMasteredCard({
     super.key,
@@ -176,10 +166,15 @@ class TopicMasteredCard extends StatelessWidget {
     required this.previousRating,
     required this.boundaryKey,
   });
+  final String topicName;
+  final String moduleName;
+  final int rating;
+  final int studyCount;
+  final int previousRating;
+  final GlobalKey boundaryKey;
 
   @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
+  Widget build(BuildContext context) => RepaintBoundary(
       key: boundaryKey,
       child: Container(
         width: 1080,
@@ -300,16 +295,10 @@ class TopicMasteredCard extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 /// Exam Countdown Card - Shows exam dates and readiness
 class ExamCountdownCard extends StatelessWidget {
-  final String examName;
-  final int daysRemaining;
-  final double readinessPercent;
-  final GlobalKey boundaryKey;
-  final bool isUrgent;
 
   const ExamCountdownCard({
     super.key,
@@ -319,6 +308,11 @@ class ExamCountdownCard extends StatelessWidget {
     required this.boundaryKey,
     this.isUrgent = false,
   });
+  final String examName;
+  final int daysRemaining;
+  final double readinessPercent;
+  final GlobalKey boundaryKey;
+  final bool isUrgent;
 
   @override
   Widget build(BuildContext context) {
@@ -434,9 +428,6 @@ class ExamCountdownCard extends StatelessWidget {
 
 /// Streak Card - Celebrates study streaks
 class StreakCard extends StatelessWidget {
-  final String studentName;
-  final int streakCount;
-  final GlobalKey boundaryKey;
 
   const StreakCard({
     super.key,
@@ -444,10 +435,12 @@ class StreakCard extends StatelessWidget {
     required this.streakCount,
     required this.boundaryKey,
   });
+  final String studentName;
+  final int streakCount;
+  final GlobalKey boundaryKey;
 
   @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
+  Widget build(BuildContext context) => RepaintBoundary(
       key: boundaryKey,
       child: Container(
         width: 1080,
@@ -521,5 +514,4 @@ class StreakCard extends StatelessWidget {
         ),
       ),
     );
-  }
 }

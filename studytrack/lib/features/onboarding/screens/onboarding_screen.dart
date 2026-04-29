@@ -162,8 +162,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  Widget build(BuildContext context) => Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: Padding(
@@ -193,10 +192,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ),
     );
-  }
 
-  Widget _buildDots() {
-    return Row(
+  Widget _buildDots() => Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(_steps, (index) {
         final active = index == _currentStep;
@@ -213,7 +210,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         );
       }),
     );
-  }
 
   Widget _buildBottomActions() {
     final isLast = _currentStep == _steps - 1;
@@ -271,8 +267,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _stepWelcome() {
-    return _stepContainer(
+  Widget _stepWelcome() => _stepContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -325,10 +320,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ],
       ).animate().fadeIn(duration: 350.ms),
     );
-  }
 
-  Widget _stepCourse() {
-    return _stepContainer(
+  Widget _stepCourse() => _stepContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -358,10 +351,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ],
       ).animate().fadeIn(duration: 350.ms),
     );
-  }
 
-  Widget _stepYearLevel() {
-    return _stepContainer(
+  Widget _stepYearLevel() => _stepContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -409,7 +400,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ],
       ).animate().fadeIn(duration: 350.ms),
     );
-  }
 
   Widget _stepPrimeTime() {
     final options = [
@@ -541,8 +531,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     );
   }
 
-  Widget _stepStudyStyle() {
-    return _stepContainer(
+  Widget _stepStudyStyle() => _stepContainer(
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -597,10 +586,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ).animate().fadeIn(duration: 350.ms),
     );
-  }
 
-  Widget _stepContainer({required Widget child}) {
-    return Container(
+  Widget _stepContainer({required Widget child}) => Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -610,13 +597,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       ),
       child: child,
     );
-  }
 
   Widget _inputField({
     required TextEditingController controller,
     required String label,
-  }) {
-    return TextField(
+  }) => TextField(
       controller: controller,
       style: GoogleFonts.inter(color: AppColors.textPrimary),
       decoration: InputDecoration(
@@ -638,10 +623,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ),
     );
-  }
 
-  Widget _title(String text) {
-    return Text(
+  Widget _title(String text) => Text(
       text,
       style: GoogleFonts.outfit(
         color: AppColors.textPrimary,
@@ -650,7 +633,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         height: 1.1,
       ),
     );
-  }
 
   Widget _studyStyleCard({
     required bool selected,
@@ -658,8 +640,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
-  }) {
-    return InkWell(
+  }) => InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
       child: Ink(
@@ -703,10 +684,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ),
       ),
     );
-  }
 
-  Widget _summaryRow(String label, String value) {
-    return Padding(
+  Widget _summaryRow(String label, String value) => Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
@@ -732,5 +711,4 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         ],
       ),
     );
-  }
 }

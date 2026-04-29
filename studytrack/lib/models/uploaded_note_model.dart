@@ -1,4 +1,18 @@
 class UploadedNoteModel {
+
+  factory UploadedNoteModel.fromJson(Map<String, dynamic> json) {
+    return UploadedNoteModel(
+      id: json['id'] as String,
+      topicId: json['topic_id'] as String,
+      userId: json['user_id'] as String,
+      fileName: json['file_name'] as String,
+      fileUrl: json['file_url'] as String,
+      fileType: json['file_type'] as String,
+      isSharedWithGroup: json['is_shared_with_group'] as bool? ?? false,
+      processingStatus: json['processing_status'] as String,
+      createdAt: DateTime.parse(json['created_at'] as String),
+    );
+  }
   const UploadedNoteModel({
     required this.id,
     required this.topicId,
@@ -21,22 +35,7 @@ class UploadedNoteModel {
   final String processingStatus;
   final DateTime createdAt;
 
-  factory UploadedNoteModel.fromJson(Map<String, dynamic> json) {
-    return UploadedNoteModel(
-      id: json['id'] as String,
-      topicId: json['topic_id'] as String,
-      userId: json['user_id'] as String,
-      fileName: json['file_name'] as String,
-      fileUrl: json['file_url'] as String,
-      fileType: json['file_type'] as String,
-      isSharedWithGroup: json['is_shared_with_group'] as bool? ?? false,
-      processingStatus: json['processing_status'] as String,
-      createdAt: DateTime.parse(json['created_at'] as String),
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
+  Map<String, dynamic> toJson() => {
       'id': id,
       'topic_id': topicId,
       'user_id': userId,
@@ -47,7 +46,6 @@ class UploadedNoteModel {
       'processing_status': processingStatus,
       'created_at': createdAt.toIso8601String(),
     };
-  }
 
   UploadedNoteModel copyWith({
     String? id,
@@ -59,8 +57,7 @@ class UploadedNoteModel {
     bool? isSharedWithGroup,
     String? processingStatus,
     DateTime? createdAt,
-  }) {
-    return UploadedNoteModel(
+  }) => UploadedNoteModel(
       id: id ?? this.id,
       topicId: topicId ?? this.topicId,
       userId: userId ?? this.userId,
@@ -71,5 +68,4 @@ class UploadedNoteModel {
       processingStatus: processingStatus ?? this.processingStatus,
       createdAt: createdAt ?? this.createdAt,
     );
-  }
 }
