@@ -44,6 +44,24 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  Future<bool> signInWithGoogle() async {
+    _setLoading(true);
+    _errorMessage = null;
+    try {
+      final ok = await _supabaseService.signInWithGoogle();
+      if (!ok) {
+        _errorMessage =
+            _supabaseService.lastAuthError ?? 'Google sign-in failed.';
+      }
+      return ok;
+    } catch (error) {
+      _errorMessage = 'Google sign-in failed: $error';
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   Future<bool> signUpWithEmail({
     required String fullName,
     required String email,

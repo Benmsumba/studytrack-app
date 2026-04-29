@@ -193,6 +193,34 @@ class SupabaseService {
     }
   }
 
+  Future<bool> resetPasswordForEmail(String email) async {
+    try {
+      await client.auth.resetPasswordForEmail(email.trim());
+      return true;
+    } catch (error) {
+      debugPrint('resetPasswordForEmail error: $error');
+      return false;
+    }
+  }
+
+  Future<bool> signInWithGoogle() async {
+    _lastAuthError = null;
+    try {
+      final launched = await client.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: kIsWeb ? null : 'com.studytrack.app://callback',
+      );
+      if (!launched) {
+        _lastAuthError = 'Could not open Google sign-in. Please try again.';
+      }
+      return launched;
+    } catch (error) {
+      _lastAuthError = _mapAuthErrorText(error.toString());
+      debugPrint('signInWithGoogle error: $error');
+      return false;
+    }
+  }
+
   User? getCurrentUser() {
     try {
       return client.auth.currentUser;

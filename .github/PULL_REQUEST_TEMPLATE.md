@@ -1,12 +1,35 @@
-## Summary
+## What does this PR do?
 
-Describe the change and the user-facing impact.
+<!-- One or two sentences. What changed and why. -->
 
-## Validation
+## Type of change
 
-- [ ] `flutter analyze`
-- [ ] `flutter test`
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Refactor (no behaviour change)
+- [ ] Documentation
+- [ ] CI / build
+
+## Linked issue
+
+Closes #
+
+## Testing
+
+Describe how you tested this change. Include device/emulator, Flutter version, and any edge cases you checked.
+
+## Screenshots (if UI change)
+
+<!-- Before / After or a short screen recording -->
+
+## Checklist
+
+- [ ] `flutter analyze` passes with no new warnings
+- [ ] `flutter test` passes
+- [ ] No secrets, API keys, keystores, or `.env` files are included
+- [ ] Documentation updated where behaviour changed
+- [ ] Change is scoped to a single concern
 
 ## Notes
 
-Add any follow-up work, screenshots, migration notes, or rollout details here.
+<!-- Migration steps, follow-up work, rollout considerations, or anything a reviewer should know. -->

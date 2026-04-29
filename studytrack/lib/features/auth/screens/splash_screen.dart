@@ -17,22 +17,71 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  // Logo matches the StudyTrack brand: split brain (purple left / cyan right)
+  // rising from an open book, with soft glow halos behind each hemisphere.
   static const String _logoSvg = '''
-<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="160" height="140" viewBox="0 0 160 140" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="studytrackGradient" x1="20" y1="20" x2="108" y2="108" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#7C3AED" />
-      <stop offset="100%" stop-color="#06B6D4" />
+    <linearGradient id="stGrad" x1="0" y1="0" x2="160" y2="140" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7C3AED"/>
+      <stop offset="100%" stop-color="#06B6D4"/>
     </linearGradient>
+    <!-- Purple glow behind left brain hemisphere -->
+    <radialGradient id="glowL" cx="42%" cy="44%" r="34%">
+      <stop offset="0%" stop-color="#7C3AED" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#7C3AED" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Cyan glow behind right brain hemisphere -->
+    <radialGradient id="glowR" cx="58%" cy="44%" r="34%">
+      <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#06B6D4" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect x="12" y="18" width="104" height="92" rx="20" fill="url(#studytrackGradient)" opacity="0.14"/>
-  <path d="M28 34C28 29.5817 31.5817 26 36 26H66.5C71.6344 26 76.5096 28.1552 80 31.9L83.5 35.65L87 31.9C90.4904 28.1552 95.3656 26 100.5 26H92C96.4183 26 100 29.5817 100 34V88C100 92.4183 96.4183 96 92 96H74.5C69.8507 96 65.4183 97.7929 62 100.95C58.5817 97.7929 54.1493 96 49.5 96H36C31.5817 96 28 92.4183 28 88V34Z" fill="#0F0F1A" stroke="url(#studytrackGradient)" stroke-width="4" stroke-linejoin="round"/>
-  <path d="M47 45C47 41.6863 49.6863 39 53 39H75C78.3137 39 81 41.6863 81 45V63C81 66.3137 78.3137 69 75 69H53C49.6863 69 47 66.3137 47 63V45Z" fill="url(#studytrackGradient)" opacity="0.22"/>
-  <path d="M54 48C57.5 44.4 63.2 44.4 66.7 48C70.2 51.6 70.2 57.4 66.7 61C64.9 62.9 63.6 65.4 63.2 68.1L62.7 71.5H60.3L59.8 68.1C59.4 65.4 58.1 62.9 56.3 61C52.8 57.4 52.8 51.6 56.3 48H54Z" fill="#FFFFFF"/>
-  <circle cx="60" cy="52" r="1.8" fill="#06B6D4"/>
-  <circle cx="66" cy="52" r="1.8" fill="#7C3AED"/>
-  <path d="M44 78H84" stroke="url(#studytrackGradient)" stroke-width="4" stroke-linecap="round"/>
-  <path d="M50 85H78" stroke="#06B6D4" stroke-width="4" stroke-linecap="round" opacity="0.95"/>
+
+  <!-- Soft glow halos (mimics the 3-D render in the logo photo) -->
+  <ellipse cx="62" cy="56" rx="38" ry="32" fill="url(#glowL)"/>
+  <ellipse cx="98" cy="56" rx="38" ry="32" fill="url(#glowR)"/>
+
+  <!-- ── OPEN BOOK ────────────────────────────────────────────────── -->
+  <!-- Left page -->
+  <path d="M18 100 L18 76 Q18 72 22 70 L78 62 L78 88 Q54 90 22 104 Z"
+        fill="#7C3AED" fill-opacity="0.18" stroke="#7C3AED" stroke-width="2.2"
+        stroke-linejoin="round"/>
+  <!-- Right page -->
+  <path d="M142 100 L142 76 Q142 72 138 70 L82 62 L82 88 Q106 90 138 104 Z"
+        fill="#06B6D4" fill-opacity="0.18" stroke="#06B6D4" stroke-width="2.2"
+        stroke-linejoin="round"/>
+  <!-- Spine -->
+  <line x1="80" y1="62" x2="80" y2="90" stroke="url(#stGrad)" stroke-width="2.5"
+        stroke-linecap="round"/>
+
+  <!-- ── LEFT BRAIN HEMISPHERE (purple) ──────────────────────────── -->
+  <g stroke="#A78BFA" stroke-width="2.4" fill="none" stroke-linecap="round"
+     stroke-linejoin="round">
+    <!-- Outer lobe -->
+    <path d="M80 28 C80 18 56 14 48 24 C38 28 34 40 38 50
+             C36 60 42 68 52 68 L80 64 Z"/>
+    <!-- Inner fold curves -->
+    <path d="M64 26 C58 30 55 36 57 42"/>
+    <path d="M56 38 C52 42 51 50 55 56"/>
+    <path d="M70 20 C65 24 63 32 66 38"/>
+  </g>
+
+  <!-- ── RIGHT BRAIN HEMISPHERE (cyan) ───────────────────────────── -->
+  <g stroke="#67E8F9" stroke-width="2.4" fill="none" stroke-linecap="round"
+     stroke-linejoin="round">
+    <!-- Outer lobe (mirrored) -->
+    <path d="M80 28 C80 18 104 14 112 24 C122 28 126 40 122 50
+             C124 60 118 68 108 68 L80 64 Z"/>
+    <!-- Inner fold curves (mirrored) -->
+    <path d="M96 26 C102 30 105 36 103 42"/>
+    <path d="M104 38 C108 42 109 50 105 56"/>
+    <path d="M90 20 C95 24 97 32 94 38"/>
+  </g>
+
+  <!-- Centre divider line -->
+  <line x1="80" y1="26" x2="80" y2="66" stroke="url(#stGrad)"
+        stroke-width="1.8" stroke-linecap="round"/>
 </svg>
 ''';
 

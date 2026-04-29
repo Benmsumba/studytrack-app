@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -25,6 +26,16 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptedTerms = false;
+  bool _googleLoading = false;
+
+  static const String _googleLogoSvg = '''
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
+  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.36-8.16 2.36-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+</svg>
+''';
 
   @override
   void dispose() {
@@ -34,6 +45,25 @@ class _SignupScreenState extends State<SignupScreen> {
     _confirmPasswordController.dispose();
     _authController.dispose();
     super.dispose();
+  }
+
+  Future<void> _onGoogleSignInTap() async {
+    setState(() => _googleLoading = true);
+    final ok = await _authController.signInWithGoogle();
+    if (!mounted) return;
+    setState(() => _googleLoading = false);
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _authController.errorMessage ?? 'Google sign-in failed.',
+          ),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+    // Navigation on success is handled by _GoRouterRefreshStream
   }
 
   Future<void> _onCreateAccountTap() async {
@@ -278,10 +308,113 @@ class _SignupScreenState extends State<SignupScreen> {
                       .animate()
                       .fadeIn(duration: 650.ms, delay: 150.ms)
                       .slideY(begin: 0.14, end: 0, duration: 650.ms),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(color: AppColors.border, thickness: 1),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Text(
+                          'or',
+                          style: GoogleFonts.inter(
+                            color: AppColors.textMuted,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(color: AppColors.border, thickness: 1),
+                      ),
+                    ],
+                  ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
+                  const SizedBox(height: 16),
+                  _buildGoogleButton().animate().fadeIn(
+                        duration: 500.ms,
+                        delay: 350.ms,
+                      ),
+                  const SizedBox(height: 20),
+                  Center(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Already have an account? ',
+                          style: GoogleFonts.inter(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => context.go('/login'),
+                          child: Text(
+                            'Login',
+                            style: GoogleFonts.inter(
+                              color: AppColors.accent,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn(duration: 500.ms, delay: 400.ms),
                 ],
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGoogleButton() {
+    final busy = _googleLoading || _authController.isLoading;
+    return GestureDetector(
+      onTap: busy ? null : _onGoogleSignInTap,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 200),
+        opacity: busy ? 0.7 : 1,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFDDDDDD)),
+          ),
+          child: busy
+              ? const SizedBox(
+                  height: 20,
+                  child: Center(
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFF4285F4),
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SvgPicture.string(_googleLogoSvg, width: 20, height: 20),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Continue with Google',
+                      style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF3C4043),
+                      ),
+                    ),
+                  ],
+                ),
         ),
       ),
     );

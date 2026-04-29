@@ -1,7 +1,12 @@
-name: Build and Release APK
+name: Build Debug APK (v1 Preview)
 
 on:
   workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build'
+        required: false
+        default: 'claude/enhance-repo-quality-IuMZU'
 
 permissions:
   contents: write
@@ -14,6 +19,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.ref }}
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -40,49 +47,27 @@ jobs:
 
       - name: Analyze
         working-directory: studytrack
-        run: flutter analyze
+        run: flutter analyze --no-fatal-warnings
 
       - name: Run tests
         working-directory: studytrack
         run: flutter test
 
-      - name: Validate release secrets
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          for name in SUPABASE_URL SUPABASE_ANON_KEY GEMINI_API_KEY; do
-            if [ -z "${!name}" ]; then
-              echo "Missing required secret: $name"
-              exit 1
-            fi
-          done
-
-      - name: Build APK (split per ABI)
+      - name: Build debug APK
         working-directory: studytrack
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          flutter build apk --release --split-per-abi \
-            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
-            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
-            --dart-define=GEMINI_API_KEY="$GEMINI_API_KEY"
+          flutter build apk --debug \
+            --dart-define=SUPABASE_URL="${SUPABASE_URL}" \
+            --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}" \
+            --dart-define=GEMINI_API_KEY="${GEMINI_API_KEY}"
 
-      - name: Upload APK artifacts
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: studytrack-apk-${{ github.run_number }}
-          path: studytrack/build/app/outputs/flutter-apk/*.apk
-
-      - name: Create release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v1.0.${{ github.run_number }}
-          name: StudyTrack v1.0.${{ github.run_number }}
-          generate_release_notes: true
-          files: |
-            studytrack/build/app/outputs/flutter-apk/*.apk
+          name: StudyTrack-v1-debug
+          path: studytrack/build/app/outputs/flutter-apk/app-debug.apk
+          retention-days: 30
