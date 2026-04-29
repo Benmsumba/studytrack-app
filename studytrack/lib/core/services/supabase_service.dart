@@ -15,6 +15,9 @@ class SupabaseService {
 
   factory SupabaseService() => _instance;
 
+  @visibleForTesting
+  SupabaseService.forTesting();
+
   RealtimeChannel? _messagesChannel;
   String? _lastAuthError;
   final OfflineSyncService _offlineSync = OfflineSyncService.instance;
