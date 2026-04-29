@@ -7,10 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'supabase_service.dart';
 
 class UploadResult {
-  const UploadResult({
-    required this.noteId,
-    required this.fileUrl,
-  });
+  const UploadResult({required this.noteId, required this.fileUrl});
 
   final String noteId;
   final String fileUrl;
@@ -18,7 +15,7 @@ class UploadResult {
 
 class StorageService {
   StorageService({SupabaseService? supabaseService})
-      : _supabaseService = supabaseService ?? SupabaseService();
+    : _supabaseService = supabaseService ?? SupabaseService();
 
   final SupabaseService _supabaseService;
   final ValueNotifier<double> uploadProgress = ValueNotifier<double>(0);
@@ -54,10 +51,7 @@ class StorageService {
           .uploadBinary(
             storagePath,
             bytes,
-            fileOptions: const FileOptions(
-              cacheControl: '3600',
-              upsert: false,
-            ),
+            fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
           );
 
       if (response.isEmpty) {
@@ -91,15 +85,11 @@ class StorageService {
       }
 
       uploadProgress.value = 1;
-      return UploadResult(
-        noteId: noteId,
-        fileUrl: fileUrl,
-      );
+      return UploadResult(noteId: noteId, fileUrl: fileUrl);
     } catch (_) {
       return null;
     }
   }
-
 
   /// Get relevant note context from all notes in a topic (ranked by keyword relevance)
   Future<String> getNoteContext({
@@ -107,7 +97,8 @@ class StorageService {
     required String searchQuery,
   }) async {
     final notes =
-        await _supabaseService.getNotesByTopic(topicId) ?? <Map<String, dynamic>>[];
+        await _supabaseService.getNotesByTopic(topicId) ??
+        <Map<String, dynamic>>[];
 
     final allChunks = <String>[];
     for (final note in notes) {
@@ -122,7 +113,8 @@ class StorageService {
       }
 
       final chunks =
-          await _supabaseService.getNoteChunks(noteId) ?? <Map<String, dynamic>>[];
+          await _supabaseService.getNoteChunks(noteId) ??
+          <Map<String, dynamic>>[];
       for (final chunk in chunks) {
         final content = (chunk['content'] as String?)?.trim();
         if (content != null && content.isNotEmpty) {

@@ -325,107 +325,104 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   }
 
   Widget _buildHeader(TopicModel topic) => Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            topic.name,
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-            ),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      gradient: AppColors.cardGradient,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          topic.name,
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 30,
+            fontWeight: FontWeight.w700,
           ),
-          const SizedBox(height: 4),
-          Text(
-            _module?.name ?? 'Module',
-            style: GoogleFonts.inter(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          _module?.name ?? 'Module',
+          style: GoogleFonts.inter(
+            color: AppColors.textSecondary,
+            fontSize: 13,
           ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: topic.ratingColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${topic.currentRating ?? 0}/10',
+                style: GoogleFonts.outfit(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
                 ),
-                decoration: BoxDecoration(
-                  color: topic.ratingColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '${topic.currentRating ?? 0}/10',
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    topic.masteryLevel,
+                    style: GoogleFonts.inter(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      topic.masteryLevel,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                      ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Studied ${topic.studyCount} times',
+                    style: GoogleFonts.inter(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Studied ${topic.studyCount} times',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            height: 80,
-            child: LineChart(
-              LineChartData(
-                minY: 0,
-                maxY: 10,
-                gridData: const FlGridData(show: false),
-                borderData: FlBorderData(show: false),
-                titlesData: const FlTitlesData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: _historySpots,
-                    isCurved: true,
-                    color: AppColors.accent,
-                    barWidth: 3,
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: AppColors.accent.withValues(alpha: 0.15),
-                    ),
-                    dotData: const FlDotData(show: true),
                   ),
                 ],
               ),
             ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          height: 80,
+          child: LineChart(
+            LineChartData(
+              minY: 0,
+              maxY: 10,
+              gridData: const FlGridData(show: false),
+              borderData: FlBorderData(show: false),
+              titlesData: const FlTitlesData(show: false),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: _historySpots,
+                  isCurved: true,
+                  color: AppColors.accent,
+                  barWidth: 3,
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: AppColors.accent.withValues(alpha: 0.15),
+                  ),
+                  dotData: const FlDotData(show: true),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 
   Widget _buildActionsGrid() {
     final actions = [
@@ -493,305 +490,301 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   }
 
   Widget _buildNotesSection(TopicModel topic) => Container(
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          ListTile(
-            title: Text(
-              'My Notes',
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      children: [
+        ListTile(
+          title: Text(
+            'My Notes',
+            style: GoogleFonts.inter(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          trailing: Icon(
+            _notesExpanded
+                ? Icons.expand_less_rounded
+                : Icons.expand_more_rounded,
+            color: Colors.white,
+          ),
+          onTap: () {
+            setState(() {
+              _notesExpanded = !_notesExpanded;
+            });
+          },
+        ),
+        if (_notesExpanded)
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            child: Column(
+              children: [
+                TextField(
+                  controller: _notesController,
+                  minLines: 5,
+                  maxLines: 8,
+                  style: GoogleFonts.inter(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Add your personal notes...',
+                    hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
+                    filled: true,
+                    fillColor: AppColors.surfaceDark,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                  ),
+                  onChanged: (_) {
+                    setState(() {});
+                  },
+                  onEditingComplete: _saveNotes,
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Text(
+                      '${_notesController.text.length} chars',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textMuted,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: _saveNotes,
+                      child: _isSavingNotes
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : Text(
+                              'Save',
+                              style: GoogleFonts.inter(color: AppColors.accent),
+                            ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+      ],
+    ),
+  );
+
+  Widget _buildUploadsSection() => Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Lecture Notes',
               style: GoogleFonts.inter(
                 color: Colors.white,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            trailing: Icon(
-              _notesExpanded
-                  ? Icons.expand_less_rounded
-                  : Icons.expand_more_rounded,
-              color: Colors.white,
+            const Spacer(),
+            TextButton.icon(
+              onPressed: _uploadNote,
+              icon: const Icon(
+                Icons.upload_file_rounded,
+                color: AppColors.accent,
+              ),
+              label: Text(
+                'Upload',
+                style: GoogleFonts.inter(color: AppColors.accent),
+              ),
             ),
-            onTap: () {
-              setState(() {
-                _notesExpanded = !_notesExpanded;
-              });
-            },
-          ),
-          if (_notesExpanded)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (_uploadedNotes.isEmpty)
+          Text(
+            'No uploaded notes yet.',
+            style: GoogleFonts.inter(color: AppColors.textSecondary),
+          )
+        else
+          ..._uploadedNotes.map((note) {
+            final typeColor = note.fileType == 'pdf'
+                ? AppColors.danger
+                : AppColors.accent;
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.surfaceDark,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.border),
+              ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  TextField(
-                    controller: _notesController,
-                    minLines: 5,
-                    maxLines: 8,
-                    style: GoogleFonts.inter(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Add your personal notes...',
-                      hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
-                      filled: true,
-                      fillColor: AppColors.surfaceDark,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                    ),
-                    onChanged: (_) {
-                      setState(() {});
-                    },
-                    onEditingComplete: _saveNotes,
-                  ),
-                  const SizedBox(height: 8),
                   Row(
                     children: [
+                      Expanded(
+                        child: Text(
+                          note.fileName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => _deleteUploadedNote(note.id),
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: AppColors.danger,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: typeColor.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          note.fileType.toUpperCase(),
+                          style: GoogleFonts.inter(
+                            color: typeColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        '${_notesController.text.length} chars',
+                        note.processingStatus,
                         style: GoogleFonts.inter(
-                          color: AppColors.textMuted,
+                          color: AppColors.textSecondary,
                           fontSize: 12,
                         ),
                       ),
                       const Spacer(),
-                      TextButton(
-                        onPressed: _saveNotes,
-                        child: _isSavingNotes
-                            ? const SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(
-                                'Save',
-                                style: GoogleFonts.inter(
-                                  color: AppColors.accent,
-                                ),
-                              ),
+                      Row(
+                        children: [
+                          Text(
+                            'Share',
+                            style: GoogleFonts.inter(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Switch(
+                            value: note.isSharedWithGroup,
+                            onChanged: (value) => _toggleShare(note, value),
+                            activeThumbColor: AppColors.accent,
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ],
               ),
-            ),
-        ],
-      ),
-    );
-
-  Widget _buildUploadsSection() => Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                'Lecture Notes',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              TextButton.icon(
-                onPressed: _uploadNote,
-                icon: const Icon(
-                  Icons.upload_file_rounded,
-                  color: AppColors.accent,
-                ),
-                label: Text(
-                  'Upload',
-                  style: GoogleFonts.inter(color: AppColors.accent),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (_uploadedNotes.isEmpty)
-            Text(
-              'No uploaded notes yet.',
-              style: GoogleFonts.inter(color: AppColors.textSecondary),
-            )
-          else
-            ..._uploadedNotes.map((note) {
-              final typeColor = note.fileType == 'pdf'
-                  ? AppColors.danger
-                  : AppColors.accent;
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceDark,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            note.fileName,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () => _deleteUploadedNote(note.id),
-                          icon: const Icon(
-                            Icons.delete_outline_rounded,
-                            color: AppColors.danger,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: typeColor.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            note.fileType.toUpperCase(),
-                            style: GoogleFonts.inter(
-                              color: typeColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          note.processingStatus,
-                          style: GoogleFonts.inter(
-                            color: AppColors.textSecondary,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const Spacer(),
-                        Row(
-                          children: [
-                            Text(
-                              'Share',
-                              style: GoogleFonts.inter(
-                                color: AppColors.textSecondary,
-                                fontSize: 12,
-                              ),
-                            ),
-                            Switch(
-                              value: note.isSharedWithGroup,
-                              onChanged: (value) => _toggleShare(note, value),
-                              activeThumbColor: AppColors.accent,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }),
-        ],
-      ),
-    );
+            );
+          }),
+      ],
+    ),
+  );
 
   Widget _buildRatingSection() => Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'How well do you understand this?',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-            ),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'How well do you understand this?',
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: List.generate(10, (index) {
-              final value = index + 1;
-              final selected = value == _selectedRating;
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: List.generate(10, (index) {
+            final value = index + 1;
+            final selected = value == _selectedRating;
 
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _selectedRating = value;
-                  });
-                },
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    gradient: selected ? AppColors.primaryGradient : null,
-                    color: selected ? null : AppColors.surfaceDark,
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  child: Text(
-                    '$value',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedRating = value;
+                });
+              },
+              child: Container(
+                width: 34,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  gradient: selected ? AppColors.primaryGradient : null,
+                  color: selected ? null : AppColors.surfaceDark,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: AppColors.border),
+                ),
+                child: Text(
+                  '$value',
+                  style: GoogleFonts.inter(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
                   ),
                 ),
-              );
-            }),
-          ),
-          const SizedBox(height: 14),
-          GestureDetector(
-            onTap: _saveRating,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(12),
               ),
-              alignment: Alignment.center,
-              child: Text(
-                'Save Rating',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
+            );
+          }),
+        ),
+        const SizedBox(height: 14),
+        GestureDetector(
+          onTap: _saveRating,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              'Save Rating',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 }

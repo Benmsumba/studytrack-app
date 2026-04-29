@@ -44,12 +44,9 @@ Future<void> main() async {
     return true;
   };
 
-  await runZonedGuarded(
-    () async {
-      await _bootstrapApp();
-    },
-    CrashReporter.report,
-  );
+  await runZonedGuarded(() async {
+    await _bootstrapApp();
+  }, CrashReporter.report);
 }
 
 Future<void> _bootstrapApp() async {

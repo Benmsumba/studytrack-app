@@ -7,7 +7,6 @@ import '../../utils/result.dart';
 import '../module_repository.dart';
 
 class ModuleRepositoryImpl implements ModuleRepository {
-
   ModuleRepositoryImpl(this._supabaseService);
   final SupabaseService _supabaseService;
 
@@ -25,7 +24,10 @@ class ModuleRepositoryImpl implements ModuleRepository {
     } catch (e, stack) {
       debugPrint('getAllModules error: $e');
       return Failure(
-        DataException(message: 'Failed to fetch modules: $e', stackTrace: stack),
+        DataException(
+          message: 'Failed to fetch modules: $e',
+          stackTrace: stack,
+        ),
       );
     }
   }
@@ -54,9 +56,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
     try {
       final uid = _userId;
       if (uid == null) {
-        return Failure(
-          DataException(message: 'User not authenticated'),
-        );
+        return Failure(DataException(message: 'User not authenticated'));
       }
       final raw = await _supabaseService.addModule(uid, name, '');
       if (raw == null) {
@@ -66,7 +66,10 @@ class ModuleRepositoryImpl implements ModuleRepository {
     } catch (e, stack) {
       debugPrint('createModule error: $e');
       return Failure(
-        DataException(message: 'Failed to create module: $e', stackTrace: stack),
+        DataException(
+          message: 'Failed to create module: $e',
+          stackTrace: stack,
+        ),
       );
     }
   }
@@ -74,7 +77,9 @@ class ModuleRepositoryImpl implements ModuleRepository {
   @override
   Future<Result<ModuleModel>> updateModule(ModuleModel module) async {
     try {
-      final data = module.toJson()..remove('id')..remove('created_at');
+      final data = module.toJson()
+        ..remove('id')
+        ..remove('created_at');
       final raw = await _supabaseService.updateModule(module.id, data);
       if (raw == null) {
         return Failure(DataException(message: 'Failed to update module'));
@@ -83,7 +88,10 @@ class ModuleRepositoryImpl implements ModuleRepository {
     } catch (e, stack) {
       debugPrint('updateModule error: $e');
       return Failure(
-        DataException(message: 'Failed to update module: $e', stackTrace: stack),
+        DataException(
+          message: 'Failed to update module: $e',
+          stackTrace: stack,
+        ),
       );
     }
   }
@@ -96,7 +104,10 @@ class ModuleRepositoryImpl implements ModuleRepository {
     } catch (e, stack) {
       debugPrint('deleteModule error: $e');
       return Failure(
-        DataException(message: 'Failed to delete module: $e', stackTrace: stack),
+        DataException(
+          message: 'Failed to delete module: $e',
+          stackTrace: stack,
+        ),
       );
     }
   }
@@ -109,7 +120,10 @@ class ModuleRepositoryImpl implements ModuleRepository {
     } catch (e, stack) {
       debugPrint('archiveModule error: $e');
       return Failure(
-        DataException(message: 'Failed to archive module: $e', stackTrace: stack),
+        DataException(
+          message: 'Failed to archive module: $e',
+          stackTrace: stack,
+        ),
       );
     }
   }
@@ -131,9 +145,8 @@ class ModuleRepositoryImpl implements ModuleRepository {
     final result = await getAllModules();
     final lower = query.toLowerCase();
     return result.map(
-      (modules) => modules
-          .where((m) => m.name.toLowerCase().contains(lower))
-          .toList(),
+      (modules) =>
+          modules.where((m) => m.name.toLowerCase().contains(lower)).toList(),
     );
   }
 

@@ -72,8 +72,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
   }
 
   List<Map<String, dynamic>> get _classesForDay => _classSlots
-        .where((item) => (item['day_of_week'] as int?) == _selectedDay)
-        .toList();
+      .where((item) => (item['day_of_week'] as int?) == _selectedDay)
+      .toList();
 
   String _displayTitleForSelectedDay() {
     final today = DateTime.now().weekday;
@@ -140,190 +140,178 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              color: AppColors.primary,
-              backgroundColor: AppColors.surfaceDark,
-              onRefresh: _loadData,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
-                children: [
-                  Text(
-                    _displayTitleForSelectedDay(),
-                    style: GoogleFonts.outfit(
-                      color: AppColors.textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
+    backgroundColor: AppColors.backgroundDark,
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            color: AppColors.primary,
+            backgroundColor: AppColors.surfaceDark,
+            onRefresh: _loadData,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+              children: [
+                Text(
+                  _displayTitleForSelectedDay(),
+                  style: GoogleFonts.outfit(
+                    color: AppColors.textPrimary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
                   ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    height: 44,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _dayLabels.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final day = index + 1;
-                        final selected = day == _selectedDay;
-                        return GestureDetector(
-                          onTap: () async {
-                            setState(() {
-                              _selectedDay = day;
-                            });
-                            await _loadData();
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 220),
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(24),
-                              gradient: selected
-                                  ? AppColors.primaryGradient
-                                  : null,
-                              color: selected ? null : AppColors.cardDark,
-                              border: Border.all(color: AppColors.border),
-                            ),
-                            alignment: Alignment.center,
-                            child: Text(
-                              _dayLabels[index],
-                              style: GoogleFonts.inter(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w600,
-                              ),
+                ),
+                const SizedBox(height: 14),
+                SizedBox(
+                  height: 44,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _dayLabels.length,
+                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    itemBuilder: (context, index) {
+                      final day = index + 1;
+                      final selected = day == _selectedDay;
+                      return GestureDetector(
+                        onTap: () async {
+                          setState(() {
+                            _selectedDay = day;
+                          });
+                          await _loadData();
+                        },
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            gradient: selected
+                                ? AppColors.primaryGradient
+                                : null,
+                            color: selected ? null : AppColors.cardDark,
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            _dayLabels[index],
+                            style: GoogleFonts.inter(
+                              color: AppColors.textPrimary,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  _buildSectionHeader('🎓 Classes', _classesForDay.length),
-                  const SizedBox(height: 10),
-                  Card(
-                    color: AppColors.cardDark,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: AppColors.border),
-                    ),
-                    child: ExpansionTile(
-                      initiallyExpanded: true,
-                      title: Text(
-                        'Class Timetable',
-                        style: GoogleFonts.inter(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
                         ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 18),
+                _buildSectionHeader('🎓 Classes', _classesForDay.length),
+                const SizedBox(height: 10),
+                Card(
+                  color: AppColors.cardDark,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: AppColors.border),
+                  ),
+                  child: ExpansionTile(
+                    initiallyExpanded: true,
+                    title: Text(
+                      'Class Timetable',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
                       ),
-                      iconColor: AppColors.textPrimary,
-                      collapsedIconColor: AppColors.textSecondary,
-                      children: _classesForDay.isEmpty
-                          ? [
-                              _buildEmptyTile(
-                                'No classes scheduled for this day.',
-                              ),
-                            ]
-                          : _classesForDay
-                                .map(_buildClassCard)
-                                .toList(),
                     ),
+                    iconColor: AppColors.textPrimary,
+                    collapsedIconColor: AppColors.textSecondary,
+                    children: _classesForDay.isEmpty
+                        ? [
+                            _buildEmptyTile(
+                              'No classes scheduled for this day.',
+                            ),
+                          ]
+                        : _classesForDay.map(_buildClassCard).toList(),
                   ),
-                  const SizedBox(height: 16),
-                  _buildSectionHeader(
-                    '📖 Study Sessions',
-                    _studySessions.length,
+                ),
+                const SizedBox(height: 16),
+                _buildSectionHeader('📖 Study Sessions', _studySessions.length),
+                const SizedBox(height: 10),
+                Card(
+                  color: AppColors.cardDark,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: const BorderSide(color: AppColors.border),
                   ),
-                  const SizedBox(height: 10),
-                  Card(
-                    color: AppColors.cardDark,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: AppColors.border),
-                    ),
-                    child: ExpansionTile(
-                      initiallyExpanded: true,
-                      title: Text(
-                        'Planned Sessions',
-                        style: GoogleFonts.inter(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  child: ExpansionTile(
+                    initiallyExpanded: true,
+                    title: Text(
+                      'Planned Sessions',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textPrimary,
+                        fontWeight: FontWeight.w600,
                       ),
-                      iconColor: AppColors.textPrimary,
-                      collapsedIconColor: AppColors.textSecondary,
-                      children: _studySessions.isEmpty
-                          ? [
-                              _buildEmptyTile(
-                                'Nothing scheduled. Add a class or study session.',
-                              ),
-                            ]
-                          : _studySessions
-                                .map(
-                                  _buildStudySessionCard,
-                                )
-                                .toList(),
                     ),
+                    iconColor: AppColors.textPrimary,
+                    collapsedIconColor: AppColors.textSecondary,
+                    children: _studySessions.isEmpty
+                        ? [
+                            _buildEmptyTile(
+                              'Nothing scheduled. Add a class or study session.',
+                            ),
+                          ]
+                        : _studySessions.map(_buildStudySessionCard).toList(),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddScheduleBottomSheet,
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
-    );
+          ),
+    floatingActionButton: FloatingActionButton(
+      onPressed: _showAddScheduleBottomSheet,
+      backgroundColor: AppColors.primary,
+      child: const Icon(Icons.add, color: Colors.white),
+    ),
+  );
 
   Widget _buildSectionHeader(String title, int count) => Row(
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.outfit(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-          ),
+    children: [
+      Text(
+        title,
+        style: GoogleFonts.outfit(
+          color: AppColors.textPrimary,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
         ),
-        const Spacer(),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceDark,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Text(
-            '$count',
-            style: GoogleFonts.inter(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    );
-
-  Widget _buildEmptyTile(String message) => Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-      child: Container(
-        width: double.infinity,
+      ),
+      const Spacer(),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: AppColors.surfaceDark,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(color: AppColors.border),
         ),
-        padding: const EdgeInsets.all(14),
         child: Text(
-          message,
+          '$count',
           style: GoogleFonts.inter(
             color: AppColors.textSecondary,
-            fontSize: 13,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
-    );
+    ],
+  );
+
+  Widget _buildEmptyTile(String message) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+    child: Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      padding: const EdgeInsets.all(14),
+      child: Text(
+        message,
+        style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 13),
+      ),
+    ),
+  );
 
   Widget _buildClassCard(Map<String, dynamic> slot) {
     final color = _safeColor(slot['color'] as String?);
@@ -780,85 +768,86 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   }
 
   Widget _buildAddClassTab() => ListView(
-      children: [
-        _buildInput(_subjectController, 'Subject name'),
-        const SizedBox(height: 10),
-        _buildDayDropdown(),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _buildTimePicker(
-                label: 'Start time',
-                value: _classStart,
-                onTap: () => _pickTime(isClass: true, isStart: true),
-              ),
+    children: [
+      _buildInput(_subjectController, 'Subject name'),
+      const SizedBox(height: 10),
+      _buildDayDropdown(),
+      const SizedBox(height: 10),
+      Row(
+        children: [
+          Expanded(
+            child: _buildTimePicker(
+              label: 'Start time',
+              value: _classStart,
+              onTap: () => _pickTime(isClass: true, isStart: true),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildTimePicker(
-                label: 'End time',
-                value: _classEnd,
-                onTap: () => _pickTime(isClass: true, isStart: false),
-              ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _buildTimePicker(
+              label: 'End time',
+              value: _classEnd,
+              onTap: () => _pickTime(isClass: true, isStart: false),
             ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        _buildInput(_roomController, 'Room (optional)'),
-        const SizedBox(height: 10),
-        _buildInput(_lecturerController, 'Lecturer (optional)'),
-      ],
-    );
+          ),
+        ],
+      ),
+      const SizedBox(height: 10),
+      _buildInput(_roomController, 'Room (optional)'),
+      const SizedBox(height: 10),
+      _buildInput(_lecturerController, 'Lecturer (optional)'),
+    ],
+  );
 
   Widget _buildAddStudyTab() => ListView(
-      children: [
-        _buildInput(_sessionTitleController, 'Session title'),
-        const SizedBox(height: 10),
-        _buildDatePicker(),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: _buildTimePicker(
-                label: 'Start time',
-                value: _sessionStart,
-                onTap: () => _pickTime(isClass: false, isStart: true),
-              ),
+    children: [
+      _buildInput(_sessionTitleController, 'Session title'),
+      const SizedBox(height: 10),
+      _buildDatePicker(),
+      const SizedBox(height: 10),
+      Row(
+        children: [
+          Expanded(
+            child: _buildTimePicker(
+              label: 'Start time',
+              value: _sessionStart,
+              onTap: () => _pickTime(isClass: false, isStart: true),
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildTimePicker(
-                label: 'End time',
-                value: _sessionEnd,
-                onTap: () => _pickTime(isClass: false, isStart: false),
-              ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _buildTimePicker(
+              label: 'End time',
+              value: _sessionEnd,
+              onTap: () => _pickTime(isClass: false, isStart: false),
             ),
-          ],
-        ),
-        const SizedBox(height: 10),
-        _buildTopicDropdown(),
-      ],
-    );
-
-  Widget _buildInput(TextEditingController controller, String hint) => TextField(
-      controller: controller,
-      style: GoogleFonts.inter(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
-        filled: true,
-        fillColor: AppColors.cardDark,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
+          ),
+        ],
       ),
-    );
+      const SizedBox(height: 10),
+      _buildTopicDropdown(),
+    ],
+  );
+
+  Widget _buildInput(TextEditingController controller, String hint) =>
+      TextField(
+        controller: controller,
+        style: GoogleFonts.inter(color: AppColors.textPrimary),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
+          filled: true,
+          fillColor: AppColors.cardDark,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+        ),
+      );
 
   Widget _buildDayDropdown() {
     const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -895,101 +884,97 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   }
 
   Widget _buildDatePicker() => InkWell(
-      onTap: _pickDate,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.cardDark,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.calendar_today,
-              color: AppColors.textSecondary,
-              size: 18,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '${_sessionDate.year}-${_sessionDate.month.toString().padLeft(2, '0')}-${_sessionDate.day.toString().padLeft(2, '0')}',
-              style: GoogleFonts.inter(color: AppColors.textPrimary),
-            ),
-          ],
-        ),
+    onTap: _pickDate,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.cardDark,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
       ),
-    );
+      child: Row(
+        children: [
+          const Icon(
+            Icons.calendar_today,
+            color: AppColors.textSecondary,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '${_sessionDate.year}-${_sessionDate.month.toString().padLeft(2, '0')}-${_sessionDate.day.toString().padLeft(2, '0')}',
+            style: GoogleFonts.inter(color: AppColors.textPrimary),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _buildTimePicker({
     required String label,
     required TimeOfDay? value,
     required VoidCallback onTap,
   }) => InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.cardDark,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            const Icon(
-              Icons.schedule,
-              color: AppColors.textSecondary,
-              size: 18,
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Text(
-                value == null ? label : value.format(context),
-                style: GoogleFonts.inter(
-                  color: value == null
-                      ? AppColors.textMuted
-                      : AppColors.textPrimary,
-                ),
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.cardDark,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.schedule, color: AppColors.textSecondary, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value == null ? label : value.format(context),
+              style: GoogleFonts.inter(
+                color: value == null
+                    ? AppColors.textMuted
+                    : AppColors.textPrimary,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
 
   Widget _buildTopicDropdown() => DropdownButtonFormField<String>(
-      initialValue: _selectedTopicId,
-      dropdownColor: AppColors.surfaceDark,
-      style: GoogleFonts.inter(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        labelText: 'Linked topic (optional)',
-        labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
-        filled: true,
-        fillColor: AppColors.cardDark,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
+    initialValue: _selectedTopicId,
+    dropdownColor: AppColors.surfaceDark,
+    style: GoogleFonts.inter(color: AppColors.textPrimary),
+    decoration: InputDecoration(
+      labelText: 'Linked topic (optional)',
+      labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
+      filled: true,
+      fillColor: AppColors.cardDark,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
-      items: _topics
-          .map(
-            (topic) => DropdownMenuItem<String>(
-              value: topic.id,
-              child: Text(topic.name),
-            ),
-          )
-          .toList(),
-      onChanged: (value) {
-        setState(() {
-          _selectedTopicId = value;
-          _selectedModuleId = _topics
-              .where((topic) => topic.id == value)
-              .map((topic) => topic.moduleId)
-              .firstOrNull;
-        });
-      },
-    );
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+    ),
+    items: _topics
+        .map(
+          (topic) => DropdownMenuItem<String>(
+            value: topic.id,
+            child: Text(topic.name),
+          ),
+        )
+        .toList(),
+    onChanged: (value) {
+      setState(() {
+        _selectedTopicId = value;
+        _selectedModuleId = _topics
+            .where((topic) => topic.id == value)
+            .map((topic) => topic.moduleId)
+            .firstOrNull;
+      });
+    },
+  );
 }

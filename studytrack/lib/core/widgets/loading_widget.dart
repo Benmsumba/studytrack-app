@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 
 class LoadingWidget extends StatefulWidget {
-
   const LoadingWidget({
     super.key,
     this.label,

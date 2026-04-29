@@ -163,53 +163,53 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-          child: Column(
-            children: [
-              _buildDots(),
-              const SizedBox(height: 18),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _stepWelcome(),
-                    _stepCourse(),
-                    _stepYearLevel(),
-                    _stepPrimeTime(),
-                    _stepDailyHours(),
-                    _stepStudyStyle(),
-                  ],
-                ),
+    backgroundColor: AppColors.backgroundDark,
+    body: SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        child: Column(
+          children: [
+            _buildDots(),
+            const SizedBox(height: 18),
+            Expanded(
+              child: PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                children: [
+                  _stepWelcome(),
+                  _stepCourse(),
+                  _stepYearLevel(),
+                  _stepPrimeTime(),
+                  _stepDailyHours(),
+                  _stepStudyStyle(),
+                ],
               ),
-              const SizedBox(height: 14),
-              _buildBottomActions(),
-            ],
-          ),
+            ),
+            const SizedBox(height: 14),
+            _buildBottomActions(),
+          ],
         ),
       ),
-    );
+    ),
+  );
 
   Widget _buildDots() => Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(_steps, (index) {
-        final active = index == _currentStep;
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 240),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: active ? 22 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            gradient: active ? AppColors.primaryGradient : null,
-            color: active ? null : AppColors.border,
-            borderRadius: BorderRadius.circular(99),
-          ),
-        );
-      }),
-    );
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: List.generate(_steps, (index) {
+      final active = index == _currentStep;
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 240),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        width: active ? 22 : 8,
+        height: 8,
+        decoration: BoxDecoration(
+          gradient: active ? AppColors.primaryGradient : null,
+          color: active ? null : AppColors.border,
+          borderRadius: BorderRadius.circular(99),
+        ),
+      );
+    }),
+  );
 
   Widget _buildBottomActions() {
     final isLast = _currentStep == _steps - 1;
@@ -268,136 +268,141 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _stepWelcome() => _stepContainer(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Welcome to StudyTrack 👋',
-            style: GoogleFonts.outfit(
-              color: AppColors.textPrimary,
-              fontSize: 32,
-              fontWeight: FontWeight.w700,
-              height: 1.1,
-            ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Welcome to StudyTrack 👋',
+          style: GoogleFonts.outfit(
+            color: AppColors.textPrimary,
+            fontSize: 32,
+            fontWeight: FontWeight.w700,
+            height: 1.1,
           ),
-          const SizedBox(height: 10),
-          Text(
-            'Let\'s set up your personal study companion',
-            style: GoogleFonts.inter(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-            ),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          'Let\'s set up your personal study companion',
+          style: GoogleFonts.inter(
+            color: AppColors.textSecondary,
+            fontSize: 14,
           ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: Center(
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: AppColors.primaryGradient,
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: SvgPicture.string(_brandSvg, fit: BoxFit.contain),
-                ),
-              )
-                  .animate(onPlay: (c) => c.repeat(reverse: true))
-                  .scale(
-                    begin: const Offset(0.95, 0.95),
-                    end: const Offset(1.05, 1.05),
-                    duration: 1800.ms,
-                    curve: Curves.easeInOut,
-                  ),
-            ),
+        ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: Center(
+            child:
+                Container(
+                      width: 160,
+                      height: 160,
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: AppColors.primaryGradient,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: SvgPicture.string(
+                          _brandSvg,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    )
+                    .animate(onPlay: (c) => c.repeat(reverse: true))
+                    .scale(
+                      begin: const Offset(0.95, 0.95),
+                      end: const Offset(1.05, 1.05),
+                      duration: 1800.ms,
+                      curve: Curves.easeInOut,
+                    ),
           ),
-          const SizedBox(height: 10),
-          _inputField(
-            controller: _nameController,
-            label: 'What\'s your name?',
-          ),
-        ],
-      ).animate().fadeIn(duration: 350.ms),
-    );
+        ),
+        const SizedBox(height: 10),
+        _inputField(controller: _nameController, label: 'What\'s your name?'),
+      ],
+    ).animate().fadeIn(duration: 350.ms),
+  );
 
   Widget _stepCourse() => _stepContainer(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _title('What are you studying?'),
-          const SizedBox(height: 12),
-          _inputField(controller: _courseController, label: 'Course name'),
-          const SizedBox(height: 18),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _courseExamples.map((example) => ActionChip(
-                backgroundColor: AppColors.cardDark,
-                side: const BorderSide(color: AppColors.border),
-                label: Text(
-                  example,
-                  style: GoogleFonts.inter(color: AppColors.textSecondary),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _title('What are you studying?'),
+        const SizedBox(height: 12),
+        _inputField(controller: _courseController, label: 'Course name'),
+        const SizedBox(height: 18),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _courseExamples
+              .map(
+                (example) => ActionChip(
+                  backgroundColor: AppColors.cardDark,
+                  side: const BorderSide(color: AppColors.border),
+                  label: Text(
+                    example,
+                    style: GoogleFonts.inter(color: AppColors.textSecondary),
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _courseController.text = example;
+                    });
+                  },
                 ),
-                onPressed: () {
-                  setState(() {
-                    _courseController.text = example;
-                  });
-                },
-              )).toList(),
-          ),
-        ],
-      ).animate().fadeIn(duration: 350.ms),
-    );
+              )
+              .toList(),
+        ),
+      ],
+    ).animate().fadeIn(duration: 350.ms),
+  );
 
   Widget _stepYearLevel() => _stepContainer(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _title('What year are you in?'),
-          const SizedBox(height: 16),
-          Expanded(
-            child: GridView.builder(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-                childAspectRatio: 1.1,
-              ),
-              itemCount: 7,
-              itemBuilder: (context, index) {
-                final year = index + 1;
-                final selected = year == _yearLevel;
-                return InkWell(
-                  onTap: () => setState(() => _yearLevel = year),
-                  borderRadius: BorderRadius.circular(14),
-                  child: Ink(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
-                      gradient: selected ? AppColors.primaryGradient : null,
-                      color: selected ? null : AppColors.cardDark,
-                      border: selected
-                          ? null
-                          : Border.all(color: AppColors.border, width: 1.2),
-                    ),
-                    child: Center(
-                      child: Text(
-                        '$year',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w700,
-                        ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _title('What year are you in?'),
+        const SizedBox(height: 16),
+        Expanded(
+          child: GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 4,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.1,
+            ),
+            itemCount: 7,
+            itemBuilder: (context, index) {
+              final year = index + 1;
+              final selected = year == _yearLevel;
+              return InkWell(
+                onTap: () => setState(() => _yearLevel = year),
+                borderRadius: BorderRadius.circular(14),
+                child: Ink(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(14),
+                    gradient: selected ? AppColors.primaryGradient : null,
+                    color: selected ? null : AppColors.cardDark,
+                    border: selected
+                        ? null
+                        : Border.all(color: AppColors.border, width: 1.2),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$year',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
-        ],
-      ).animate().fadeIn(duration: 350.ms),
-    );
+        ),
+      ],
+    ).animate().fadeIn(duration: 350.ms),
+  );
 
   Widget _stepPrimeTime() {
     final options = [
@@ -421,7 +426,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 onTap: () => setState(() => _primeStudyTime = item.$1),
                 borderRadius: BorderRadius.circular(16),
                 child: Ink(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
                     gradient: selected ? AppColors.cardGradient : null,
@@ -492,7 +500,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Center(
             child: Text(
               'hours/day',
-              style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 14),
+              style: GoogleFonts.inter(
+                color: AppColors.textSecondary,
+                fontSize: 14,
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -530,107 +541,110 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _stepStudyStyle() => _stepContainer(
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _title('How do you prefer to study?'),
-            const SizedBox(height: 12),
-            _studyStyleCard(
-              selected: _studyPreference == 'alone',
-              emoji: '🎧',
-              title: 'Alone',
-              subtitle: 'I focus best by myself',
-              onTap: () => setState(() => _studyPreference = 'alone'),
+    child: SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _title('How do you prefer to study?'),
+          const SizedBox(height: 12),
+          _studyStyleCard(
+            selected: _studyPreference == 'alone',
+            emoji: '🎧',
+            title: 'Alone',
+            subtitle: 'I focus best by myself',
+            onTap: () => setState(() => _studyPreference = 'alone'),
+          ),
+          const SizedBox(height: 10),
+          _studyStyleCard(
+            selected: _studyPreference == 'group',
+            emoji: '👥',
+            title: 'With others',
+            subtitle: 'I learn better with friends',
+            onTap: () => setState(() => _studyPreference = 'group'),
+          ),
+          const SizedBox(height: 18),
+          Text(
+            'Almost ready! Here\'s what we set up for you:',
+            style: GoogleFonts.inter(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 10),
-            _studyStyleCard(
-              selected: _studyPreference == 'group',
-              emoji: '👥',
-              title: 'With others',
-              subtitle: 'I learn better with friends',
-              onTap: () => setState(() => _studyPreference = 'group'),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: AppColors.cardDark,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.border),
             ),
-            const SizedBox(height: 18),
-            Text(
-              'Almost ready! Here\'s what we set up for you:',
-              style: GoogleFonts.inter(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _summaryRow('Name', _nameController.text.trim()),
+                _summaryRow('Course', _courseController.text.trim()),
+                _summaryRow('Year', '$_yearLevel'),
+                _summaryRow('Best time', _primeStudyTime),
+                _summaryRow('Hours/day', _dailyStudyHours.round().toString()),
+                _summaryRow(
+                  'Style',
+                  _studyPreference == 'alone' ? 'Alone' : 'With others',
+                ),
+              ],
             ),
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.cardDark,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _summaryRow('Name', _nameController.text.trim()),
-                  _summaryRow('Course', _courseController.text.trim()),
-                  _summaryRow('Year', '$_yearLevel'),
-                  _summaryRow('Best time', _primeStudyTime),
-                  _summaryRow('Hours/day', _dailyStudyHours.round().toString()),
-                  _summaryRow('Style', _studyPreference == 'alone' ? 'Alone' : 'With others'),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ).animate().fadeIn(duration: 350.ms),
-    );
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 350.ms),
+  );
 
   Widget _stepContainer({required Widget child}) => Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: child,
-    );
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: AppColors.surfaceDark,
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: child,
+  );
 
   Widget _inputField({
     required TextEditingController controller,
     required String label,
   }) => TextField(
-      controller: controller,
-      style: GoogleFonts.inter(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        labelText: label,
-        labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
-        filled: true,
-        fillColor: AppColors.cardDark,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.accent),
-        ),
+    controller: controller,
+    style: GoogleFonts.inter(color: AppColors.textPrimary),
+    decoration: InputDecoration(
+      labelText: label,
+      labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
+      filled: true,
+      fillColor: AppColors.cardDark,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
       ),
-    );
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.border),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.accent),
+      ),
+    ),
+  );
 
   Widget _title(String text) => Text(
-      text,
-      style: GoogleFonts.outfit(
-        color: AppColors.textPrimary,
-        fontSize: 30,
-        fontWeight: FontWeight.w700,
-        height: 1.1,
-      ),
-    );
+    text,
+    style: GoogleFonts.outfit(
+      color: AppColors.textPrimary,
+      fontSize: 30,
+      fontWeight: FontWeight.w700,
+      height: 1.1,
+    ),
+  );
 
   Widget _studyStyleCard({
     required bool selected,
@@ -639,74 +653,74 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     required String subtitle,
     required VoidCallback onTap,
   }) => InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: selected ? AppColors.cardGradient : null,
-          color: selected ? null : AppColors.cardDark,
-          border: Border.all(
-            color: selected ? AppColors.accent : AppColors.border,
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 24)),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.outfit(
-                      color: AppColors.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.inter(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(16),
+    child: Ink(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: selected ? AppColors.cardGradient : null,
+        color: selected ? null : AppColors.cardDark,
+        border: Border.all(
+          color: selected ? AppColors.accent : AppColors.border,
+          width: selected ? 1.5 : 1,
         ),
       ),
-    );
-
-  Widget _summaryRow(String label, String value) => Padding(
-      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          SizedBox(
-            width: 88,
-            child: Text(
-              '$label:',
-              style: GoogleFonts.inter(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+          Text(emoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              value.isEmpty ? '-' : value,
-              style: GoogleFonts.inter(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.outfit(
+                    color: AppColors.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.inter(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-    );
+    ),
+  );
+
+  Widget _summaryRow(String label, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 88,
+          child: Text(
+            '$label:',
+            style: GoogleFonts.inter(
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value.isEmpty ? '-' : value,
+            style: GoogleFonts.inter(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 }

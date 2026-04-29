@@ -189,7 +189,10 @@ class _QuizScreenState extends State<QuizScreen> {
         backgroundColor: AppColors.backgroundDark,
         title: Text(
           'Quiz',
-          style: GoogleFonts.outfit(color: Colors.white, fontWeight: FontWeight.w700),
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       body: Padding(
@@ -274,7 +277,9 @@ class _QuizScreenState extends State<QuizScreen> {
 
   _OptionState _optionState(QuizQuestion question, int index) {
     if (!_answered) {
-      return _selectedIndex == index ? _OptionState.selected : _OptionState.normal;
+      return _selectedIndex == index
+          ? _OptionState.selected
+          : _OptionState.normal;
     }
     if (index == question.correctIndex) {
       return _OptionState.correct;
@@ -358,10 +363,7 @@ class _OptionCard extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                text,
-                style: GoogleFonts.inter(color: Colors.white),
-              ),
+              child: Text(text, style: GoogleFonts.inter(color: Colors.white)),
             ),
             if (trailing != null) Icon(trailing, color: border),
           ],
@@ -399,48 +401,51 @@ class _ResultsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      appBar: AppBar(backgroundColor: AppColors.backgroundDark),
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '$score/$total',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontSize: 52,
-                fontWeight: FontWeight.w800,
-              ),
+    backgroundColor: AppColors.backgroundDark,
+    appBar: AppBar(backgroundColor: AppColors.backgroundDark),
+    body: Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '$score/$total',
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontSize: 52,
+              fontWeight: FontWeight.w800,
             ),
-            const SizedBox(height: 12),
-            Text(
-              _message(),
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 16),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _message(),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              color: AppColors.textSecondary,
+              fontSize: 16,
             ),
-            const SizedBox(height: 12),
-            Text(
-              'We suggest rating this $suggestedRating/10',
-              style: GoogleFonts.inter(
-                color: AppColors.accent,
-                fontWeight: FontWeight.w700,
-              ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'We suggest rating this $suggestedRating/10',
+            style: GoogleFonts.inter(
+              color: AppColors.accent,
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 20),
-            _PrimaryButton(
-              label: isSubmitting ? 'Updating...' : 'Update My Rating',
-              onTap: onUpdateRating,
-            ),
-            const SizedBox(height: 10),
-            _SecondaryButton(label: 'Try Again', onTap: onTryAgain),
-            const SizedBox(height: 10),
-            _SecondaryButton(label: 'Back to Topic', onTap: onBack),
-          ],
-        ),
+          ),
+          const SizedBox(height: 20),
+          _PrimaryButton(
+            label: isSubmitting ? 'Updating...' : 'Update My Rating',
+            onTap: onUpdateRating,
+          ),
+          const SizedBox(height: 10),
+          _SecondaryButton(label: 'Try Again', onTap: onTryAgain),
+          const SizedBox(height: 10),
+          _SecondaryButton(label: 'Back to Topic', onTap: onBack),
+        ],
       ),
-    );
+    ),
+  );
 }
 
 class _PrimaryButton extends StatelessWidget {
@@ -451,21 +456,24 @@ class _PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          label,
-          style: GoogleFonts.inter(color: Colors.white, fontWeight: FontWeight.w700),
+    onTap: onTap,
+    child: Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      decoration: BoxDecoration(
+        gradient: AppColors.primaryGradient,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        label,
+        style: GoogleFonts.inter(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
         ),
       ),
-    );
+    ),
+  );
 }
 
 class _SecondaryButton extends StatelessWidget {
@@ -476,14 +484,14 @@ class _SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => OutlinedButton(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        minimumSize: const Size.fromHeight(48),
-        side: const BorderSide(color: AppColors.border),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.inter(color: AppColors.textSecondary),
-      ),
-    );
+    onPressed: onTap,
+    style: OutlinedButton.styleFrom(
+      minimumSize: const Size.fromHeight(48),
+      side: const BorderSide(color: AppColors.border),
+    ),
+    child: Text(
+      label,
+      style: GoogleFonts.inter(color: AppColors.textSecondary),
+    ),
+  );
 }

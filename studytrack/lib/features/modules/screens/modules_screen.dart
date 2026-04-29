@@ -79,10 +79,8 @@ class _ModulesScreenState extends State<ModulesScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => _AddModuleBottomSheet(
-        service: _service,
-        module: module,
-      ),
+      builder: (context) =>
+          _AddModuleBottomSheet(service: _service, module: module),
     );
 
     if (changed == true) {
@@ -98,149 +96,153 @@ class _ModulesScreenState extends State<ModulesScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) => SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.edit_rounded, color: Colors.white),
-                title: Text(
-                  'Edit name',
-                  style: GoogleFonts.inter(color: Colors.white),
-                ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _showAddOrEditModuleSheet(module: module);
-                },
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_rounded, color: Colors.white),
+              title: Text(
+                'Edit name',
+                style: GoogleFonts.inter(color: Colors.white),
               ),
-              ListTile(
-                leading: const Icon(Icons.palette_rounded, color: Colors.white),
-                title: Text(
-                  'Change color',
-                  style: GoogleFonts.inter(color: Colors.white),
-                ),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _showAddOrEditModuleSheet(module: module);
-                },
+              onTap: () {
+                Navigator.of(context).pop();
+                _showAddOrEditModuleSheet(module: module);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.palette_rounded, color: Colors.white),
+              title: Text(
+                'Change color',
+                style: GoogleFonts.inter(color: Colors.white),
               ),
-              ListTile(
-                leading: const Icon(Icons.delete_rounded, color: AppColors.danger),
-                title: Text(
-                  'Delete',
-                  style: GoogleFonts.inter(color: AppColors.danger),
-                ),
-                onTap: () async {
-                  Navigator.of(context).pop();
-                  await _service.deleteModule(module.id);
-                  await _loadModules();
-                },
+              onTap: () {
+                Navigator.of(context).pop();
+                _showAddOrEditModuleSheet(module: module);
+              },
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.delete_rounded,
+                color: AppColors.danger,
               ),
-            ],
-          ),
+              title: Text(
+                'Delete',
+                style: GoogleFonts.inter(color: AppColors.danger),
+              ),
+              onTap: () async {
+                Navigator.of(context).pop();
+                await _service.deleteModule(module.id);
+                await _loadModules();
+              },
+            ),
+          ],
         ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              color: AppColors.primary,
-              backgroundColor: AppColors.surfaceDark,
-              onRefresh: _loadModules,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
-                children: [
-                  TextField(
-                    controller: _searchController,
-                    style: GoogleFonts.inter(color: Colors.white),
-                    decoration: InputDecoration(
-                      hintText: 'Search modules',
-                      hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        color: AppColors.textMuted,
-                      ),
-                      filled: true,
-                      fillColor: AppColors.cardDark,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(color: AppColors.border),
+    backgroundColor: AppColors.backgroundDark,
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            color: AppColors.primary,
+            backgroundColor: AppColors.surfaceDark,
+            onRefresh: _loadModules,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
+              children: [
+                TextField(
+                  controller: _searchController,
+                  style: GoogleFonts.inter(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Search modules',
+                    hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
+                    prefixIcon: const Icon(
+                      Icons.search_rounded,
+                      color: AppColors.textMuted,
+                    ),
+                    filled: true,
+                    fillColor: AppColors.cardDark,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide: const BorderSide(color: AppColors.border),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _query = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 14),
+                GestureDetector(
+                  onTap: _showAddOrEditModuleSheet,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    alignment: Alignment.center,
+                    child: Text(
+                      'Add Module',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
                       ),
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        _query = value;
-                      });
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_filteredModules.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 44),
+                    child: Center(
+                      child: Text(
+                        'No modules yet. Add your first module.',
+                        style: GoogleFonts.inter(
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  GridView.builder(
+                    itemCount: _filteredModules.length,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          childAspectRatio: 0.78,
+                        ),
+                    itemBuilder: (context, index) {
+                      final module = _filteredModules[index];
+                      final topics =
+                          _topicsByModule[module.id] ?? const <TopicModel>[];
+                      final stats = _ModuleStats.fromTopics(topics);
+
+                      return GestureDetector(
+                        onLongPress: () => _showCardOptions(module),
+                        onTap: () => context.push('/modules/${module.id}'),
+                        child: _ModuleCard(module: module, stats: stats),
+                      );
                     },
                   ),
-                  const SizedBox(height: 14),
-                  GestureDetector(
-                    onTap: _showAddOrEditModuleSheet,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Add Module',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_filteredModules.isEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 44),
-                      child: Center(
-                        child: Text(
-                          'No modules yet. Add your first module.',
-                          style: GoogleFonts.inter(color: AppColors.textSecondary),
-                        ),
-                      ),
-                    )
-                  else
-                    GridView.builder(
-                      itemCount: _filteredModules.length,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        crossAxisSpacing: 12,
-                        mainAxisSpacing: 12,
-                        childAspectRatio: 0.78,
-                      ),
-                      itemBuilder: (context, index) {
-                        final module = _filteredModules[index];
-                        final topics = _topicsByModule[module.id] ?? const <TopicModel>[];
-                        final stats = _ModuleStats.fromTopics(topics);
-
-                        return GestureDetector(
-                          onLongPress: () => _showCardOptions(module),
-                          onTap: () => context.push('/modules/${module.id}'),
-                          child: _ModuleCard(
-                            module: module,
-                            stats: stats,
-                          ),
-                        );
-                      },
-                    ),
-                ],
-              ),
+              ],
             ),
-    );
+          ),
+  );
 }
 
 class _ModuleCard extends StatelessWidget {
@@ -272,10 +274,7 @@ class _ModuleCard extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            subjectColor.withValues(alpha: 0.45),
-            AppColors.cardDark,
-          ],
+          colors: [subjectColor.withValues(alpha: 0.45), AppColors.cardDark],
         ),
         border: Border.all(color: AppColors.border),
       ),
@@ -349,7 +348,6 @@ class _ModuleCard extends StatelessWidget {
 }
 
 class _ModuleStats {
-
   factory _ModuleStats.fromTopics(List<TopicModel> topics) {
     if (topics.isEmpty) {
       return const _ModuleStats(totalTopics: 0, studiedTopics: 0, mastery: 0);
@@ -555,5 +553,4 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
       ),
     );
   }
-
 }

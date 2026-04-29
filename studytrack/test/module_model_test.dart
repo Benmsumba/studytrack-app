@@ -65,11 +65,11 @@ ModuleModel _module({
   String? semester,
   bool isActive = true,
 }) => ModuleModel(
-    id: 'module-1',
-    userId: 'user-1',
-    name: name,
-    color: color,
-    semester: semester,
-    isActive: isActive,
-    createdAt: DateTime.parse('2026-04-01T00:00:00.000Z'),
-  );
+  id: 'module-1',
+  userId: 'user-1',
+  name: name,
+  color: color,
+  semester: semester,
+  isActive: isActive,
+  createdAt: DateTime.parse('2026-04-01T00:00:00.000Z'),
+);

@@ -7,7 +7,8 @@ import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 
 class TopicChatScreen extends StatefulWidget {
   const TopicChatScreen({
-    required this.topicId, super.key,
+    required this.topicId,
+    super.key,
     this.topicName,
     this.moduleName,
     this.groupName,
@@ -175,23 +176,23 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) => Padding(
-          padding: EdgeInsets.only(
-            left: 16,
-            right: 16,
-            top: 16,
-            bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
-          ),
-          child: VoiceNoteRecorderWidget(
-            topicId: widget.topicId,
-            onSaved: (result) async {
-              final navigator = Navigator.of(sheetContext);
-              await _sendMessage('🎙 Voice note: ${result.transcription}');
-              if (navigator.mounted) {
-                navigator.pop();
-              }
-            },
-          ),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 16,
+          bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
         ),
+        child: VoiceNoteRecorderWidget(
+          topicId: widget.topicId,
+          onSaved: (result) async {
+            final navigator = Navigator.of(sheetContext);
+            await _sendMessage('🎙 Voice note: ${result.transcription}');
+            if (navigator.mounted) {
+              navigator.pop();
+            }
+          },
+        ),
+      ),
     );
   }
 
@@ -448,10 +449,10 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
   }
 
   Widget _promptChip(String text) => ActionChip(
-      label: Text(text),
-      onPressed: () => _sendMessage(text),
-      backgroundColor: AppColors.surfaceDark,
-      labelStyle: GoogleFonts.inter(color: Colors.white, fontSize: 12),
-      side: const BorderSide(color: AppColors.border),
-    );
+    label: Text(text),
+    onPressed: () => _sendMessage(text),
+    backgroundColor: AppColors.surfaceDark,
+    labelStyle: GoogleFonts.inter(color: Colors.white, fontSize: 12),
+    side: const BorderSide(color: AppColors.border),
+  );
 }

@@ -15,7 +15,6 @@ class _CacheEntry {
 }
 
 class QuizQuestion {
-
   factory QuizQuestion.fromJson(Map<String, dynamic> json) {
     final rawOptions = (json['options'] as List<dynamic>? ?? const <dynamic>[])
         .map((e) => e.toString())
@@ -43,15 +42,14 @@ class QuizQuestion {
   final String explanation;
 
   Map<String, dynamic> toJson() => {
-      'question': question,
-      'options': options,
-      'correctIndex': correctIndex,
-      'explanation': explanation,
-    };
+    'question': question,
+    'options': options,
+    'correctIndex': correctIndex,
+    'explanation': explanation,
+  };
 }
 
 class GeminiService {
-
   factory GeminiService() => _instance;
   GeminiService._internal();
 
@@ -88,7 +86,8 @@ class GeminiService {
     required int currentRating,
     String? notesContent,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 You are an expert academic tutor for health sciences students.
 
 Student course: $course
@@ -108,7 +107,10 @@ Student notes:
 ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' : notesContent}
 ''';
 
-    return _generateText(prompt, fallback: 'Could not generate explanation right now.');
+    return _generateText(
+      prompt,
+      fallback: 'Could not generate explanation right now.',
+    );
   }
 
   Future<List<QuizQuestion>> generateQuiz({
@@ -116,7 +118,8 @@ ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' :
     required String course,
     String? notesContent,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Generate 5 multiple-choice questions for the topic "$topicName" (course: $course).
 
 Rules:
@@ -172,7 +175,8 @@ ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' :
     required String topicName,
     required String content,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Create a creative and memorable mnemonic for this topic:
 Topic: $topicName
 Content: $content
@@ -182,14 +186,18 @@ Return:
 - Quick breakdown of what each part maps to
 ''';
 
-    return _generateText(prompt, fallback: 'Could not generate mnemonic right now.');
+    return _generateText(
+      prompt,
+      fallback: 'Could not generate mnemonic right now.',
+    );
   }
 
   Future<String> summarizeNotes({
     required String topicName,
     required String notesContent,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Summarize these notes for topic "$topicName" in under 300 words.
 Use concise bullet points and prioritize exam-relevant facts.
 
@@ -197,7 +205,10 @@ Notes:
 $notesContent
 ''';
 
-    return _generateText(prompt, fallback: 'Could not summarize notes right now.');
+    return _generateText(
+      prompt,
+      fallback: 'Could not summarize notes right now.',
+    );
   }
 
   Future<String> predictExamQuestions({
@@ -205,7 +216,8 @@ $notesContent
     required String moduleName,
     String? notesContent,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Predict 5 likely exam questions for:
 Topic: $topicName
 Module: $moduleName
@@ -216,7 +228,10 @@ Notes context:
 ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' : notesContent}
 ''';
 
-    return _generateText(prompt, fallback: 'Could not predict exam questions right now.');
+    return _generateText(
+      prompt,
+      fallback: 'Could not predict exam questions right now.',
+    );
   }
 
   Future<String> generateWeeklyWrappedSummary({
@@ -229,7 +244,8 @@ ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' :
     required int sessionsCompleted,
     required int sessionsMissed,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Write a 3-4 sentence motivational weekly summary.
 Tone: encouraging coach.
 
@@ -245,7 +261,10 @@ Sessions missed: $sessionsMissed
 Mention wins first, then gaps, then practical next-week advice.
 ''';
 
-    return _generateText(prompt, fallback: 'Could not generate weekly summary right now.');
+    return _generateText(
+      prompt,
+      fallback: 'Could not generate weekly summary right now.',
+    );
   }
 
   Future<String> getStudySuggestion({
@@ -254,7 +273,8 @@ Mention wins first, then gaps, then practical next-week advice.
     required List<String> upcomingExams,
     required String primeStudyTime,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Create a short 2-line actionable study suggestion.
 
 Student: $studentName
@@ -265,7 +285,10 @@ Prime study time: $primeStudyTime
 Keep it practical and specific for today.
 ''';
 
-    return _generateText(prompt, fallback: 'Could not get study suggestion right now.');
+    return _generateText(
+      prompt,
+      fallback: 'Could not get study suggestion right now.',
+    );
   }
 
   Future<String> chatWithTutor({
@@ -276,11 +299,14 @@ Keep it practical and specific for today.
     String? notesContext,
   }) async {
     final history = conversationHistory
-        .map((entry) =>
-            '- ${entry['role'] ?? 'user'}: ${(entry['content'] ?? '').toString()}')
+        .map(
+          (entry) =>
+              '- ${entry['role'] ?? 'user'}: ${(entry['content'] ?? '').toString()}',
+        )
         .join('\n');
 
-    final prompt = '''
+    final prompt =
+        '''
 You are StudyTrack AI Tutor.
 Stay focused on academic help only.
 If user asks off-topic requests, politely redirect to study help.
@@ -298,7 +324,10 @@ New user message:
 $message
 ''';
 
-    return _generateText(prompt, fallback: 'Tutor is currently unavailable. Please try again.');
+    return _generateText(
+      prompt,
+      fallback: 'Tutor is currently unavailable. Please try again.',
+    );
   }
 
   Future<String> _generateText(
@@ -366,10 +395,7 @@ $message
   String _extractJson(String raw) {
     var output = raw.trim();
     if (output.startsWith('```')) {
-      output = output
-          .replaceAll('```json', '')
-          .replaceAll('```', '')
-          .trim();
+      output = output.replaceAll('```json', '').replaceAll('```', '').trim();
     }
 
     final firstBrace = output.indexOf('{');
@@ -380,10 +406,14 @@ $message
     return output.substring(firstBrace, lastBrace + 1);
   }
 
-  List<QuizQuestion> _fallbackQuiz(String message) => List<QuizQuestion>.generate(5, (index) => QuizQuestion(
-        question: 'Quiz unavailable (${index + 1}/5)',
-        options: const ['A', 'B', 'C', 'D'],
-        correctIndex: 0,
-        explanation: message,
-      ));
+  List<QuizQuestion> _fallbackQuiz(String message) =>
+      List<QuizQuestion>.generate(
+        5,
+        (index) => QuizQuestion(
+          question: 'Quiz unavailable (${index + 1}/5)',
+          options: const ['A', 'B', 'C', 'D'],
+          correctIndex: 0,
+          explanation: message,
+        ),
+      );
 }

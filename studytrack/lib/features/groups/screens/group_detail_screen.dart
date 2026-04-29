@@ -570,11 +570,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   Widget _chatTab() => Center(
-      child: FilledButton.icon(
-        onPressed: () =>
-            context.push('/group/${widget.groupId}/chat', extra: widget.group),
-        icon: const Icon(Icons.chat_bubble_outline),
-        label: const Text('Open Group Chat'),
-      ),
-    );
+    child: FilledButton.icon(
+      onPressed: () =>
+          context.push('/group/${widget.groupId}/chat', extra: widget.group),
+      icon: const Icon(Icons.chat_bubble_outline),
+      label: const Text('Open Group Chat'),
+    ),
+  );
 }

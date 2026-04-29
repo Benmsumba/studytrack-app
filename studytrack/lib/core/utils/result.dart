@@ -54,7 +54,6 @@ sealed class Result<T> {
 
 /// Success variant of Result
 class Success<T> extends Result<T> {
-
   const Success(this.data);
   final T data;
 
@@ -64,7 +63,6 @@ class Success<T> extends Result<T> {
 
 /// Failure variant of Result
 class Failure<T> extends Result<T> {
-
   const Failure(this.error);
   final AppException error;
 

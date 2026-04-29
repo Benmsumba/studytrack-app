@@ -10,7 +10,6 @@ import '../study_group_repository.dart';
 
 /// Implementation of StudyGroupRepository using SupabaseService
 class StudyGroupRepositoryImpl implements StudyGroupRepository {
-
   StudyGroupRepositoryImpl(this._supabaseService);
   final SupabaseService _supabaseService;
 
@@ -169,7 +168,8 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
   }
 
   @override
-  Stream<List<GroupMessageModel>> subscribeToGroupMessages(String groupId) => _supabaseService.subscribeToGroupMessages(groupId);
+  Stream<List<GroupMessageModel>> subscribeToGroupMessages(String groupId) =>
+      _supabaseService.subscribeToGroupMessages(groupId);
 
   @override
   Future<Result<void>> inviteUserToGroup({

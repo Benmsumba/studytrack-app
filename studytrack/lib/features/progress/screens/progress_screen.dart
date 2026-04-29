@@ -129,144 +129,141 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Analytics',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: () => context.push('/weekly-wrapped'),
-            icon: const Icon(
-              Icons.auto_awesome,
-              size: 16,
-              color: AppColors.cyan,
-            ),
-            label: const Text(
-              'See Wrapped',
-              style: TextStyle(color: AppColors.cyan),
-            ),
-          ),
-        ],
+    backgroundColor: AppColors.backgroundDark,
+    appBar: AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      title: Text(
+        'Analytics',
+        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              onRefresh: _loadProgress,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                children: [
-                  _buildQuickStats(),
-                  const SizedBox(height: 16),
-                  _buildWeeklyBarChart(),
-                  const SizedBox(height: 16),
-                  _buildRadarChart(),
-                  const SizedBox(height: 16),
-                  _buildHeatmap(),
-                  const SizedBox(height: 16),
-                  _buildTopicRatingHistory(),
-                  const SizedBox(height: 16),
-                  _buildModuleDonuts(),
-                ],
-              ),
-            ),
-    );
-
-  Widget _buildQuickStats() => GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: 1.5,
-      children: [
-        _statCard('Topics Mastered', '$_topicsMastered', Icons.school_rounded),
-        _statCard(
-          'Current Streak',
-          '$_currentStreak',
-          Icons.local_fire_department,
-        ),
-        _statCard(
-          "This Week's Sessions",
-          '$_weeklySessions',
-          Icons.menu_book_rounded,
-        ),
-        _statCard(
-          'Average Rating',
-          _averageRating.toStringAsFixed(1),
-          Icons.star_rounded,
+      actions: [
+        TextButton.icon(
+          onPressed: () => context.push('/weekly-wrapped'),
+          icon: const Icon(Icons.auto_awesome, size: 16, color: AppColors.cyan),
+          label: const Text(
+            'See Wrapped',
+            style: TextStyle(color: AppColors.cyan),
+          ),
         ),
       ],
-    );
+    ),
+    body: _isLoading
+        ? const Center(child: CircularProgressIndicator())
+        : RefreshIndicator(
+            onRefresh: _loadProgress,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              children: [
+                _buildQuickStats(),
+                const SizedBox(height: 16),
+                _buildWeeklyBarChart(),
+                const SizedBox(height: 16),
+                _buildRadarChart(),
+                const SizedBox(height: 16),
+                _buildHeatmap(),
+                const SizedBox(height: 16),
+                _buildTopicRatingHistory(),
+                const SizedBox(height: 16),
+                _buildModuleDonuts(),
+              ],
+            ),
+          ),
+  );
+
+  Widget _buildQuickStats() => GridView.count(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    crossAxisCount: 2,
+    crossAxisSpacing: 12,
+    mainAxisSpacing: 12,
+    childAspectRatio: 1.5,
+    children: [
+      _statCard('Topics Mastered', '$_topicsMastered', Icons.school_rounded),
+      _statCard(
+        'Current Streak',
+        '$_currentStreak',
+        Icons.local_fire_department,
+      ),
+      _statCard(
+        "This Week's Sessions",
+        '$_weeklySessions',
+        Icons.menu_book_rounded,
+      ),
+      _statCard(
+        'Average Rating',
+        _averageRating.toStringAsFixed(1),
+        Icons.star_rounded,
+      ),
+    ],
+  );
 
   Widget _statCard(String label, String value, IconData icon) => Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: AppColors.accent, size: 16),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  label,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    color: AppColors.textSecondary,
-                    fontSize: 11,
-                  ),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: AppColors.accent, size: 16),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
                 ),
               ),
-            ],
-          ),
-          const Spacer(),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
             ),
+          ],
+        ),
+        const Spacer(),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 
-  Widget _buildSectionShell(String title, Widget child, {double? fixedHeight}) => Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.outfit(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 12),
-          if (fixedHeight != null)
-            SizedBox(height: fixedHeight, child: child)
-          else
-            child,
-        ],
-      ),
-    );
+  Widget _buildSectionShell(
+    String title,
+    Widget child, {
+    double? fixedHeight,
+  }) => Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.border),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
+        if (fixedHeight != null)
+          SizedBox(height: fixedHeight, child: child)
+        else
+          child,
+      ],
+    ),
+  );
 
   Widget _buildWeeklyBarChart() {
     final maxValue = _weeklyTopicCounts.values.fold<int>(
@@ -284,13 +281,14 @@ class _ProgressScreenState extends State<ProgressScreen> {
           barTouchData: BarTouchData(
             enabled: true,
             touchTooltipData: BarTouchTooltipData(
-              getTooltipItem: (group, groupIndex, rod, rodIndex) => BarTooltipItem(
-                  '${rod.toY.toInt()} topics',
-                  GoogleFonts.inter(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+              getTooltipItem: (group, groupIndex, rod, rodIndex) =>
+                  BarTooltipItem(
+                    '${rod.toY.toInt()} topics',
+                    GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
             ),
           ),
           barGroups: List.generate(7, (index) {
@@ -324,12 +322,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 showTitles: true,
                 reservedSize: 26,
                 getTitlesWidget: (value, meta) => Text(
-                    value.toInt().toString(),
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      color: AppColors.textMuted,
-                    ),
+                  value.toInt().toString(),
+                  style: GoogleFonts.inter(
+                    fontSize: 10,
+                    color: AppColors.textMuted,
                   ),
+                ),
               ),
             ),
             bottomTitles: AxisTitles(
@@ -465,7 +463,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: List.generate(12, (index) => Expanded(
+            children: List.generate(
+              12,
+              (index) => Expanded(
                 child: Text(
                   monthLabels[index],
                   textAlign: TextAlign.center,
@@ -474,7 +474,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     color: AppColors.textMuted,
                   ),
                 ),
-              )),
+              ),
+            ),
           ),
           const SizedBox(height: 6),
           Row(
@@ -530,95 +531,95 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Widget _buildTopicRatingHistory() => _buildSectionShell(
-      'Topic Rating History',
-      _topics.isEmpty
-          ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                'Add topics to unlock rating trends.',
-                style: GoogleFonts.inter(color: AppColors.textSecondary),
-              ),
-            )
-          : Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceDark,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<TopicModel>(
-                      value: _selectedTopic,
-                      dropdownColor: AppColors.surfaceDark,
-                      isExpanded: true,
-                      style: GoogleFonts.inter(color: Colors.white),
-                      items: _topics
-                          .map(
-                            (topic) => DropdownMenuItem<TopicModel>(
-                              value: topic,
-                              child: Text(topic.name),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (next) {
-                        if (next == null) return;
-                        setState(() => _selectedTopic = next);
-                      },
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 220,
-                  child: _selectedTopic == null
-                      ? const SizedBox.shrink()
-                      : _TopicLineChart(
-                          topic: _selectedTopic!,
-                          service: _service,
-                        ),
-                ),
-              ],
+    'Topic Rating History',
+    _topics.isEmpty
+        ? Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              'Add topics to unlock rating trends.',
+              style: GoogleFonts.inter(color: AppColors.textSecondary),
             ),
-    );
+          )
+        : Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceDark,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<TopicModel>(
+                    value: _selectedTopic,
+                    dropdownColor: AppColors.surfaceDark,
+                    isExpanded: true,
+                    style: GoogleFonts.inter(color: Colors.white),
+                    items: _topics
+                        .map(
+                          (topic) => DropdownMenuItem<TopicModel>(
+                            value: topic,
+                            child: Text(topic.name),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (next) {
+                      if (next == null) return;
+                      setState(() => _selectedTopic = next);
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 220,
+                child: _selectedTopic == null
+                    ? const SizedBox.shrink()
+                    : _TopicLineChart(
+                        topic: _selectedTopic!,
+                        service: _service,
+                      ),
+              ),
+            ],
+          ),
+  );
 
   Widget _buildModuleDonuts() => _buildSectionShell(
-      'Module Progress Donut Charts',
-      _modules.isEmpty
-          ? Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Text(
-                'Create modules to view progress donuts.',
-                style: GoogleFonts.inter(color: AppColors.textSecondary),
-              ),
-            )
-          : SizedBox(
-              height: 160,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: _modules.length,
-                separatorBuilder: (context, index) => const SizedBox(width: 14),
-                itemBuilder: (context, index) {
-                  final module = _modules[index];
-                  final moduleTopics = _topics
-                      .where((topic) => topic.moduleId == module.id)
-                      .toList();
-                  final masteredCount = moduleTopics
-                      .where((topic) => (topic.currentRating ?? 0) >= 7)
-                      .length;
-                  final percentage = moduleTopics.isEmpty
-                      ? 0.0
-                      : masteredCount * 100 / moduleTopics.length;
-
-                  return _ModuleDonutCard(
-                    moduleName: module.name,
-                    color: module.subjectColor,
-                    percentage: percentage,
-                  );
-                },
-              ),
+    'Module Progress Donut Charts',
+    _modules.isEmpty
+        ? Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              'Create modules to view progress donuts.',
+              style: GoogleFonts.inter(color: AppColors.textSecondary),
             ),
-    );
+          )
+        : SizedBox(
+            height: 160,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: _modules.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 14),
+              itemBuilder: (context, index) {
+                final module = _modules[index];
+                final moduleTopics = _topics
+                    .where((topic) => topic.moduleId == module.id)
+                    .toList();
+                final masteredCount = moduleTopics
+                    .where((topic) => (topic.currentRating ?? 0) >= 7)
+                    .length;
+                final percentage = moduleTopics.isEmpty
+                    ? 0.0
+                    : masteredCount * 100 / moduleTopics.length;
+
+                return _ModuleDonutCard(
+                  moduleName: module.name,
+                  color: module.subjectColor,
+                  percentage: percentage,
+                );
+              },
+            ),
+          ),
+  );
 }
 
 class _TopicLineChart extends StatelessWidget {
@@ -628,80 +629,82 @@ class _TopicLineChart extends StatelessWidget {
   final SupabaseService service;
 
   @override
-  Widget build(BuildContext context) => FutureBuilder<List<Map<String, dynamic>>?>(
-      future: service.getTopicRatingHistory(topic.id, limit: 20),
-      builder: (context, snapshot) {
-        final values = snapshot.data ?? [];
-        if (values.isEmpty) {
-          return Center(
-            child: Text(
-              'No ratings yet for this topic.',
-              style: GoogleFonts.inter(color: AppColors.textSecondary),
-            ),
-          );
-        }
+  Widget build(BuildContext context) =>
+      FutureBuilder<List<Map<String, dynamic>>?>(
+        future: service.getTopicRatingHistory(topic.id, limit: 20),
+        builder: (context, snapshot) {
+          final values = snapshot.data ?? [];
+          if (values.isEmpty) {
+            return Center(
+              child: Text(
+                'No ratings yet for this topic.',
+                style: GoogleFonts.inter(color: AppColors.textSecondary),
+              ),
+            );
+          }
 
-        final points = values.asMap().entries.map((entry) {
-          final rating = (entry.value['rating'] as num?)?.toDouble() ?? 0;
-          return FlSpot(entry.key.toDouble(), rating);
-        }).toList();
+          final points = values.asMap().entries.map((entry) {
+            final rating = (entry.value['rating'] as num?)?.toDouble() ?? 0;
+            return FlSpot(entry.key.toDouble(), rating);
+          }).toList();
 
-        return LineChart(
-          LineChartData(
-            minY: 0,
-            maxY: 10,
-            borderData: FlBorderData(show: false),
-            gridData: const FlGridData(drawVerticalLine: false),
-            lineTouchData: const LineTouchData(enabled: true),
-            titlesData: FlTitlesData(
-              topTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              rightTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              bottomTitles: const AxisTitles(
-                sideTitles: SideTitles(showTitles: false),
-              ),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 28,
-                  getTitlesWidget: (value, meta) => Text(
+          return LineChart(
+            LineChartData(
+              minY: 0,
+              maxY: 10,
+              borderData: FlBorderData(show: false),
+              gridData: const FlGridData(drawVerticalLine: false),
+              lineTouchData: const LineTouchData(enabled: true),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                bottomTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 28,
+                    getTitlesWidget: (value, meta) => Text(
                       value.toInt().toString(),
                       style: GoogleFonts.inter(
                         color: AppColors.textMuted,
                         fontSize: 10,
                       ),
                     ),
+                  ),
                 ),
               ),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: points,
+                  isCurved: true,
+                  color: AppColors.cyan,
+                  barWidth: 3,
+                  dotData: FlDotData(
+                    show: true,
+                    getDotPainter: (spot, percent, barData, index) =>
+                        FlDotCirclePainter(
+                          radius: 3,
+                          color: AppColors.deepViolet,
+                          strokeWidth: 1,
+                          strokeColor: Colors.white,
+                        ),
+                  ),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    color: AppColors.deepViolet.withValues(alpha: 0.2),
+                  ),
+                ),
+              ],
             ),
-            lineBarsData: [
-              LineChartBarData(
-                spots: points,
-                isCurved: true,
-                color: AppColors.cyan,
-                barWidth: 3,
-                dotData: FlDotData(
-                  show: true,
-                  getDotPainter: (spot, percent, barData, index) => FlDotCirclePainter(
-                      radius: 3,
-                      color: AppColors.deepViolet,
-                      strokeWidth: 1,
-                      strokeColor: Colors.white,
-                    ),
-                ),
-                belowBarData: BarAreaData(
-                  show: true,
-                  color: AppColors.deepViolet.withValues(alpha: 0.2),
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
 }
 
 class _ModuleDonutCard extends StatelessWidget {

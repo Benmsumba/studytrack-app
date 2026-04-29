@@ -185,7 +185,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 mainAxisSpacing: 12,
                 crossAxisSpacing: 12,
                 children: [
-                  const _BadgeWidget(emoji: '🌱', label: 'First Step', earned: true),
+                  const _BadgeWidget(
+                    emoji: '🌱',
+                    label: 'First Step',
+                    earned: true,
+                  ),
                   _BadgeWidget(
                     emoji: '🔥',
                     label: 'Week Warrior',
@@ -386,89 +390,87 @@ class _SocialCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Shareable Social Card',
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
+    width: double.infinity,
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      gradient: AppColors.primaryGradient,
+      borderRadius: BorderRadius.circular(16),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Shareable Social Card',
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
           ),
-          const SizedBox(height: 8),
-          Text(
-            '$name • $masteredTopics/$totalTopics topics mastered • $streak day streak',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          '$name • $masteredTopics/$totalTopics topics mastered • $streak day streak',
+          style: GoogleFonts.inter(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
           ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: onShare,
-            icon: const Icon(Icons.ios_share_rounded, color: Colors.white),
-            label: const Text(
-              'Share Card',
-              style: TextStyle(color: Colors.white),
-            ),
-            style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: Colors.white70),
-            ),
+        ),
+        const SizedBox(height: 12),
+        OutlinedButton.icon(
+          onPressed: onShare,
+          icon: const Icon(Icons.ios_share_rounded, color: Colors.white),
+          label: const Text(
+            'Share Card',
+            style: TextStyle(color: Colors.white),
           ),
-        ],
-      ),
-    );
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Colors.white70),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _StatCard extends StatelessWidget {
-
   const _StatCard({required this.label, required this.value});
   final String label;
   final String value;
 
   @override
   Widget build(BuildContext context) => Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: AppColors.border, width: 1),
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
           ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 10,
-              color: AppColors.textSecondary,
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: GoogleFonts.inter(
+            fontSize: 10,
+            color: AppColors.textSecondary,
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 }
 
 class _BadgeWidget extends StatelessWidget {
-
   const _BadgeWidget({
     required this.emoji,
     required this.label,
@@ -480,44 +482,45 @@ class _BadgeWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0.96, end: earned ? 1 : 0.98),
-      duration: const Duration(milliseconds: 280),
-      curve: Curves.easeOutBack,
-      builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
-      child: Container(
-        decoration: BoxDecoration(
-          color: earned
-              ? AppColors.cardDark
-              : AppColors.cardDark.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: earned ? AppColors.primary : AppColors.border,
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              emoji,
-              style: TextStyle(
-                fontSize: 28,
-                color: earned
-                    ? Colors.white
-                    : Colors.white.withValues(alpha: 0.4),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 8,
-                color: earned ? Colors.white : AppColors.textMuted,
-              ),
-            ),
-          ],
+    tween: Tween<double>(begin: 0.96, end: earned ? 1 : 0.98),
+    duration: const Duration(milliseconds: 280),
+    curve: Curves.easeOutBack,
+    builder: (context, scale, child) =>
+        Transform.scale(scale: scale, child: child),
+    child: Container(
+      decoration: BoxDecoration(
+        color: earned
+            ? AppColors.cardDark
+            : AppColors.cardDark.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: earned ? AppColors.primary : AppColors.border,
+          width: 1,
         ),
       ),
-    );
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            emoji,
+            style: TextStyle(
+              fontSize: 28,
+              color: earned
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.4),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 8,
+              color: earned ? Colors.white : AppColors.textMuted,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }

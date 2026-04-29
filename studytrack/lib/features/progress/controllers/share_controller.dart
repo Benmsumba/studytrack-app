@@ -86,9 +86,7 @@ class ShareController extends ChangeNotifier {
           key.currentContext!.findRenderObject()! as RenderRepaintBoundary;
 
       final image = await boundary.toImage(pixelRatio: 1);
-      final byteData = await image.toByteData(
-        format: ui.ImageByteFormat.png,
-      );
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
       return byteData?.buffer.asUint8List();
     } catch (e) {

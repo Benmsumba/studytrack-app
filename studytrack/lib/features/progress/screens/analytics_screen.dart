@@ -8,64 +8,66 @@ class AnalyticsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(),
-              const SizedBox(height: 20),
-              _buildStatsRow(),
-              const SizedBox(height: 16),
-              _buildRadarChartCard(),
-              const SizedBox(height: 16),
-              _buildHeatmapCard(),
-            ],
-          ),
+    backgroundColor: const Color(0xFF0F0F1A),
+    body: SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 20),
+            _buildStatsRow(),
+            const SizedBox(height: 16),
+            _buildRadarChartCard(),
+            const SizedBox(height: 16),
+            _buildHeatmapCard(),
+          ],
         ),
       ),
-    );
+    ),
+  );
 
   Widget _buildHeader() => Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          'Analytics',
-          style: GoogleFonts.outfit(
-            color: Colors.white,
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(
+        'Analytics',
+        style: GoogleFonts.outfit(
+          color: Colors.white,
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFF7C3AED).withValues(alpha: 0.5),
           ),
         ),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF7C3AED).withValues(alpha: 0.2),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF7C3AED).withValues(alpha: 0.5)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'See Wrapped ',
-                style: GoogleFonts.outfit(
-                  color: const Color(0xFF7C3AED),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'See Wrapped ',
+              style: GoogleFonts.outfit(
+                color: const Color(0xFF7C3AED),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
               ),
-              const Text(
-                '✦',
-                style: TextStyle(color: Color(0xFF7C3AED), fontSize: 13),
-              ),
-            ],
-          ),
+            ),
+            const Text(
+              '✦',
+              style: TextStyle(color: Color(0xFF7C3AED), fontSize: 13),
+            ),
+          ],
         ),
-      ],
-    );
+      ),
+    ],
+  );
 
   Widget _buildStatsRow() {
     // Placeholder: Replace with dynamic data from analytics provider
@@ -77,123 +79,130 @@ class AnalyticsScreen extends StatelessWidget {
     ];
 
     return Row(
-      children: stats.map((s) => Expanded(
-          child: Container(
-            margin: EdgeInsets.only(right: s != stats.last ? 8 : 0),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-            decoration: BoxDecoration(
-              color: const Color(0xFF16213E),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFF2D2D44)),
-            ),
-            child: Column(
-              children: [
-                Text(s['icon']!, style: const TextStyle(fontSize: 18)),
-                const SizedBox(height: 4),
-                Text(
-                  s['label']!,
-                  style: GoogleFonts.inter(
-                    color: const Color(0xFF9CA3AF),
-                    fontSize: 9,
-                  ),
-                  textAlign: TextAlign.center,
+      children: stats
+          .map(
+            (s) => Expanded(
+              child: Container(
+                margin: EdgeInsets.only(right: s != stats.last ? 8 : 0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 12,
                 ),
-                Text(
-                  s['value']!,
-                  style: GoogleFonts.outfit(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF16213E),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF2D2D44)),
                 ),
-              ],
+                child: Column(
+                  children: [
+                    Text(s['icon']!, style: const TextStyle(fontSize: 18)),
+                    const SizedBox(height: 4),
+                    Text(
+                      s['label']!,
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFF9CA3AF),
+                        fontSize: 9,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    Text(
+                      s['value']!,
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
             ),
-          ),
-        )).toList(),
+          )
+          .toList(),
     );
   }
 
   Widget _buildRadarChartCard() => Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2D2D44)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Subject Radar Chart',
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: const Color(0xFF16213E),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFF2D2D44)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Subject Radar Chart',
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 220,
-            child: CustomPaint(
-              painter: _RadarChartPainter(),
-              child: const SizedBox.expand(),
-            ),
+        ),
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 220,
+          child: CustomPaint(
+            painter: _RadarChartPainter(),
+            child: const SizedBox.expand(),
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 
   Widget _buildHeatmapCard() => Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF16213E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2D2D44)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Study Consistency Heatmap',
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+    padding: const EdgeInsets.all(20),
+    decoration: BoxDecoration(
+      color: const Color(0xFF16213E),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: const Color(0xFF2D2D44)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Study Consistency Heatmap',
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
-          Text(
-            'GitHub style',
-            style: GoogleFonts.inter(
-              color: const Color(0xFF9CA3AF),
-              fontSize: 11,
-            ),
+        ),
+        Text(
+          'GitHub style',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF9CA3AF),
+            fontSize: 11,
           ),
-          const SizedBox(height: 14),
-          _HeatmapGrid(),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '12 weeks × 7 days',
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF6B7280),
-                  fontSize: 10,
-                ),
+        ),
+        const SizedBox(height: 14),
+        _HeatmapGrid(),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '12 weeks × 7 days',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6B7280),
+                fontSize: 10,
               ),
-              Text(
-                '1 week',
-                style: GoogleFonts.inter(
-                  color: const Color(0xFF6B7280),
-                  fontSize: 10,
-                ),
+            ),
+            Text(
+              '1 week',
+              style: GoogleFonts.inter(
+                color: const Color(0xFF6B7280),
+                fontSize: 10,
               ),
-            ],
-          ),
-        ],
-      ),
-    );
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 }
 
 class _HeatmapGrid extends StatelessWidget {
@@ -207,7 +216,9 @@ class _HeatmapGrid extends StatelessWidget {
     ];
 
     return Row(
-      children: List.generate(weeks, (w) => Expanded(
+      children: List.generate(
+        weeks,
+        (w) => Expanded(
           child: Column(
             children: List.generate(days, (d) {
               final intensity = random[w][d];
@@ -227,7 +238,8 @@ class _HeatmapGrid extends StatelessWidget {
               );
             }),
           ),
-        )),
+        ),
+      ),
     );
   }
 }

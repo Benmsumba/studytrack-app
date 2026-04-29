@@ -120,59 +120,71 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SvgPicture.string(_logoSvg, width: 128, height: 128)
-                  .animate(onPlay: (controller) => controller.repeat(reverse: true))
-                  .fadeIn(duration: 700.ms, curve: Curves.easeOut)
-                  .scale(
-                    begin: const Offset(0.92, 0.92),
-                    end: const Offset(1, 1),
-                    duration: 900.ms,
-                    curve: Curves.easeOut,
-                  )
-                  .then()
-                  .scale(
-                    begin: const Offset(1, 1),
-                    end: const Offset(1.03, 1.03),
-                    duration: 1200.ms,
-                    curve: Curves.easeInOut,
+    backgroundColor: AppColors.backgroundDark,
+    body: SafeArea(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SvgPicture.string(_logoSvg, width: 128, height: 128)
+                .animate(
+                  onPlay: (controller) => controller.repeat(reverse: true),
+                )
+                .fadeIn(duration: 700.ms, curve: Curves.easeOut)
+                .scale(
+                  begin: const Offset(0.92, 0.92),
+                  end: const Offset(1, 1),
+                  duration: 900.ms,
+                  curve: Curves.easeOut,
+                )
+                .then()
+                .scale(
+                  begin: const Offset(1, 1),
+                  end: const Offset(1.03, 1.03),
+                  duration: 1200.ms,
+                  curve: Curves.easeInOut,
+                ),
+            const SizedBox(height: 24),
+            Text(
+                  'StudyTrack',
+                  style: GoogleFonts.outfit(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                    height: 1.1,
                   ),
-              const SizedBox(height: 24),
-              Text(
-                'StudyTrack',
-                style: GoogleFonts.outfit(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  height: 1.1,
+                )
+                .animate()
+                .fadeIn(duration: 700.ms, delay: 200.ms, curve: Curves.easeOut)
+                .slideY(
+                  begin: 0.12,
+                  end: 0,
+                  duration: 700.ms,
+                  curve: Curves.easeOut,
                 ),
-              )
-                  .animate()
-                  .fadeIn(duration: 700.ms, delay: 200.ms, curve: Curves.easeOut)
-                  .slideY(begin: 0.12, end: 0, duration: 700.ms, curve: Curves.easeOut),
-              const SizedBox(height: 8),
-              Text(
-                'Study smarter. Know where you stand.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
-                  height: 1.4,
+            const SizedBox(height: 8),
+            Text(
+                  'Study smarter. Know where you stand.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.inter(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: AppColors.textSecondary,
+                    height: 1.4,
+                  ),
+                )
+                .animate()
+                .fadeIn(duration: 700.ms, delay: 350.ms, curve: Curves.easeOut)
+                .slideY(
+                  begin: 0.12,
+                  end: 0,
+                  duration: 700.ms,
+                  curve: Curves.easeOut,
                 ),
-              )
-                  .animate()
-                  .fadeIn(duration: 700.ms, delay: 350.ms, curve: Curves.easeOut)
-                  .slideY(begin: 0.12, end: 0, duration: 700.ms, curve: Curves.easeOut),
-            ],
-          ),
+          ],
         ),
       ),
-    );
+    ),
+  );
 }

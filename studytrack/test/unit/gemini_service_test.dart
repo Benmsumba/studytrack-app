@@ -16,7 +16,10 @@ void main() {
       expect(q.question, 'What is osmosis?');
       expect(q.options, ['A', 'B', 'C', 'D']);
       expect(q.correctIndex, 2);
-      expect(q.explanation, 'Osmosis is the movement of water across a membrane.');
+      expect(
+        q.explanation,
+        'Osmosis is the movement of water across a membrane.',
+      );
     });
 
     test('fromJson uses fallback options when list length is not 4', () {
@@ -95,19 +98,22 @@ void main() {
       expect(result.isNotEmpty, isTrue);
     });
 
-    test('generateQuiz returns 5-item fallback list when API not configured', () async {
-      final service = GeminiService();
-      final questions = await service.generateQuiz(
-        topicName: 'Cardiac Cycle',
-        course: 'Medicine',
-      );
+    test(
+      'generateQuiz returns 5-item fallback list when API not configured',
+      () async {
+        final service = GeminiService();
+        final questions = await service.generateQuiz(
+          topicName: 'Cardiac Cycle',
+          course: 'Medicine',
+        );
 
-      expect(questions.length, 5);
-      for (final q in questions) {
-        expect(q.options.length, 4);
-        expect(q.correctIndex, inInclusiveRange(0, 3));
-      }
-    });
+        expect(questions.length, 5);
+        for (final q in questions) {
+          expect(q.options.length, 4);
+          expect(q.correctIndex, inInclusiveRange(0, 3));
+        }
+      },
+    );
 
     test('clearCache does not throw', () {
       expect(() => GeminiService().clearCache(), returnsNormally);

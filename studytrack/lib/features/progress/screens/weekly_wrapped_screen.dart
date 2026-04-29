@@ -138,7 +138,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     }
   }
 
-  Future<Uint8List?> _captureShareCard() async => _screenshotController.capture(pixelRatio: 2.5);
+  Future<Uint8List?> _captureShareCard() async =>
+      _screenshotController.capture(pixelRatio: 2.5);
 
   Future<void> _saveToGallery() async {
     final bytes = await _captureShareCard();
@@ -251,271 +252,263 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     );
   }
 
-  Widget _animatedPage({required int index, required Widget child}) => AnimatedBuilder(
-      animation: _pageController,
-      builder: (context, _) {
-        var currentPage = 0.0;
-        if (_pageController.hasClients) {
-          final rawPage = _pageController.page;
-          currentPage = rawPage ?? _pageController.initialPage.toDouble();
-        }
+  Widget _animatedPage({required int index, required Widget child}) =>
+      AnimatedBuilder(
+        animation: _pageController,
+        builder: (context, _) {
+          var currentPage = 0.0;
+          if (_pageController.hasClients) {
+            final rawPage = _pageController.page;
+            currentPage = rawPage ?? _pageController.initialPage.toDouble();
+          }
 
-        final delta = (currentPage - index).abs().clamp(0.0, 1.0);
-        final scale = 1.0 - (delta * 0.08);
-        final opacity = 1.0 - (delta * 0.35);
+          final delta = (currentPage - index).abs().clamp(0.0, 1.0);
+          final scale = 1.0 - (delta * 0.08);
+          final opacity = 1.0 - (delta * 0.35);
 
-        return Opacity(
-          opacity: opacity,
-          child: Transform.scale(scale: scale, child: child),
-        );
-      },
-    );
+          return Opacity(
+            opacity: opacity,
+            child: Transform.scale(scale: scale, child: child),
+          );
+        },
+      );
 
   Widget _introPage() => Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF7C3AED), Color(0xFF0F0F1A)],
-        ),
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF7C3AED), Color(0xFF0F0F1A)],
       ),
-      child: SafeArea(
-        child: Stack(
-          children: [
-            Positioned(
-              top: 16,
-              right: 16,
-              child: _hasGeneratedThisWeek
-                  ? const SizedBox.shrink()
-                  : FilledButton.icon(
-                      onPressed: _regenerateSummary,
-                      icon: _generating
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.auto_awesome),
-                      label: Text(
-                        'Generate',
-                        style: GoogleFonts.inter(fontWeight: FontWeight.w600),
-                      ),
+    ),
+    child: SafeArea(
+      child: Stack(
+        children: [
+          Positioned(
+            top: 16,
+            right: 16,
+            child: _hasGeneratedThisWeek
+                ? const SizedBox.shrink()
+                : FilledButton.icon(
+                    onPressed: _regenerateSummary,
+                    icon: _generating
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_awesome),
+                    label: Text(
+                      'Generate',
+                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
                     ),
+                  ),
+          ),
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                      Icons.star_rounded,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      size: 70,
+                    )
+                    .animate(onPlay: (controller) => controller.repeat())
+                    .fadeIn(duration: 700.ms)
+                    .scale(
+                      begin: const Offset(0.8, 0.8),
+                      end: const Offset(1.08, 1.08),
+                      duration: 1400.ms,
+                    )
+                    .then()
+                    .scale(
+                      begin: const Offset(1.08, 1.08),
+                      end: const Offset(0.95, 0.95),
+                      duration: 1400.ms,
+                    ),
+                const SizedBox(height: 20),
+                Text(
+                  'Your Week in Review',
+                  style: GoogleFonts.outfit(
+                    fontSize: 38,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  weekDateRange,
+                  style: GoogleFonts.inter(fontSize: 14, color: Colors.white70),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  studentName,
+                  style: GoogleFonts.inter(fontSize: 18, color: Colors.white70),
+                ),
+                const SizedBox(height: 40),
+                Text(
+                  'Swipe up to see ↑',
+                  style: GoogleFonts.inter(fontSize: 13, color: Colors.white60),
+                ),
+              ],
             ),
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                        Icons.star_rounded,
-                        color: Colors.white.withValues(alpha: 0.9),
-                        size: 70,
-                      )
-                      .animate(onPlay: (controller) => controller.repeat())
-                      .fadeIn(duration: 700.ms)
-                      .scale(
-                        begin: const Offset(0.8, 0.8),
-                        end: const Offset(1.08, 1.08),
-                        duration: 1400.ms,
-                      )
-                      .then()
-                      .scale(
-                        begin: const Offset(1.08, 1.08),
-                        end: const Offset(0.95, 0.95),
-                        duration: 1400.ms,
-                      ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Your Week in Review',
-                    style: GoogleFonts.outfit(
-                      fontSize: 38,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    weekDateRange,
-                    style: GoogleFonts.inter(
-                      fontSize: 14,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    studentName,
-                    style: GoogleFonts.inter(
-                      fontSize: 18,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  Text(
-                    'Swipe up to see ↑',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: Colors.white60,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  );
 
   Widget _topicsPage() => _solidPage(
-      color: const Color(0xFF06B6D4),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-                '$topicsStudied',
-                style: GoogleFonts.outfit(
-                  fontSize: 110,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              )
-              .animate()
-              .fadeIn(duration: 450.ms)
-              .scale(begin: const Offset(0.8, 0.8)),
-          Text(
-            'topics covered',
-            style: GoogleFonts.inter(fontSize: 24, color: Colors.white),
-          ),
-          Text(
-            'this week',
-            style: GoogleFonts.inter(fontSize: 14, color: Colors.white70),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _topicsDeltaText(),
-            style: GoogleFonts.inter(fontSize: 14, color: _topicsDeltaColor()),
-          ),
-        ],
-      ),
-    );
+    color: const Color(0xFF06B6D4),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+              '$topicsStudied',
+              style: GoogleFonts.outfit(
+                fontSize: 110,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            )
+            .animate()
+            .fadeIn(duration: 450.ms)
+            .scale(begin: const Offset(0.8, 0.8)),
+        Text(
+          'topics covered',
+          style: GoogleFonts.inter(fontSize: 24, color: Colors.white),
+        ),
+        Text(
+          'this week',
+          style: GoogleFonts.inter(fontSize: 14, color: Colors.white70),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _topicsDeltaText(),
+          style: GoogleFonts.inter(fontSize: 14, color: _topicsDeltaColor()),
+        ),
+      ],
+    ),
+  );
 
   Widget _bestSubjectPage() => _gradientPage(
-      colors: const [Color(0xFF7C3AED), Color(0xFF1F1B4D)],
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('🏆', style: TextStyle(fontSize: 66)),
-          const SizedBox(height: 12),
-          Text(
-            'Your strongest subject',
-            style: GoogleFonts.inter(color: Colors.white70, fontSize: 16),
+    colors: const [Color(0xFF7C3AED), Color(0xFF1F1B4D)],
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text('🏆', style: TextStyle(fontSize: 66)),
+        const SizedBox(height: 12),
+        Text(
+          'Your strongest subject',
+          style: GoogleFonts.inter(color: Colors.white70, fontSize: 16),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          bestSubject,
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 40,
           ),
-          const SizedBox(height: 10),
-          Text(
-            bestSubject,
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 40,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'Avg rating ${averageRating.toStringAsFixed(1)} / 10',
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 17),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(5, (index) {
+            final threshold = (index + 1) * 2;
+            final active = averageRating >= threshold;
+            return Icon(
+              active ? Icons.star_rounded : Icons.star_outline_rounded,
+              color: active ? Colors.amber : Colors.white54,
+              size: 20,
+            );
+          }),
+        ),
+        const SizedBox(height: 14),
+        SizedBox(
+          width: 220,
+          child: TweenAnimationBuilder<double>(
+            duration: const Duration(milliseconds: 900),
+            tween: Tween<double>(
+              begin: 0,
+              end: (averageRating / 10).clamp(0, 1),
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Avg rating ${averageRating.toStringAsFixed(1)} / 10',
-            style: GoogleFonts.inter(color: Colors.white, fontSize: 17),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: List.generate(5, (index) {
-              final threshold = (index + 1) * 2;
-              final active = averageRating >= threshold;
-              return Icon(
-                active ? Icons.star_rounded : Icons.star_outline_rounded,
-                color: active ? Colors.amber : Colors.white54,
-                size: 20,
-              );
-            }),
-          ),
-          const SizedBox(height: 14),
-          SizedBox(
-            width: 220,
-            child: TweenAnimationBuilder<double>(
-              duration: const Duration(milliseconds: 900),
-              tween: Tween<double>(
-                begin: 0,
-                end: (averageRating / 10).clamp(0, 1),
-              ),
-              builder: (context, value, child) => LinearProgressIndicator(
-                  value: value,
-                  minHeight: 10,
-                  backgroundColor: Colors.white24,
-                  color: AppColors.accent,
-                ),
+            builder: (context, value, child) => LinearProgressIndicator(
+              value: value,
+              minHeight: 10,
+              backgroundColor: Colors.white24,
+              color: AppColors.accent,
             ),
           ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 
   Widget _needsAttentionPage() => _gradientPage(
-      colors: const [Color(0xFFF59E0B), Color(0xFF4D2E07)],
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('⚠️', style: TextStyle(fontSize: 64)),
-          const SizedBox(height: 10),
-          Text(
-            'Needs more love',
-            style: GoogleFonts.inter(color: Colors.white70, fontSize: 17),
+    colors: const [Color(0xFFF59E0B), Color(0xFF4D2E07)],
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text('⚠️', style: TextStyle(fontSize: 64)),
+        const SizedBox(height: 10),
+        Text(
+          'Needs more love',
+          style: GoogleFonts.inter(color: Colors.white70, fontSize: 17),
+        ),
+        const SizedBox(height: 10),
+        Text(
+          weakestSubject,
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 38,
           ),
-          const SizedBox(height: 10),
-          Text(
-            weakestSubject,
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 38,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'You’ve got this 💪',
-            style: GoogleFonts.inter(color: Colors.white, fontSize: 18),
-          ),
-        ],
-      ),
-    );
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 14),
+        Text(
+          'You’ve got this 💪',
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 18),
+        ),
+      ],
+    ),
+  );
 
   Widget _streakPage() => _solidPage(
-      color: const Color(0xFF121224),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text('🔥', style: TextStyle(fontSize: 70)),
-          const SizedBox(height: 12),
-          Text(
-            '$streak',
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontSize: 92,
-              fontWeight: FontWeight.w700,
-            ),
+    color: const Color(0xFF121224),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text('🔥', style: TextStyle(fontSize: 70)),
+        const SizedBox(height: 12),
+        Text(
+          '$streak',
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 92,
+            fontWeight: FontWeight.w700,
           ),
-          Text(
-            'day streak',
-            style: GoogleFonts.inter(color: Colors.white70, fontSize: 18),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            _streakMessage(),
-            style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
-          ),
-        ],
-      ),
-    );
+        ),
+        Text(
+          'day streak',
+          style: GoogleFonts.inter(color: Colors.white70, fontSize: 18),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          _streakMessage(),
+          style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
+        ),
+      ],
+    ),
+  );
 
   Widget _sessionsPage() {
     final completed = sessionsCompleted;
@@ -571,200 +564,201 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   }
 
   Widget _aiSummaryPage() => _solidPage(
-      color: const Color(0xFF0F0F1A),
+    color: const Color(0xFF0F0F1A),
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.psychology_alt_rounded,
+            size: 64,
+            color: Colors.white,
+          ),
+          const SizedBox(height: 18),
+          Text(
+            '“',
+            style: GoogleFonts.outfit(
+              color: Colors.white,
+              fontSize: 46,
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 6),
+          TweenAnimationBuilder<int>(
+            duration: const Duration(milliseconds: 1800),
+            tween: Tween<int>(
+              begin: 0,
+              end: aiSummary.split(RegExp(r'\s+')).length,
+            ),
+            builder: (context, visibleWordCount, child) {
+              final words = aiSummary.split(RegExp(r'\s+'));
+              final safeCount = visibleWordCount.clamp(0, words.length);
+              final partial = words.take(safeCount).join(' ');
+              return Text(
+                partial,
+                style: GoogleFonts.inter(
+                  color: Colors.white,
+                  fontSize: 17,
+                  height: 1.55,
+                ),
+                textAlign: TextAlign.center,
+              );
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _finalSharePage() => _solidPage(
+    color: const Color(0xFF121224),
+    child: SafeArea(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+        padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(
-              Icons.psychology_alt_rounded,
-              size: 64,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 18),
-            Text(
-              '“',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontSize: 46,
-                height: 1,
-              ),
-            ),
-            const SizedBox(height: 6),
-            TweenAnimationBuilder<int>(
-              duration: const Duration(milliseconds: 1800),
-              tween: Tween<int>(
-                begin: 0,
-                end: aiSummary.split(RegExp(r'\s+')).length,
-              ),
-              builder: (context, visibleWordCount, child) {
-                final words = aiSummary.split(RegExp(r'\s+'));
-                final safeCount = visibleWordCount.clamp(0, words.length);
-                final partial = words.take(safeCount).join(' ');
-                return Text(
-                  partial,
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 17,
-                    height: 1.55,
+            Screenshot(
+              controller: _screenshotController,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF7C3AED), Color(0xFF06B6D4)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  textAlign: TextAlign.center,
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-
-  Widget _finalSharePage() => _solidPage(
-      color: const Color(0xFF121224),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Screenshot(
-                controller: _screenshotController,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF7C3AED), Color(0xFF06B6D4)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'StudyTrack Weekly Wrapped',
+                      style: GoogleFonts.outfit(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'StudyTrack Weekly Wrapped',
-                        style: GoogleFonts.outfit(
-                          color: Colors.white,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    const SizedBox(height: 8),
+                    Text(
+                      studentName,
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 15,
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        studentName,
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 15,
-                        ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      weekDateRange,
+                      style: GoogleFonts.inter(
+                        color: Colors.white70,
+                        fontSize: 12,
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        weekDateRange,
+                    ),
+                    const SizedBox(height: 14),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _shareStat('Topics', '$topicsStudied'),
+                        _shareStat('Avg', averageRating.toStringAsFixed(1)),
+                        _shareStat('Streak', '$streak'),
+                        _shareStat(
+                          'Sessions',
+                          '$sessionsCompleted/$sessionsPlanned',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: Text(
+                        'studytrack',
                         style: GoogleFonts.inter(
                           color: Colors.white70,
                           fontSize: 12,
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          _shareStat('Topics', '$topicsStudied'),
-                          _shareStat('Avg', averageRating.toStringAsFixed(1)),
-                          _shareStat('Streak', '$streak'),
-                          _shareStat(
-                            'Sessions',
-                            '$sessionsCompleted/$sessionsPlanned',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: Text(
-                          'studytrack',
-                          style: GoogleFonts.inter(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: FilledButton.icon(
-                      onPressed: _shareToWhatsApp,
-                      icon: const Icon(Icons.share),
-                      label: const Text('Share to WhatsApp'),
-                    ),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _shareToWhatsApp,
+                    icon: const Icon(Icons.share),
+                    label: const Text('Share to WhatsApp'),
                   ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _saveToGallery,
-                      icon: const Icon(Icons.download),
-                      label: const Text('Save to Gallery'),
-                    ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _saveToGallery,
+                    icon: const Icon(Icons.download),
+                    label: const Text('Save to Gallery'),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
-    );
+    ),
+  );
 
   Widget _shareStat(String label, String value) => Container(
-      width: 130,
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+    width: 130,
+    padding: const EdgeInsets.all(10),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.18),
+      borderRadius: BorderRadius.circular(10),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
           ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: GoogleFonts.outfit(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-            ),
-          ),
-        ],
-      ),
-    );
+        ),
+      ],
+    ),
+  );
 
   Widget _solidPage({required Color color, required Widget child}) => Container(
-      color: color,
-      child: SafeArea(child: child),
-    );
+    color: color,
+    child: SafeArea(child: child),
+  );
 
-  Widget _gradientPage({required List<Color> colors, required Widget child}) => Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: colors,
+  Widget _gradientPage({required List<Color> colors, required Widget child}) =>
+      Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: colors,
+          ),
         ),
-      ),
-      child: SafeArea(child: child),
-    );
+        child: SafeArea(child: child),
+      );
 }

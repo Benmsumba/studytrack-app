@@ -179,10 +179,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
     final ratedTopics = _topics.where((t) => t.currentRating != null).toList();
     final averageRating = ratedTopics.isEmpty
         ? 0.0
-        : ratedTopics
-                .map((t) => t.currentRating!)
-                .reduce((a, b) => a + b) /
-            ratedTopics.length;
+        : ratedTopics.map((t) => t.currentRating!).reduce((a, b) => a + b) /
+              ratedTopics.length;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
@@ -247,7 +245,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                             _StatChip(label: '$studiedCount studied'),
                             const SizedBox(width: 8),
                             _StatChip(
-                              label: 'Avg ${averageRating.toStringAsFixed(1)}/10',
+                              label:
+                                  'Avg ${averageRating.toStringAsFixed(1)}/10',
                             ),
                           ],
                         ),
@@ -264,7 +263,9 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                         label: Text(filter.label),
                         selected: selected,
                         labelStyle: GoogleFonts.inter(
-                          color: selected ? Colors.white : AppColors.textSecondary,
+                          color: selected
+                              ? Colors.white
+                              : AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                         selectedColor: AppColors.primary,
@@ -285,7 +286,9 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                       child: Center(
                         child: Text(
                           'No topics in this filter.',
-                          style: GoogleFonts.inter(color: AppColors.textSecondary),
+                          style: GoogleFonts.inter(
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     )
@@ -293,7 +296,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                     ..._filteredTopics.map((topic) {
                       final now = DateTime.now();
                       final today = DateTime(now.year, now.month, now.day);
-                      final isDue = topic.nextReviewAt != null &&
+                      final isDue =
+                          topic.nextReviewAt != null &&
                           !DateTime(
                             topic.nextReviewAt!.year,
                             topic.nextReviewAt!.month,
@@ -357,7 +361,9 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                                         ),
                                         decoration: BoxDecoration(
                                           color: _ratingBadgeColor(topic),
-                                          borderRadius: BorderRadius.circular(999),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
                                         ),
                                         child: Row(
                                           children: [
@@ -389,8 +395,12 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                                             color: AppColors.warning.withValues(
                                               alpha: 0.2,
                                             ),
-                                            borderRadius: BorderRadius.circular(999),
-                                            border: Border.all(color: AppColors.warning),
+                                            borderRadius: BorderRadius.circular(
+                                              999,
+                                            ),
+                                            border: Border.all(
+                                              color: AppColors.warning,
+                                            ),
                                           ),
                                           child: Text(
                                             'Due for review',
@@ -435,20 +445,20 @@ class _StatChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Text(
+      label,
+      style: GoogleFonts.inter(
+        color: Colors.white,
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
       ),
-      child: Text(
-        label,
-        style: GoogleFonts.inter(
-          color: Colors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
+    ),
+  );
 }
 
 enum _TopicFilter {

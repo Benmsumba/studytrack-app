@@ -268,58 +268,57 @@ class _StudySessionScreenState extends State<StudySessionScreen>
       context: context,
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
-          builder: (context, setDialogState) => AlertDialog(
-              backgroundColor: AppColors.surfaceDark,
-              title: Text(
-                'How well do you understand this now?',
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: AppColors.surfaceDark,
+          title: Text(
+            'How well do you understand this now?',
+            style: GoogleFonts.outfit(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '${tempRating.round()}/10',
                 style: GoogleFonts.outfit(
-                  color: AppColors.textPrimary,
+                  color: AppColors.accent,
+                  fontSize: 28,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '${tempRating.round()}/10',
-                    style: GoogleFonts.outfit(
-                      color: AppColors.accent,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  Slider(
-                    value: tempRating,
-                    min: 1,
-                    max: 10,
-                    divisions: 9,
-                    activeColor: AppColors.primary,
-                    inactiveColor: AppColors.border,
-                    label: tempRating.round().toString(),
-                    onChanged: (value) {
-                      setDialogState(() {
-                        tempRating = value;
-                      });
-                    },
-                  ),
-                ],
+              Slider(
+                value: tempRating,
+                min: 1,
+                max: 10,
+                divisions: 9,
+                activeColor: AppColors.primary,
+                inactiveColor: AppColors.border,
+                label: tempRating.round().toString(),
+                onChanged: (value) {
+                  setDialogState(() {
+                    tempRating = value;
+                  });
+                },
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Later'),
-                ),
-                ElevatedButton(
-                  onPressed: () =>
-                      Navigator.of(context).pop(tempRating.round()),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                  ),
-                  child: const Text('Save Rating'),
-                ),
-              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Later'),
             ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(tempRating.round()),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
+              child: const Text('Save Rating'),
+            ),
+          ],
         ),
+      ),
     );
 
     if (result != null) {
@@ -447,17 +446,17 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                         duration: const Duration(milliseconds: 400),
                         tween: Tween<double>(begin: 0, end: progress),
                         builder: (context, value, _) => SizedBox(
-                            width: 240,
-                            height: 240,
-                            child: CircularProgressIndicator(
-                              value: value,
-                              strokeWidth: 12,
-                              color: _isBreakMode
-                                  ? AppColors.accent
-                                  : AppColors.primary,
-                              backgroundColor: AppColors.border,
-                            ),
+                          width: 240,
+                          height: 240,
+                          child: CircularProgressIndicator(
+                            value: value,
+                            strokeWidth: 12,
+                            color: _isBreakMode
+                                ? AppColors.accent
+                                : AppColors.primary,
+                            backgroundColor: AppColors.border,
                           ),
+                        ),
                       ),
                       Column(
                         mainAxisSize: MainAxisSize.min,

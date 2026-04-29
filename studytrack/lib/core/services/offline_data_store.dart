@@ -186,17 +186,22 @@ class OfflineDataStore {
       'SELECT id, entity, operation, record_id, payload, created_at FROM pending_changes ORDER BY id ASC',
     );
 
-    return rows.map((row) => OfflinePendingChange(
-        id: row['id'] as int,
-        entity: row['entity'] as String,
-        operation: row['operation'] as String,
-        recordId: row['record_id'] as String?,
-        payload:
-            _decodeMap(row['payload'] as String?) ?? const <String, dynamic>{},
-        createdAt:
-            DateTime.tryParse(row['created_at'] as String? ?? '') ??
-            DateTime.now(),
-      )).toList();
+    return rows
+        .map(
+          (row) => OfflinePendingChange(
+            id: row['id'] as int,
+            entity: row['entity'] as String,
+            operation: row['operation'] as String,
+            recordId: row['record_id'] as String?,
+            payload:
+                _decodeMap(row['payload'] as String?) ??
+                const <String, dynamic>{},
+            createdAt:
+                DateTime.tryParse(row['created_at'] as String? ?? '') ??
+                DateTime.now(),
+          ),
+        )
+        .toList();
   }
 
   Future<void> removePendingChange(int id) async {

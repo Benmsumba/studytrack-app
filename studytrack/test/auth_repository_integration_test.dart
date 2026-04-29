@@ -13,7 +13,6 @@ class MockSupabaseService extends Mock implements SupabaseService {}
 
 // Mock User
 class MockUser extends Mock implements User {
-
   MockUser({
     required this.id,
     Map<String, dynamic>? userMetadata,
@@ -89,10 +88,7 @@ void main() {
         // Assert
         expect(result, isA<Success<ProfileModel>>());
         expect((result as Success<ProfileModel>).data.id, equals('user-123'));
-        expect(
-          (result).data.name,
-          equals('Test User'),
-        );
+        expect((result).data.name, equals('Test User'));
         verify(
           () => mockSupabaseService.signUpWithEmail(
             'test@example.com',

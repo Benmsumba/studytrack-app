@@ -83,163 +83,160 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: AppColors.backgroundDark,
-      body: SafeArea(
-        child: RefreshIndicator(
-          color: AppColors.warning,
-          backgroundColor: AppColors.surfaceDark,
-          onRefresh: _loadExam,
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Exam Countdown', style: AppTextStyles.headingLarge),
-                const SizedBox(height: 8),
-                Text(
-                  'Track the next exam you need to beat.',
-                  style: AppTextStyles.bodyMediumSecondary,
-                ),
-                const SizedBox(height: 20),
-                if (_isLoading)
-                  const Center(child: CircularProgressIndicator())
-                else if (_exam == null)
-                  WrappedCard(
-                    enableGlow: false,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'No upcoming exams yet',
-                          style: AppTextStyles.headingSmall,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Add an exam in your timetable to start a live countdown.',
-                          style: AppTextStyles.bodyMediumSecondary,
-                        ),
-                        const SizedBox(height: 16),
-                        FilledButton(
-                          onPressed: () => context.push('/study-session'),
-                          child: const Text('Open Study Session'),
-                        ),
-                      ],
-                    ),
-                  )
-                else
-                  WrappedCard(
-                    enableGlow: true,
-                    glowColor: AppColors.warning.withValues(alpha: 0.25),
-                    customBorderColors: [
-                      AppColors.warning.withValues(alpha: 0.8),
-                      AppColors.primary,
+    backgroundColor: AppColors.backgroundDark,
+    body: SafeArea(
+      child: RefreshIndicator(
+        color: AppColors.warning,
+        backgroundColor: AppColors.surfaceDark,
+        onRefresh: _loadExam,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Exam Countdown', style: AppTextStyles.headingLarge),
+              const SizedBox(height: 8),
+              Text(
+                'Track the next exam you need to beat.',
+                style: AppTextStyles.bodyMediumSecondary,
+              ),
+              const SizedBox(height: 20),
+              if (_isLoading)
+                const Center(child: CircularProgressIndicator())
+              else if (_exam == null)
+                WrappedCard(
+                  enableGlow: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'No upcoming exams yet',
+                        style: AppTextStyles.headingSmall,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Add an exam in your timetable to start a live countdown.',
+                        style: AppTextStyles.bodyMediumSecondary,
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton(
+                        onPressed: () => context.push('/study-session'),
+                        child: const Text('Open Study Session'),
+                      ),
                     ],
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _firstText(_exam, ['title', 'name']) ??
-                              'Upcoming exam',
-                          style: AppTextStyles.headingLarge.copyWith(
-                            fontSize: 24,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '$_daysRemaining days remaining',
-                          style: AppTextStyles.bodyLargeSecondary,
-                        ),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Readiness pulse',
-                                    style: AppTextStyles.bodySmallSecondary,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(6),
-                                    child: LinearProgressIndicator(
-                                      value: _readiness,
-                                      backgroundColor: AppColors.border,
-                                      valueColor:
-                                          const AlwaysStoppedAnimation<Color>(
-                                            AppColors.warning,
-                                          ),
-                                      minHeight: 8,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            SizedBox(
-                              width: 68,
-                              height: 68,
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 68,
-                                    height: 68,
-                                    child: CircularProgressIndicator(
-                                      value: _readiness,
-                                      strokeWidth: 6,
-                                      backgroundColor: AppColors.border,
-                                      valueColor:
-                                          const AlwaysStoppedAnimation<Color>(
-                                            AppColors.warning,
-                                          ),
-                                    ),
-                                  ),
-                                  Text(
-                                    '${(_readiness * 100).toInt()}%',
-                                    style: AppTextStyles.caption.copyWith(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        SizedBox(
-                          width: double.infinity,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: AppColors.primaryGradient,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: TextButton(
-                              onPressed: () => context.push('/study-session'),
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                              ),
-                              child: Text(
-                                'Start Study Session',
-                                style: AppTextStyles.button.copyWith(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
-              ],
-            ),
+                )
+              else
+                WrappedCard(
+                  enableGlow: true,
+                  glowColor: AppColors.warning.withValues(alpha: 0.25),
+                  customBorderColors: [
+                    AppColors.warning.withValues(alpha: 0.8),
+                    AppColors.primary,
+                  ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _firstText(_exam, ['title', 'name']) ?? 'Upcoming exam',
+                        style: AppTextStyles.headingLarge.copyWith(
+                          fontSize: 24,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '$_daysRemaining days remaining',
+                        style: AppTextStyles.bodyLargeSecondary,
+                      ),
+                      const SizedBox(height: 20),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Readiness pulse',
+                                  style: AppTextStyles.bodySmallSecondary,
+                                ),
+                                const SizedBox(height: 8),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: LinearProgressIndicator(
+                                    value: _readiness,
+                                    backgroundColor: AppColors.border,
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                          AppColors.warning,
+                                        ),
+                                    minHeight: 8,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 68,
+                            height: 68,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 68,
+                                  height: 68,
+                                  child: CircularProgressIndicator(
+                                    value: _readiness,
+                                    strokeWidth: 6,
+                                    backgroundColor: AppColors.border,
+                                    valueColor:
+                                        const AlwaysStoppedAnimation<Color>(
+                                          AppColors.warning,
+                                        ),
+                                  ),
+                                ),
+                                Text(
+                                  '${(_readiness * 100).toInt()}%',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: double.infinity,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: AppColors.primaryGradient,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: TextButton(
+                            onPressed: () => context.push('/study-session'),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                            child: Text(
+                              'Start Study Session',
+                              style: AppTextStyles.button.copyWith(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
           ),
         ),
       ),
-    );
+    ),
+  );
 }

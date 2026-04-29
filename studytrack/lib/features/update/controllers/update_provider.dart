@@ -70,10 +70,7 @@ class UpdateProvider extends ChangeNotifier {
       final savePath = await _service.apkSavePath;
       _apkPath = savePath;
 
-      await for (final p in _service.downloadApk(
-        info.downloadUrl,
-        savePath,
-      )) {
+      await for (final p in _service.downloadApk(info.downloadUrl, savePath)) {
         _progress = p;
         notifyListeners();
       }
