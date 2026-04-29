@@ -1,5 +1,4 @@
 import 'package:flutter/foundation.dart';
-import 'package:gotrue/gotrue.dart' hide AuthException;
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 import '../../../models/user_model.dart';
 import '../../services/supabase_service.dart';
