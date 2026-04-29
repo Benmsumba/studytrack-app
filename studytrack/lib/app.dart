@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -64,6 +66,23 @@ String? resolveAppRedirect({
   return null;
 }
 
+// Bridges a Stream into a ChangeNotifier so GoRouter re-evaluates its
+// redirect function whenever the auth state changes (e.g. email confirmed).
+class _GoRouterRefreshStream extends ChangeNotifier {
+  _GoRouterRefreshStream(Stream<dynamic> stream) {
+    notifyListeners();
+    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
+  }
+
+  late final StreamSubscription<dynamic> _subscription;
+
+  @override
+  void dispose() {
+    _subscription.cancel();
+    super.dispose();
+  }
+}
+
 class StudyTrackApp extends StatelessWidget {
   const StudyTrackApp({super.key});
 
@@ -114,8 +133,15 @@ class StudyTrackApp extends StatelessWidget {
     );
   }
 
+  // refreshListenable is set only when Supabase is configured so we don't
+  // access Supabase.instance before it has been initialized.
   static final GoRouter _router = GoRouter(
     initialLocation: '/splash',
+    refreshListenable: AppConstants.isSupabaseConfigured
+        ? _GoRouterRefreshStream(
+            Supabase.instance.client.auth.onAuthStateChange,
+          )
+        : null,
     redirect: (context, state) async {
       final location = state.matchedLocation;
 
