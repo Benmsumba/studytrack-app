@@ -3,7 +3,7 @@ import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 import 'dart:ui' as ui;
 import 'dart:typed_data';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 
@@ -63,17 +63,11 @@ class ShareController extends ChangeNotifier {
         return;
       }
 
-      final result = await ImageGallerySaver.saveImage(
+      await Gal.putImageBytes(
         image,
-        quality: 100,
         name: 'studytrack_${DateTime.now().millisecondsSinceEpoch}',
       );
-
-      if (result['isSuccess'] == true) {
-        _lastError = null;
-      } else {
-        _lastError = 'Failed to save to gallery';
-      }
+      _lastError = null;
 
       _isCapturing = false;
       notifyListeners();
