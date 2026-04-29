@@ -1648,6 +1648,180 @@ class SupabaseService {
     }
   }
 
+  // Repository-compatible wrappers returning strong types -------------------------------------------------
+  Future<List<StudyGroupModel>?> getStudyGroups() async {
+    try {
+      final currentUser = getCurrentUser();
+      if (currentUser == null) return <StudyGroupModel>[];
+      final raw = await getMyGroups(currentUser.id);
+      if (raw == null) return null;
+      return raw.map((membership) {
+        final gm = membership['study_groups'] as Map<String, dynamic>? ?? membership;
+        return StudyGroupModel.fromJson(gm);
+      }).toList();
+    } catch (e) {
+      debugPrint('getStudyGroups wrapper error: $e');
+      return null;
+    }
+  }
+
+  Future<StudyGroupModel?> getStudyGroup(String groupId) async {
+    try {
+      final response = await client.from('study_groups').select().eq('id', groupId).maybeSingle();
+      if (response == null) return null;
+      return StudyGroupModel.fromJson(response as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('getStudyGroup error: $e');
+      return null;
+    }
+  }
+
+  Future<StudyGroupModel?> createStudyGroup({
+    required String name,
+    required String description,
+    String? topicId,
+  }) async {
+    try {
+      final currentUser = getCurrentUser();
+      final createdBy = currentUser?.id ?? _newId();
+      final res = await createGroup(name, description, createdBy);
+      if (res == null) return null;
+      return StudyGroupModel.fromJson(res);
+    } catch (e) {
+      debugPrint('createStudyGroup wrapper error: $e');
+      return null;
+    }
+  }
+
+  Future<StudyGroupModel?> updateStudyGroup(StudyGroupModel group) async {
+    try {
+      final response = await client
+          .from('study_groups')
+          .update(group.toJson())
+          .eq('id', group.id)
+          .select()
+          .maybeSingle();
+      if (response == null) return null;
+      return StudyGroupModel.fromJson(response as Map<String, dynamic>);
+    } catch (e) {
+      debugPrint('updateStudyGroup error: $e');
+      return null;
+    }
+  }
+
+  Future<bool?> deleteStudyGroup(String groupId) async {
+    try {
+      final resp = await client.from('study_groups').delete().eq('id', groupId);
+      return resp != null;
+    } catch (e) {
+      debugPrint('deleteStudyGroup error: $e');
+      return null;
+    }
+  }
+
+  Future<bool?> joinGroupByCode(String inviteCode) async {
+    try {
+      final currentUser = getCurrentUser();
+      if (currentUser == null) return null;
+      await joinGroup(inviteCode, currentUser.id);
+      return true;
+    } catch (e) {
+      debugPrint('joinGroupByCode error: $e');
+      return null;
+    }
+  }
+
+  Future<bool?> leaveStudyGroup(String groupId) async {
+    try {
+      final currentUser = getCurrentUser();
+      if (currentUser == null) return null;
+      await leaveGroup(groupId, currentUser.id);
+      return true;
+    } catch (e) {
+      debugPrint('leaveStudyGroup error: $e');
+      return null;
+    }
+  }
+
+  Future<List<GroupMemberModel>?> getGroupMembersTyped(String groupId) async {
+    try {
+      final rows = await getGroupMembers(groupId);
+      if (rows == null) return null;
+      return rows.map((r) => GroupMemberModel.fromJson(r)).toList();
+    } catch (e) {
+      debugPrint('getGroupMembersTyped error: $e');
+      return null;
+    }
+  }
+
+  Future<List<GroupMessageModel>?> getGroupMessagesTyped(String groupId) async {
+    try {
+      final rows = await getGroupMessages(groupId);
+      if (rows == null) return null;
+      return rows.map((r) => GroupMessageModel.fromJson(r)).toList();
+    } catch (e) {
+      debugPrint('getGroupMessagesTyped error: $e');
+      return null;
+    }
+  }
+
+  Future<GroupMessageModel?> sendGroupMessage({
+    required String groupId,
+    required String content,
+    String? topicId,
+  }) async {
+    try {
+      final payload = {
+        'group_id': groupId,
+        'content': content,
+        if (topicId != null) 'topic_id': topicId,
+      };
+      final resp = await sendMessage(payload);
+      if (resp == null) return null;
+      return GroupMessageModel.fromJson(resp);
+    } catch (e) {
+      debugPrint('sendGroupMessage wrapper error: $e');
+      return null;
+    }
+  }
+
+  Stream<List<GroupMessageModel>> subscribeToGroupMessagesStream(String groupId) {
+    final controller = StreamController<List<GroupMessageModel>>.broadcast();
+    // Emit initial snapshot
+    getGroupMessagesTyped(groupId).then((initial) {
+      controller.add(initial ?? []);
+    });
+
+    // Subscribe to realtime and push updates
+    subscribeToGroupMessages(groupId, (message) async {
+      final latest = await getGroupMessagesTyped(groupId) ?? [];
+      if (!controller.isClosed) controller.add(latest);
+    });
+
+    controller.onCancel = () async {
+      await unsubscribeFromMessages();
+    };
+
+    return controller.stream;
+  }
+
+  Future<void> inviteUserToGroup({required String groupId, required String userEmail}) async {
+    try {
+      await client.from('group_invitations').insert({
+        'id': _newId(),
+        'group_id': groupId,
+        'email': userEmail,
+        'created_at': DateTime.now().toIso8601String(),
+      });
+    } catch (e) {
+      debugPrint('inviteUserToGroup error: $e');
+    }
+  }
+
+  Future<void> removeGroupMemberWrapper({required String groupId, required String userId}) async {
+    await removeGroupMember(groupId, userId);
+  }
+
   Future<void> unsubscribeFromMessages() async {
     try {
       if (_messagesChannel != null) {
