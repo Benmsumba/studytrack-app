@@ -7,17 +7,8 @@ class AppConstants {
   // Bump this whenever you publish a new APK.
   static const int currentVersionCode = 1;
 
-  // URL that returns the version manifest JSON.
-  // Replace with your actual hosted JSON URL before building.
-  //
-  // Expected format:
-  // {
-  //   "versionCode": 2,
-  //   "versionName": "1.1.0",
-  //   "downloadUrl": "https://your-host.com/studytrack.apk",
-  //   "releaseNotes": "Bug fixes and new features"
-  // }
-  static const String updateCheckUrl = 'YOUR_UPDATE_CHECK_URL';
+  // URL that returns the version manifest JSON. Replace with your hosted
+  // JSON URL before building; a getter below constructs the runtime URL.
 
   // Environment placeholders. Provide real values via --dart-define.
   static const String supabaseUrl = 'YOUR_SUPABASE_URL';
@@ -39,10 +30,11 @@ class AppConstants {
     return fromEnv.isNotEmpty ? fromEnv : geminiApiKey;
   }
 
-  static bool get isSupabaseConfigured => resolvedSupabaseUrl.isNotEmpty &&
-        resolvedSupabaseAnonKey.isNotEmpty &&
-        resolvedSupabaseUrl != 'YOUR_SUPABASE_URL' &&
-        resolvedSupabaseAnonKey != 'YOUR_SUPABASE_ANON_KEY';
+  static bool get isSupabaseConfigured =>
+      resolvedSupabaseUrl.isNotEmpty &&
+      resolvedSupabaseAnonKey.isNotEmpty &&
+      resolvedSupabaseUrl != 'YOUR_SUPABASE_URL' &&
+      resolvedSupabaseAnonKey != 'YOUR_SUPABASE_ANON_KEY';
 
   static bool get isGeminiConfigured {
     final key = resolvedGeminiApiKey;
