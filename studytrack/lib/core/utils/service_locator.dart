@@ -27,7 +27,7 @@ Future<void> setupServiceLocator() async {
   final supabaseService = SupabaseService();
   getIt.registerSingleton<SupabaseService>(supabaseService);
 
-  final offlineDataStore = OfflineDataStore();
+  final offlineDataStore = OfflineDataStore.instance;
   try {
     await offlineDataStore.initialize();
   } catch (e) {
@@ -61,7 +61,7 @@ Future<void> setupServiceLocator() async {
   getIt.registerSingleton<NotificationService>(notificationService);
 
   getIt.registerSingleton<AchievementService>(
-    AchievementService(supabaseService),
+    AchievementService(supabaseService: supabaseService),
   );
   getIt.registerSingleton<ExportService>(ExportService());
   getIt.registerSingleton<GeminiService>(GeminiService());

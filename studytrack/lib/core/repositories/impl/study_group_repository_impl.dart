@@ -16,7 +16,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
   @override
   Future<Result<List<StudyGroupModel>>> getAllGroups() async {
     try {
-      final groups = await _supabaseService.getStudyGroups();
+      final groups = await _supabaseService.getStudyGroups() ?? const [];
       return Success(groups);
     } catch (e, stack) {
       debugPrint('getAllGroups error: $e');
@@ -30,6 +30,9 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
   Future<Result<StudyGroupModel?>> getGroupById(String groupId) async {
     try {
       final group = await _supabaseService.getStudyGroup(groupId);
+      if (group == null) {
+        throw DataException(message: 'Group not found');
+      }
       return Success(group);
     } catch (e, stack) {
       debugPrint('getGroupById error: $e');
@@ -51,6 +54,9 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
         description: description,
         topicId: topicId,
       );
+      if (group == null) {
+        throw DataException(message: 'Failed to create group');
+      }
       return Success(group);
     } catch (e, stack) {
       debugPrint('createGroup error: $e');
@@ -64,6 +70,9 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
   Future<Result<StudyGroupModel>> updateGroup(StudyGroupModel group) async {
     try {
       final updated = await _supabaseService.updateStudyGroup(group);
+      if (updated == null) {
+        throw DataException(message: 'Failed to update group');
+      }
       return Success(updated);
     } catch (e, stack) {
       debugPrint('updateGroup error: $e');
@@ -115,7 +124,8 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
   @override
   Future<Result<List<GroupMemberModel>>> getGroupMembers(String groupId) async {
     try {
-      final members = await _supabaseService.getGroupMembers(groupId);
+      final members =
+          await _supabaseService.getGroupMembersTyped(groupId) ?? const [];
       return Success(members);
     } catch (e, stack) {
       debugPrint('getGroupMembers error: $e');
@@ -133,7 +143,8 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
     String groupId,
   ) async {
     try {
-      final messages = await _supabaseService.getGroupMessages(groupId);
+      final messages =
+          await _supabaseService.getGroupMessagesTyped(groupId) ?? const [];
       return Success(messages);
     } catch (e, stack) {
       debugPrint('getGroupMessages error: $e');
@@ -158,6 +169,9 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
         content: content,
         topicId: topicId,
       );
+      if (message == null) {
+        throw DataException(message: 'Failed to send message');
+      }
       return Success(message);
     } catch (e, stack) {
       debugPrint('sendGroupMessage error: $e');
@@ -169,7 +183,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
 
   @override
   Stream<List<GroupMessageModel>> subscribeToGroupMessages(String groupId) =>
-      _supabaseService.subscribeToGroupMessages(groupId);
+      _supabaseService.subscribeToGroupMessagesStream(groupId);
 
   @override
   Future<Result<void>> inviteUserToGroup({
@@ -196,7 +210,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
     required String userId,
   }) async {
     try {
-      await _supabaseService.removeGroupMember(
+      await _supabaseService.removeGroupMemberWrapper(
         groupId: groupId,
         userId: userId,
       );
