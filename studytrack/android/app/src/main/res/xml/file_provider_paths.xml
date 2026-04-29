@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-    <!-- Internal cache — used by SelfUpdateService for downloaded APKs -->
+    <!--
+        Covers getTemporaryDirectory() in Flutter (maps to getCacheDir() on Android).
+        Used to share the downloaded APK with the system package installer.
+    -->
+    <cache-path name="apk_cache" path="." />
     <cache-path name="cache" path="." />
     <external-cache-path name="external_cache" path="." />
-    <!-- Internal files -->
     <files-path name="files" path="." />
     <external-files-path name="external_files" path="." />
 </paths>

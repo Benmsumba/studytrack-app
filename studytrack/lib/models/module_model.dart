@@ -23,7 +23,7 @@ class ModuleModel {
 
   Color get subjectColor {
     final key = name.trim();
-    return AppColors.subjectColors[key] ?? AppColors.subjectColors['Default']!;
+    return AppColors.subjectColors[key] ?? AppColors.accent;
   }
 
   factory ModuleModel.fromJson(Map<String, dynamic> json) {

@@ -14,6 +14,11 @@
     <!-- SelfUpdateService: allow installing downloaded APK updates -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- Self-update: download APK files -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Self-update: required on Android 12+ to use foreground download reliably -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
     <application
         android:label="StudyTrack"
         android:name="${applicationName}"
@@ -53,8 +58,11 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- FileProvider for SelfUpdateService: exposes cached APK to the
-             Android package installer on API 24+ without storage permission -->
+        <!--
+            FileProvider: exposes downloaded APK files to the system package
+            installer via a content:// URI. Required on Android 7+ (API 24+).
+            Authority must match the string used in MainActivity.kt.
+        -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

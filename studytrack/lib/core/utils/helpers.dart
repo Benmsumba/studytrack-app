@@ -50,8 +50,8 @@ class Helpers {
     return DateFormat('hh:mm a').format(date);
   }
 
-  static String getGreeting() {
-    final hour = DateTime.now().hour;
+  static String getGreeting({DateTime? now}) {
+    final hour = (now ?? DateTime.now()).hour;
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
@@ -70,8 +70,8 @@ class Helpers {
     return (average / 10) * 100;
   }
 
-  static DateTime getSpacedRepetitionDate(int rating) {
-    final now = DateTime.now();
+  static DateTime getSpacedRepetitionDate(int rating, {DateTime? from}) {
+    final now = from ?? DateTime.now();
     if (rating <= 3) return now.add(const Duration(days: 1));
     if (rating <= 5) return now.add(const Duration(days: 3));
     if (rating <= 7) return now.add(const Duration(days: 7));
