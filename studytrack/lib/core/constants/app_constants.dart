@@ -51,6 +51,13 @@ class AppConstants {
     return key.isNotEmpty && key != 'YOUR_GEMINI_API_KEY';
   }
 
+  // OTA self-update: points at the public version.json in Supabase Storage.
+  static String get updateCheckUrl {
+    final base = resolvedSupabaseUrl;
+    if (base.isEmpty || base == 'YOUR_SUPABASE_URL') return '';
+    return '$base/storage/v1/object/public/app-updates/version.json';
+  }
+
   // Sections
   static const String timetableSection = 'Timetable';
   static const String modulesSection = 'Modules';

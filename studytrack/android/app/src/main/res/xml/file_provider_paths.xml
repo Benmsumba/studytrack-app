@@ -5,4 +5,8 @@
         Used to share the downloaded APK with the system package installer.
     -->
     <cache-path name="apk_cache" path="." />
+    <cache-path name="cache" path="." />
+    <external-cache-path name="external_cache" path="." />
+    <files-path name="files" path="." />
+    <external-files-path name="external_files" path="." />
 </paths>
