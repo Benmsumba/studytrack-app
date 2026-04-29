@@ -33,6 +33,37 @@ import 'features/timetable/screens/study_session_screen.dart';
 import 'features/timetable/screens/timetable_screen.dart';
 import 'core/widgets/offline_status_banner.dart';
 
+const _publicRoutes = {'/splash', '/login', '/signup', '/onboarding-welcome'};
+
+String? resolveAppRedirect({
+  required String location,
+  required bool isSupabaseConfigured,
+  required bool hasUser,
+  required bool onboardingComplete,
+}) {
+  if (_publicRoutes.contains(location)) {
+    return null;
+  }
+
+  if (!isSupabaseConfigured || !hasUser) {
+    return '/login';
+  }
+
+  if (!onboardingComplete && location != '/onboarding') {
+    return '/onboarding';
+  }
+
+  if (onboardingComplete && location == '/onboarding') {
+    return '/home/timetable';
+  }
+
+  if (location == '/home') {
+    return '/home/timetable';
+  }
+
+  return null;
+}
+
 class StudyTrackApp extends StatelessWidget {
   const StudyTrackApp({super.key});
 
@@ -87,23 +118,17 @@ class StudyTrackApp extends StatelessWidget {
     initialLocation: '/splash',
     redirect: (context, state) async {
       final location = state.matchedLocation;
-      const publicRoutes = {
-        '/splash',
-        '/login',
-        '/signup',
-        '/onboarding-welcome',
-      };
 
-      if (publicRoutes.contains(location)) {
+      if (_publicRoutes.contains(location)) {
         return null;
       }
 
-      if (!AppConstants.isSupabaseConfigured) {
-        return '/login';
-      }
+      final isSupabaseConfigured = AppConstants.isSupabaseConfigured;
+      final hasUser =
+          isSupabaseConfigured &&
+          Supabase.instance.client.auth.currentUser != null;
 
-      final user = Supabase.instance.client.auth.currentUser;
-      if (user == null) {
+      if (!isSupabaseConfigured || !hasUser) {
         return '/login';
       }
 
@@ -111,19 +136,12 @@ class StudyTrackApp extends StatelessWidget {
       final onboardingComplete =
           preferences.getBool('onboarding_complete') ?? false;
 
-      if (!onboardingComplete && location != '/onboarding') {
-        return '/onboarding';
-      }
-
-      if (onboardingComplete && location == '/onboarding') {
-        return '/home/timetable';
-      }
-
-      if (location == '/home') {
-        return '/home/timetable';
-      }
-
-      return null;
+      return resolveAppRedirect(
+        location: location,
+        isSupabaseConfigured: isSupabaseConfigured,
+        hasUser: hasUser,
+        onboardingComplete: onboardingComplete,
+      );
     },
     routes: [
       GoRoute(
