@@ -27,16 +27,18 @@ class StudySessionModel {
   final int? actualDurationMinutes;
   final DateTime createdAt;
 
-  bool get isOverdue {
+  bool isOverdueAt({DateTime? now}) {
     final scheduled = DateTime(
       scheduledDate.year,
       scheduledDate.month,
       scheduledDate.day,
     );
-    final today = DateTime.now();
+    final today = now ?? DateTime.now();
     final todayDate = DateTime(today.year, today.month, today.day);
     return status != 'completed' && scheduled.isBefore(todayDate);
   }
+
+  bool get isOverdue => isOverdueAt();
 
   factory StudySessionModel.fromJson(Map<String, dynamic> json) {
     return StudySessionModel(
@@ -97,7 +99,8 @@ class StudySessionModel {
       endTime: endTime ?? this.endTime,
       durationMinutes: durationMinutes ?? this.durationMinutes,
       status: status ?? this.status,
-      actualDurationMinutes: actualDurationMinutes ?? this.actualDurationMinutes,
+      actualDurationMinutes:
+          actualDurationMinutes ?? this.actualDurationMinutes,
       createdAt: createdAt ?? this.createdAt,
     );
   }

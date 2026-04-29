@@ -21,14 +21,18 @@ class ExamModel {
   final String examType;
   final DateTime createdAt;
 
-  int get daysUntilExam {
+  int daysUntilExamFrom({DateTime? from}) {
     final examDay = DateTime(examDate.year, examDate.month, examDate.day);
-    final today = DateTime.now();
+    final today = from ?? DateTime.now();
     final todayDay = DateTime(today.year, today.month, today.day);
     return examDay.difference(todayDay).inDays;
   }
 
-  bool get isUrgent => daysUntilExam <= 7;
+  int get daysUntilExam => daysUntilExamFrom();
+
+  bool isUrgentFrom({DateTime? from}) => daysUntilExamFrom(from: from) <= 7;
+
+  bool get isUrgent => isUrgentFrom();
 
   factory ExamModel.fromJson(Map<String, dynamic> json) {
     return ExamModel(
