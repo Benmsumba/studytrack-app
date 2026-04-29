@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!--
+        Covers getTemporaryDirectory() in Flutter (maps to getCacheDir() on Android).
+        Used to share the downloaded APK with the system package installer.
+    -->
+    <cache-path name="apk_cache" path="." />
+</paths>

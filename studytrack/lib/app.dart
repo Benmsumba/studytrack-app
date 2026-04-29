@@ -34,6 +34,7 @@ import 'features/timetable/screens/exam_countdown_screen.dart';
 import 'features/timetable/screens/study_session_screen.dart';
 import 'features/timetable/screens/timetable_screen.dart';
 import 'core/widgets/offline_status_banner.dart';
+import 'features/update/widgets/update_overlay.dart';
 
 const _publicRoutes = {'/splash', '/login', '/signup', '/onboarding-welcome'};
 
@@ -312,7 +313,14 @@ class StudyTrackApp extends StatelessWidget {
       title: 'StudyTrack',
       theme: _buildTheme(),
       builder: (context, child) {
-        return OfflineStatusBanner(child: child ?? const SizedBox.shrink());
+        return Stack(
+          children: [
+            OfflineStatusBanner(
+              child: child ?? const SizedBox.shrink(),
+            ),
+            const UpdateOverlay(),
+          ],
+        );
       },
     );
   }

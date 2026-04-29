@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/validators.dart';
 import '../controllers/auth_controller.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -175,28 +176,14 @@ class _SignupScreenState extends State<SignupScreen> {
                                 _buildTextField(
                                   controller: _nameController,
                                   hintText: 'Full name',
-                                  validator: (value) {
-                                    if ((value ?? '').trim().isEmpty) {
-                                      return 'Full name is required';
-                                    }
-                                    return null;
-                                  },
+                                  validator: Validators.requiredField,
                                 ),
                                 const SizedBox(height: 14),
                                 _buildTextField(
                                   controller: _emailController,
                                   hintText: 'Email address',
                                   keyboardType: TextInputType.emailAddress,
-                                  validator: (value) {
-                                    final text = value?.trim() ?? '';
-                                    if (text.isEmpty) {
-                                      return 'Email is required';
-                                    }
-                                    if (!text.contains('@')) {
-                                      return 'Enter a valid email';
-                                    }
-                                    return null;
-                                  },
+                                  validator: Validators.email,
                                 ),
                                 const SizedBox(height: 14),
                                 _buildTextField(
@@ -217,15 +204,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                     ),
                                   ),
                                   onChanged: (_) => setState(() {}),
-                                  validator: (value) {
-                                    if ((value ?? '').isEmpty) {
-                                      return 'Password is required';
-                                    }
-                                    if ((value ?? '').length < 8) {
-                                      return 'Use at least 8 characters';
-                                    }
-                                    return null;
-                                  },
+                                  validator: Validators.password,
                                 ),
                                 const SizedBox(height: 10),
                                 _buildPasswordStrengthIndicator(
@@ -251,15 +230,10 @@ class _SignupScreenState extends State<SignupScreen> {
                                       color: AppColors.textMuted,
                                     ),
                                   ),
-                                  validator: (value) {
-                                    if ((value ?? '').isEmpty) {
-                                      return 'Please confirm your password';
-                                    }
-                                    if (value != _passwordController.text) {
-                                      return 'Passwords do not match';
-                                    }
-                                    return null;
-                                  },
+                                  validator: (value) => Validators.confirmPassword(
+                                    value,
+                                    _passwordController.text,
+                                  ),
                                 ),
                                 const SizedBox(height: 10),
                                 Row(
