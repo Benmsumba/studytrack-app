@@ -77,6 +77,10 @@ class GeminiService {
     return AppConstants.geminiApiKey;
   }
 
+  // Minimum gap between API requests — prevents runaway usage from rapid fire.
+  static const _minRequestInterval = Duration(milliseconds: 500);
+  DateTime? _lastRequestAt;
+
   void clearCache() => _cache.clear();
 
   Future<String> explainTopic({
@@ -268,7 +272,7 @@ Keep it practical and specific for today.
 
   Future<String> chatWithTutor({
     required String message,
-    required List<Map> conversationHistory,
+    required List<Map<String, dynamic>> conversationHistory,
     required String currentTopic,
     required String course,
     String? notesContext,
@@ -313,6 +317,8 @@ $message
       return cached.value;
     }
 
+    await _throttle();
+
     Exception? lastError;
     for (var attempt = 0; attempt < _maxRetries; attempt++) {
       try {
@@ -337,6 +343,17 @@ $message
 
     debugPrint('GeminiService: all retries failed — $lastError');
     return '$fallback Error: $lastError';
+  }
+
+  Future<void> _throttle() async {
+    final now = DateTime.now();
+    if (_lastRequestAt != null) {
+      final elapsed = now.difference(_lastRequestAt!);
+      if (elapsed < _minRequestInterval) {
+        await Future<void>.delayed(_minRequestInterval - elapsed);
+      }
+    }
+    _lastRequestAt = DateTime.now();
   }
 
   Map<String, dynamic>? _decodeJson(String jsonText) {

@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/validators.dart';
 import '../controllers/auth_controller.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -254,12 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   hintText: 'Email address',
                                   keyboardType: TextInputType.emailAddress,
                                   prefixIcon: Icons.email_outlined,
-                                  validator: (value) {
-                                    final text = value?.trim() ?? '';
-                                    if (text.isEmpty) return 'Email is required';
-                                    if (!text.contains('@')) return 'Enter a valid email';
-                                    return null;
-                                  },
+                                  validator: Validators.email,
                                 ),
                                 const SizedBox(height: 14),
                                 _buildTextField(
@@ -278,10 +274,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       color: AppColors.textMuted,
                                     ),
                                   ),
-                                  validator: (value) {
-                                    if ((value ?? '').isEmpty) return 'Password is required';
-                                    return null;
-                                  },
+                                  validator: Validators.requiredField,
                                 ),
                                 const SizedBox(height: 6),
                                 Align(
