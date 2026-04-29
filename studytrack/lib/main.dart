@@ -12,6 +12,7 @@ import 'core/services/crash_reporter.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/offline_sync_service.dart';
 import 'core/utils/service_locator.dart';
+import 'core/services/app_update_service.dart';
 import 'features/auth/controllers/auth_provider.dart';
 import 'features/groups/controllers/groups_provider.dart';
 import 'features/modules/controllers/modules_provider.dart';
@@ -20,6 +21,7 @@ import 'features/profile/controllers/profile_provider.dart';
 import 'features/progress/controllers/progress_provider.dart';
 import 'features/settings/controllers/settings_provider.dart';
 import 'features/timetable/controllers/timetable_provider.dart';
+import 'features/update/controllers/update_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,6 +89,8 @@ Future<void> _bootstrapApp() async {
     });
   }
 
+  final updateProvider = UpdateProvider(AppUpdateService());
+
   runApp(
     MultiProvider(
       providers: [
@@ -99,10 +103,13 @@ Future<void> _bootstrapApp() async {
         ChangeNotifierProvider(create: (_) => NotificationProvider()),
         ChangeNotifierProvider(create: (_) => ProfileProvider()),
         ChangeNotifierProvider(create: (_) => SettingsProvider()..load()),
+        ChangeNotifierProvider<UpdateProvider>.value(value: updateProvider),
       ],
       child: const StudyTrackApp(),
     ),
   );
+
+  unawaited(updateProvider.checkForUpdate());
 }
 
 Future<void> _safeInit(Future<void> Function() action) async {
