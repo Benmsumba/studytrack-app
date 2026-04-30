@@ -59,9 +59,14 @@ jobs:
             echo "::error::SUPABASE_SERVICE_ROLE_KEY is empty after trimming whitespace."
             exit 1
           fi
-          # Accept both old JWT format (eyJ...) and new sb_secret_ format
-          if [[ "${TRIMMED_KEY}" != sb_secret_* && "${TRIMMED_KEY}" != eyJ* ]]; then
-            echo "::error::SUPABASE_SERVICE_ROLE_KEY does not look like a valid Supabase key (expected sb_secret_... or eyJ...). Re-paste from Supabase → Project Settings → API → service_role."
+          # The Storage REST API requires a JWT Bearer token (starts with eyJ).
+          # New-format sb_secret_ keys are NOT JWTs and will be rejected by the Storage API.
+          if [[ "${TRIMMED_KEY}" == sb_secret_* || "${TRIMMED_KEY}" == sb_publishable_* ]]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is in Supabase's new key format (sb_secret_...) which is NOT accepted by the Storage REST API. You need the legacy JWT service_role key. In Supabase: Project Settings → API → scroll down to 'JWT Settings' or look for a 'Show legacy keys' / 'service_role (JWT)' option. The JWT starts with eyJ..."
+            exit 1
+          fi
+          if [[ "${TRIMMED_KEY}" != eyJ* ]]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY does not look like a valid JWT (should start with eyJ). Re-paste from Supabase → Project Settings → API → service_role."
             exit 1
           fi
           echo "SUPABASE_SERVICE_ROLE_KEY format looks valid (length: ${#TRIMMED_KEY})"
