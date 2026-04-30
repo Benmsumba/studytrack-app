@@ -84,8 +84,8 @@ class _GoRouterRefreshStream extends ChangeNotifier {
   }
 }
 
-class StudyTrackApp extends StatelessWidget {
-  const StudyTrackApp({super.key});
+class StudyAIdApp extends StatelessWidget {
+  const StudyAIdApp({super.key});
 
   static ThemeData _buildTheme() {
     final base = ThemeData(
@@ -308,7 +308,7 @@ class StudyTrackApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp.router(
     debugShowCheckedModeBanner: false,
     routerConfig: _router,
-    title: 'StudyTrack',
+    title: 'StudyAId',
     theme: _buildTheme(),
     builder: (context, child) => Stack(
       children: [

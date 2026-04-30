@@ -16,7 +16,7 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  static const String _brandAsset = 'assets/icon/app_icon.png';
+  static const String _brandAsset = 'assets/icon/app_icon.jpeg';
 
   static const int _steps = 6;
   static const List<String> _courseExamples = [

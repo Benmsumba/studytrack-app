@@ -120,7 +120,7 @@ class _OnboardingWelcomeScreenState extends State<OnboardingWelcomeScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Image.asset(
-              'assets/icon/app_icon.png',
+              'assets/icon/app_icon.jpeg',
               width: 88,
               height: 88,
               fit: BoxFit.contain,
