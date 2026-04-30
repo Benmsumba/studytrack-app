@@ -65,7 +65,10 @@ jobs:
           
           if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_FILE"
-            test -s "$KEYSTORE_FILE"
+            if ! test -s "$KEYSTORE_FILE"; then
+              echo "::error::Failed to decode keystore from base64"
+              exit 1
+            fi
             echo "Using repository-provided keystore secrets"
             {
               echo "KEYSTORE_PATH=$KEYSTORE_FILE"
@@ -76,8 +79,9 @@ jobs:
             exit 0
           fi
 
-          # Generate CI keystore (no caching needed - fast generation, single run)
-          echo "Generating CI keystore for this build"
+          # Generate CI keystore with proper error handling
+          echo "Generating CI keystore for this build..."
+          set +e  # Don't exit on error yet
           keytool -genkeypair \
             -alias studyaid-ci \
             -keyalg RSA \
@@ -87,16 +91,54 @@ jobs:
             -storepass studyaid_ci_store_pass \
             -keypass studyaid_ci_key_pass \
             -noprompt \
-            -dname "CN=StudyAId CI, OU=Mobile, O=StudyAId, L=NA, S=NA, C=US"
+            -dname "CN=StudyAId CI, OU=Mobile, O=StudyAId, L=NA, S=NA, C=US" 2>&1
+          
+          KEYTOOL_EXIT=$?
+          set -e
+          
+          if [ $KEYTOOL_EXIT -ne 0 ] || ! test -f "$KEYSTORE_FILE"; then
+            echo "::warning::Keystore generation failed, using debug keystore as fallback"
+            DEBUG_KEYSTORE="$HOME/.android/debug.keystore"
+            if [ ! -f "$DEBUG_KEYSTORE" ]; then
+              echo "Creating debug keystore..."
+              keytool -genkeypair \
+                -alias androiddebugkey \
+                -keyalg RSA \
+                -keysize 2048 \
+                -validity 10000 \
+                -keystore "$DEBUG_KEYSTORE" \
+                -storepass android \
+                -keypass android \
+                -noprompt \
+                -dname "CN=Android Debug, O=Android, C=US"
+            fi
+            KEYSTORE_FILE="$DEBUG_KEYSTORE"
+          fi
 
-          test -f "$KEYSTORE_FILE" && echo "Keystore created successfully"
-
-          {
-            echo "KEYSTORE_PATH=$KEYSTORE_FILE"
-            echo "KEYSTORE_PASSWORD=studyaid_ci_store_pass"
-            echo "KEY_ALIAS=studyaid-ci"
-            echo "KEY_PASSWORD=studyaid_ci_key_pass"
-          } >> "$GITHUB_ENV"
+          # Verify keystore is readable
+          if ! keytool -list -keystore "$KEYSTORE_FILE" -storepass studyaid_ci_store_pass > /dev/null 2>&1 && \
+             ! keytool -list -keystore "$KEYSTORE_FILE" -storepass android > /dev/null 2>&1; then
+            echo "::error::Keystore verification failed"
+            exit 1
+          fi
+          
+          echo "Keystore ready at $KEYSTORE_FILE"
+          
+          if [ "$KEYSTORE_FILE" = "$HOME/.android/debug.keystore" ]; then
+            {
+              echo "KEYSTORE_PATH=$KEYSTORE_FILE"
+              echo "KEYSTORE_PASSWORD=android"
+              echo "KEY_ALIAS=androiddebugkey"
+              echo "KEY_PASSWORD=android"
+            } >> "$GITHUB_ENV"
+          else
+            {
+              echo "KEYSTORE_PATH=$KEYSTORE_FILE"
+              echo "KEYSTORE_PASSWORD=studyaid_ci_store_pass"
+              echo "KEY_ALIAS=studyaid-ci"
+              echo "KEY_PASSWORD=studyaid_ci_key_pass"
+            } >> "$GITHUB_ENV"
+          fi
 
       - name: Install dependencies
         working-directory: studytrack
