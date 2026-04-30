@@ -610,6 +610,46 @@ class SupabaseService {
     }
   }
 
+  /// Fetch all topics for multiple modules in a single query.
+  /// Returns a flat list — callers group by [TopicModel.moduleId].
+  Future<List<TopicModel>> getTopicsByModuleIds(
+    List<String> moduleIds,
+  ) async {
+    if (moduleIds.isEmpty) return const [];
+    try {
+      if (await _isOnline()) {
+        final response = await client
+            .from('topics')
+            .select()
+            .inFilter('module_id', moduleIds)
+            .order('created_at');
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        for (final row in rows) {
+          await _cacheRecord('topics', row['id'].toString(), row);
+        }
+        return rows.map(TopicModel.fromJson).toList();
+      }
+
+      // Offline: aggregate from per-module caches.
+      final all = <TopicModel>[];
+      for (final moduleId in moduleIds) {
+        final cached = await _cachedList('topics', moduleId);
+        if (cached != null) all.addAll(cached.map(TopicModel.fromJson));
+      }
+      return all;
+    } catch (error) {
+      debugPrint('getTopicsByModuleIds error: $error');
+      final all = <TopicModel>[];
+      for (final moduleId in moduleIds) {
+        final cached = await _cachedList('topics', moduleId);
+        if (cached != null) all.addAll(cached.map(TopicModel.fromJson));
+      }
+      return all;
+    }
+  }
+
   Future<TopicModel?> getTopicById(String topicId) async {
     try {
       if (await _isOnline()) {

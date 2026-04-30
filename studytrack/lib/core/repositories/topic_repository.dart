@@ -7,6 +7,10 @@ abstract class TopicRepository {
   /// Fetch all topics for a module
   Future<Result<List<TopicModel>>> getTopicsByModule(String moduleId);
 
+  /// Fetch topics for multiple modules in a single round-trip.
+  /// Returns a flat list grouped by [TopicModel.moduleId] on the caller side.
+  Future<Result<List<TopicModel>>> getTopicsByModuleIds(List<String> moduleIds);
+
   /// Fetch single topic by ID
   Future<Result<TopicModel?>> getTopicById(String topicId);
 

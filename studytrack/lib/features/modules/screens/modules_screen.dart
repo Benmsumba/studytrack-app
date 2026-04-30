@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
+import '../controllers/modules_provider.dart';
 
 class ModulesScreen extends StatefulWidget {
   const ModulesScreen({super.key});
@@ -15,18 +18,18 @@ class ModulesScreen extends StatefulWidget {
 }
 
 class _ModulesScreenState extends State<ModulesScreen> {
-  final SupabaseService _service = SupabaseService();
   final TextEditingController _searchController = TextEditingController();
 
-  bool _isLoading = true;
-  String _query = '';
-  List<ModuleModel> _modules = const [];
+  // Topics are still fetched locally (no TopicsProvider in scope).
+  // Modules list and loading state come from ModulesProvider.
   Map<String, List<TopicModel>> _topicsByModule = const {};
+  bool _topicsLoading = true;
+  String _query = '';
 
   @override
   void initState() {
     super.initState();
-    _loadModules();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _refresh());
   }
 
   @override
@@ -35,67 +38,72 @@ class _ModulesScreenState extends State<ModulesScreen> {
     super.dispose();
   }
 
-  Future<void> _loadModules() async {
-    final user = _service.getCurrentUser();
-    if (user == null) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
+  Future<void> _refresh() async {
+    final provider = context.read<ModulesProvider>();
+    await provider.loadModules();
+    if (!mounted) return;
+    await _loadTopicsFor(provider.modules);
+  }
+
+  Future<void> _loadTopicsFor(List<ModuleModel> modules) async {
+    if (!mounted || modules.isEmpty) {
+      if (mounted) setState(() => _topicsLoading = false);
       return;
     }
+    setState(() => _topicsLoading = true);
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    final modules = await _service.getModules(user.id) ?? [];
-    final topicsByModule = <String, List<TopicModel>>{};
-    for (final module in modules) {
-      topicsByModule[module.id] = await _service.getTopics(module.id) ?? [];
-    }
+    final moduleIds = modules.map((m) => m.id).toList();
+    final result = await getIt<TopicRepository>().getTopicsByModuleIds(moduleIds);
 
     if (!mounted) return;
+
+    final map = <String, List<TopicModel>>{};
+    result.fold(
+      (_) {}, // non-critical; leave map empty on error
+      (topics) {
+        for (final topic in topics) {
+          (map[topic.moduleId] ??= []).add(topic);
+        }
+      },
+    );
+
     setState(() {
-      _modules = modules;
-      _topicsByModule = topicsByModule;
-      _isLoading = false;
+      _topicsByModule = map;
+      _topicsLoading = false;
     });
   }
 
-  List<ModuleModel> get _filteredModules {
-    if (_query.trim().isEmpty) {
-      return _modules;
-    }
-    final q = _query.toLowerCase();
-    return _modules.where((m) => m.name.toLowerCase().contains(q)).toList();
+  List<ModuleModel> _filtered(List<ModuleModel> modules) {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return modules;
+    return modules.where((m) => m.name.toLowerCase().contains(q)).toList();
   }
 
   Future<void> _showAddOrEditModuleSheet({ModuleModel? module}) async {
-    final changed = await showModalBottomSheet<bool>(
+    final provider = context.read<ModulesProvider>();
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppColors.surfaceDark,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) =>
-          _AddModuleBottomSheet(service: _service, module: module),
+      builder: (_) => _AddModuleBottomSheet(provider: provider, module: module),
     );
-
-    if (changed == true) {
-      await _loadModules();
-    }
+    // No manual reload — optimistic UI already updated provider state.
+    // Re-fetch topics to reflect any new/renamed module.
+    if (mounted) await _loadTopicsFor(provider.modules);
   }
 
   Future<void> _showCardOptions(ModuleModel module) async {
+    final provider = context.read<ModulesProvider>();
     await showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.surfaceDark,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => SafeArea(
+      builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -106,7 +114,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                 style: GoogleFonts.inter(color: Colors.white),
               ),
               onTap: () {
-                Navigator.of(context).pop();
+                Navigator.of(sheetContext).pop();
                 _showAddOrEditModuleSheet(module: module);
               },
             ),
@@ -117,7 +125,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                 style: GoogleFonts.inter(color: Colors.white),
               ),
               onTap: () {
-                Navigator.of(context).pop();
+                Navigator.of(sheetContext).pop();
                 _showAddOrEditModuleSheet(module: module);
               },
             ),
@@ -131,9 +139,14 @@ class _ModulesScreenState extends State<ModulesScreen> {
                 style: GoogleFonts.inter(color: AppColors.danger),
               ),
               onTap: () async {
-                Navigator.of(context).pop();
-                await _service.deleteModule(module.id);
-                await _loadModules();
+                Navigator.of(sheetContext).pop();
+                final result = await provider.deleteModule(module.id);
+                if (!mounted) return;
+                if (!result.success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(result.message)),
+                  );
+                }
               },
             ),
           ],
@@ -143,107 +156,113 @@ class _ModulesScreenState extends State<ModulesScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
-    body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : RefreshIndicator(
-            color: AppColors.primary,
-            backgroundColor: AppColors.surfaceDark,
-            onRefresh: _loadModules,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
-              children: [
-                TextField(
-                  controller: _searchController,
-                  style: GoogleFonts.inter(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Search modules',
-                    hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: AppColors.textMuted,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.cardDark,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _query = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: 14),
-                GestureDetector(
-                  onTap: _showAddOrEditModuleSheet,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Add Module',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                if (_filteredModules.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 44),
-                    child: Center(
-                      child: Text(
-                        'No modules yet. Add your first module.',
-                        style: GoogleFonts.inter(
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  GridView.builder(
-                    itemCount: _filteredModules.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.78,
-                        ),
-                    itemBuilder: (context, index) {
-                      final module = _filteredModules[index];
-                      final topics =
-                          _topicsByModule[module.id] ?? const <TopicModel>[];
-                      final stats = _ModuleStats.fromTopics(topics);
+  Widget build(BuildContext context) {
+    final provider = context.watch<ModulesProvider>();
+    final isLoading = provider.isLoading || _topicsLoading;
+    final visible = _filtered(provider.modules);
 
-                      return GestureDetector(
-                        onLongPress: () => _showCardOptions(module),
-                        onTap: () => context.push('/modules/${module.id}'),
-                        child: _ModuleCard(module: module, stats: stats),
-                      );
-                    },
+    return Scaffold(
+      backgroundColor: AppColors.backgroundDark,
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              color: AppColors.primary,
+              backgroundColor: AppColors.surfaceDark,
+              onRefresh: _refresh,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
+                children: [
+                  TextField(
+                    controller: _searchController,
+                    style: GoogleFonts.inter(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: 'Search modules',
+                      hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: AppColors.textMuted,
+                      ),
+                      filled: true,
+                      fillColor: AppColors.cardDark,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                    ),
+                    onChanged: (value) => setState(() => _query = value),
                   ),
-              ],
+                  const SizedBox(height: 14),
+                  GestureDetector(
+                    onTap: _showAddOrEditModuleSheet,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Add Module',
+                        style: GoogleFonts.inter(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  if (visible.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 44),
+                      child: Center(
+                        child: Text(
+                          'No modules yet. Add your first module.',
+                          style: GoogleFonts.inter(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    GridView.builder(
+                      itemCount: visible.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.78,
+                          ),
+                      itemBuilder: (context, index) {
+                        final module = visible[index];
+                        final topics =
+                            _topicsByModule[module.id] ?? const <TopicModel>[];
+                        final stats = _ModuleStats.fromTopics(topics);
+
+                        return GestureDetector(
+                          onLongPress: () => _showCardOptions(module),
+                          onTap: () => context.push('/modules/${module.id}'),
+                          child: _ModuleCard(module: module, stats: stats),
+                        );
+                      },
+                    ),
+                ],
+              ),
             ),
-          ),
-  );
+    );
+  }
 }
+
+// ---------------------------------------------------------------------------
+// Pure display widget — no data access.
+// ---------------------------------------------------------------------------
 
 class _ModuleCard extends StatelessWidget {
   const _ModuleCard({required this.module, required this.stats});
@@ -253,13 +272,9 @@ class _ModuleCard extends StatelessWidget {
 
   Color _parseColor() {
     final color = module.color;
-    if (color == null || color.isEmpty) {
-      return module.subjectColor;
-    }
+    if (color == null || color.isEmpty) return module.subjectColor;
     final sanitized = color.replaceAll('#', '');
-    if (sanitized.length != 6) {
-      return module.subjectColor;
-    }
+    if (sanitized.length != 6) return module.subjectColor;
     return Color(int.parse('FF$sanitized', radix: 16));
   }
 
@@ -347,21 +362,24 @@ class _ModuleCard extends StatelessWidget {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Stats helper — pure computation.
+// ---------------------------------------------------------------------------
+
 class _ModuleStats {
   factory _ModuleStats.fromTopics(List<TopicModel> topics) {
     if (topics.isEmpty) {
       return const _ModuleStats(totalTopics: 0, studiedTopics: 0, mastery: 0);
     }
-
     final studied = topics.where((t) => t.isStudied).length;
     final mastered = topics.where((t) => (t.currentRating ?? 0) >= 7).length;
-
     return _ModuleStats(
       totalTopics: topics.length,
       studiedTopics: studied,
       mastery: mastered / topics.length,
     );
   }
+
   const _ModuleStats({
     required this.totalTopics,
     required this.studiedTopics,
@@ -372,16 +390,18 @@ class _ModuleStats {
   final int studiedTopics;
   final double mastery;
 
-  double get studiedProgress {
-    if (totalTopics == 0) return 0;
-    return studiedTopics / totalTopics;
-  }
+  double get studiedProgress =>
+      totalTopics == 0 ? 0 : studiedTopics / totalTopics;
 }
 
-class _AddModuleBottomSheet extends StatefulWidget {
-  const _AddModuleBottomSheet({required this.service, this.module});
+// ---------------------------------------------------------------------------
+// Bottom sheet for add / edit — routes all mutations through ModulesProvider.
+// ---------------------------------------------------------------------------
 
-  final SupabaseService service;
+class _AddModuleBottomSheet extends StatefulWidget {
+  const _AddModuleBottomSheet({required this.provider, this.module});
+
+  final ModulesProvider provider;
   final ModuleModel? module;
 
   @override
@@ -404,13 +424,9 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
 
   Color _resolveInitialColor() {
     final hex = widget.module?.color;
-    if (hex == null || hex.isEmpty) {
-      return AppColors.primary;
-    }
+    if (hex == null || hex.isEmpty) return AppColors.primary;
     final sanitized = hex.replaceAll('#', '');
-    if (sanitized.length != 6) {
-      return AppColors.primary;
-    }
+    if (sanitized.length != 6) return AppColors.primary;
     return Color(int.parse('FF$sanitized', radix: 16));
   }
 
@@ -427,30 +443,31 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
 
   Future<void> _save() async {
     final name = _nameController.text.trim();
-    if (name.isEmpty || _isSaving) {
-      return;
-    }
+    if (name.isEmpty || _isSaving) return;
 
-    final user = widget.service.getCurrentUser();
-    if (user == null) {
-      return;
-    }
+    setState(() => _isSaving = true);
 
-    setState(() {
-      _isSaving = true;
-    });
+    final color = _hexColor(_selectedColor);
+    final ModuleActionResult result;
 
     if (widget.module == null) {
-      await widget.service.addModule(user.id, name, _hexColor(_selectedColor));
+      result = await widget.provider.addModule(name: name, color: color);
     } else {
-      await widget.service.updateModule(widget.module!.id, {
-        'name': name,
-        'color': _hexColor(_selectedColor),
-      });
+      result = await widget.provider.updateModule(
+        widget.module!.copyWith(name: name, color: color),
+      );
     }
 
     if (!mounted) return;
-    Navigator.of(context).pop(true);
+
+    if (result.success) {
+      Navigator.of(context).pop();
+    } else {
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message)),
+      );
+    }
   }
 
   @override
@@ -498,11 +515,7 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
                 final selected = color.toARGB32() == _selectedColor.toARGB32();
 
                 return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _selectedColor = color;
-                    });
-                  },
+                  onTap: () => setState(() => _selectedColor = color),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 180),
                     width: selected ? 42 : 36,
