@@ -1,6 +1,6 @@
 class AppConstants {
   // App metadata
-  static const String appName = 'StudyTrack';
+  static const String appName = 'StudyAId';
   static const String appVersion = '1.0.0';
 
   // Self-update — must match the +build_number in pubspec.yaml.
