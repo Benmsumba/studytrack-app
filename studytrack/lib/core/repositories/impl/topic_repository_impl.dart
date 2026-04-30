@@ -26,6 +26,24 @@ class TopicRepositoryImpl implements TopicRepository {
   }
 
   @override
+  Future<Result<List<TopicModel>>> getTopicsByModuleIds(
+    List<String> moduleIds,
+  ) async {
+    try {
+      final topics = await _supabaseService.getTopicsByModuleIds(moduleIds);
+      return Success(topics);
+    } catch (e, stack) {
+      debugPrint('getTopicsByModuleIds error: $e');
+      return Failure(
+        DataException(
+          message: 'Failed to fetch topics: $e',
+          stackTrace: stack,
+        ),
+      );
+    }
+  }
+
+  @override
   Future<Result<TopicModel?>> getTopicById(String topicId) async {
     try {
       final topic = await _supabaseService.getTopic(topicId);
