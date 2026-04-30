@@ -1,11 +1,12 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/repositories/module_repository.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/app_exception.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../models/module_model.dart';
 
+/// UI command result — carries the outcome of a mutating operation.
 class ModuleActionResult {
   const ModuleActionResult({
     required this.success,
@@ -19,20 +20,13 @@ class ModuleActionResult {
 }
 
 class ModulesProvider extends ChangeNotifier {
-  ModulesProvider({
-    ModuleRepository? moduleRepository,
-    SupabaseService? supabaseService,
-  }) : _moduleRepository =
-           moduleRepository ??
-           (supabaseService == null ? getIt<ModuleRepository>() : null),
-       _legacySupabaseService = supabaseService;
+  ModulesProvider({ModuleRepository? moduleRepository})
+      : _repo = moduleRepository ?? getIt<ModuleRepository>();
 
-  final ModuleRepository? _moduleRepository;
-  final SupabaseService? _legacySupabaseService;
+  final ModuleRepository _repo;
 
   List<ModuleModel> _modules = const [];
   ModuleModel? _selectedModule;
-  String? _selectedModuleId;
   bool _isLoading = false;
   String? _errorMessage;
 
@@ -41,82 +35,43 @@ class ModulesProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  Future<ModuleActionResult> loadModules(String userId) async {
-    if (userId.trim().isEmpty) {
-      _errorMessage = 'User context is missing. Please sign in again.';
-      notifyListeners();
-      return const ModuleActionResult(
-        success: false,
-        statusCode: 401,
-        message: 'User context is missing. Please sign in again.',
-      );
-    }
-
+  /// Auth is resolved inside the repository — no userId required here.
+  Future<ModuleActionResult> loadModules() async {
     _setLoading(true);
     _errorMessage = null;
 
-    try {
-      if (_legacySupabaseService != null) {
-        final modulesResult = await _legacySupabaseService.getModules(userId);
-        _modules = (modulesResult ?? const []).toList(growable: false);
-        if (_selectedModuleId != null && _modules.isNotEmpty) {
-          _selectedModule = _modules.firstWhere(
-            (module) => module.id == _selectedModuleId,
-            orElse: () => _modules.first,
-          );
-        } else if (_selectedModuleId != null) {
-          _selectedModule = null;
+    final result = await _repo.getAllModules();
+
+    return result.fold(
+      (error) {
+        _errorMessage = error.message;
+        _setLoading(false);
+        return ModuleActionResult(
+          success: false,
+          statusCode: _statusCode(error),
+          message: error.message,
+        );
+      },
+      (modules) {
+        _modules = modules;
+        // Rehydrate selected module if it's still present after reload.
+        if (_selectedModule != null) {
+          _selectedModule = _modules
+              .where((m) => m.id == _selectedModule!.id)
+              .firstOrNull;
         }
+        _setLoading(false);
         return const ModuleActionResult(
           success: true,
           statusCode: 200,
           message: 'Modules loaded successfully.',
         );
-      }
-
-      final result = await _moduleRepository!.getAllModules();
-
-      if (result is Failure<List<ModuleModel>>) {
-        _errorMessage = result.error.message;
-        return ModuleActionResult(
-          success: false,
-          statusCode: 500,
-          message: _errorMessage ?? 'Failed to load modules.',
-        );
-      }
-
-      if (result is Success<List<ModuleModel>>) {
-        _modules = result.data;
-        if (_selectedModuleId != null && _modules.isNotEmpty) {
-          _selectedModule = _modules.firstWhere(
-            (module) => module.id == _selectedModuleId,
-            orElse: () => _modules.first,
-          );
-        } else if (_selectedModuleId != null) {
-          _selectedModule = null;
-        }
-      }
-
-      return const ModuleActionResult(
-        success: true,
-        statusCode: 200,
-        message: 'Modules loaded successfully.',
-      );
-    } catch (error) {
-      _errorMessage = 'Failed to load modules: $error';
-      return ModuleActionResult(
-        success: false,
-        statusCode: 500,
-        message: _errorMessage!,
-      );
-    } finally {
-      _setLoading(false);
-    }
+      },
+    );
   }
 
   Future<ModuleActionResult> addModule({
     required String name,
-    String? userId,
     String? color,
     String? code,
     String? description,
@@ -125,140 +80,83 @@ class ModulesProvider extends ChangeNotifier {
   }) async {
     final nameText = name.trim();
     if (nameText.isEmpty) {
-      _errorMessage = 'Module name is required.';
-      notifyListeners();
-      return const ModuleActionResult(
-        success: false,
-        statusCode: 422,
-        message: 'Module name is required.',
-      );
-    }
-
-    if (_legacySupabaseService != null || userId != null || color != null) {
-      final legacyService = _legacySupabaseService;
-      if (legacyService == null || userId == null) {
-        return const ModuleActionResult(
-          success: false,
-          statusCode: 422,
-          message: 'User context is required.',
-        );
-      }
-
-      _errorMessage = null;
-      try {
-        final created = await legacyService.addModule(
-          userId,
-          nameText,
-          color ?? '#000000',
-        );
-        if (created == null) {
-          _errorMessage = 'Failed to add module.';
-          notifyListeners();
-          return const ModuleActionResult(
-            success: false,
-            statusCode: 500,
-            message: 'Failed to add module.',
-          );
-        }
-
-        final createdModel = ModuleModel.fromJson(created);
-        _modules = [..._modules, createdModel];
-        notifyListeners();
-        return const ModuleActionResult(
-          success: true,
-          statusCode: 201,
-          message: 'Module added successfully.',
-        );
-      } catch (error) {
-        _errorMessage = 'Failed to add module: $error';
-        notifyListeners();
-        return ModuleActionResult(
-          success: false,
-          statusCode: 500,
-          message: _errorMessage!,
-        );
-      }
+      return _validationFailure('Module name is required.');
     }
 
     _errorMessage = null;
-    final result = await _moduleRepository!.createModule(
+
+    final result = await _repo.createModule(
       name: nameText,
+      color: color,
       code: code?.trim() ?? '',
       description: description?.trim() ?? '',
       instructorName: instructorName?.trim(),
       instructorEmail: instructorEmail?.trim(),
     );
 
-    if (result is Failure<ModuleModel>) {
-      _errorMessage = result.error.message;
-      notifyListeners();
-      return ModuleActionResult(
-        success: false,
-        statusCode: 500,
-        message: _errorMessage ?? 'Failed to add module.',
-      );
-    }
-
-    if (result is Success<ModuleModel>) {
-      final created = result.data;
-      _modules = [..._modules, created];
-      notifyListeners();
-    }
-
-    return const ModuleActionResult(
-      success: true,
-      statusCode: 201,
-      message: 'Module added successfully.',
+    return result.fold(
+      (error) {
+        _errorMessage = error.message;
+        notifyListeners();
+        return ModuleActionResult(
+          success: false,
+          statusCode: _statusCode(error),
+          message: error.message,
+        );
+      },
+      (created) {
+        _modules = [..._modules, created];
+        notifyListeners();
+        return const ModuleActionResult(
+          success: true,
+          statusCode: 201,
+          message: 'Module added successfully.',
+        );
+      },
     );
   }
 
-  Future<ModuleActionResult> updateModule({
-    required String moduleId,
-    required dynamic changes,
-  }) async {
-    if (moduleId.trim().isEmpty) {
-      return const ModuleActionResult(
-        success: false,
-        statusCode: 422,
-        message: 'Module ID is required.',
-      );
+  /// Optimistic UI: applies the change immediately and rolls back on failure.
+  Future<ModuleActionResult> updateModule(ModuleModel module) async {
+    if (module.id.trim().isEmpty) {
+      return _validationFailure('Module ID is required.');
     }
 
-    if (_legacySupabaseService != null || changes is Map<String, dynamic>) {
-      final legacyService = _legacySupabaseService;
-      if (legacyService == null) {
-        return const ModuleActionResult(
+    // Snapshot for rollback.
+    final previousModules = _modules;
+    final previousSelected = _selectedModule;
+
+    // Apply optimistically before the async call.
+    _modules = _modules
+        .map((m) => m.id == module.id ? module : m)
+        .toList(growable: false);
+    if (_selectedModule?.id == module.id) {
+      _selectedModule = module;
+    }
+    notifyListeners();
+
+    final result = await _repo.updateModule(module);
+
+    return result.fold(
+      (error) {
+        // Rollback to pre-update state.
+        _modules = previousModules;
+        _selectedModule = previousSelected;
+        _errorMessage = error.message;
+        notifyListeners();
+        return ModuleActionResult(
           success: false,
-          statusCode: 422,
-          message: 'Module service is unavailable.',
+          statusCode: _statusCode(error),
+          message: error.message,
         );
-      }
-
-      _errorMessage = null;
-      try {
-        final legacyChanges = changes is Map<String, dynamic>
-            ? changes
-            : Map<String, dynamic>.from(changes as Map);
-        final updated = await legacyService.updateModule(
-          moduleId,
-          legacyChanges,
-        );
-        if (updated == null) {
-          _errorMessage = 'Failed to update module.';
-          notifyListeners();
-          return const ModuleActionResult(
-            success: false,
-            statusCode: 500,
-            message: 'Failed to update module.',
-          );
-        }
-
-        final updatedModel = ModuleModel.fromJson(updated);
+      },
+      (updated) {
+        // Reconcile with the authoritative server response.
         _modules = _modules
-            .map((module) => module.id == moduleId ? updatedModel : module)
+            .map((m) => m.id == updated.id ? updated : m)
             .toList(growable: false);
-        if (_selectedModule?.id == moduleId) {
-          _selectedModule = updatedModel;
+        if (_selectedModule?.id == updated.id) {
+          _selectedModule = updated;
         }
         notifyListeners();
         return const ModuleActionResult(
@@ -266,133 +164,82 @@ class ModulesProvider extends ChangeNotifier {
           statusCode: 200,
           message: 'Module updated successfully.',
         );
-      } catch (error) {
-        _errorMessage = 'Failed to update module: $error';
-        notifyListeners();
-        return ModuleActionResult(
-          success: false,
-          statusCode: 500,
-          message: _errorMessage!,
-        );
-      }
-    }
-
-    _errorMessage = null;
-    final result = await _moduleRepository!.updateModule(
-      changes as ModuleModel,
-    );
-
-    if (result is Failure<ModuleModel>) {
-      _errorMessage = result.error.message;
-      notifyListeners();
-      return ModuleActionResult(
-        success: false,
-        statusCode: 500,
-        message: _errorMessage ?? 'Failed to update module.',
-      );
-    }
-
-    if (result is Success<ModuleModel>) {
-      final updatedModel = result.data;
-      _modules = _modules
-          .map((module) => module.id == moduleId ? updatedModel : module)
-          .toList(growable: false);
-
-      if (_selectedModule?.id == moduleId) {
-        _selectedModule = updatedModel;
-      }
-      notifyListeners();
-    }
-
-    return const ModuleActionResult(
-      success: true,
-      statusCode: 200,
-      message: 'Module updated successfully.',
+      },
     );
   }
 
+  /// Optimistic UI: removes immediately and rolls back on failure.
   Future<ModuleActionResult> deleteModule(String moduleId) async {
     if (moduleId.trim().isEmpty) {
-      return const ModuleActionResult(
-        success: false,
-        statusCode: 422,
-        message: 'Module ID is required.',
-      );
+      return _validationFailure('Module ID is required.');
     }
 
-    _errorMessage = null;
-    final previous = _modules;
+    // Snapshot for rollback.
+    final previousModules = _modules;
+    final previousSelected = _selectedModule;
 
+    // Apply optimistically before the async call.
     _modules = _modules
-        .where((module) => module.id != moduleId)
+        .where((m) => m.id != moduleId)
         .toList(growable: false);
     if (_selectedModule?.id == moduleId) {
       _selectedModule = null;
     }
     notifyListeners();
 
-    if (_legacySupabaseService != null) {
-      try {
-        final deleted = await _legacySupabaseService.deleteModule(moduleId);
-        if (deleted == true) {
-          return const ModuleActionResult(
-            success: true,
-            statusCode: 200,
-            message: 'Module deleted successfully.',
-          );
-        }
-      } catch (error) {
-        _modules = previous;
-        _errorMessage = 'Failed to delete module: $error';
+    final result = await _repo.deleteModule(moduleId);
+
+    return result.fold(
+      (error) {
+        // Rollback to pre-delete state.
+        _modules = previousModules;
+        _selectedModule = previousSelected;
+        _errorMessage = error.message;
         notifyListeners();
         return ModuleActionResult(
           success: false,
-          statusCode: 500,
-          message: _errorMessage!,
+          statusCode: _statusCode(error),
+          message: error.message,
         );
-      }
-
-      _modules = previous;
-      _errorMessage = 'Failed to delete module.';
-      notifyListeners();
-      return const ModuleActionResult(
-        success: false,
-        statusCode: 500,
-        message: 'Failed to delete module.',
-      );
-    }
-
-    final result = await _moduleRepository!.deleteModule(moduleId);
-
-    if (result is Success<void>) {
-      return const ModuleActionResult(
+      },
+      (_) => const ModuleActionResult(
         success: true,
         statusCode: 200,
         message: 'Module deleted successfully.',
-      );
-    }
-
-    // Rollback on failure
-    _modules = previous;
-    if (previous.any((m) => m.id == moduleId)) {
-      _selectedModule = previous.firstWhere((m) => m.id == moduleId);
-    }
-    _errorMessage = (result as Failure<void>).error.message;
-    notifyListeners();
-    return ModuleActionResult(
-      success: false,
-      statusCode: 500,
-      message: _errorMessage ?? 'Failed to delete module.',
+      ),
     );
   }
 
   void selectModule(ModuleModel? module) {
     _selectedModule = module;
-    if (module != null) {
-      _selectedModuleId = module.id;
-    }
     notifyListeners();
   }
+
+  void clearError() {
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  ModuleActionResult _validationFailure(String message) {
+    _errorMessage = message;
+    notifyListeners();
+    return ModuleActionResult(
+      success: false,
+      statusCode: 422,
+      message: message,
+    );
+  }
+
+  int _statusCode(AppException error) => switch (error) {
+    ValidationException() => 422,
+    AuthException() => 401,
+    OfflineException() => 503,
+    _ => 500,
+  };
 
   void _setLoading(bool value) {
     _isLoading = value;

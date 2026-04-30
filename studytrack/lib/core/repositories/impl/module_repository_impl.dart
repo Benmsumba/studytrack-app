@@ -17,17 +17,16 @@ class ModuleRepositoryImpl implements ModuleRepository {
     try {
       final uid = _userId;
       if (uid == null) {
-        return const Success(<ModuleModel>[]);
+        return Failure(
+          AuthException(message: 'Not authenticated. Please sign in.'),
+        );
       }
       final modules = await _supabaseService.getModules(uid);
       return Success(modules ?? <ModuleModel>[]);
     } catch (e, stack) {
       debugPrint('getAllModules error: $e');
       return Failure(
-        DataException(
-          message: 'Failed to fetch modules: $e',
-          stackTrace: stack,
-        ),
+        DataException(message: 'Failed to fetch modules: $e', stackTrace: stack),
       );
     }
   }
@@ -50,15 +49,16 @@ class ModuleRepositoryImpl implements ModuleRepository {
     required String name,
     required String code,
     required String description,
+    String? color,
     String? instructorName,
     String? instructorEmail,
   }) async {
     try {
       final uid = _userId;
       if (uid == null) {
-        return Failure(DataException(message: 'User not authenticated'));
+        return Failure(AuthException(message: 'User not authenticated'));
       }
-      final raw = await _supabaseService.addModule(uid, name, '');
+      final raw = await _supabaseService.addModule(uid, name, color ?? '');
       if (raw == null) {
         return Failure(DataException(message: 'Failed to create module'));
       }
@@ -66,10 +66,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
     } catch (e, stack) {
       debugPrint('createModule error: $e');
       return Failure(
-        DataException(
-          message: 'Failed to create module: $e',
-          stackTrace: stack,
-        ),
+        DataException(message: 'Failed to create module: $e', stackTrace: stack),
       );
     }
   }
@@ -88,10 +85,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
     } catch (e, stack) {
       debugPrint('updateModule error: $e');
       return Failure(
-        DataException(
-          message: 'Failed to update module: $e',
-          stackTrace: stack,
-        ),
+        DataException(message: 'Failed to update module: $e', stackTrace: stack),
       );
     }
   }
@@ -99,7 +93,10 @@ class ModuleRepositoryImpl implements ModuleRepository {
   @override
   Future<Result<void>> deleteModule(String moduleId) async {
     try {
-      await _supabaseService.deleteModule(moduleId);
+      final deleted = await _supabaseService.deleteModule(moduleId);
+      if (deleted != true) {
+        return Failure(DataException(message: 'Failed to delete module'));
+      }
       return const Success(null);
     } catch (e, stack) {
       debugPrint('deleteModule error: $e');
