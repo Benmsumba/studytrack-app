@@ -162,14 +162,23 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          curl --fail -X POST \
+          # PUT supports raw binary body; POST requires multipart/form-data.
+          # x-upsert: true makes PUT create-or-replace (idempotent).
+          HTTP_STATUS=$(curl --silent --show-error --output /tmp/apk_upload_response.txt \
+            --write-out "%{http_code}" \
+            -X PUT \
             "${SUPABASE_URL}/storage/v1/object/app-updates/studytrack-latest.apk" \
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/octet-stream" \
             -H "x-upsert: true" \
-            -H "cache-control: no-cache" \
-            --data-binary @studytrack/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-          echo "APK uploaded"
+            --data-binary @studytrack/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk)
+          echo "HTTP status: ${HTTP_STATUS}"
+          cat /tmp/apk_upload_response.txt
+          if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 300 ]; then
+            echo "::error::APK upload failed with HTTP ${HTTP_STATUS}"
+            exit 1
+          fi
+          echo "APK uploaded successfully"
 
       - name: Generate and upload version.json
         env:
@@ -185,12 +194,19 @@ jobs:
           }
           JSONEOF
 
-          curl --fail -X POST \
+          HTTP_STATUS=$(curl --silent --show-error --output /tmp/version_upload_response.txt \
+            --write-out "%{http_code}" \
+            -X PUT \
             "${SUPABASE_URL}/storage/v1/object/app-updates/version.json" \
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/json" \
             -H "x-upsert: true" \
-            -H "cache-control: no-cache" \
-            --data-binary @/tmp/version.json
-          echo "version.json uploaded"
+            --data-binary @/tmp/version.json)
+          echo "HTTP status: ${HTTP_STATUS}"
+          cat /tmp/version_upload_response.txt
+          if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 300 ]; then
+            echo "::error::version.json upload failed with HTTP ${HTTP_STATUS}"
+            exit 1
+          fi
+          echo "version.json uploaded successfully"
           cat /tmp/version.json
