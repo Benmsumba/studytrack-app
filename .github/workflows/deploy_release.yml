@@ -50,6 +50,17 @@ jobs:
         working-directory: studytrack
         run: flutter analyze --no-fatal-warnings
 
+      - name: Extract version from pubspec.yaml
+        id: ver
+        working-directory: studytrack
+        run: |
+          RAW=$(grep '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//')
+          VERSION=$(echo "$RAW" | cut -d'+' -f1)
+          BUILD=${GITHUB_RUN_NUMBER}
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "build=$BUILD"     >> "$GITHUB_OUTPUT"
+          echo "Detected version=$VERSION build=$BUILD"
+
       - name: Build release APK
         working-directory: studytrack
         env:
@@ -68,17 +79,6 @@ jobs:
             --dart-define=SUPABASE_URL="${SUPABASE_URL}" \
             --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}" \
             --dart-define=GEMINI_API_KEY="${GEMINI_API_KEY}"
-
-      - name: Extract version from pubspec.yaml
-        id: ver
-        working-directory: studytrack
-        run: |
-          RAW=$(grep '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//')
-          VERSION=$(echo "$RAW" | cut -d'+' -f1)
-          BUILD=${GITHUB_RUN_NUMBER}
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "build=$BUILD"     >> "$GITHUB_OUTPUT"
-          echo "Detected version=$VERSION build=$BUILD"
 
       - name: Upload APK to Supabase Storage
         env:
