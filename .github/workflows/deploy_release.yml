@@ -99,11 +99,10 @@ jobs:
         run: |
           cat > /tmp/version.json << JSONEOF
           {
-            "version": "${{ steps.ver.outputs.version }}",
-            "build": ${{ steps.ver.outputs.build }},
-            "apk_url": "${SUPABASE_URL}/storage/v1/object/public/app-updates/studytrack-latest.apk",
-            "release_notes": "StudyAId ${{ steps.ver.outputs.version }} is available.",
-            "min_build": 1
+            "versionCode": ${{ steps.ver.outputs.build }},
+            "versionName": "${{ steps.ver.outputs.version }}",
+            "downloadUrl": "${SUPABASE_URL}/storage/v1/object/public/app-updates/studytrack-latest.apk",
+            "releaseNotes": "StudyAId ${{ steps.ver.outputs.version }} is available."
           }
           JSONEOF
 
