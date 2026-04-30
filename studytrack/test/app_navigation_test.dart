@@ -3,15 +3,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:studytrack/app.dart';
 
 void main() {
-  group('StudyTrackApp Navigation', () {
+  group('StudyAIdApp Navigation', () {
     testWidgets('resolveAppRedirect allows public routes without auth', (
       tester,
     ) async {
-      const publicRoutes = [
-        '/splash',
-        '/login',
-        '/signup',
-      ];
+      const publicRoutes = ['/splash', '/login', '/signup'];
 
       for (final route in publicRoutes) {
         final result = resolveAppRedirect(

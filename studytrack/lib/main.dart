@@ -100,7 +100,7 @@ Future<void> _bootstrapApp() async {
         ChangeNotifierProvider(create: (_) => SettingsProvider()..load()),
         ChangeNotifierProvider<UpdateProvider>.value(value: updateProvider),
       ],
-      child: const StudyTrackApp(),
+      child: const StudyAIdApp(),
     ),
   );
 
