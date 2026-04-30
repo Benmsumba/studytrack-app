@@ -35,13 +35,6 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
-      - name: Restore CI keystore cache
-        id: keystore-cache
-        uses: actions/cache@v4
-        with:
-          path: /tmp/studytrack-release.jks
-          key: ${{ runner.os }}-studyaid-release-keystore-v1
-
       - name: Validate required secrets
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -67,12 +60,15 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
+          mkdir -p ~/.android
+          KEYSTORE_FILE="$HOME/.android/studytrack-release.jks"
+          
           if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
-            echo "$KEYSTORE_BASE64" | base64 -d > /tmp/studytrack-release.jks
-            test -s /tmp/studytrack-release.jks
+            echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_FILE"
+            test -s "$KEYSTORE_FILE"
             echo "Using repository-provided keystore secrets"
             {
-              echo "KEYSTORE_PATH=/tmp/studytrack-release.jks"
+              echo "KEYSTORE_PATH=$KEYSTORE_FILE"
               echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
               echo "KEY_ALIAS=$KEY_ALIAS"
               echo "KEY_PASSWORD=$KEY_PASSWORD"
@@ -80,23 +76,23 @@ jobs:
             exit 0
           fi
 
-          if [ -f /tmp/studytrack-release.jks ]; then
-            echo "Using cached CI keystore"
-          else
-            echo "Generating persistent CI keystore (first run only)"
-            keytool -genkeypair \
-              -alias studyaid-ci \
-              -keyalg RSA \
-              -keysize 4096 \
-              -validity 9125 \
-              -keystore /tmp/studytrack-release.jks \
-              -storepass studyaid_ci_store_pass \
-              -keypass studyaid_ci_key_pass \
-              -dname "CN=StudyAId CI, OU=Mobile, O=StudyAId, L=NA, S=NA, C=US"
-          fi
+          # Generate CI keystore (no caching needed - fast generation, single run)
+          echo "Generating CI keystore for this build"
+          keytool -genkeypair \
+            -alias studyaid-ci \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 9125 \
+            -keystore "$KEYSTORE_FILE" \
+            -storepass studyaid_ci_store_pass \
+            -keypass studyaid_ci_key_pass \
+            -noprompt \
+            -dname "CN=StudyAId CI, OU=Mobile, O=StudyAId, L=NA, S=NA, C=US"
+
+          test -f "$KEYSTORE_FILE" && echo "Keystore created successfully"
 
           {
-            echo "KEYSTORE_PATH=/tmp/studytrack-release.jks"
+            echo "KEYSTORE_PATH=$KEYSTORE_FILE"
             echo "KEYSTORE_PASSWORD=studyaid_ci_store_pass"
             echo "KEY_ALIAS=studyaid-ci"
             echo "KEY_PASSWORD=studyaid_ci_key_pass"
