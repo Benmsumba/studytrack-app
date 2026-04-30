@@ -53,15 +53,18 @@ jobs:
             exit 1
           fi
 
-          # Validate SUPABASE_SERVICE_ROLE_KEY looks like a JWT (header.payload.signature)
+          # Strip whitespace (common copy-paste artifact) and export the clean value
           TRIMMED_KEY=$(echo "${SUPABASE_SERVICE_ROLE_KEY}" | tr -d '[:space:]')
-          JWT_PARTS=$(echo "${TRIMMED_KEY}" | tr '.' '\n' | wc -l)
-          if [ "${JWT_PARTS}" -ne 3 ]; then
-            echo "::error::SUPABASE_SERVICE_ROLE_KEY does not look like a valid JWT (expected 3 dot-separated parts, got ${JWT_PARTS}). Re-paste the key from Supabase → Project Settings → API → service_role."
+          if [ -z "${TRIMMED_KEY}" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY is empty after trimming whitespace."
+            exit 1
+          fi
+          # Accept both old JWT format (eyJ...) and new sb_secret_ format
+          if [[ "${TRIMMED_KEY}" != sb_secret_* && "${TRIMMED_KEY}" != eyJ* ]]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY does not look like a valid Supabase key (expected sb_secret_... or eyJ...). Re-paste from Supabase → Project Settings → API → service_role."
             exit 1
           fi
           echo "SUPABASE_SERVICE_ROLE_KEY format looks valid (length: ${#TRIMMED_KEY})"
-          # Export trimmed version so upload steps get a clean token
           echo "SUPABASE_SERVICE_ROLE_KEY=${TRIMMED_KEY}" >> "$GITHUB_ENV"
 
       - name: Prepare signing material
