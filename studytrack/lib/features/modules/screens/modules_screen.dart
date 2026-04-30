@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/topic_repository.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
@@ -46,16 +46,27 @@ class _ModulesScreenState extends State<ModulesScreen> {
   }
 
   Future<void> _loadTopicsFor(List<ModuleModel> modules) async {
-    if (!mounted) return;
+    if (!mounted || modules.isEmpty) {
+      if (mounted) setState(() => _topicsLoading = false);
+      return;
+    }
     setState(() => _topicsLoading = true);
 
-    final service = getIt<SupabaseService>();
-    final map = <String, List<TopicModel>>{};
-    for (final module in modules) {
-      map[module.id] = await service.getTopics(module.id) ?? [];
-    }
+    final moduleIds = modules.map((m) => m.id).toList();
+    final result = await getIt<TopicRepository>().getTopicsByModuleIds(moduleIds);
 
     if (!mounted) return;
+
+    final map = <String, List<TopicModel>>{};
+    result.fold(
+      (_) {}, // non-critical; leave map empty on error
+      (topics) {
+        for (final topic in topics) {
+          (map[topic.moduleId] ??= []).add(topic);
+        }
+      },
+    );
+
     setState(() {
       _topicsByModule = map;
       _topicsLoading = false;

@@ -28,35 +28,38 @@ class TopicModuleProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  /// Load all modules and topics for the current user
+  /// Load all modules and topics for the current user in two round-trips:
+  /// one for modules, one batch query for all their topics.
   Future<void> loadModulesAndTopics() async {
     _setLoading(true);
     _errorMessage = null;
 
     try {
-      // Fetch all modules
       final moduleResult = await _moduleRepository.getAllModules();
 
-      if (moduleResult is! Success<List<ModuleModel>>) {
-        _errorMessage = 'Failed to load modules';
-        notifyListeners();
+      moduleResult.fold(
+        (error) {
+          _errorMessage = error.message;
+          return;
+        },
+        (modules) => _modules = modules,
+      );
+
+      if (_errorMessage != null) return;
+
+      final moduleIds = _modules.map((m) => m.id).toList();
+      if (moduleIds.isEmpty) {
+        _topics = const [];
         return;
       }
 
-      _modules = moduleResult.data;
+      final topicResult =
+          await _topicRepository.getTopicsByModuleIds(moduleIds);
 
-      // Fetch all topics for each module
-      final allTopics = <TopicModel>[];
-      for (final module in _modules) {
-        final topicResult = await _topicRepository.getTopicsByModule(module.id);
-
-        if (topicResult is Success<List<TopicModel>>) {
-          final topics = topicResult.data;
-          allTopics.addAll(topics);
-        }
-      }
-
-      _topics = allTopics;
+      topicResult.fold(
+        (error) => _errorMessage = error.message,
+        (topics) => _topics = topics,
+      );
     } catch (e) {
       debugPrint('loadModulesAndTopics error: $e');
       _errorMessage = 'Failed to load topics and modules: $e';
