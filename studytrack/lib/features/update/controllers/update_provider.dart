@@ -40,7 +40,8 @@ class UpdateProvider extends ChangeNotifier {
   Future<void> checkForUpdate() async {
     final packageInfo = await PackageInfo.fromPlatform();
     final currentVersionCode =
-        int.tryParse(packageInfo.buildNumber) ?? AppConstants.currentVersionCode;
+        int.tryParse(packageInfo.buildNumber) ??
+        AppConstants.currentVersionCode;
 
     final info = await _service.checkForUpdate(
       checkUrl: AppConstants.updateCheckUrl,

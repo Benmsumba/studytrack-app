@@ -221,9 +221,9 @@ class _GroupsScreenState extends State<GroupsScreen> {
                   )
                 else
                   ..._groups.map((membership) {
-                    final group =
-                        (membership['study_groups'] ?? {})
-                            as Map<String, dynamic>;
+                    final group = Map<String, dynamic>.from(
+                      (membership['study_groups'] as Map?) ?? const {},
+                    );
                     final groupId = group['id']?.toString() ?? '';
                     final inviteCode = group['invite_code']?.toString() ?? '-';
                     final title = group['name']?.toString() ?? 'Untitled Group';

@@ -10,26 +10,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class _FakeSupabaseService extends SupabaseService {
   _FakeSupabaseService() : super.forTesting();
 
-  User? _signUpResult;
-  User? _signInResult;
-  Map<String, dynamic>? _profileResult;
-  bool _signOutCalled = false;
-  String? _fakeLastAuthError;
+  User? signUpResult;
+  User? signInResult;
+  Map<String, dynamic>? profileResult;
+  bool signOutCalled = false;
+  String? lastAuthErrorValue;
 
   bool shouldThrowOnSignIn = false;
   bool shouldThrowOnSignUp = false;
   bool shouldThrowOnSignOut = false;
 
-  bool get signOutCalled => _signOutCalled;
-
-  void setSignUpResult(User? user) => _signUpResult = user;
-  void setSignInResult(User? user) => _signInResult = user;
-  void setProfileResult(Map<String, dynamic>? profile) =>
-      _profileResult = profile;
-  void setLastAuthError(String? error) => _fakeLastAuthError = error;
-
   @override
-  String? get lastAuthError => _fakeLastAuthError;
+  String? get lastAuthError => lastAuthErrorValue;
 
   @override
   Future<User?> signUpWithEmail(
@@ -42,29 +34,35 @@ class _FakeSupabaseService extends SupabaseService {
     int studyHoursPerDay,
     String studyPreference,
   ) async {
-    if (shouldThrowOnSignUp) throw Exception('signup network error');
-    return _signUpResult;
+    if (shouldThrowOnSignUp) {
+      throw Exception('signup network error');
+    }
+    return signUpResult;
   }
 
   @override
   Future<User?> signInWithEmail(String email, String password) async {
-    if (shouldThrowOnSignIn) throw Exception('signin network error');
-    return _signInResult;
+    if (shouldThrowOnSignIn) {
+      throw Exception('signin network error');
+    }
+    return signInResult;
   }
 
   @override
   Future<bool?> signOut() async {
-    if (shouldThrowOnSignOut) throw Exception('signout error');
-    _signOutCalled = true;
+    if (shouldThrowOnSignOut) {
+      throw Exception('signout error');
+    }
+    signOutCalled = true;
     return true;
   }
 
   @override
-  User? getCurrentUser() => _signInResult;
+  User? getCurrentUser() => signInResult;
 
   @override
   Future<Map<String, dynamic>?> getProfile(String userId) async =>
-      _profileResult;
+      profileResult;
 }
 
 // ---------------------------------------------------------------------------
@@ -94,8 +92,9 @@ void main() {
     test(
       'sets errorMessage from lastAuthError when signUp returns null',
       () async {
-        fake.setSignUpResult(null);
-        fake.setLastAuthError('Email already in use.');
+        fake
+          ..signUpResult = null
+          ..lastAuthErrorValue = 'Email already in use.';
 
         await provider.register(
           fullName: 'Alice',
@@ -110,8 +109,9 @@ void main() {
     );
 
     test('falls back to generic message when lastAuthError is null', () async {
-      fake.setSignUpResult(null);
-      fake.setLastAuthError(null);
+      fake
+        ..signUpResult = null
+        ..lastAuthErrorValue = null;
 
       await provider.register(
         fullName: 'Bob',
@@ -137,7 +137,7 @@ void main() {
     });
 
     test('clears loading flag in all cases', () async {
-      fake.setSignUpResult(null);
+      fake.signUpResult = null;
 
       await provider.register(
         fullName: 'Dave',
@@ -153,8 +153,9 @@ void main() {
     test(
       'sets errorMessage from lastAuthError when signIn returns null',
       () async {
-        fake.setSignInResult(null);
-        fake.setLastAuthError('Invalid credentials.');
+        fake
+          ..signInResult = null
+          ..lastAuthErrorValue = 'Invalid credentials.';
 
         await provider.login(email: 'x@x.com', password: 'wrong');
 
@@ -165,8 +166,9 @@ void main() {
     );
 
     test('falls back to generic message when lastAuthError is null', () async {
-      fake.setSignInResult(null);
-      fake.setLastAuthError(null);
+      fake
+        ..signInResult = null
+        ..lastAuthErrorValue = null;
 
       await provider.login(email: 'x@x.com', password: 'wrong');
 
@@ -204,7 +206,7 @@ void main() {
 
   group('AuthProvider — refreshCurrentUser', () {
     test('clears currentUser when getCurrentUser returns null', () async {
-      fake.setSignInResult(null);
+      fake.signInResult = null;
 
       await provider.refreshCurrentUser();
 

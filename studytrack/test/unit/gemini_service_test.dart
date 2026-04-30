@@ -93,7 +93,7 @@ void main() {
         currentRating: 5,
       );
 
-      // Either the placeholder error message or a real response — never an exception.
+      // Either the placeholder error message or a real response.
       expect(result, isA<String>());
       expect(result.isNotEmpty, isTrue);
     });

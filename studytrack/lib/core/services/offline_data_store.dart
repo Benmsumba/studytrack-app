@@ -156,7 +156,7 @@ class OfflineDataStore {
     }
 
     return decoded
-        .whereType<Map>()
+        .whereType<Map<dynamic, dynamic>>()
         .map(
           (value) => Map<String, dynamic>.from(value.cast<String, dynamic>()),
         )

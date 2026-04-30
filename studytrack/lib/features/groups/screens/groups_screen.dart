@@ -388,9 +388,9 @@ class _GroupsScreenState extends State<GroupsScreen> {
                   ),
                   const SizedBox(height: 12),
                   ..._groups.map((membership) {
-                    final group =
-                        (membership['study_groups'] ?? {})
-                            as Map<String, dynamic>;
+                    final group = Map<String, dynamic>.from(
+                      (membership['study_groups'] as Map?) ?? const {},
+                    );
                     final name = group['name']?.toString() ?? 'Study Group';
                     final description =
                         group['description']?.toString() ??

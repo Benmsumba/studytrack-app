@@ -30,7 +30,7 @@ class AuthRepositoryImpl implements AuthRepository {
       studyHoursPerDay: (userData['study_hours_per_day'] as num?)?.toInt(),
       studyPreference: userData['study_preference'] as String?,
       streakCount: 0,
-      createdAt: createdAt ?? DateTime.now(),
+      createdAt: createdAt,
       updatedAt: updatedAt ?? DateTime.now(),
     );
   }

@@ -7,7 +7,6 @@ void main() {
     group('Success type', () {
       test('constructor and equality', () {
         const result1 = Success<String>('value');
-        const result2 = Success<String>('value');
 
         expect(result1.data, equals('value'));
         expect(result1.isSuccess, isTrue);
@@ -258,11 +257,13 @@ void main() {
       });
 
       test('Combined operations with error propagation', () {
-        final result = const Success<int>(5).map((x) => x + 3).flatMap((x) {
+        final result = const Success<int>(5).map((x) => x + 3).flatMap<int>((
+          x,
+        ) {
           if (x > 10) {
-            return Failure(ValidationException(message: 'Too large'));
+            return Failure<int>(ValidationException(message: 'Too large'));
           }
-          return Success(x * 2);
+          return Success<int>(x * 2);
         });
 
         expect(result.isSuccess, isTrue);
