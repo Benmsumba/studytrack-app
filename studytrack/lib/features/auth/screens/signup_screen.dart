@@ -3,11 +3,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/validators.dart';
-import '../controllers/auth_controller.dart';
+import '../controllers/auth_provider.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -22,7 +22,6 @@ class _SignupScreenState extends State<SignupScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _authController = AuthController();
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -44,21 +43,19 @@ class _SignupScreenState extends State<SignupScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _authController.dispose();
     super.dispose();
   }
 
   Future<void> _onGoogleSignInTap() async {
+    final auth = context.read<AuthProvider>();
     setState(() => _googleLoading = true);
-    final ok = await _authController.signInWithGoogle();
+    final result = await auth.signInWithGoogle();
     if (!mounted) return;
     setState(() => _googleLoading = false);
-    if (!ok) {
+    if (!result.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _authController.errorMessage ?? 'Google sign-in failed.',
-          ),
+          content: Text(result.message),
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
         ),
@@ -81,7 +78,7 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    final ok = await _authController.signUpWithEmail(
+    final result = await context.read<AuthProvider>().signUpWithEmail(
       fullName: _nameController.text.trim(),
       email: _emailController.text.trim(),
       password: _passwordController.text,
@@ -89,9 +86,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
     if (!mounted) return;
 
-    if (ok) {
-      final isLoggedIn = SupabaseService().isLoggedIn();
-      if (isLoggedIn) {
+    if (result.success) {
+      if (context.read<AuthProvider>().isAuthenticated) {
         context.go('/onboarding');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -107,10 +103,9 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    final message = _authController.errorMessage ?? 'Unable to create account.';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(result.message),
         backgroundColor: AppColors.danger,
         behavior: SnackBarBehavior.floating,
       ),
@@ -119,231 +114,223 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final passwordStrength = _authController.passwordStrength(
-      _passwordController.text,
-    );
-    final strengthLabel = _authController.passwordStrengthLabel(
-      _passwordController.text,
-    );
+    final auth = context.watch<AuthProvider>();
+    final passwordStrength = auth.passwordStrength(_passwordController.text);
+    final strengthLabel = auth.passwordStrengthLabel(_passwordController.text);
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
-        child: AnimatedBuilder(
-          animation: _authController,
-          builder: (context, _) => SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                      'Create account',
-                      style: GoogleFonts.outfit(
-                        fontSize: 34,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
-                    )
-                    .animate()
-                    .fadeIn(duration: 500.ms)
-                    .slideY(begin: 0.2, end: 0, duration: 500.ms),
-                const SizedBox(height: 8),
-                Text(
-                  'Start strong and personalize your study flow.',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                ).animate().fadeIn(duration: 600.ms, delay: 100.ms),
-                const SizedBox(height: 24),
-                Container(
-                      padding: const EdgeInsets.all(1.2),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                    'Create account',
+                    style: GoogleFonts.outfit(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  )
+                  .animate()
+                  .fadeIn(duration: 500.ms)
+                  .slideY(begin: 0.2, end: 0, duration: 500.ms),
+              const SizedBox(height: 8),
+              Text(
+                'Start strong and personalize your study flow.',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ).animate().fadeIn(duration: 600.ms, delay: 100.ms),
+              const SizedBox(height: 24),
+              Container(
+                    padding: const EdgeInsets.all(1.2),
+                    decoration: BoxDecoration(
+                      gradient: AppColors.primaryGradient,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(18),
                       decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(18),
+                        color: AppColors.surfaceDark,
+                        borderRadius: BorderRadius.circular(17),
                       ),
-                      child: Container(
-                        padding: const EdgeInsets.all(18),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceDark,
-                          borderRadius: BorderRadius.circular(17),
-                        ),
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            children: [
-                              _buildTextField(
-                                controller: _nameController,
-                                hintText: 'Full name',
-                                validator: Validators.requiredField,
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            _buildTextField(
+                              controller: _nameController,
+                              hintText: 'Full name',
+                              validator: Validators.requiredField,
+                            ),
+                            const SizedBox(height: 14),
+                            _buildTextField(
+                              controller: _emailController,
+                              hintText: 'Email address',
+                              keyboardType: TextInputType.emailAddress,
+                              validator: Validators.email,
+                            ),
+                            const SizedBox(height: 14),
+                            _buildTextField(
+                              controller: _passwordController,
+                              hintText: 'Password',
+                              obscureText: _obscurePassword,
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _obscurePassword = !_obscurePassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off_rounded
+                                      : Icons.visibility_rounded,
+                                  color: AppColors.textMuted,
+                                ),
                               ),
-                              const SizedBox(height: 14),
-                              _buildTextField(
-                                controller: _emailController,
-                                hintText: 'Email address',
-                                keyboardType: TextInputType.emailAddress,
-                                validator: Validators.email,
+                              onChanged: (_) => setState(() {}),
+                              validator: Validators.password,
+                            ),
+                            const SizedBox(height: 10),
+                            _buildPasswordStrengthIndicator(
+                              value: passwordStrength,
+                              label: strengthLabel,
+                            ),
+                            const SizedBox(height: 14),
+                            _buildTextField(
+                              controller: _confirmPasswordController,
+                              hintText: 'Confirm password',
+                              obscureText: _obscureConfirmPassword,
+                              suffixIcon: IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureConfirmPassword =
+                                        !_obscureConfirmPassword;
+                                  });
+                                },
+                                icon: Icon(
+                                  _obscureConfirmPassword
+                                      ? Icons.visibility_off_rounded
+                                      : Icons.visibility_rounded,
+                                  color: AppColors.textMuted,
+                                ),
                               ),
-                              const SizedBox(height: 14),
-                              _buildTextField(
-                                controller: _passwordController,
-                                hintText: 'Password',
-                                obscureText: _obscurePassword,
-                                suffixIcon: IconButton(
-                                  onPressed: () {
+                              validator: (value) => Validators.confirmPassword(
+                                value,
+                                _passwordController.text,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Checkbox(
+                                  value: _acceptedTerms,
+                                  onChanged: (value) {
                                     setState(() {
-                                      _obscurePassword = !_obscurePassword;
+                                      _acceptedTerms = value ?? false;
                                     });
                                   },
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off_rounded
-                                        : Icons.visibility_rounded,
-                                    color: AppColors.textMuted,
+                                  activeColor: AppColors.accent,
+                                  checkColor: AppColors.backgroundDark,
+                                  side: const BorderSide(
+                                    color: AppColors.border,
                                   ),
                                 ),
-                                onChanged: (_) => setState(() {}),
-                                validator: Validators.password,
-                              ),
-                              const SizedBox(height: 10),
-                              _buildPasswordStrengthIndicator(
-                                value: passwordStrength,
-                                label: strengthLabel,
-                              ),
-                              const SizedBox(height: 14),
-                              _buildTextField(
-                                controller: _confirmPasswordController,
-                                hintText: 'Confirm password',
-                                obscureText: _obscureConfirmPassword,
-                                suffixIcon: IconButton(
-                                  onPressed: () {
-                                    setState(() {
-                                      _obscureConfirmPassword =
-                                          !_obscureConfirmPassword;
-                                    });
-                                  },
-                                  icon: Icon(
-                                    _obscureConfirmPassword
-                                        ? Icons.visibility_off_rounded
-                                        : Icons.visibility_rounded,
-                                    color: AppColors.textMuted,
-                                  ),
-                                ),
-                                validator: (value) =>
-                                    Validators.confirmPassword(
-                                      value,
-                                      _passwordController.text,
-                                    ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Checkbox(
-                                    value: _acceptedTerms,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _acceptedTerms = value ?? false;
-                                      });
-                                    },
-                                    activeColor: AppColors.accent,
-                                    checkColor: AppColors.backgroundDark,
-                                    side: const BorderSide(
-                                      color: AppColors.border,
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(top: 10),
-                                      child: Text(
-                                        'I agree to the terms and conditions',
-                                        style: GoogleFonts.inter(
-                                          color: AppColors.textSecondary,
-                                          fontSize: 13,
-                                        ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: Text(
+                                      'I agree to the terms and conditions',
+                                      style: GoogleFonts.inter(
+                                        color: AppColors.textSecondary,
+                                        fontSize: 13,
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              _buildGradientButton(
-                                label: 'Create Account',
-                                isLoading: _authController.isLoading,
-                                onTap: _authController.isLoading
-                                    ? null
-                                    : _onCreateAccountTap,
-                              ),
-                            ],
-                          ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            _buildGradientButton(
+                              label: 'Create Account',
+                              isLoading: auth.isLoading,
+                              onTap: auth.isLoading
+                                  ? null
+                                  : _onCreateAccountTap,
+                            ),
+                          ],
                         ),
                       ),
-                    )
-                    .animate()
-                    .fadeIn(duration: 650.ms, delay: 150.ms)
-                    .slideY(begin: 0.14, end: 0, duration: 650.ms),
-                const SizedBox(height: 24),
-                Row(
+                    ),
+                  )
+                  .animate()
+                  .fadeIn(duration: 650.ms, delay: 150.ms)
+                  .slideY(begin: 0.14, end: 0, duration: 650.ms),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Divider(color: AppColors.border, thickness: 1),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                    child: Text(
+                      'or',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textMuted,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  const Expanded(
+                    child: Divider(color: AppColors.border, thickness: 1),
+                  ),
+                ],
+              ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
+              const SizedBox(height: 16),
+              _buildGoogleButton(
+                auth.isLoading,
+              ).animate().fadeIn(duration: 500.ms, delay: 350.ms),
+              const SizedBox(height: 20),
+              Center(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Expanded(
-                      child: Divider(color: AppColors.border, thickness: 1),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: Text(
-                        'or',
-                        style: GoogleFonts.inter(
-                          color: AppColors.textMuted,
-                          fontSize: 13,
-                        ),
+                    Text(
+                      'Already have an account? ',
+                      style: GoogleFonts.inter(
+                        color: AppColors.textSecondary,
+                        fontSize: 14,
                       ),
                     ),
-                    const Expanded(
-                      child: Divider(color: AppColors.border, thickness: 1),
+                    GestureDetector(
+                      onTap: () => context.go('/login'),
+                      child: Text(
+                        'Login',
+                        style: GoogleFonts.inter(
+                          color: AppColors.accent,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                   ],
-                ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
-                const SizedBox(height: 16),
-                _buildGoogleButton().animate().fadeIn(
-                  duration: 500.ms,
-                  delay: 350.ms,
                 ),
-                const SizedBox(height: 20),
-                Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Already have an account? ',
-                        style: GoogleFonts.inter(
-                          color: AppColors.textSecondary,
-                          fontSize: 14,
-                        ),
-                      ),
-                      GestureDetector(
-                        onTap: () => context.go('/login'),
-                        child: Text(
-                          'Login',
-                          style: GoogleFonts.inter(
-                            color: AppColors.accent,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ).animate().fadeIn(duration: 500.ms, delay: 400.ms),
-              ],
-            ),
+              ).animate().fadeIn(duration: 500.ms, delay: 400.ms),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildGoogleButton() {
-    final busy = _googleLoading || _authController.isLoading;
+  Widget _buildGoogleButton(bool authLoading) {
+    final busy = _googleLoading || authLoading;
     return GestureDetector(
       onTap: busy ? null : _onGoogleSignInTap,
       child: AnimatedOpacity(

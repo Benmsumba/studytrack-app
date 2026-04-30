@@ -112,6 +112,35 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
   }
 
   @override
+  Future<Result<void>> updateSessionStatus({
+    required String sessionId,
+    required String status,
+    int? actualDurationMinutes,
+  }) async {
+    try {
+      final updated = await _supabaseService.updateSessionStatus(
+        sessionId,
+        status,
+        actualDurationMinutes,
+      );
+      if (updated == null) {
+        return Failure(
+          DataException(message: 'Failed to update session status.'),
+        );
+      }
+      return const Success(null);
+    } catch (e, stack) {
+      debugPrint('updateSessionStatus error: $e');
+      return Failure(
+        DataException(
+          message: 'Failed to update session status: $e',
+          stackTrace: stack,
+        ),
+      );
+    }
+  }
+
+  @override
   Future<Result<void>> deleteSession(String sessionId) async {
     try {
       await _supabaseService.deleteSession(sessionId);

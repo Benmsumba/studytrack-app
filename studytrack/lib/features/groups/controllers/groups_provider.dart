@@ -1,14 +1,29 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/study_group_repository.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/group_message_model.dart';
 import '../../../models/study_group_model.dart';
 
-class GroupsProvider extends ChangeNotifier {
-  GroupsProvider({SupabaseService? supabaseService})
-    : _supabaseService = supabaseService ?? SupabaseService();
+class GroupActionResult {
+  const GroupActionResult({
+    required this.success,
+    required this.statusCode,
+    required this.message,
+  });
 
-  final SupabaseService _supabaseService;
+  final bool success;
+  final int statusCode;
+  final String message;
+}
+
+class GroupsProvider extends ChangeNotifier {
+  GroupsProvider({StudyGroupRepository? studyGroupRepository})
+    : _studyGroupRepository =
+          studyGroupRepository ?? getIt<StudyGroupRepository>();
+
+  final StudyGroupRepository _studyGroupRepository;
 
   List<StudyGroupModel> _myGroups = const [];
   StudyGroupModel? _selectedGroup;
@@ -22,107 +37,204 @@ class GroupsProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  Future<void> loadGroups(String userId) async {
+  Future<GroupActionResult> loadGroups(String userId) async {
+    if (userId.trim().isEmpty) {
+      _errorMessage = 'User context is missing. Please sign in again.';
+      notifyListeners();
+      return const GroupActionResult(
+        success: false,
+        statusCode: 401,
+        message: 'User context is missing. Please sign in again.',
+      );
+    }
+
     _setLoading(true);
     _errorMessage = null;
 
     try {
-      final rows = await _supabaseService.getMyGroups(userId) ?? const [];
-      _myGroups = rows
-          .map((row) => row['study_groups'])
-          .whereType<Map<String, dynamic>>()
-          .map(StudyGroupModel.fromJson)
-          .toList(growable: false);
+      final result = await _studyGroupRepository.getAllGroups();
+
+      if (result is Failure<List<StudyGroupModel>>) {
+        _errorMessage = result.error.message;
+        return GroupActionResult(
+          success: false,
+          statusCode: 500,
+          message: _errorMessage ?? 'Failed to load groups.',
+        );
+      }
+
+      if (result is Success<List<StudyGroupModel>>) {
+        _myGroups = result.data;
+      }
+
+      return const GroupActionResult(
+        success: true,
+        statusCode: 200,
+        message: 'Groups loaded successfully.',
+      );
     } catch (error) {
       _errorMessage = 'Failed to load groups: $error';
+      return GroupActionResult(
+        success: false,
+        statusCode: 500,
+        message: _errorMessage!,
+      );
     } finally {
       _setLoading(false);
     }
   }
 
-  Future<void> createGroup({
+  Future<GroupActionResult> createGroup({
     required String name,
-    required String createdBy,
-    String description = '',
+    required String description,
   }) async {
-    _errorMessage = null;
+    final nameText = name.trim();
+    if (nameText.isEmpty) {
+      _errorMessage = 'Group name is required.';
+      notifyListeners();
+      return const GroupActionResult(
+        success: false,
+        statusCode: 422,
+        message: 'Group name is required.',
+      );
+    }
 
-    final created = await _supabaseService.createGroup(
-      name,
-      description,
-      createdBy,
+    _errorMessage = null;
+    final result = await _studyGroupRepository.createGroup(
+      name: nameText,
+      description: description.trim(),
     );
-    if (created == null) {
-      _errorMessage = 'Failed to create group.';
+
+    if (result is Failure<StudyGroupModel>) {
+      _errorMessage = result.error.message;
       notifyListeners();
-      return;
+      return GroupActionResult(
+        success: false,
+        statusCode: 500,
+        message: _errorMessage ?? 'Failed to create group.',
+      );
     }
 
-    _myGroups = [..._myGroups, StudyGroupModel.fromJson(created)];
-    notifyListeners();
+    if (result is Success<StudyGroupModel>) {
+      final created = result.data;
+      _myGroups = [..._myGroups, created];
+      _selectedGroup = created;
+      notifyListeners();
+    }
+
+    return const GroupActionResult(
+      success: true,
+      statusCode: 201,
+      message: 'Group created successfully.',
+    );
   }
 
-  Future<void> joinGroup({
-    required String inviteCode,
-    required String userId,
-  }) async {
+  Future<GroupActionResult> joinGroup({required String inviteCode}) async {
+    if (inviteCode.trim().isEmpty) {
+      _errorMessage = 'Invite code is required.';
+      notifyListeners();
+      return const GroupActionResult(
+        success: false,
+        statusCode: 422,
+        message: 'Invite code is required.',
+      );
+    }
+
     _errorMessage = null;
-    final joined = await _supabaseService.joinGroup(inviteCode, userId);
-    if (joined == null) {
-      _errorMessage = 'Could not join group. Check invite code.';
-      notifyListeners();
-      return;
+    final result = await _studyGroupRepository.joinGroupByCode(inviteCode);
+
+    if (result is Failure<void>) {
+      _errorMessage = result.error.message;
+      return GroupActionResult(
+        success: false,
+        statusCode: 500,
+        message: _errorMessage ?? 'Could not join group. Check invite code.',
+      );
     }
 
-    await loadGroups(userId);
+    // Reload groups after successful join
+    await loadGroups('');
+
+    return const GroupActionResult(
+      success: true,
+      statusCode: 200,
+      message: 'Successfully joined group.',
+    );
   }
 
-  Future<void> sendMessage({
-    required String senderId,
+  Future<GroupActionResult> sendMessage({
+    required String groupId,
     required String content,
-    String? groupId,
     String? topicId,
   }) async {
-    final sent = await _supabaseService.sendMessage({
-      'group_id': groupId,
-      'topic_id': topicId,
-      'sender_id': senderId,
-      'content': content,
-      'message_type': 'text',
-    });
-
-    if (sent == null) {
-      _errorMessage = 'Failed to send message.';
-      notifyListeners();
-      return;
+    if (groupId.trim().isEmpty) {
+      return const GroupActionResult(
+        success: false,
+        statusCode: 422,
+        message: 'Group ID is required.',
+      );
     }
 
-    final messageModel = GroupMessageModel.fromJson(sent);
-    _messages = [..._messages, messageModel];
-    notifyListeners();
+    if (content.trim().isEmpty) {
+      return const GroupActionResult(
+        success: false,
+        statusCode: 422,
+        message: 'Message content is required.',
+      );
+    }
+
+    _errorMessage = null;
+    final result = await _studyGroupRepository.sendGroupMessage(
+      groupId: groupId,
+      content: content.trim(),
+      topicId: topicId,
+    );
+
+    if (result is Failure<GroupMessageModel>) {
+      _errorMessage = result.error.message;
+      return GroupActionResult(
+        success: false,
+        statusCode: 500,
+        message: _errorMessage ?? 'Failed to send message.',
+      );
+    }
+
+    if (result is Success<GroupMessageModel>) {
+      final messageModel = result.data;
+      _messages = [..._messages, messageModel];
+      notifyListeners();
+    }
+
+    return const GroupActionResult(
+      success: true,
+      statusCode: 201,
+      message: 'Message sent successfully.',
+    );
   }
 
-  Future<void> subscribeToMessages({String? groupId, String? topicId}) async {
-    await _supabaseService.unsubscribeFromMessages();
-
-    if (groupId != null && groupId.isNotEmpty) {
-      await _supabaseService.subscribeToGroupMessages(groupId, _handleIncoming);
+  /// Subscribe to real-time group messages
+  void subscribeToMessages({required String groupId}) {
+    if (groupId.isEmpty) {
       return;
     }
 
-    if (topicId != null && topicId.isNotEmpty) {
-      await _supabaseService.subscribeToMessages(topicId, _handleIncoming);
-    }
+    // Listen to the repository's message stream and update local state
+    _studyGroupRepository
+        .subscribeToGroupMessages(groupId)
+        .listen(
+          (messages) {
+            _messages = messages;
+            notifyListeners();
+          },
+          onError: (Object error) {
+            _errorMessage = 'Failed to subscribe to messages: $error';
+            notifyListeners();
+          },
+        );
   }
 
   void setSelectedGroup(StudyGroupModel? group) {
     _selectedGroup = group;
-    notifyListeners();
-  }
-
-  void _handleIncoming(Map<String, dynamic> row) {
-    final incoming = GroupMessageModel.fromJson(row);
-    _messages = [..._messages, incoming];
     notifyListeners();
   }
 
@@ -133,7 +245,6 @@ class GroupsProvider extends ChangeNotifier {
 
   @override
   void dispose() {
-    _supabaseService.unsubscribeFromMessages();
     super.dispose();
   }
 }
