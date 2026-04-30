@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/repositories/study_group_repository.dart';
+import '../../../core/utils/app_exception.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../models/group_message_model.dart';
@@ -20,8 +21,8 @@ class GroupActionResult {
 
 class GroupsProvider extends ChangeNotifier {
   GroupsProvider({StudyGroupRepository? studyGroupRepository})
-    : _studyGroupRepository =
-          studyGroupRepository ?? getIt<StudyGroupRepository>();
+      : _studyGroupRepository =
+            studyGroupRepository ?? getIt<StudyGroupRepository>();
 
   final StudyGroupRepository _studyGroupRepository;
 
@@ -37,40 +38,31 @@ class GroupsProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  Future<GroupActionResult> loadGroups(String userId) async {
-    if (userId.trim().isEmpty) {
-      _errorMessage = 'User context is missing. Please sign in again.';
-      notifyListeners();
-      return const GroupActionResult(
-        success: false,
-        statusCode: 401,
-        message: 'User context is missing. Please sign in again.',
-      );
-    }
-
+  /// Auth is resolved inside the repository — no userId required here.
+  Future<GroupActionResult> loadGroups() async {
     _setLoading(true);
     _errorMessage = null;
 
     try {
       final result = await _studyGroupRepository.getAllGroups();
 
-      if (result is Failure<List<StudyGroupModel>>) {
-        _errorMessage = result.error.message;
-        return GroupActionResult(
-          success: false,
-          statusCode: 500,
-          message: _errorMessage ?? 'Failed to load groups.',
-        );
-      }
-
-      if (result is Success<List<StudyGroupModel>>) {
-        _myGroups = result.data;
-      }
-
-      return const GroupActionResult(
-        success: true,
-        statusCode: 200,
-        message: 'Groups loaded successfully.',
+      return result.fold(
+        (error) {
+          _errorMessage = error.message;
+          return GroupActionResult(
+            success: false,
+            statusCode: _statusCode(error),
+            message: error.message,
+          );
+        },
+        (groups) {
+          _myGroups = groups;
+          return const GroupActionResult(
+            success: true,
+            statusCode: 200,
+            message: 'Groups loaded successfully.',
+          );
+        },
       );
     } catch (error) {
       _errorMessage = 'Failed to load groups: $error';
@@ -90,13 +82,7 @@ class GroupsProvider extends ChangeNotifier {
   }) async {
     final nameText = name.trim();
     if (nameText.isEmpty) {
-      _errorMessage = 'Group name is required.';
-      notifyListeners();
-      return const GroupActionResult(
-        success: false,
-        statusCode: 422,
-        message: 'Group name is required.',
-      );
+      return _validationFailure('Group name is required.');
     }
 
     _errorMessage = null;
@@ -105,60 +91,57 @@ class GroupsProvider extends ChangeNotifier {
       description: description.trim(),
     );
 
-    if (result is Failure<StudyGroupModel>) {
-      _errorMessage = result.error.message;
-      notifyListeners();
-      return GroupActionResult(
-        success: false,
-        statusCode: 500,
-        message: _errorMessage ?? 'Failed to create group.',
-      );
-    }
-
-    if (result is Success<StudyGroupModel>) {
-      final created = result.data;
-      _myGroups = [..._myGroups, created];
-      _selectedGroup = created;
-      notifyListeners();
-    }
-
-    return const GroupActionResult(
-      success: true,
-      statusCode: 201,
-      message: 'Group created successfully.',
+    return result.fold(
+      (error) {
+        _errorMessage = error.message;
+        notifyListeners();
+        return GroupActionResult(
+          success: false,
+          statusCode: _statusCode(error),
+          message: error.message,
+        );
+      },
+      (created) {
+        _myGroups = [..._myGroups, created];
+        _selectedGroup = created;
+        notifyListeners();
+        return const GroupActionResult(
+          success: true,
+          statusCode: 201,
+          message: 'Group created successfully.',
+        );
+      },
     );
   }
 
   Future<GroupActionResult> joinGroup({required String inviteCode}) async {
-    if (inviteCode.trim().isEmpty) {
-      _errorMessage = 'Invite code is required.';
-      notifyListeners();
-      return const GroupActionResult(
-        success: false,
-        statusCode: 422,
-        message: 'Invite code is required.',
-      );
+    final code = inviteCode.trim();
+    if (code.isEmpty) {
+      return _validationFailure('Invite code is required.');
     }
 
     _errorMessage = null;
-    final result = await _studyGroupRepository.joinGroupByCode(inviteCode);
+    final result = await _studyGroupRepository.joinGroupByCode(code);
 
-    if (result is Failure<void>) {
-      _errorMessage = result.error.message;
-      return GroupActionResult(
-        success: false,
-        statusCode: 500,
-        message: _errorMessage ?? 'Could not join group. Check invite code.',
-      );
-    }
-
-    // Reload groups after successful join
-    await loadGroups('');
-
-    return const GroupActionResult(
-      success: true,
-      statusCode: 200,
-      message: 'Successfully joined group.',
+    return result.fold(
+      (error) {
+        _errorMessage = error.message;
+        notifyListeners();
+        return GroupActionResult(
+          success: false,
+          statusCode: _statusCode(error),
+          message: error.message,
+        );
+      },
+      (_) async {
+        // Reload the groups list after a successful join.
+        await loadGroups();
+        return const GroupActionResult(
+          success: true,
+          statusCode: 200,
+          message: 'Successfully joined group.',
+        );
+      },
     );
   }
 
@@ -168,19 +151,10 @@ class GroupsProvider extends ChangeNotifier {
     String? topicId,
   }) async {
     if (groupId.trim().isEmpty) {
-      return const GroupActionResult(
-        success: false,
-        statusCode: 422,
-        message: 'Group ID is required.',
-      );
+      return _validationFailure('Group ID is required.');
     }
-
     if (content.trim().isEmpty) {
-      return const GroupActionResult(
-        success: false,
-        statusCode: 422,
-        message: 'Message content is required.',
-      );
+      return _validationFailure('Message content is required.');
     }
 
     _errorMessage = null;
@@ -190,53 +164,64 @@ class GroupsProvider extends ChangeNotifier {
       topicId: topicId,
     );
 
-    if (result is Failure<GroupMessageModel>) {
-      _errorMessage = result.error.message;
-      return GroupActionResult(
-        success: false,
-        statusCode: 500,
-        message: _errorMessage ?? 'Failed to send message.',
-      );
-    }
-
-    if (result is Success<GroupMessageModel>) {
-      final messageModel = result.data;
-      _messages = [..._messages, messageModel];
-      notifyListeners();
-    }
-
-    return const GroupActionResult(
-      success: true,
-      statusCode: 201,
-      message: 'Message sent successfully.',
+    return result.fold(
+      (error) {
+        _errorMessage = error.message;
+        notifyListeners();
+        return GroupActionResult(
+          success: false,
+          statusCode: _statusCode(error),
+          message: error.message,
+        );
+      },
+      (messageModel) {
+        _messages = [..._messages, messageModel];
+        notifyListeners();
+        return const GroupActionResult(
+          success: true,
+          statusCode: 201,
+          message: 'Message sent successfully.',
+        );
+      },
     );
   }
 
-  /// Subscribe to real-time group messages
   void subscribeToMessages({required String groupId}) {
-    if (groupId.isEmpty) {
-      return;
-    }
+    if (groupId.isEmpty) return;
 
-    // Listen to the repository's message stream and update local state
-    _studyGroupRepository
-        .subscribeToGroupMessages(groupId)
-        .listen(
-          (messages) {
-            _messages = messages;
-            notifyListeners();
-          },
-          onError: (Object error) {
-            _errorMessage = 'Failed to subscribe to messages: $error';
-            notifyListeners();
-          },
-        );
+    _studyGroupRepository.subscribeToGroupMessages(groupId).listen(
+      (messages) {
+        _messages = messages;
+        notifyListeners();
+      },
+      onError: (Object error) {
+        _errorMessage = 'Failed to subscribe to messages: $error';
+        notifyListeners();
+      },
+    );
   }
 
   void setSelectedGroup(StudyGroupModel? group) {
     _selectedGroup = group;
     notifyListeners();
   }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
+
+  GroupActionResult _validationFailure(String message) {
+    _errorMessage = message;
+    notifyListeners();
+    return GroupActionResult(success: false, statusCode: 422, message: message);
+  }
+
+  int _statusCode(AppException error) => switch (error) {
+    ValidationException() => 422,
+    AuthException() => 401,
+    OfflineException() => 503,
+    _ => 500,
+  };
 
   void _setLoading(bool value) {
     _isLoading = value;

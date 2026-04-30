@@ -4,9 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/module_repository.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/study_session_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
+import '../../../models/topic_rating_history_model.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -16,8 +21,6 @@ class ProgressScreen extends StatefulWidget {
 }
 
 class _ProgressScreenState extends State<ProgressScreen> {
-  final SupabaseService _service = SupabaseService();
-
   bool _isLoading = true;
   List<ModuleModel> _modules = [];
   List<TopicModel> _topics = [];
@@ -37,66 +40,92 @@ class _ProgressScreenState extends State<ProgressScreen> {
     _loadProgress();
   }
 
+  /// Loads all analytics data in 2 network round-trips instead of 91+.
+  ///
+  /// Round-trip 1 (parallel): modules + sessions (84-day window) + profile.
+  /// Round-trip 2: batch topics for all module IDs.
+  /// Everything else is computed client-side from those three lists.
   Future<void> _loadProgress() async {
-    final user = _service.getCurrentUser();
-    if (user == null) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      return;
-    }
-
     setState(() => _isLoading = true);
 
-    final modules = await _service.getModules(user.id) ?? [];
-    final allTopics = <TopicModel>[];
-    for (final module in modules) {
-      final topics = await _service.getTopics(module.id) ?? [];
-      allTopics.addAll(topics);
-    }
+    final now = DateTime.now();
+    final heatmapStart = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 83));
 
+    // Round-trip 1 — fire modules, sessions, and profile in parallel.
+    late final moduleResult = getIt<ModuleRepository>().getAllModules();
+    late final sessionResult = getIt<StudySessionRepository>()
+        .getSessionsByDateRange(startDate: heatmapStart, endDate: now);
+    late final profileResult =
+        getIt<ProfileRepository>().getCurrentProfile();
+
+    final (modules, allSessions, profile) = await (
+      moduleResult,
+      sessionResult,
+      profileResult,
+    ).wait;
+
+    final resolvedModules = modules.fold((_) => <ModuleModel>[], (m) => m);
+    final resolvedSessions =
+        allSessions.fold((_) => const <StudySessionModel>[], (s) => s);
+    final resolvedProfile = profile.fold((_) => null, (p) => p);
+
+    // Round-trip 2 — batch topics (needs module IDs from round-trip 1).
+    final moduleIds = resolvedModules.map((m) => m.id).toList();
+    final topicResult =
+        await getIt<TopicRepository>().getTopicsByModuleIds(moduleIds);
+    final allTopics = topicResult.fold((_) => <TopicModel>[], (t) => t);
+
+    // All stats computed client-side — zero additional queries.
     final ratings = allTopics
-        .where((topic) => topic.currentRating != null)
-        .map((topic) => topic.currentRating!)
+        .where((t) => t.currentRating != null)
+        .map((t) => t.currentRating!)
         .toList();
 
-    final topicsMastered = allTopics
-        .where((topic) => (topic.currentRating ?? 0) >= 7)
-        .length;
+    final topicsMastered =
+        allTopics.where((t) => (t.currentRating ?? 0) >= 7).length;
+
     final averageRating = ratings.isEmpty
         ? 0.0
-        : (ratings.reduce((a, b) => a + b) / ratings.length).toDouble();
+        : ratings.reduce((a, b) => a + b) / ratings.length;
 
-    final profile = await _service.getProfile(user.id);
-    final currentStreak = (profile?['streak_count'] as num?)?.toInt() ?? 0;
+    final currentStreak =
+        (resolvedProfile?['streak_count'] as num?)?.toInt() ?? 0;
 
-    final now = DateTime.now();
-    final weekStart = _startOfWeek(now);
-    final weeklyTopicCounts = <int, int>{};
+    final weekStart = _startOfWeek(DateTime(now.year, now.month, now.day));
+    final weeklyTopicIds = <int, Set<String>>{};
     var weeklySessions = 0;
-
-    for (var dayIndex = 0; dayIndex < 7; dayIndex++) {
-      final date = weekStart.add(Duration(days: dayIndex));
-      final sessions = await _service.getStudySessions(user.id, date) ?? [];
-      final topicIds = sessions
-          .map((session) => session['topic_id']?.toString() ?? '')
-          .where((topicId) => topicId.isNotEmpty)
-          .toSet();
-
-      weeklyTopicCounts[dayIndex] = topicIds.length;
-      weeklySessions += sessions.length;
-    }
-
     final heatmapCounts = <String, int>{};
-    final heatmapStart = now.subtract(const Duration(days: 83));
-    for (var offset = 0; offset < 84; offset++) {
-      final date = heatmapStart.add(Duration(days: offset));
-      final sessions = await _service.getStudySessions(user.id, date) ?? [];
-      heatmapCounts[_dateKey(date)] = sessions.length;
+
+    for (final session in resolvedSessions) {
+      final dateOnly = DateTime(
+        session.scheduledDate.year,
+        session.scheduledDate.month,
+        session.scheduledDate.day,
+      );
+
+      // Heatmap — count all sessions in the 84-day window.
+      final key = _dateKey(dateOnly);
+      heatmapCounts[key] = (heatmapCounts[key] ?? 0) + 1;
+
+      // Weekly — count unique topics per day within the current week.
+      final dayDiff = dateOnly.difference(weekStart).inDays;
+      if (dayDiff >= 0 && dayDiff < 7) {
+        weeklySessions++;
+        final topicId = session.topicId;
+        if (topicId != null && topicId.isNotEmpty) {
+          (weeklyTopicIds[dayDiff] ??= {}).add(topicId);
+        }
+      }
     }
+
+    final weeklyTopicCounts = {
+      for (var i = 0; i < 7; i++) i: weeklyTopicIds[i]?.length ?? 0,
+    };
 
     if (!mounted) return;
     setState(() {
-      _modules = modules;
+      _modules = resolvedModules;
       _topics = allTopics;
       _selectedTopic = allTopics.isEmpty
           ? null
@@ -574,10 +603,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 height: 220,
                 child: _selectedTopic == null
                     ? const SizedBox.shrink()
-                    : _TopicLineChart(
-                        topic: _selectedTopic!,
-                        service: _service,
-                      ),
+                    : _TopicLineChart(topic: _selectedTopic!),
               ),
             ],
           ),
@@ -623,18 +649,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
 }
 
 class _TopicLineChart extends StatelessWidget {
-  const _TopicLineChart({required this.topic, required this.service});
+  const _TopicLineChart({required this.topic});
 
   final TopicModel topic;
-  final SupabaseService service;
 
   @override
   Widget build(BuildContext context) =>
-      FutureBuilder<List<Map<String, dynamic>>?>(
-        future: service.getTopicRatingHistory(topic.id, limit: 20),
+      FutureBuilder<List<TopicRatingHistoryModel>>(
+        future: getIt<TopicRepository>()
+            .getTopicRatingHistory(topic.id)
+            .then((r) => r.fold((_) => [], (h) => h)),
         builder: (context, snapshot) {
-          final values = snapshot.data ?? [];
-          if (values.isEmpty) {
+          final history = snapshot.data ?? [];
+          if (history.isEmpty) {
             return Center(
               child: Text(
                 'No ratings yet for this topic.',
@@ -643,9 +670,8 @@ class _TopicLineChart extends StatelessWidget {
             );
           }
 
-          final points = values.asMap().entries.map((entry) {
-            final rating = (entry.value['rating'] as num?)?.toDouble() ?? 0;
-            return FlSpot(entry.key.toDouble(), rating);
+          final points = history.asMap().entries.map((entry) {
+            return FlSpot(entry.key.toDouble(), entry.value.rating.toDouble());
           }).toList();
 
           return LineChart(
