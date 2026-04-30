@@ -152,7 +152,7 @@ class PremiumTextField extends StatefulWidget {
   final TextInputType keyboardType;
   final bool obscureText;
   final int maxLines;
-  final Function(String)? onChanged;
+  final ValueChanged<String>? onChanged;
 
   @override
   State<PremiumTextField> createState() => _PremiumTextFieldState();

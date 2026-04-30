@@ -10,21 +10,18 @@ import 'package:studytrack/models/module_model.dart';
 class _FakeSupabaseService extends SupabaseService {
   _FakeSupabaseService() : super.forTesting();
 
-  List<ModuleModel>? _modulesResult;
-  Map<String, dynamic>? _addResult;
-  Map<String, dynamic>? _updateResult;
-  bool? _deleteResult;
+  List<ModuleModel>? modulesResult;
+  Map<String, dynamic>? addResult;
+  Map<String, dynamic>? updateResult;
+  bool? deleteResult;
   bool shouldThrow = false;
-
-  void setModules(List<ModuleModel> modules) => _modulesResult = modules;
-  void setAddResult(Map<String, dynamic>? result) => _addResult = result;
-  void setUpdateResult(Map<String, dynamic>? result) => _updateResult = result;
-  void setDeleteResult(bool? result) => _deleteResult = result;
 
   @override
   Future<List<ModuleModel>?> getModules(String userId) async {
-    if (shouldThrow) throw Exception('network error');
-    return _modulesResult;
+    if (shouldThrow) {
+      throw Exception('network error');
+    }
+    return modulesResult;
   }
 
   @override
@@ -33,8 +30,10 @@ class _FakeSupabaseService extends SupabaseService {
     String name,
     String color,
   ) async {
-    if (shouldThrow) throw Exception('network error');
-    return _addResult;
+    if (shouldThrow) {
+      throw Exception('network error');
+    }
+    return addResult;
   }
 
   @override
@@ -42,14 +41,18 @@ class _FakeSupabaseService extends SupabaseService {
     String moduleId,
     Map<String, dynamic> data,
   ) async {
-    if (shouldThrow) throw Exception('network error');
-    return _updateResult;
+    if (shouldThrow) {
+      throw Exception('network error');
+    }
+    return updateResult;
   }
 
   @override
   Future<bool?> deleteModule(String moduleId) async {
-    if (shouldThrow) throw Exception('network error');
-    return _deleteResult;
+    if (shouldThrow) {
+      throw Exception('network error');
+    }
+    return deleteResult;
   }
 }
 
@@ -103,7 +106,10 @@ void main() {
 
   group('ModulesProvider — loadModules', () {
     test('populates modules on success', () async {
-      fake.setModules([_module(), _module(id: 'mod-2', name: 'Physiology')]);
+      fake.modulesResult = [
+        _module(),
+        _module(id: 'mod-2', name: 'Physiology'),
+      ];
 
       await provider.loadModules('user-1');
 
@@ -113,7 +119,7 @@ void main() {
     });
 
     test('handles null response as empty list', () async {
-      fake.setModules([]);
+      fake.modulesResult = [];
 
       await provider.loadModules('user-1');
 
@@ -133,12 +139,15 @@ void main() {
 
     test('updates selectedModule reference after reload', () async {
       final mod = _module();
-      fake.setModules([mod]);
+      fake.modulesResult = [mod];
       await provider.loadModules('user-1');
-      provider.selectModule(provider.modules.first);
+      final selectedModule = provider.modules.first;
+      provider
+        ..selectModule(selectedModule)
+        ..selectModule(null);
 
       // Reload with updated name
-      fake.setModules([_module(name: 'Anatomy Updated')]);
+      fake.modulesResult = [_module(name: 'Anatomy Updated')];
       await provider.loadModules('user-1');
 
       expect(provider.selectedModule?.name, 'Anatomy Updated');
@@ -147,10 +156,10 @@ void main() {
 
   group('ModulesProvider — addModule', () {
     test('appends new module to list on success', () async {
-      fake.setModules([_module()]);
+      fake.modulesResult = [_module()];
       await provider.loadModules('user-1');
 
-      fake.setAddResult(_moduleJson(id: 'mod-2', name: 'Biochemistry'));
+      fake.addResult = _moduleJson(id: 'mod-2', name: 'Biochemistry');
       await provider.addModule(
         userId: 'user-1',
         name: 'Biochemistry',
@@ -163,7 +172,7 @@ void main() {
     });
 
     test('sets errorMessage when service returns null', () async {
-      fake.setAddResult(null);
+      fake.addResult = null;
 
       await provider.addModule(userId: 'user-1', name: 'X', color: '#000');
 
@@ -173,12 +182,13 @@ void main() {
 
   group('ModulesProvider — updateModule', () {
     test('replaces module in list and updates selectedModule', () async {
-      fake.setModules([_module()]);
+      fake.modulesResult = [_module()];
       await provider.loadModules('user-1');
-      provider.selectModule(provider.modules.first);
+      final selectedModule = provider.modules.first;
+      provider.selectModule(selectedModule);
 
       final updatedJson = _moduleJson(name: 'Anatomy II');
-      fake.setUpdateResult(updatedJson);
+      fake.updateResult = updatedJson;
 
       await provider.updateModule(
         moduleId: 'mod-1',
@@ -191,7 +201,7 @@ void main() {
     });
 
     test('sets errorMessage when service returns null', () async {
-      fake.setUpdateResult(null);
+      fake.updateResult = null;
 
       await provider.updateModule(moduleId: 'mod-1', changes: {});
 
@@ -201,11 +211,15 @@ void main() {
 
   group('ModulesProvider — deleteModule', () {
     test('removes module from list and clears selectedModule', () async {
-      fake.setModules([_module(), _module(id: 'mod-2', name: 'Physiology')]);
+      fake.modulesResult = [
+        _module(),
+        _module(id: 'mod-2', name: 'Physiology'),
+      ];
       await provider.loadModules('user-1');
-      provider.selectModule(provider.modules.first);
+      final selectedModule = provider.modules.first;
+      provider.selectModule(selectedModule);
 
-      fake.setDeleteResult(true);
+      fake.deleteResult = true;
       await provider.deleteModule('mod-1');
 
       expect(provider.modules.length, 1);
@@ -215,7 +229,7 @@ void main() {
     });
 
     test('sets errorMessage when service returns null/false', () async {
-      fake.setDeleteResult(null);
+      fake.deleteResult = null;
 
       await provider.deleteModule('mod-1');
 
@@ -225,7 +239,7 @@ void main() {
 
   group('ModulesProvider — selectModule', () {
     test('updates selectedModule and notifies listeners', () async {
-      fake.setModules([_module()]);
+      fake.modulesResult = [_module()];
       await provider.loadModules('user-1');
 
       var notified = false;
@@ -238,11 +252,12 @@ void main() {
     });
 
     test('can deselect by passing null', () async {
-      fake.setModules([_module()]);
+      fake.modulesResult = [_module()];
       await provider.loadModules('user-1');
-      provider.selectModule(provider.modules.first);
-
-      provider.selectModule(null);
+      final selectedModule = provider.modules.first;
+      provider
+        ..selectModule(selectedModule)
+        ..selectModule(null);
 
       expect(provider.selectedModule, isNull);
     });

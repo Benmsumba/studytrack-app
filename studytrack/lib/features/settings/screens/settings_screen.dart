@@ -261,7 +261,7 @@ class _SettingsToggle extends StatelessWidget {
   final String title;
   final String subtitle;
   final bool value;
-  final Function(bool) onChanged;
+  final ValueChanged<bool> onChanged;
 
   @override
   Widget build(BuildContext context) => Container(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../constants/app_colors.dart';
 import '../constants/app_text_styles.dart';
 
@@ -19,7 +20,7 @@ class CustomTextField extends StatefulWidget {
   final TextInputType keyboardType;
   final bool obscureText;
   final int maxLines;
-  final Function(String)? onChanged;
+  final ValueChanged<String>? onChanged;
 
   @override
   State<CustomTextField> createState() => _CustomTextFieldState();

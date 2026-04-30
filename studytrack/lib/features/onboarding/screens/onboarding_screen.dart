@@ -134,7 +134,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'We will sync with the cloud when internet is available.',
         );
         // Wait a moment so user sees the message, then navigate
-        await Future.delayed(const Duration(milliseconds: 800));
+        await Future<void>.delayed(const Duration(milliseconds: 800));
         if (mounted) context.go('/home');
       }
     } finally {

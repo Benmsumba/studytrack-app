@@ -41,7 +41,9 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadHomeData() async {
     final user = _service.getCurrentUser();
     if (user == null) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() => _isLoading = false);
       return;
     }
@@ -76,7 +78,9 @@ class _HomeScreenState extends State<HomeScreen> {
           (profile?['study_hours_per_day'] as num?)?.toInt() ?? 3;
       final sessionProgress = targetHours <= 0
           ? 0.0
-          : math.min(completedMinutes.toDouble() / (targetHours * 60.0), 1.0);
+          : math
+                .min(completedMinutes.toDouble() / (targetHours * 60.0), 1)
+                .toDouble();
 
       final topicName =
           _firstText(activeSession, ['topic_name', 'title', 'name']) ??
@@ -93,7 +97,9 @@ class _HomeScreenState extends State<HomeScreen> {
           ? 0.0
           : (1 - (daysRemaining / 21)).clamp(0.0, 1.0).toDouble();
 
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _userName = name;
         _avatarUrl = avatarUrl;
@@ -108,8 +114,10 @@ class _HomeScreenState extends State<HomeScreen> {
         _examReadiness = examReadiness;
         _isLoading = false;
       });
-    } catch (e) {
-      if (!mounted) return;
+    } on Exception {
+      if (!mounted) {
+        return;
+      }
       setState(() => _isLoading = false);
     }
   }
@@ -133,12 +141,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Map<String, dynamic>? _firstMap(List<Map<String, dynamic>> items) {
-    if (items.isEmpty) return null;
+    if (items.isEmpty) {
+      return null;
+    }
     return items.first;
   }
 
   String? _firstText(Map<String, dynamic>? data, List<String> keys) {
-    if (data == null) return null;
+    if (data == null) {
+      return null;
+    }
     for (final key in keys) {
       final value = data[key]?.toString().trim();
       if (value != null && value.isNotEmpty) {
@@ -188,8 +200,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
+    if (value == null) {
+      return null;
+    }
+    if (value is DateTime) {
+      return value;
+    }
     return DateTime.tryParse(value.toString());
   }
 
