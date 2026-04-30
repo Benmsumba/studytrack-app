@@ -62,6 +62,8 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           flutter build apk --release --split-per-abi \
+            --build-name="${{ steps.ver.outputs.version }}" \
+            --build-number="${{ steps.ver.outputs.build }}" \
             --tree-shake-icons \
             --dart-define=SUPABASE_URL="${SUPABASE_URL}" \
             --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}" \
@@ -73,7 +75,7 @@ jobs:
         run: |
           RAW=$(grep '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//')
           VERSION=$(echo "$RAW" | cut -d'+' -f1)
-          BUILD=$(echo "$RAW" | cut -d'+' -f2)
+          BUILD=${GITHUB_RUN_NUMBER}
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "build=$BUILD"     >> "$GITHUB_OUTPUT"
           echo "Detected version=$VERSION build=$BUILD"
