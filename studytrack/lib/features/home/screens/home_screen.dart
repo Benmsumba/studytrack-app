@@ -76,7 +76,7 @@ class _HomeScreenState extends State<HomeScreen> {
           (profile?['study_hours_per_day'] as num?)?.toInt() ?? 3;
       final sessionProgress = targetHours <= 0
           ? 0.0
-          : math.min(completedMinutes.toDouble() / (targetHours * 60), 1);
+          : math.min(completedMinutes.toDouble() / (targetHours * 60.0), 1.0);
 
       final topicName =
           _firstText(activeSession, ['topic_name', 'title', 'name']) ??
@@ -108,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _examReadiness = examReadiness;
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
     }
