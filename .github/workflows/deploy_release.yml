@@ -72,7 +72,7 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          flutter build apk --release \
+          flutter build apk --release --split-per-abi \
             --build-name="${{ steps.ver.outputs.version }}" \
             --build-number="${{ steps.ver.outputs.build }}" \
             --tree-shake-icons \
@@ -91,7 +91,7 @@ jobs:
             -H "Content-Type: application/octet-stream" \
             -H "x-upsert: true" \
             -H "cache-control: no-cache" \
-            --data-binary @studytrack/build/app/outputs/flutter-apk/app-release.apk
+            --data-binary @studytrack/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
           echo "APK uploaded"
 
       - name: Generate and upload version.json
