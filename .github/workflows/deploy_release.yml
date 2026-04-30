@@ -35,11 +35,34 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
+      - name: Validate required secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          missing=0
+          for key in SUPABASE_URL SUPABASE_ANON_KEY GEMINI_API_KEY SUPABASE_SERVICE_ROLE_KEY KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            if [ -z "${!key}" ]; then
+              echo "::error::Missing required secret: $key"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+
       - name: Decode release keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
           echo "$KEYSTORE_BASE64" | base64 -d > /tmp/studytrack-release.jks
+          test -s /tmp/studytrack-release.jks
           echo "Keystore decoded"
 
       - name: Install dependencies
@@ -75,10 +98,17 @@ jobs:
           flutter build apk --release --split-per-abi \
             --build-name="${{ steps.ver.outputs.version }}" \
             --build-number="${{ steps.ver.outputs.build }}" \
+            --obfuscate \
+            --split-debug-info=build/app/outputs/symbols \
             --tree-shake-icons \
             --dart-define=SUPABASE_URL="${SUPABASE_URL}" \
             --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}" \
             --dart-define=GEMINI_API_KEY="${GEMINI_API_KEY}"
+
+      - name: Show built APK sizes
+        run: |
+          ls -lh studytrack/build/app/outputs/flutter-apk/
+          du -h studytrack/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
 
       - name: Upload APK to Supabase Storage
         env:
