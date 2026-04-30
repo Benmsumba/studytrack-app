@@ -1,0 +1,91 @@
+name: Trigger OTA Update Notification
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Version name shown to users (e.g. 1.2.0)'
+        required: false
+        default: ''
+      release_notes:
+        description: 'Message shown in the update banner'
+        required: false
+        default: 'A new version of StudyAId is available.'
+
+permissions:
+  contents: read
+
+jobs:
+  push-version-json:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Validate secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          TRIMMED_KEY=$(echo "${SUPABASE_SERVICE_ROLE_KEY}" | tr -d '[:space:]')
+          if [ -z "${SUPABASE_URL}" ] || [ -z "${TRIMMED_KEY}" ]; then
+            echo "::error::SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set."
+            exit 1
+          fi
+          echo "SUPABASE_SERVICE_ROLE_KEY=${TRIMMED_KEY}" >> "$GITHUB_ENV"
+
+      - name: Ensure app-updates bucket is public
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          curl --silent -X POST "${SUPABASE_URL}/storage/v1/bucket" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"id":"app-updates","name":"app-updates","public":true}' || true
+          curl --silent -X PUT "${SUPABASE_URL}/storage/v1/bucket/app-updates" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"public":true}'
+
+      - name: Build and upload version.json
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          # versionCode: 10000 + run_number guarantees it exceeds any installed build
+          VERSION_CODE=$((10000 + GITHUB_RUN_NUMBER))
+          VERSION_NAME="${{ github.event.inputs.version_name }}"
+          if [ -z "${VERSION_NAME}" ]; then
+            VERSION_NAME="$(date +'%Y.%m.%d')"
+          fi
+          NOTES="${{ github.event.inputs.release_notes }}"
+
+          cat > /tmp/version.json <<JSONEOF
+          {
+            "versionCode": ${VERSION_CODE},
+            "versionName": "${VERSION_NAME}",
+            "downloadUrl": "${SUPABASE_URL}/storage/v1/object/public/app-updates/studytrack-latest.apk",
+            "releaseNotes": "${NOTES}"
+          }
+          JSONEOF
+
+          echo "Uploading version.json with versionCode=${VERSION_CODE}:"
+          cat /tmp/version.json
+
+          HTTP_STATUS=$(curl --silent --show-error --output /tmp/upload_response.txt \
+            --write-out "%{http_code}" \
+            -X PUT "${SUPABASE_URL}/storage/v1/object/app-updates/version.json" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -H "x-upsert: true" \
+            --data-binary @/tmp/version.json)
+
+          echo "HTTP status: ${HTTP_STATUS}"
+          cat /tmp/upload_response.txt
+
+          if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 300 ]; then
+            echo "::error::version.json upload failed with HTTP ${HTTP_STATUS}"
+            exit 1
+          fi
+
+          echo ""
+          echo "Done. Open the app on your phone — the update banner will appear within seconds."
+          echo "Public URL: ${SUPABASE_URL}/storage/v1/object/public/app-updates/version.json"
