@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../../core/repositories/class_timetable_repository.dart';
 import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/app_exception.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../models/class_slot_model.dart';
@@ -22,18 +23,20 @@ class TimetableActionResult {
 
 class TimetableProvider extends ChangeNotifier {
   TimetableProvider({
-    SupabaseService? supabaseService,
     ClassTimetableRepository? classTimetableRepository,
     StudySessionRepository? studySessionRepository,
-  }) : _supabaseService = supabaseService ?? SupabaseService(),
-       _classTimetableRepository =
+    SupabaseService? supabaseService,
+  }) : _classTimetableRepository =
            classTimetableRepository ?? getIt<ClassTimetableRepository>(),
        _studySessionRepository =
-           studySessionRepository ?? getIt<StudySessionRepository>();
+           studySessionRepository ?? getIt<StudySessionRepository>(),
+       // Raw service kept only for addStudySession until StudySessionRepository
+       // gains a scheduleSession method that supports the full timetable payload.
+       _supabaseService = supabaseService ?? getIt<SupabaseService>();
 
-  final SupabaseService _supabaseService;
   final ClassTimetableRepository _classTimetableRepository;
   final StudySessionRepository _studySessionRepository;
+  final SupabaseService _supabaseService;
 
   List<ClassSlotModel> _classSlots = const [];
   List<StudySessionModel> _studySessions = const [];
@@ -47,47 +50,35 @@ class TimetableProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  Future<TimetableActionResult> loadTimetable(String userId) async {
-    if (userId.trim().isEmpty) {
-      _errorMessage = 'User context is missing. Please sign in again.';
-      notifyListeners();
-      return const TimetableActionResult(
-        success: false,
-        statusCode: 401,
-        message: 'User context is missing. Please sign in again.',
-      );
-    }
-
+  /// Auth is resolved inside the repository — no userId required here.
+  Future<TimetableActionResult> loadTimetable() async {
     _setLoading(true);
     _errorMessage = null;
 
     try {
-      final classResult = await _classTimetableRepository.getClassTimetable(
-        userId,
+      final classResult = await _classTimetableRepository.getClassTimetable('');
+
+      final outcome = classResult.fold(
+        (error) {
+          _errorMessage = error.message;
+          return TimetableActionResult(
+            success: false,
+            statusCode: _statusCode(error),
+            message: error.message,
+          );
+        },
+        (slots) {
+          _classSlots = slots;
+          return const TimetableActionResult(
+            success: true,
+            statusCode: 200,
+            message: 'Timetable loaded successfully.',
+          );
+        },
       );
 
-      if (classResult is Failure<List<ClassSlotModel>>) {
-        _errorMessage = classResult.error.message;
-        return TimetableActionResult(
-          success: false,
-          statusCode: 500,
-          message: _errorMessage ?? 'Failed to load class timetable.',
-        );
-      }
-
-      if (classResult is Success<List<ClassSlotModel>>) {
-        _classSlots = classResult.data;
-      }
-
-      // TODO: Fetch study sessions via repository when StudySessionRepository
-      // has method to fetch by date (currently only has date-range methods)
       _studySessions = const [];
-
-      return const TimetableActionResult(
-        success: true,
-        statusCode: 200,
-        message: 'Timetable loaded successfully.',
-      );
+      return outcome;
     } catch (error) {
       _errorMessage = 'Failed to load timetable: $error';
       return TimetableActionResult(
@@ -105,45 +96,35 @@ class TimetableProvider extends ChangeNotifier {
   ) async {
     final subject = classData['subject_name']?.toString().trim() ?? '';
     if (subject.isEmpty) {
-      _errorMessage = 'Subject name is required.';
-      notifyListeners();
-      return const TimetableActionResult(
-        success: false,
-        statusCode: 422,
-        message: 'Subject name is required.',
-      );
+      return _validationFailure('Subject name is required.');
     }
 
     _errorMessage = null;
 
     final result = await _classTimetableRepository.addClassSlot(classData);
 
-    if (result is Failure<ClassSlotModel>) {
-      _errorMessage = result.error.message;
-      notifyListeners();
-      return TimetableActionResult(
-        success: false,
-        statusCode: 500,
-        message: _errorMessage ?? 'Failed to add class slot.',
-      );
-    }
-
-    if (result is Success<ClassSlotModel>) {
-      final created = result.data;
-      _classSlots = [..._classSlots, created]
-        ..sort((a, b) {
-          if (a.dayOfWeek == b.dayOfWeek) {
-            return a.startTime.compareTo(b.startTime);
-          }
-          return a.dayOfWeek.compareTo(b.dayOfWeek);
-        });
-      notifyListeners();
-    }
-
-    return const TimetableActionResult(
-      success: true,
-      statusCode: 201,
-      message: 'Class slot added successfully.',
+    return result.fold(
+      (error) {
+        _errorMessage = error.message;
+        notifyListeners();
+        return TimetableActionResult(
+          success: false,
+          statusCode: _statusCode(error),
+          message: error.message,
+        );
+      },
+      (created) {
+        _classSlots = [..._classSlots, created]
+          ..sort((a, b) => a.dayOfWeek == b.dayOfWeek
+              ? a.startTime.compareTo(b.startTime)
+              : a.dayOfWeek.compareTo(b.dayOfWeek));
+        notifyListeners();
+        return const TimetableActionResult(
+          success: true,
+          statusCode: 201,
+          message: 'Class slot added successfully.',
+        );
+      },
     );
   }
 
@@ -152,11 +133,7 @@ class TimetableProvider extends ChangeNotifier {
     required Map<String, dynamic> classData,
   }) async {
     if (classSlotId.trim().isEmpty) {
-      return const TimetableActionResult(
-        success: false,
-        statusCode: 422,
-        message: 'Class slot id is required.',
-      );
+      return _validationFailure('Class slot id is required.');
     }
 
     final result = await _classTimetableRepository.updateClassSlot(
@@ -164,45 +141,37 @@ class TimetableProvider extends ChangeNotifier {
       classData: classData,
     );
 
-    if (result is Failure<ClassSlotModel>) {
-      _errorMessage = result.error.message;
-      notifyListeners();
-      return TimetableActionResult(
-        success: false,
-        statusCode: 500,
-        message: _errorMessage ?? 'Failed to update class slot.',
-      );
-    }
-
-    if (result is Success<ClassSlotModel>) {
-      final updatedModel = result.data;
-      _classSlots =
-          _classSlots
-              .map((slot) => slot.id == classSlotId ? updatedModel : slot)
-              .toList(growable: false)
-            ..sort((a, b) {
-              if (a.dayOfWeek == b.dayOfWeek) {
-                return a.startTime.compareTo(b.startTime);
-              }
-              return a.dayOfWeek.compareTo(b.dayOfWeek);
-            });
-      notifyListeners();
-    }
-
-    return const TimetableActionResult(
-      success: true,
-      statusCode: 200,
-      message: 'Class slot updated successfully.',
+    return result.fold(
+      (error) {
+        _errorMessage = error.message;
+        notifyListeners();
+        return TimetableActionResult(
+          success: false,
+          statusCode: _statusCode(error),
+          message: error.message,
+        );
+      },
+      (updatedModel) {
+        _classSlots = _classSlots
+            .map((slot) => slot.id == classSlotId ? updatedModel : slot)
+            .toList(growable: false)
+          ..sort((a, b) => a.dayOfWeek == b.dayOfWeek
+              ? a.startTime.compareTo(b.startTime)
+              : a.dayOfWeek.compareTo(b.dayOfWeek));
+        notifyListeners();
+        return const TimetableActionResult(
+          success: true,
+          statusCode: 200,
+          message: 'Class slot updated successfully.',
+        );
+      },
     );
   }
 
+  /// Optimistic UI: removes immediately and rolls back on failure.
   Future<TimetableActionResult> deleteClassSlot(String classSlotId) async {
     if (classSlotId.trim().isEmpty) {
-      return const TimetableActionResult(
-        success: false,
-        statusCode: 422,
-        message: 'Class slot id is required.',
-      );
+      return _validationFailure('Class slot id is required.');
     }
 
     final previous = _classSlots;
@@ -213,28 +182,34 @@ class TimetableProvider extends ChangeNotifier {
 
     final result = await _classTimetableRepository.deleteClassSlot(classSlotId);
 
-    if (result is Success<bool>) {
-      final deleted = result.data;
-      if (deleted == true) {
+    return result.fold(
+      (error) {
+        _classSlots = previous;
+        _errorMessage = error.message;
+        notifyListeners();
+        return TimetableActionResult(
+          success: false,
+          statusCode: _statusCode(error),
+          message: error.message,
+        );
+      },
+      (deleted) {
+        if (deleted != true) {
+          _classSlots = previous;
+          _errorMessage = 'Failed to delete class slot.';
+          notifyListeners();
+          return const TimetableActionResult(
+            success: false,
+            statusCode: 500,
+            message: 'Failed to delete class slot.',
+          );
+        }
         return const TimetableActionResult(
           success: true,
           statusCode: 200,
           message: 'Class slot deleted successfully.',
         );
-      }
-    }
-
-    _classSlots = previous;
-    if (result is Failure<bool>) {
-      _errorMessage = result.error.message;
-    } else {
-      _errorMessage = 'Failed to delete class slot.';
-    }
-    notifyListeners();
-    return TimetableActionResult(
-      success: false,
-      statusCode: 500,
-      message: _errorMessage ?? 'Failed to delete class slot.',
+      },
     );
   }
 
@@ -243,13 +218,7 @@ class TimetableProvider extends ChangeNotifier {
   ) async {
     final title = sessionData['title']?.toString().trim() ?? '';
     if (title.isEmpty) {
-      _errorMessage = 'Session title is required.';
-      notifyListeners();
-      return const TimetableActionResult(
-        success: false,
-        statusCode: 422,
-        message: 'Session title is required.',
-      );
+      return _validationFailure('Session title is required.');
     }
 
     _errorMessage = null;
@@ -266,8 +235,7 @@ class TimetableProvider extends ChangeNotifier {
     }
 
     final model = StudySessionModel.fromJson(created);
-    final sameDate = _isSameDate(model.scheduledDate, _selectedDate);
-    if (sameDate) {
+    if (_isSameDate(model.scheduledDate, _selectedDate)) {
       _studySessions = [..._studySessions, model]
         ..sort((a, b) => (a.startTime ?? '').compareTo(b.startTime ?? ''));
       notifyListeners();
@@ -279,13 +247,13 @@ class TimetableProvider extends ChangeNotifier {
     );
   }
 
+  /// Optimistic UI: marks complete immediately, rolls back on failure.
   Future<TimetableActionResult> completeSession(
     String sessionId, {
     int? actualDuration,
   }) async {
-    final index = _studySessions.indexWhere(
-      (session) => session.id == sessionId,
-    );
+    final index =
+        _studySessions.indexWhere((session) => session.id == sessionId);
     if (index == -1) {
       return const TimetableActionResult(
         success: false,
@@ -295,12 +263,12 @@ class TimetableProvider extends ChangeNotifier {
     }
 
     final previous = _studySessions[index];
-    final optimistic = previous.copyWith(
-      status: 'completed',
-      actualDurationMinutes: actualDuration,
+    _replaceSession(
+      previous.copyWith(
+        status: 'completed',
+        actualDurationMinutes: actualDuration,
+      ),
     );
-
-    _replaceSession(optimistic);
     _errorMessage = null;
 
     final result = await _studySessionRepository.updateSessionStatus(
@@ -309,28 +277,29 @@ class TimetableProvider extends ChangeNotifier {
       actualDurationMinutes: actualDuration,
     );
 
-    if (result is Success<void>) {
-      return const TimetableActionResult(
+    return result.fold(
+      (error) {
+        _replaceSession(previous);
+        _errorMessage = error.message;
+        notifyListeners();
+        return TimetableActionResult(
+          success: false,
+          statusCode: _statusCode(error),
+          message: error.message,
+        );
+      },
+      (_) => const TimetableActionResult(
         success: true,
         statusCode: 200,
         message: 'Session marked as completed.',
-      );
-    }
-
-    _replaceSession(previous);
-    _errorMessage = (result as Failure<void>).error.message;
-    notifyListeners();
-    return TimetableActionResult(
-      success: false,
-      statusCode: 500,
-      message: _errorMessage ?? 'Failed to complete session.',
+      ),
     );
   }
 
+  /// Optimistic UI: marks missed immediately, rolls back on failure.
   Future<TimetableActionResult> missSession(String sessionId) async {
-    final index = _studySessions.indexWhere(
-      (session) => session.id == sessionId,
-    );
+    final index =
+        _studySessions.indexWhere((session) => session.id == sessionId);
     if (index == -1) {
       return const TimetableActionResult(
         success: false,
@@ -340,12 +309,9 @@ class TimetableProvider extends ChangeNotifier {
     }
 
     final previous = _studySessions[index];
-    final optimistic = previous.copyWith(
-      status: 'missed',
-      actualDurationMinutes: null,
+    _replaceSession(
+      previous.copyWith(status: 'missed', actualDurationMinutes: null),
     );
-
-    _replaceSession(optimistic);
     _errorMessage = null;
 
     final result = await _studySessionRepository.updateSessionStatus(
@@ -353,21 +319,22 @@ class TimetableProvider extends ChangeNotifier {
       status: 'missed',
     );
 
-    if (result is Success<void>) {
-      return const TimetableActionResult(
+    return result.fold(
+      (error) {
+        _replaceSession(previous);
+        _errorMessage = error.message;
+        notifyListeners();
+        return TimetableActionResult(
+          success: false,
+          statusCode: _statusCode(error),
+          message: error.message,
+        );
+      },
+      (_) => const TimetableActionResult(
         success: true,
         statusCode: 200,
         message: 'Session marked as missed.',
-      );
-    }
-
-    _replaceSession(previous);
-    _errorMessage = (result as Failure<void>).error.message;
-    notifyListeners();
-    return TimetableActionResult(
-      success: false,
-      statusCode: 500,
-      message: _errorMessage ?? 'Failed to mark session as missed.',
+      ),
     );
   }
 
@@ -375,6 +342,10 @@ class TimetableProvider extends ChangeNotifier {
     _selectedDate = DateTime(date.year, date.month, date.day);
     notifyListeners();
   }
+
+  // ---------------------------------------------------------------------------
+  // Private helpers
+  // ---------------------------------------------------------------------------
 
   void _replaceSession(StudySessionModel updated) {
     _studySessions = _studySessions
@@ -387,6 +358,23 @@ class TimetableProvider extends ChangeNotifier {
       first.year == second.year &&
       first.month == second.month &&
       first.day == second.day;
+
+  TimetableActionResult _validationFailure(String message) {
+    _errorMessage = message;
+    notifyListeners();
+    return TimetableActionResult(
+      success: false,
+      statusCode: 422,
+      message: message,
+    );
+  }
+
+  int _statusCode(AppException error) => switch (error) {
+    ValidationException() => 422,
+    AuthException() => 401,
+    OfflineException() => 503,
+    _ => 500,
+  };
 
   void _setLoading(bool value) {
     _isLoading = value;
