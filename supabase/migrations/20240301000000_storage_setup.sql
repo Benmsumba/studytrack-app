@@ -6,6 +6,12 @@ values ('studytrack-notes', 'studytrack-notes', true)
 on conflict (id) do update
 set public = excluded.public;
 
+-- Public bucket for OTA APK distribution and version.json.
+insert into storage.buckets (id, name, public)
+values ('app-updates', 'app-updates', true)
+on conflict (id) do update
+set public = excluded.public;
+
 -- Optional hardening for object listing while keeping files publicly readable.
 -- In many projects, public buckets already work without extra policies.
 -- These statements are included for explicitness.

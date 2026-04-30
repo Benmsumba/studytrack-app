@@ -146,7 +146,9 @@ jobs:
         run: |
           RAW=$(grep '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//')
           VERSION=$(echo "$RAW" | cut -d'+' -f1)
-          BUILD=${GITHUB_RUN_NUMBER}
+          # Base offset ensures CI builds always exceed any manually-installed APK
+          # (pubspec default is 1; debug builds from build_apk.yml are also 1).
+          BUILD=$((10000 + GITHUB_RUN_NUMBER))
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "build=$BUILD"     >> "$GITHUB_OUTPUT"
           echo "Detected version=$VERSION build=$BUILD"
@@ -176,6 +178,34 @@ jobs:
         run: |
           ls -lh studytrack/build/app/outputs/flutter-apk/
           du -h studytrack/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+
+      - name: Ensure app-updates bucket exists and is public
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          # Create bucket (succeeds on first run, 409 if already exists — both are fine)
+          CREATE_STATUS=$(curl --silent --output /tmp/bucket_create.txt --write-out "%{http_code}" \
+            -X POST "${SUPABASE_URL}/storage/v1/bucket" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"id":"app-updates","name":"app-updates","public":true}')
+          echo "Create bucket status: ${CREATE_STATUS}"
+          cat /tmp/bucket_create.txt
+
+          # Ensure it is public regardless (idempotent PUT)
+          UPDATE_STATUS=$(curl --silent --output /tmp/bucket_update.txt --write-out "%{http_code}" \
+            -X PUT "${SUPABASE_URL}/storage/v1/bucket/app-updates" \
+            -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"public":true}')
+          echo "Update bucket status: ${UPDATE_STATUS}"
+          cat /tmp/bucket_update.txt
+
+          if [ "${UPDATE_STATUS}" -lt 200 ] || [ "${UPDATE_STATUS}" -ge 300 ]; then
+            echo "::error::Failed to ensure app-updates bucket is public (HTTP ${UPDATE_STATUS})"
+            exit 1
+          fi
+          echo "app-updates bucket is public"
 
       - name: Upload APK to Supabase Storage
         env:
