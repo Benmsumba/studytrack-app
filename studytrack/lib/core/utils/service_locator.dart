@@ -2,12 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 
 import '../repositories/auth_repository.dart';
+import '../repositories/class_timetable_repository.dart';
 import '../repositories/impl/auth_repository_impl.dart';
+import '../repositories/impl/class_timetable_repository_impl.dart';
 import '../repositories/impl/module_repository_impl.dart';
+import '../repositories/impl/profile_repository_impl.dart';
 import '../repositories/impl/study_group_repository_impl.dart';
 import '../repositories/impl/study_session_repository_impl.dart';
 import '../repositories/impl/topic_repository_impl.dart';
 import '../repositories/module_repository.dart';
+import '../repositories/profile_repository.dart';
 import '../repositories/study_group_repository.dart';
 import '../repositories/study_session_repository.dart';
 import '../repositories/topic_repository.dart';
@@ -39,6 +43,12 @@ Future<void> setupServiceLocator() async {
   getIt.registerSingleton<OfflineSyncService>(offlineSyncService);
 
   getIt.registerSingleton<AuthRepository>(AuthRepositoryImpl(supabaseService));
+  getIt.registerSingleton<ProfileRepository>(
+    ProfileRepositoryImpl(supabaseService),
+  );
+  getIt.registerSingleton<ClassTimetableRepository>(
+    ClassTimetableRepositoryImpl(supabaseService),
+  );
   getIt.registerSingleton<ModuleRepository>(
     ModuleRepositoryImpl(supabaseService),
   );

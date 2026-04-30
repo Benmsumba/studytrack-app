@@ -21,6 +21,7 @@ import 'features/profile/controllers/profile_provider.dart';
 import 'features/progress/controllers/progress_provider.dart';
 import 'features/settings/controllers/settings_provider.dart';
 import 'features/timetable/controllers/timetable_provider.dart';
+import 'features/timetable/controllers/topic_module_provider.dart';
 import 'features/update/controllers/update_provider.dart';
 
 Future<void> main() async {
@@ -93,6 +94,7 @@ Future<void> _bootstrapApp() async {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ModulesProvider()),
         ChangeNotifierProvider(create: (_) => TimetableProvider()),
+        ChangeNotifierProvider(create: (_) => TopicModuleProvider()),
         ChangeNotifierProvider(create: (_) => ProgressProvider()),
         ChangeNotifierProvider(create: (_) => GroupsProvider()),
         ChangeNotifierProvider(create: (_) => NotificationProvider()),

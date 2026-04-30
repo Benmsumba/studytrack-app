@@ -116,6 +116,26 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Result<void>> signInWithGoogle() async {
+    try {
+      final ok = await _supabaseService.signInWithGoogle();
+      if (!ok) {
+        return Failure(
+          AuthException(
+            message: _supabaseService.lastAuthError ?? 'Google sign-in failed',
+          ),
+        );
+      }
+      return const Success(null);
+    } catch (e, stack) {
+      debugPrint('GoogleSignIn error: $e');
+      return Failure(
+        AuthException(message: 'Google sign-in failed: $e', stackTrace: stack),
+      );
+    }
+  }
+
+  @override
   Future<Result<void>> signOut() async {
     try {
       await _supabaseService.signOut();

@@ -26,6 +26,13 @@ abstract class StudySessionRepository {
   /// Update session
   Future<Result<StudySessionModel>> updateSession(StudySessionModel session);
 
+  /// Update session status with optional actual duration
+  Future<Result<void>> updateSessionStatus({
+    required String sessionId,
+    required String status,
+    int? actualDurationMinutes,
+  });
+
   /// Delete session
   Future<Result<void>> deleteSession(String sessionId);
 

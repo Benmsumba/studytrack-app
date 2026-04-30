@@ -6,7 +6,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/study_session_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/utils/service_locator.dart';
 
 class StudySessionScreen extends StatefulWidget {
   const StudySessionScreen({
@@ -26,7 +29,9 @@ class StudySessionScreen extends StatefulWidget {
 
 class _StudySessionScreenState extends State<StudySessionScreen>
     with WidgetsBindingObserver {
-  final SupabaseService _service = SupabaseService();
+  final StudySessionRepository _studySessionRepository =
+      getIt<StudySessionRepository>();
+  final TopicRepository _topicRepository = getIt<TopicRepository>();
   late final ConfettiController _confettiController;
 
   Timer? _timer;
@@ -85,13 +90,11 @@ class _StudySessionScreenState extends State<StudySessionScreen>
       return;
     }
 
-    final topic = await _service.client
-        .from('topics')
-        .select('name')
-        .eq('id', topicId)
-        .maybeSingle();
-
-    final name = topic?['name']?.toString();
+    final result = await _topicRepository.getTopicById(topicId);
+    final name = switch (result) {
+      Success(data: final topic) => topic?.name,
+      Failure() => null,
+    };
     if (!mounted || name == null || name.isEmpty) return;
     setState(() {
       _topicName = name;
@@ -340,16 +343,32 @@ class _StudySessionScreenState extends State<StudySessionScreen>
 
     final sessionId = widget.sessionId;
     if (sessionId != null && sessionId.isNotEmpty) {
-      await _service.updateSessionStatus(
-        sessionId,
-        'completed',
-        elapsedMinutes,
+      final sessionResult = await _studySessionRepository.updateSessionStatus(
+        sessionId: sessionId,
+        status: 'completed',
+        actualDurationMinutes: elapsedMinutes,
       );
+      if (sessionResult is Failure<void>) {
+        if (!mounted) return;
+        setState(() {
+          _isCompleting = false;
+        });
+        await _showInfoDialog(sessionResult.error.message);
+        return;
+      }
     }
 
     final topicId = widget.topicId;
     if (topicId != null && topicId.isNotEmpty) {
-      await _service.updateTopicRating(topicId, rating);
+      final ratingResult = await _topicRepository.rateTopic(topicId, rating);
+      if (ratingResult is Failure<void>) {
+        if (!mounted) return;
+        setState(() {
+          _isCompleting = false;
+        });
+        await _showInfoDialog(ratingResult.error.message);
+        return;
+      }
     }
 
     _confettiController.play();

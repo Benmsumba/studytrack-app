@@ -3,11 +3,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/validators.dart';
-import '../controllers/auth_controller.dart';
+import '../controllers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -20,7 +20,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _authController = AuthController();
 
   bool _obscurePassword = true;
   bool _googleLoading = false;
@@ -38,21 +37,19 @@ class _LoginScreenState extends State<LoginScreen> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
-    _authController.dispose();
     super.dispose();
   }
 
   Future<void> _onGoogleSignInTap() async {
+    final auth = context.read<AuthProvider>();
     setState(() => _googleLoading = true);
-    final ok = await _authController.signInWithGoogle();
+    final result = await auth.signInWithGoogle();
     if (!mounted) return;
     setState(() => _googleLoading = false);
-    if (!ok) {
+    if (!result.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _authController.errorMessage ?? 'Google sign-in failed.',
-          ),
+          content: Text(result.message),
           backgroundColor: AppColors.danger,
           behavior: SnackBarBehavior.floating,
         ),
@@ -65,23 +62,21 @@ class _LoginScreenState extends State<LoginScreen> {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
-    final ok = await _authController.signInWithEmail(
+    final result = await context.read<AuthProvider>().signInWithEmail(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
 
     if (!mounted) return;
 
-    if (ok) {
+    if (result.success) {
       context.go('/home');
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          _authController.errorMessage ?? 'Login failed. Please try again.',
-        ),
+        content: Text(result.message),
         backgroundColor: AppColors.danger,
         behavior: SnackBarBehavior.floating,
       ),
@@ -172,18 +167,14 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = emailController.text.trim();
     if (email.isEmpty) return;
 
-    final sent = await SupabaseService().resetPasswordForEmail(email);
+    final result = await context.read<AuthProvider>().resetPassword(email);
 
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          sent
-              ? 'Password reset link sent. Check your inbox.'
-              : 'Could not send reset email. Please try again.',
-        ),
-        backgroundColor: sent ? AppColors.success : AppColors.danger,
+        content: Text(result.message),
+        backgroundColor: result.success ? AppColors.success : AppColors.danger,
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -193,9 +184,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.backgroundDark,
     body: SafeArea(
-      child: AnimatedBuilder(
-        animation: _authController,
-        builder: (context, _) => SingleChildScrollView(
+      child: Consumer<AuthProvider>(
+        builder: (context, auth, _) => SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
           child: Form(
             key: _formKey,
@@ -302,10 +292,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 16),
                             _buildGradientButton(
                               label: 'Login',
-                              isLoading: _authController.isLoading,
-                              onTap: _authController.isLoading
-                                  ? null
-                                  : _onLoginTap,
+                              isLoading: auth.isLoading,
+                              onTap: auth.isLoading ? null : _onLoginTap,
                             ),
                           ],
                         ),
@@ -336,10 +324,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ).animate().fadeIn(duration: 400.ms, delay: 300.ms),
                 const SizedBox(height: 16),
-                _buildGoogleButton().animate().fadeIn(
-                  duration: 500.ms,
-                  delay: 350.ms,
-                ),
+                _buildGoogleButton(
+                  auth.isLoading,
+                ).animate().fadeIn(duration: 500.ms, delay: 350.ms),
                 const SizedBox(height: 28),
                 Center(
                   child: Row(
@@ -374,8 +361,8 @@ class _LoginScreenState extends State<LoginScreen> {
     ),
   );
 
-  Widget _buildGoogleButton() {
-    final busy = _googleLoading || _authController.isLoading;
+  Widget _buildGoogleButton(bool authLoading) {
+    final busy = _googleLoading || authLoading;
     return GestureDetector(
       onTap: busy ? null : _onGoogleSignInTap,
       child: AnimatedOpacity(
