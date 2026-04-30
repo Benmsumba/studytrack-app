@@ -14,6 +14,7 @@ abstract class ModuleRepository {
     required String name,
     required String code,
     required String description,
+    String? color,
     String? instructorName,
     String? instructorEmail,
   });
