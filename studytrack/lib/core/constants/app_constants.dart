@@ -11,7 +11,8 @@ class AppConstants {
   // JSON URL before building; a getter below constructs the runtime URL.
 
   // Environment placeholders. Provide real values via --dart-define.
-  static const String supabaseUrl = 'YOUR_SUPABASE_URL';
+  // Fallback to actual Supabase URL so OTA works even if --dart-define is missing.
+  static const String supabaseUrl = 'https://xidpslwjxnyiptebwdff.supabase.co';
   static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
   static const String geminiApiKey = 'YOUR_GEMINI_API_KEY';
 
