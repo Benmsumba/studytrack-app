@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:studytrack/core/services/supabase_service.dart';
+import 'package:studytrack/core/repositories/module_repository.dart';
+import 'package:studytrack/core/utils/app_exception.dart';
+import 'package:studytrack/core/utils/result.dart';
 import 'package:studytrack/features/modules/controllers/modules_provider.dart';
 import 'package:studytrack/models/module_model.dart';
 
@@ -7,78 +9,103 @@ import 'package:studytrack/models/module_model.dart';
 // Manual mock
 // ---------------------------------------------------------------------------
 
-class _FakeSupabaseService extends SupabaseService {
-  _FakeSupabaseService() : super.forTesting();
-
-  List<ModuleModel>? modulesResult;
-  Map<String, dynamic>? addResult;
-  Map<String, dynamic>? updateResult;
-  bool? deleteResult;
+class _FakeModuleRepository implements ModuleRepository {
+  List<ModuleModel>? allModulesResult;
+  ModuleModel? getModuleByIdResult;
+  ModuleModel? createModuleResult;
+  ModuleModel? updateModuleResult;
   bool shouldThrow = false;
+  String errorMessage = 'Operation failed';
 
   @override
-  Future<List<ModuleModel>?> getModules(String userId) async {
+  Future<Result<List<ModuleModel>>> getAllModules() async {
     if (shouldThrow) {
-      throw Exception('network error');
+      return Failure(OfflineException(message: errorMessage));
     }
-    return modulesResult;
+    return Success(allModulesResult ?? []);
   }
 
   @override
-  Future<Map<String, dynamic>?> addModule(
-    String userId,
-    String name,
-    String color,
-  ) async {
+  Future<Result<ModuleModel?>> getModuleById(String moduleId) async {
     if (shouldThrow) {
-      throw Exception('network error');
+      return Failure(OfflineException(message: errorMessage));
     }
-    return addResult;
+    return Success(getModuleByIdResult);
   }
 
   @override
-  Future<Map<String, dynamic>?> updateModule(
-    String moduleId,
-    Map<String, dynamic> data,
-  ) async {
+  Future<Result<ModuleModel>> createModule({
+    required String name,
+    required String code,
+    required String description,
+    String? color,
+    String? instructorName,
+    String? instructorEmail,
+  }) async {
     if (shouldThrow) {
-      throw Exception('network error');
+      return Failure(OfflineException(message: errorMessage));
     }
-    return updateResult;
+    if (createModuleResult == null) {
+      return Failure(ValidationException(message: 'Module creation failed'));
+    }
+    return Success(createModuleResult!);
   }
 
   @override
-  Future<bool?> deleteModule(String moduleId) async {
+  Future<Result<ModuleModel>> updateModule(ModuleModel module) async {
     if (shouldThrow) {
-      throw Exception('network error');
+      return Failure(OfflineException(message: errorMessage));
     }
-    return deleteResult;
+    if (updateModuleResult == null) {
+      return Failure(ValidationException(message: 'Module update failed'));
+    }
+    return Success(updateModuleResult!);
   }
+
+  @override
+  Future<Result<void>> deleteModule(String moduleId) async {
+    if (shouldThrow) {
+      return Failure(OfflineException(message: errorMessage));
+    }
+    return Success(null);
+  }
+
+  @override
+  Future<Result<void>> archiveModule(String moduleId) async => Success(null);
+
+  @override
+  Future<Result<List<ModuleModel>>> getModulesBySemester(
+    String semester,
+  ) async => Success([]);
+
+  @override
+  Future<Result<List<ModuleModel>>> searchModules(String query) async =>
+      Success([]);
+
+  @override
+  Future<Result<int>> getModuleCount() async => Success(0);
+
+  @override
+  Future<Result<void>> syncModules() async => Success(null);
 }
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-Map<String, dynamic> _moduleJson({
-  String id = 'mod-1',
-  String userId = 'user-1',
-  String name = 'Anatomy',
-}) => {
-  'id': id,
-  'user_id': userId,
-  'name': name,
-  'color': '#FF0000',
-  'semester': null,
-  'is_active': true,
-  'created_at': DateTime.now().toIso8601String(),
-};
-
 ModuleModel _module({
   String id = 'mod-1',
   String userId = 'user-1',
   String name = 'Anatomy',
-}) => ModuleModel.fromJson(_moduleJson(id: id, userId: userId, name: name));
+}) => ModuleModel(
+  id: id,
+  userId: userId,
+  name: name,
+  color: '#FF0000',
+  semester: null,
+  isActive: true,
+  createdAt: DateTime.now(),
+);
 
 // ---------------------------------------------------------------------------
 // Tests
@@ -87,12 +114,12 @@ ModuleModel _module({
 void main() {
   setUpAll(TestWidgetsFlutterBinding.ensureInitialized);
 
-  late _FakeSupabaseService fake;
+  late _FakeModuleRepository fake;
   late ModulesProvider provider;
 
   setUp(() {
-    fake = _FakeSupabaseService();
-    provider = ModulesProvider(supabaseService: fake);
+    fake = _FakeModuleRepository();
+    provider = ModulesProvider(moduleRepository: fake);
   });
 
   group('ModulesProvider — initial state', () {
@@ -106,49 +133,49 @@ void main() {
 
   group('ModulesProvider — loadModules', () {
     test('populates modules on success', () async {
-      fake.modulesResult = [
+      fake.allModulesResult = [
         _module(),
         _module(id: 'mod-2', name: 'Physiology'),
       ];
 
-      await provider.loadModules('user-1');
+      final result = await provider.loadModules();
 
+      expect(result.success, isTrue);
       expect(provider.modules.length, 2);
       expect(provider.isLoading, isFalse);
       expect(provider.errorMessage, isNull);
     });
 
-    test('handles null response as empty list', () async {
-      fake.modulesResult = [];
+    test('handles empty list response', () async {
+      fake.allModulesResult = [];
 
-      await provider.loadModules('user-1');
+      final result = await provider.loadModules();
 
+      expect(result.success, isTrue);
       expect(provider.modules, isEmpty);
       expect(provider.errorMessage, isNull);
     });
 
-    test('sets errorMessage when service throws', () async {
+    test('sets errorMessage when service fails', () async {
       fake.shouldThrow = true;
+      fake.errorMessage = 'Network error';
 
-      await provider.loadModules('user-1');
+      final result = await provider.loadModules();
 
+      expect(result.success, isFalse);
       expect(provider.errorMessage, isNotNull);
-      expect(provider.errorMessage, contains('Failed to load'));
       expect(provider.isLoading, isFalse);
     });
 
     test('updates selectedModule reference after reload', () async {
-      final mod = _module();
-      fake.modulesResult = [mod];
-      await provider.loadModules('user-1');
+      fake.allModulesResult = [_module()];
+      await provider.loadModules();
       final selectedModule = provider.modules.first;
-      provider
-        ..selectModule(selectedModule)
-        ..selectModule(null);
+      provider.selectModule(selectedModule);
 
       // Reload with updated name
-      fake.modulesResult = [_module(name: 'Anatomy Updated')];
-      await provider.loadModules('user-1');
+      fake.allModulesResult = [_module(name: 'Anatomy Updated')];
+      await provider.loadModules();
 
       expect(provider.selectedModule?.name, 'Anatomy Updated');
     });
@@ -156,94 +183,115 @@ void main() {
 
   group('ModulesProvider — addModule', () {
     test('appends new module to list on success', () async {
-      fake.modulesResult = [_module()];
-      await provider.loadModules('user-1');
+      fake.allModulesResult = [_module()];
+      await provider.loadModules();
 
-      fake.addResult = _moduleJson(id: 'mod-2', name: 'Biochemistry');
-      await provider.addModule(
-        userId: 'user-1',
+      fake.createModuleResult = _module(id: 'mod-2', name: 'Biochemistry');
+      final result = await provider.addModule(
         name: 'Biochemistry',
         color: '#00FF00',
       );
 
+      expect(result.success, isTrue);
       expect(provider.modules.length, 2);
       expect(provider.modules.last.name, 'Biochemistry');
       expect(provider.errorMessage, isNull);
     });
 
-    test('sets errorMessage when service returns null', () async {
-      fake.addResult = null;
+    test('sets errorMessage when service returns failure', () async {
+      fake.createModuleResult = null;
 
-      await provider.addModule(userId: 'user-1', name: 'X', color: '#000');
+      final result = await provider.addModule(name: 'X');
 
-      expect(provider.errorMessage, 'Failed to add module.');
+      expect(result.success, isFalse);
+      expect(provider.errorMessage, isNotNull);
+    });
+
+    test('validates module name is not empty', () async {
+      final result = await provider.addModule(name: '   ');
+
+      expect(result.success, isFalse);
+      expect(provider.errorMessage, contains('required'));
     });
   });
 
   group('ModulesProvider — updateModule', () {
     test('replaces module in list and updates selectedModule', () async {
-      fake.modulesResult = [_module()];
-      await provider.loadModules('user-1');
+      fake.allModulesResult = [_module()];
+      await provider.loadModules();
       final selectedModule = provider.modules.first;
       provider.selectModule(selectedModule);
 
-      final updatedJson = _moduleJson(name: 'Anatomy II');
-      fake.updateResult = updatedJson;
+      final updatedModule = _module(name: 'Anatomy II');
+      fake.updateModuleResult = updatedModule;
 
-      await provider.updateModule(
-        moduleId: 'mod-1',
-        changes: {'name': 'Anatomy II'},
-      );
+      final result = await provider.updateModule(updatedModule);
 
+      expect(result.success, isTrue);
       expect(provider.modules.first.name, 'Anatomy II');
       expect(provider.selectedModule?.name, 'Anatomy II');
       expect(provider.errorMessage, isNull);
     });
 
-    test('sets errorMessage when service returns null', () async {
-      fake.updateResult = null;
+    test('sets errorMessage when service returns failure', () async {
+      fake.updateModuleResult = null;
 
-      await provider.updateModule(
-        moduleId: 'mod-1',
-        changes: <String, dynamic>{},
-      );
+      final result = await provider.updateModule(_module());
 
-      expect(provider.errorMessage, 'Failed to update module.');
+      expect(result.success, isFalse);
+      expect(provider.errorMessage, isNotNull);
+    });
+
+    test('validates module ID is not empty', () async {
+      final badModule = _module(id: '   ');
+
+      final result = await provider.updateModule(badModule);
+
+      expect(result.success, isFalse);
+      expect(provider.errorMessage, contains('ID'));
     });
   });
 
   group('ModulesProvider — deleteModule', () {
     test('removes module from list and clears selectedModule', () async {
-      fake.modulesResult = [
+      fake.allModulesResult = [
         _module(),
         _module(id: 'mod-2', name: 'Physiology'),
       ];
-      await provider.loadModules('user-1');
+      await provider.loadModules();
       final selectedModule = provider.modules.first;
       provider.selectModule(selectedModule);
 
-      fake.deleteResult = true;
-      await provider.deleteModule('mod-1');
+      final result = await provider.deleteModule('mod-1');
 
+      expect(result.success, isTrue);
       expect(provider.modules.length, 1);
       expect(provider.modules.first.id, 'mod-2');
       expect(provider.selectedModule, isNull);
       expect(provider.errorMessage, isNull);
     });
 
-    test('sets errorMessage when service returns null/false', () async {
-      fake.deleteResult = null;
+    test('sets errorMessage when service fails', () async {
+      fake.shouldThrow = true;
 
-      await provider.deleteModule('mod-1');
+      final result = await provider.deleteModule('mod-1');
 
-      expect(provider.errorMessage, 'Failed to delete module.');
+      expect(result.success, isFalse);
+      expect(provider.errorMessage, isNotNull);
+    });
+
+    test('validates module ID is not empty', () async {
+      final result = await provider.deleteModule('   ');
+
+      expect(result.success, isFalse);
+      expect(provider.errorMessage, contains('ID'));
     });
   });
 
   group('ModulesProvider — selectModule', () {
     test('updates selectedModule and notifies listeners', () async {
-      fake.modulesResult = [_module()];
-      await provider.loadModules('user-1');
+      fake.allModulesResult = [_module()];
+      await provider.loadModules();
 
       var notified = false;
       provider.addListener(() => notified = true);
@@ -255,12 +303,11 @@ void main() {
     });
 
     test('can deselect by passing null', () async {
-      fake.modulesResult = [_module()];
-      await provider.loadModules('user-1');
+      fake.allModulesResult = [_module()];
+      await provider.loadModules();
       final selectedModule = provider.modules.first;
-      provider
-        ..selectModule(selectedModule)
-        ..selectModule(null);
+      provider.selectModule(selectedModule);
+      provider.selectModule(null);
 
       expect(provider.selectedModule, isNull);
     });
