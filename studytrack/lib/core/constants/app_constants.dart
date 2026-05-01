@@ -5,7 +5,7 @@ class AppConstants {
 
   // Self-update — must match the +build_number in pubspec.yaml.
   // Bump this whenever you publish a new APK.
-  static const int currentVersionCode = 1;
+  static const int currentVersionCode = 0;
 
   // URL that returns the version manifest JSON. Replace with your hosted
   // JSON URL before building; a getter below constructs the runtime URL.
