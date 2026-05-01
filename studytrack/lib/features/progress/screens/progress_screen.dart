@@ -1,6 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -93,49 +92,54 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
     final now = DateTime.now();
     final weekStart = _startOfWeek(now);
+    final heatmapStart = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 83));
+    final heatmapEnd = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
+
+    final sessionsResult = await _sessionRepo.getSessionsByDateRange(
+      startDate: heatmapStart,
+      endDate: heatmapEnd,
+    );
+    final sessions = sessionsResult is Success<List<StudySessionModel>>
+        ? sessionsResult.data
+        : <StudySessionModel>[];
+
+    final sessionsByDay = <String, List<StudySessionModel>>{};
+    for (final session in sessions) {
+      final dayKey = _dateKey(session.scheduledDate);
+      sessionsByDay
+          .putIfAbsent(dayKey, () => <StudySessionModel>[])
+          .add(session);
+    }
+
     final weeklyTopicCounts = <int, int>{};
     var weeklySessions = 0;
-
     for (var dayIndex = 0; dayIndex < 7; dayIndex++) {
       final date = weekStart.add(Duration(days: dayIndex));
-      final dayStart = DateTime(date.year, date.month, date.day);
-      final dayEnd = dayStart
-          .add(const Duration(days: 1))
-          .subtract(const Duration(milliseconds: 1));
-      final sessionsResult = await _sessionRepo.getSessionsByDateRange(
-        startDate: dayStart,
-        endDate: dayEnd,
-      );
-      final sessions = sessionsResult is Success<List<StudySessionModel>>
-          ? sessionsResult.data
-          : <StudySessionModel>[];
+      final daySessions = sessionsByDay[_dateKey(date)] ?? const [];
 
-      final topicIds = sessions
+      final topicIds = daySessions
           .map((s) => s.topicId)
           .where((id) => id != null && id.isNotEmpty)
           .map((id) => id!)
           .toSet();
 
       weeklyTopicCounts[dayIndex] = topicIds.length;
-      weeklySessions += sessions.length;
+      weeklySessions += daySessions.length;
     }
 
     final heatmapCounts = <String, int>{};
-    final heatmapStart = now.subtract(const Duration(days: 83));
     for (var offset = 0; offset < 84; offset++) {
       final date = heatmapStart.add(Duration(days: offset));
-      final dayStart = DateTime(date.year, date.month, date.day);
-      final dayEnd = dayStart
-          .add(const Duration(days: 1))
-          .subtract(const Duration(milliseconds: 1));
-      final sessionsResult = await _sessionRepo.getSessionsByDateRange(
-        startDate: dayStart,
-        endDate: dayEnd,
-      );
-      final sessions = sessionsResult is Success<List<StudySessionModel>>
-          ? sessionsResult.data
-          : <StudySessionModel>[];
-      heatmapCounts[_dateKey(date)] = sessions.length;
+      heatmapCounts[_dateKey(date)] =
+          sessionsByDay[_dateKey(date)]?.length ?? 0;
     }
 
     if (!mounted) return;
@@ -174,24 +178,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.backgroundDark,
-    appBar: AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      title: Text(
-        'Analytics',
-        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
-      ),
-      actions: [
-        TextButton.icon(
-          onPressed: () => context.push('/weekly-wrapped'),
-          icon: const Icon(Icons.auto_awesome, size: 16, color: AppColors.cyan),
-          label: const Text(
-            'See Wrapped',
-            style: TextStyle(color: AppColors.cyan),
-          ),
-        ),
-      ],
-    ),
     body: _isLoading
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
@@ -693,8 +679,7 @@ class _TopicLineChart extends StatelessWidget {
           }
 
           final points = values.asMap().entries.map((entry) {
-            final rating = (entry.value).rating
-                .toDouble();
+            final rating = entry.value.rating.toDouble();
             return FlSpot(entry.key.toDouble(), rating);
           }).toList();
 

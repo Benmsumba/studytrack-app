@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -27,6 +28,7 @@ import 'features/update/controllers/update_provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   // To route crashes to Sentry, Firebase Crashlytics, or any other service,
   // call CrashReporter.configure() here before runZonedGuarded:
@@ -108,7 +110,7 @@ Future<void> _bootstrapApp() async {
         ChangeNotifierProvider(create: (_) => SettingsProvider()..load()),
         ChangeNotifierProvider<UpdateProvider>.value(value: updateProvider),
       ],
-      child: StudyAIdApp(authProvider: authProvider),
+      child: StudyTrackApp(authProvider: authProvider),
     ),
   );
 

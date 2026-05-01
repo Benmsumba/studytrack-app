@@ -15,6 +15,22 @@ class MainShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentIndex = navigationShell.currentIndex;
     final showStudyNow = currentIndex == 0 || currentIndex == 1;
+    final headerActions = currentIndex == 2
+        ? [
+            TextButton.icon(
+              onPressed: () => context.push('/weekly-wrapped'),
+              icon: const Icon(
+                Icons.auto_awesome,
+                size: 16,
+                color: AppColors.cyan,
+              ),
+              label: const Text(
+                'See Wrapped',
+                style: TextStyle(color: AppColors.cyan),
+              ),
+            ),
+          ]
+        : const <Widget>[];
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
@@ -28,6 +44,7 @@ class MainShell extends StatelessWidget {
                   title: _titles[currentIndex],
                   onProfileTap: () => context.go('/profile'),
                   onNotificationTap: () => context.push('/notifications'),
+                  actions: headerActions,
                 ),
               ),
               Expanded(child: navigationShell),
@@ -62,11 +79,13 @@ class _Header extends StatelessWidget {
     required this.title,
     required this.onProfileTap,
     required this.onNotificationTap,
+    required this.actions,
   });
 
   final String title;
   final VoidCallback onProfileTap;
   final VoidCallback onNotificationTap;
+  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -98,6 +117,7 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
+        ...actions,
         IconButton(
           onPressed: onNotificationTap,
           icon: const Icon(

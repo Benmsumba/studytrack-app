@@ -6,8 +6,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
-import '../../../core/utils/service_locator.dart';
 import '../../../core/services/gemini_service.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/topic_model.dart';
 
 class AiTutorScreen extends StatefulWidget {

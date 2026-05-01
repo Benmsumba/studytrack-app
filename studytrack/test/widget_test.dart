@@ -8,10 +8,10 @@ void main() {
 
     await tester.pumpWidget(
       const MaterialApp(
-        home: Scaffold(body: Center(child: Text('StudyAId'))),
+        home: Scaffold(body: Center(child: Text('StudyTrack'))),
       ),
     );
 
-    expect(find.text('StudyAId'), findsOneWidget);
+    expect(find.text('StudyTrack'), findsOneWidget);
   });
 }

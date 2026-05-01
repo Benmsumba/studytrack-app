@@ -74,9 +74,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           .getSessionsByDateRange(startDate: startOfToday, endDate: endOfToday);
       final upcomingExamsResult = await _examRepository.getUpcomingExams();
 
-      List<ClassSlotModel> modules = const [];
-      List<StudySessionModel> todaySessions = const [];
-      List<ExamModel> upcomingExams = const [];
+      var modules = const <ClassSlotModel>[];
+      var todaySessions = const <StudySessionModel>[];
+      var upcomingExams = const <ExamModel>[];
 
       timetableResult.fold((error) {}, (value) => modules = value);
       todaySessionsResult.fold((error) {}, (value) => todaySessions = value);

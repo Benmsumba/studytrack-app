@@ -11,7 +11,6 @@ import 'features/ai_tutor/screens/ai_tutor_screen.dart';
 import 'features/ai_tutor/screens/quiz_screen.dart';
 import 'features/auth/controllers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
-import 'features/auth/screens/onboarding_welcome_screen.dart';
 import 'features/auth/screens/signup_screen.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'features/groups/screens/group_chat_screen.dart';
@@ -24,12 +23,11 @@ import 'features/modules/screens/modules_screen.dart';
 import 'features/modules/screens/topic_detail_screen.dart';
 import 'features/notifications/screens/notifications_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
-import 'features/onboarding/screens/onboarding_steps_2356.dart';
 import 'features/profile/screens/profile_screen.dart';
 import 'features/progress/screens/progress_screen.dart';
+import 'features/progress/screens/exam_countdown_screen.dart';
 import 'features/progress/screens/weekly_wrapped_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
-import 'features/timetable/screens/exam_countdown_screen.dart';
 import 'features/timetable/screens/study_session_screen.dart';
 import 'features/timetable/screens/timetable_screen.dart';
 import 'features/update/widgets/update_overlay.dart';
@@ -65,8 +63,8 @@ String? resolveAppRedirect({
   return null;
 }
 
-class StudyAIdApp extends StatelessWidget {
-  const StudyAIdApp({required this.authProvider, super.key});
+class StudyTrackApp extends StatelessWidget {
+  const StudyTrackApp({required this.authProvider, super.key});
 
   final AuthProvider authProvider;
 
@@ -163,16 +161,8 @@ class StudyAIdApp extends StatelessWidget {
         builder: (context, state) => const SignupScreen(),
       ),
       GoRoute(
-        path: '/onboarding-welcome',
-        builder: (context, state) => const OnboardingWelcomeScreen(),
-      ),
-      GoRoute(
         path: '/onboarding',
-        builder: (context, state) => const OnboardingScreen(),
-      ),
-      GoRoute(
-        path: '/onboarding-steps-2356',
-        builder: (context, state) => const OnboardingSteps2356Screen(),
+        builder: (context, state) => const OnboardingFlow(),
       ),
       GoRoute(path: '/home', redirect: (context, state) => '/home/timetable'),
       StatefulShellRoute.indexedStack(
@@ -290,7 +280,7 @@ class StudyAIdApp extends StatelessWidget {
   Widget build(BuildContext context) => MaterialApp.router(
     debugShowCheckedModeBanner: false,
     routerConfig: _buildRouter(),
-    title: 'StudyAId',
+    title: 'StudyTrack',
     theme: _buildTheme(),
     builder: (context, child) => Stack(
       children: [

@@ -9,14 +9,14 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/utils/service_locator.dart';
 
-class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+class OnboardingFlow extends StatefulWidget {
+  const OnboardingFlow({super.key});
 
   @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  State<OnboardingFlow> createState() => _OnboardingFlowState();
 }
 
-class _OnboardingScreenState extends State<OnboardingScreen> {
+class _OnboardingFlowState extends State<OnboardingFlow> {
   static const String _brandAsset = 'assets/icon/app_icon.jpeg';
 
   static const int _steps = 6;

@@ -62,7 +62,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
 
   Future<void> _loadMessages() async {
     final result = await _topicChatRepository.getTopicMessages(widget.topicId);
-    List<Map<String, dynamic>> messages = const [];
+    var messages = const <Map<String, dynamic>>[];
     result.fold((error) {}, (value) => messages = value);
     await _hydrateSenderMeta(messages);
     if (!mounted) return;

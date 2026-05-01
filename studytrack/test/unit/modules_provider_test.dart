@@ -67,26 +67,26 @@ class _FakeModuleRepository implements ModuleRepository {
     if (shouldThrow) {
       return Failure(OfflineException(message: errorMessage));
     }
-    return Success(null);
+    return const Success(null);
   }
 
   @override
-  Future<Result<void>> archiveModule(String moduleId) async => Success(null);
+  Future<Result<void>> archiveModule(String moduleId) async => const Success(null);
 
   @override
   Future<Result<List<ModuleModel>>> getModulesBySemester(
     String semester,
-  ) async => Success([]);
+  ) async => const Success([]);
 
   @override
   Future<Result<List<ModuleModel>>> searchModules(String query) async =>
-      Success([]);
+      const Success([]);
 
   @override
-  Future<Result<int>> getModuleCount() async => Success(0);
+  Future<Result<int>> getModuleCount() async => const Success(0);
 
   @override
-  Future<Result<void>> syncModules() async => Success(null);
+  Future<Result<void>> syncModules() async => const Success(null);
 }
 
 // ---------------------------------------------------------------------------

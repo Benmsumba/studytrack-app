@@ -17,7 +17,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  // Logo matches the StudyAId brand: split brain (purple left / cyan right)
+  // Logo matches the StudyTrack brand: split brain (purple left / cyan right)
   // rising from an open book, with soft glow halos behind each hemisphere.
   static const String _logoAsset = 'assets/icon/app_icon.jpeg';
 
@@ -90,7 +90,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 ),
             const SizedBox(height: 24),
             Text(
-                  'StudyAId',
+                  'StudyTrack',
                   style: GoogleFonts.outfit(
                     fontSize: 32,
                     fontWeight: FontWeight.w700,

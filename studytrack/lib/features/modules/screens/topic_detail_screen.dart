@@ -6,15 +6,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/storage_service.dart';
-import '../../../core/utils/service_locator.dart';
-import '../../../core/repositories/topic_repository.dart';
 import '../../../core/repositories/module_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/services/storage_service.dart';
 import '../../../core/utils/result.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 import '../../../models/topic_rating_history_model.dart';
