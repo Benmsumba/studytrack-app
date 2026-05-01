@@ -47,7 +47,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
     );
 
     ModuleModel? module;
-    List<TopicModel> topics = const [];
+    var topics = const <TopicModel>[];
 
     moduleResult.fold((error) {}, (value) => module = value);
     topicsResult.fold((error) {}, (value) => topics = value);

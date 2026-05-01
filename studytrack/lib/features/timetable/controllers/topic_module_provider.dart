@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
-import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:studytrack/app.dart';
 
 void main() {
-  group('StudyAIdApp Navigation', () {
+  group('StudyTrackApp Navigation', () {
     testWidgets('resolveAppRedirect allows public routes without auth', (
       tester,
     ) async {

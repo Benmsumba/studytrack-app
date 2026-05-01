@@ -11,12 +11,12 @@ import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/study_group_repository.dart';
 import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
-import '../../../core/utils/service_locator.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/result.dart';
-import '../../../models/topic_model.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/group_member_model.dart';
 import '../../../models/study_session_model.dart';
+import '../../../models/topic_model.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   const GroupDetailScreen({required this.groupId, super.key, this.group});

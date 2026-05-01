@@ -58,7 +58,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   Future<void> _loadMessages() async {
     final result = await _groupRepository.getGroupMessages(widget.groupId);
-    List<GroupMessageModel> messages = const [];
+    var messages = const <GroupMessageModel>[];
     result.fold((error) {}, (value) => messages = value);
     await _hydrateSenderMeta(messages);
     if (!mounted) return;
