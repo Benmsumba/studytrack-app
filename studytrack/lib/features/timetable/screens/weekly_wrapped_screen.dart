@@ -6,10 +6,10 @@ import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/repositories/weekly_report_repository.dart';
-import '../../../core/utils/service_locator.dart';
 import '../../../core/services/gemini_service.dart';
-import '../../../models/topic_model.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/study_session_model.dart';
+import '../../../models/topic_model.dart';
 import '../../../models/weekly_report_model.dart';
 
 class WeeklyWrappedScreen extends StatefulWidget {
@@ -66,8 +66,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           );
 
       WeeklyReportModel? report;
-      List<TopicModel> topics = const [];
-      List<StudySessionModel> sessions = const [];
+      var topics = const <TopicModel>[];
+      var sessions = const <StudySessionModel>[];
 
       reportResult.fold((error) {}, (value) => report = value);
       topicsResult.fold((error) {}, (value) => topics = value);
