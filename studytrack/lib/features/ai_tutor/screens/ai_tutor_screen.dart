@@ -3,8 +3,11 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/repositories/module_repository.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../core/services/gemini_service.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../models/topic_model.dart';
 
 class AiTutorScreen extends StatefulWidget {
@@ -17,7 +20,9 @@ class AiTutorScreen extends StatefulWidget {
 }
 
 class _AiTutorScreenState extends State<AiTutorScreen> {
-  final SupabaseService _supabase = SupabaseService();
+  late final TopicRepository _topicRepository;
+  late final ModuleRepository _moduleRepository;
+  late final ProfileRepository _profileRepository;
   final GeminiService _gemini = GeminiService();
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -33,6 +38,9 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
   @override
   void initState() {
     super.initState();
+    _topicRepository = getIt<TopicRepository>();
+    _moduleRepository = getIt<ModuleRepository>();
+    _profileRepository = getIt<ProfileRepository>();
     _loadContext();
   }
 
@@ -44,22 +52,27 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
   }
 
   Future<void> _loadContext() async {
-    final topic = await _supabase.getTopicById(widget.topicId);
+    final topicResult = await _topicRepository.getTopicById(widget.topicId);
+    TopicModel? topic;
+    topicResult.fold((error) {}, (value) => topic = value);
     var moduleName = 'General';
     if (topic != null) {
-      final module = await _supabase.getModuleById(topic.moduleId);
-      moduleName = module?.name ?? 'General';
+      final moduleResult = await _moduleRepository.getModuleById(
+        topic!.moduleId,
+      );
+      moduleResult.fold((error) {}, (value) {
+        moduleName = value?.name ?? 'General';
+      });
     }
 
-    final user = _supabase.getCurrentUser();
     var course = 'Health Sciences';
-    if (user != null) {
-      final profile = await _supabase.getProfile(user.id);
+    final profileResult = await _profileRepository.getCurrentProfile();
+    profileResult.fold((error) {}, (profile) {
       final profileCourse = profile?['course']?.toString();
       if (profileCourse != null && profileCourse.trim().isNotEmpty) {
         course = profileCourse;
       }
-    }
+    });
 
     if (!mounted) return;
     setState(() {

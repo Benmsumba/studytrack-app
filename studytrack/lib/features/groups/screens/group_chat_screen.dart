@@ -1,8 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/repositories/study_group_repository.dart';
+import '../../../core/utils/service_locator.dart';
+import '../../../models/group_message_model.dart';
+import '../../../models/user_model.dart';
 import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 
 class GroupChatScreen extends StatefulWidget {
@@ -16,34 +22,44 @@ class GroupChatScreen extends StatefulWidget {
 }
 
 class _GroupChatScreenState extends State<GroupChatScreen> {
-  final SupabaseService _service = SupabaseService();
+  late final StudyGroupRepository _groupRepository;
+  late final AuthRepository _authRepository;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  StreamSubscription<List<GroupMessageModel>>? _messageSubscription;
 
   bool _loading = true;
   bool _sending = false;
-  List<Map<String, dynamic>> _messages = [];
+  List<GroupMessageModel> _messages = [];
   final Map<String, Map<String, dynamic>> _senderMeta = {};
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
+    _groupRepository = getIt<StudyGroupRepository>();
+    _authRepository = getIt<AuthRepository>();
     _init();
   }
 
   Future<void> _init() async {
     await _loadMessages();
-    await _service.subscribeToGroupMessages(widget.groupId, (message) {
-      if (!mounted) return;
-      setState(() {
-        _messages = [..._messages, message];
-      });
-      _scrollToBottom();
-    });
+    _messageSubscription?.cancel();
+    _messageSubscription = _groupRepository
+        .subscribeToGroupMessages(widget.groupId)
+        .listen((messages) {
+          if (!mounted) return;
+          setState(() {
+            _messages = messages;
+          });
+          _scrollToBottom();
+        });
   }
 
   Future<void> _loadMessages() async {
-    final messages = await _service.getGroupMessages(widget.groupId) ?? [];
+    final result = await _groupRepository.getGroupMessages(widget.groupId);
+    List<GroupMessageModel> messages = const [];
+    result.fold((error) {}, (value) => messages = value);
     await _hydrateSenderMeta(messages);
     if (!mounted) return;
     setState(() {
@@ -53,19 +69,22 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     _scrollToBottom();
   }
 
-  Future<void> _hydrateSenderMeta(List<Map<String, dynamic>> messages) async {
-    final me = _service.getCurrentUser();
+  Future<void> _hydrateSenderMeta(List<GroupMessageModel> messages) async {
+    final meResult = await _authRepository.getCurrentUser();
+    ProfileModel? me;
+    meResult.fold((error) {}, (value) => me = value);
     if (me == null) return;
 
-    final profile = await _service.getProfile(me.id);
+    final profile = me!;
+    _currentUserId = profile.id;
     for (final message in messages) {
-      final senderId = message['sender_id']?.toString() ?? '';
+      final senderId = message.senderId;
       if (senderId.isEmpty || _senderMeta.containsKey(senderId)) continue;
-      if (senderId == me.id) {
+      if (senderId == profile.id) {
         _senderMeta[senderId] = {
-          'name': profile?['name']?.toString() ?? 'You',
-          'course': profile?['course']?.toString() ?? 'N/A',
-          'year': (profile?['year_level'] as num?)?.toInt(),
+          'name': profile.name ?? 'You',
+          'course': profile.course ?? 'N/A',
+          'year': profile.yearLevel,
         };
       } else {
         final short = senderId.length > 8 ? senderId.substring(0, 8) : senderId;
@@ -85,21 +104,24 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Future<void> _sendMessage([String? quickText]) async {
-    final user = _service.getCurrentUser();
+    final userResult = await _authRepository.getCurrentUser();
+    ProfileModel? user;
+    userResult.fold((error) {}, (value) => user = value);
     final content = (quickText ?? _messageController.text).trim();
     if (user == null || content.isEmpty || _sending) return;
 
     setState(() => _sending = true);
-    final sent = await _service.sendMessage({
-      'group_id': widget.groupId,
-      'sender_id': user.id,
-      'content': content,
-      'message_type': 'text',
-    });
+    final sentResult = await _groupRepository.sendGroupMessage(
+      groupId: widget.groupId,
+      content: content,
+    );
     setState(() => _sending = false);
 
     if (!mounted) return;
-    if (sent == null) {
+    GroupMessageModel? sent;
+    sentResult.fold((error) {}, (value) => sent = value);
+    final sentMessage = sent;
+    if (sentMessage == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Failed to send message.')));
@@ -107,9 +129,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     }
 
     _messageController.clear();
-    await _hydrateSenderMeta([sent]);
+    await _hydrateSenderMeta([sentMessage]);
     setState(() {
-      _messages = [..._messages, sent];
+      _messages = [..._messages, sentMessage];
     });
     _scrollToBottom();
   }
@@ -161,7 +183,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
-    _service.unsubscribeFromMessages();
+    _messageSubscription?.cancel();
     super.dispose();
   }
 
@@ -186,11 +208,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final message = _messages[index];
-                      final sender =
-                          message['sender_id']?.toString() ?? 'unknown';
-                      final content = message['content']?.toString() ?? '';
-                      final me = _service.getCurrentUser();
-                      final mine = me != null && sender == me.id;
+                      final sender = message.senderId;
+                      final content = message.content;
+                      final mine =
+                          _currentUserId != null && sender == _currentUserId;
                       final meta = _senderMeta[sender] ?? const {};
                       final displayName = meta['name']?.toString() ?? sender;
                       final course = meta['course']?.toString() ?? 'N/A';

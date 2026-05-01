@@ -10,8 +10,10 @@ import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/weekly_report_repository.dart';
 import '../../../core/services/gemini_service.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/service_locator.dart';
 
 class WeeklyWrappedScreen extends StatefulWidget {
   const WeeklyWrappedScreen({super.key});
@@ -21,7 +23,8 @@ class WeeklyWrappedScreen extends StatefulWidget {
 }
 
 class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
-  final SupabaseService _supabase = SupabaseService();
+  late final WeeklyReportRepository _weeklyReportRepository;
+  late final ProfileRepository _profileRepository;
   final GeminiService _gemini = GeminiService();
   final PageController _pageController = PageController();
   final ScreenshotController _screenshotController = ScreenshotController();
@@ -45,64 +48,79 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   @override
   void initState() {
     super.initState();
+    _weeklyReportRepository = getIt<WeeklyReportRepository>();
+    _profileRepository = getIt<ProfileRepository>();
     _loadWeeklyWrapped();
   }
 
   Future<void> _loadWeeklyWrapped() async {
     try {
-      final user = _supabase.getCurrentUser();
-      if (user == null) {
-        if (mounted) {
-          setState(() => _loading = false);
-        }
-        return;
-      }
+      // Fetch profile from repository
+      final profileResult = await _profileRepository.getCurrentProfile();
+      profileResult.fold(
+        (error) {
+          studentName = 'Student';
+          streak = 0;
+        },
+        (profile) {
+          studentName = (profile?['name'] as String?)?.trim().isNotEmpty == true
+              ? (profile?['name'] as String)
+              : 'Student';
+          streak = (profile?['streak_count'] as num?)?.toInt() ?? 0;
+        },
+      );
 
-      final profile = await _supabase.getProfile(user.id);
-      studentName = (profile?['name'] as String?)?.trim().isNotEmpty == true
-          ? (profile?['name'] as String)
-          : 'Student';
-      streak = (profile?['streak_count'] as num?)?.toInt() ?? 0;
+      // Fetch weekly reports from repository
+      final reportsResult = await _weeklyReportRepository.getWeeklyReports(2);
 
-      final reports = await _supabase.getWeeklyReports(user.id, 2) ?? [];
-      final current = reports.isNotEmpty ? reports.first : <String, dynamic>{};
-      final previous = reports.length > 1 ? reports[1] : <String, dynamic>{};
+      reportsResult.fold(
+        (error) {
+          debugPrint('Failed to load weekly reports: ${error.message}');
+          _loading = false;
+        },
+        (reports) {
+          if (reports.isEmpty) {
+            if (mounted) {
+              setState(() => _loading = false);
+            }
+            return;
+          }
 
-      weekDateRange = _resolveWeekRange(current);
+          final current = reports.first;
+          final previous = reports.length > 1 ? reports[1] : null;
 
-      topicsStudied = (current['topics_studied'] as num?)?.toInt() ?? 0;
-      _lastWeekTopics = (previous['topics_studied'] as num?)?.toInt() ?? 0;
-      averageRating = ((current['average_rating'] as num?)?.toDouble() ?? 0)
-          .clamp(0, 10);
-      bestSubject =
-          (current['best_subject'] as String?)?.trim().isNotEmpty == true
-          ? current['best_subject'] as String
-          : 'No data yet';
-      weakestSubject =
-          (current['weakest_subject'] as String?)?.trim().isNotEmpty == true
-          ? current['weakest_subject'] as String
-          : 'No data yet';
-      sessionsCompleted = (current['sessions_completed'] as num?)?.toInt() ?? 0;
-      sessionsPlanned = (current['sessions_planned'] as num?)?.toInt() ?? 0;
+          weekDateRange = _resolveWeekRange(current);
 
-      final existingSummary = (current['ai_summary'] as String?)?.trim();
-      _hasGeneratedThisWeek =
-          existingSummary != null && existingSummary.isNotEmpty;
-      if (existingSummary != null && existingSummary.isNotEmpty) {
-        aiSummary = existingSummary;
-      } else {
-        final lastWeekTopics =
-            (previous['topics_studied'] as num?)?.toInt() ?? 0;
-        final diff = topicsStudied - lastWeekTopics;
-        final trend = diff >= 0
-            ? 'You covered $diff more topics than last week.'
-            : 'You covered ${diff.abs()} fewer topics than last week.';
-        aiSummary =
-            'This week you studied $topicsStudied topics with an average rating of ${averageRating.toStringAsFixed(1)}/10. $trend';
-      }
+          topicsStudied = current.topicsStudied;
+          _lastWeekTopics = previous?.topicsStudied ?? 0;
+          averageRating = (current.averageRating ?? 0).clamp(0, 10);
+          bestSubject = 'No data yet'; // Not available in WeeklyReportModel
+          weakestSubject = 'No data yet'; // Not available in WeeklyReportModel
+          sessionsCompleted = current.sessionsCompleted;
+          sessionsPlanned = current.sessionsPlanned;
+
+          _hasGeneratedThisWeek =
+              (current.aiSummary?.isNotEmpty ?? false) &&
+              (current.aiSummary != 'Keep your momentum this week.');
+          if (_hasGeneratedThisWeek && current.aiSummary != null) {
+            aiSummary = current.aiSummary!;
+          } else {
+            final lastWeekTopics = previous?.topicsStudied ?? 0;
+            final diff = topicsStudied - lastWeekTopics;
+            final trend = diff >= 0
+                ? 'You covered $diff more topics than last week.'
+                : 'You covered ${diff.abs()} fewer topics than last week.';
+            aiSummary =
+                'This week you studied $topicsStudied topics with an average rating of ${averageRating.toStringAsFixed(1)}/10. $trend';
+          }
+
+          if (mounted) {
+            setState(() => _loading = false);
+          }
+        },
+      );
     } catch (error) {
       debugPrint('WeeklyWrapped load error: $error');
-    } finally {
       if (mounted) {
         setState(() => _loading = false);
       }
@@ -192,21 +210,35 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     return Colors.white70;
   }
 
-  String _resolveWeekRange(Map<String, dynamic> report) {
-    final startRaw = report['week_start']?.toString();
-    final endRaw = report['week_end']?.toString();
-    if (startRaw == null || endRaw == null) {
+  String _resolveWeekRange(dynamic report) {
+    if (report == null) {
       final now = DateTime.now();
       final start = now.subtract(Duration(days: now.weekday - 1));
       final end = start.add(const Duration(days: 6));
       return '${_fmtDate(start)} - ${_fmtDate(end)}';
     }
 
-    final start = DateTime.tryParse(startRaw);
-    final end = DateTime.tryParse(endRaw);
-    if (start == null || end == null) {
-      return '';
+    DateTime? start;
+    DateTime? end;
+
+    if (report is Map<String, dynamic>) {
+      final startRaw = report['week_start']?.toString();
+      final endRaw = report['week_end']?.toString();
+      start = startRaw != null ? DateTime.tryParse(startRaw) : null;
+      end = endRaw != null ? DateTime.tryParse(endRaw) : null;
+    } else {
+      // Assume it's a WeeklyReportModel
+      start = (report as dynamic).weekStart as DateTime?;
+      end = (report as dynamic).weekEnd as DateTime?;
     }
+
+    if (start == null || end == null) {
+      final now = DateTime.now();
+      final startDate = now.subtract(Duration(days: now.weekday - 1));
+      final endDate = startDate.add(const Duration(days: 6));
+      return '${_fmtDate(startDate)} - ${_fmtDate(endDate)}';
+    }
+
     return '${_fmtDate(start)} - ${_fmtDate(end)}';
   }
 

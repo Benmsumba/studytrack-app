@@ -30,6 +30,11 @@ class AppConstants {
     return fromEnv.isNotEmpty ? fromEnv : geminiApiKey;
   }
 
+  static String get resolvedOAuthRedirectUri {
+    const fromEnv = String.fromEnvironment('OAUTH_REDIRECT_URI');
+    return fromEnv.isNotEmpty ? fromEnv : 'com.studytrack.app://callback';
+  }
+
   static bool get isSupabaseConfigured =>
       resolvedSupabaseUrl.isNotEmpty &&
       resolvedSupabaseAnonKey.isNotEmpty &&
@@ -44,7 +49,9 @@ class AppConstants {
   // OTA self-update: points at the public version.json in Supabase Storage.
   static String get updateCheckUrl {
     final base = resolvedSupabaseUrl;
-    if (base.isEmpty || base == 'YOUR_SUPABASE_URL') return '';
+    if (base.isEmpty || base == 'YOUR_SUPABASE_URL') {
+      return '';
+    }
     return '$base/storage/v1/object/public/app-updates/version.json';
   }
 

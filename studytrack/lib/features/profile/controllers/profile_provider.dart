@@ -1,33 +1,35 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/utils/service_locator.dart';
 
 class ProfileProvider extends ChangeNotifier {
-  ProfileProvider({SupabaseService? service})
-    : _service = service ?? SupabaseService();
+  ProfileProvider({ProfileRepository? profileRepository})
+    : _profileRepository = profileRepository ?? getIt<ProfileRepository>();
 
-  final SupabaseService _service;
+  final ProfileRepository _profileRepository;
 
   bool isLoading = false;
   Map<String, dynamic>? profile;
   String? error;
 
   Future<void> refresh() async {
-    final user = _service.getCurrentUser();
-    if (user == null) {
-      error = 'User not authenticated';
-      notifyListeners();
-      return;
-    }
-
     isLoading = true;
     error = null;
     notifyListeners();
 
     try {
-      profile = await _service.getProfile(user.id);
-    } catch (e) {
-      error = e.toString();
+      final result = await _profileRepository.getCurrentProfile();
+      switch (result) {
+        case Success(data: final data):
+          profile = data;
+        case Failure(error: final failure):
+          profile = null;
+          error = failure.message;
+      }
+    } on Exception catch (e) {
+      error = 'Failed to refresh profile: $e';
     } finally {
       isLoading = false;
       notifyListeners();

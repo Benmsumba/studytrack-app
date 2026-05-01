@@ -61,12 +61,13 @@ Future<void> _bootstrapApp() async {
         anonKey: AppConstants.resolvedSupabaseAnonKey,
       );
       await _completeAuthCodeExchangeIfPresent();
-    } catch (error, stack) {
+    } on Object catch (error, stack) {
       CrashReporter.report(error, stack);
     }
   } else {
     debugPrint(
-      'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY via --dart-define or update AppConstants.',
+      'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY '
+      'via --dart-define or update AppConstants.',
     );
   }
 
@@ -75,15 +76,20 @@ Future<void> _bootstrapApp() async {
   final notificationService = NotificationService();
   await _safeInit(notificationService.initialize);
 
-  if (AppConstants.isSupabaseConfigured) {
-    await _safeInit(notificationService.bootstrapForCurrentUser);
+  final authProvider = AuthProvider();
+  var lastAuthState = authProvider.isAuthenticated;
 
-    Supabase.instance.client.auth.onAuthStateChange.listen((event) {
-      if (event.session != null) {
-        unawaited(_safeInit(notificationService.bootstrapForCurrentUser));
-      }
-    });
+  if (AppConstants.isSupabaseConfigured && lastAuthState) {
+    await _safeInit(notificationService.bootstrapForCurrentUser);
   }
+
+  authProvider.addListener(() {
+    final currentAuthState = authProvider.isAuthenticated;
+    if (!lastAuthState && currentAuthState) {
+      unawaited(_safeInit(notificationService.bootstrapForCurrentUser));
+    }
+    lastAuthState = currentAuthState;
+  });
 
   final updateProvider = UpdateProvider(AppUpdateService());
 
@@ -91,7 +97,7 @@ Future<void> _bootstrapApp() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: OfflineSyncService.instance),
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider.value(value: authProvider),
         ChangeNotifierProvider(create: (_) => ModulesProvider()),
         ChangeNotifierProvider(create: (_) => TimetableProvider()),
         ChangeNotifierProvider(create: (_) => TopicModuleProvider()),
@@ -102,7 +108,7 @@ Future<void> _bootstrapApp() async {
         ChangeNotifierProvider(create: (_) => SettingsProvider()..load()),
         ChangeNotifierProvider<UpdateProvider>.value(value: updateProvider),
       ],
-      child: const StudyAIdApp(),
+      child: StudyAIdApp(authProvider: authProvider),
     ),
   );
 
@@ -112,7 +118,7 @@ Future<void> _bootstrapApp() async {
 Future<void> _safeInit(Future<void> Function() action) async {
   try {
     await action();
-  } catch (error, stack) {
+  } on Object catch (error, stack) {
     CrashReporter.report(error, stack);
   }
 }
@@ -125,7 +131,7 @@ Future<void> _completeAuthCodeExchangeIfPresent() async {
 
   try {
     await Supabase.instance.client.auth.exchangeCodeForSession(authCode);
-  } catch (error, stack) {
+  } on Object catch (error, stack) {
     CrashReporter.report(error, stack);
   }
 }

@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/exam_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/exam_model.dart';
 
 class ExamCountdownScreen extends StatefulWidget {
@@ -13,7 +14,7 @@ class ExamCountdownScreen extends StatefulWidget {
 }
 
 class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
-  final SupabaseService _service = SupabaseService();
+  late final ExamRepository _examRepository;
 
   bool _isLoading = true;
   List<ExamModel> _exams = const [];
@@ -21,28 +22,28 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
   @override
   void initState() {
     super.initState();
+    _examRepository = getIt<ExamRepository>();
     _loadExams();
   }
 
   Future<void> _loadExams() async {
-    final user = _service.getCurrentUser();
-    if (user == null) {
-      if (!mounted) return;
-      setState(() {
-        _exams = const [];
-        _isLoading = false;
-      });
-      return;
-    }
-
     try {
-      final rows = await _service.getUpcomingExams(user.id) ?? const [];
-      final exams = rows.map(ExamModel.fromJson).toList();
+      final result = await _examRepository.getUpcomingExams();
       if (!mounted) return;
-      setState(() {
-        _exams = exams;
-        _isLoading = false;
-      });
+      result.fold(
+        (error) {
+          setState(() {
+            _exams = const [];
+            _isLoading = false;
+          });
+        },
+        (exams) {
+          setState(() {
+            _exams = exams;
+            _isLoading = false;
+          });
+        },
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() {

@@ -1,14 +1,26 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/study_session_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/repositories/weekly_report_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/topic_model.dart';
 import '../../../models/weekly_report_model.dart';
 
 class ProgressProvider extends ChangeNotifier {
-  ProgressProvider({SupabaseService? supabaseService})
-    : _supabaseService = supabaseService ?? SupabaseService();
+  ProgressProvider({
+    WeeklyReportRepository? weeklyReportRepository,
+    StudySessionRepository? studySessionRepository,
+    TopicRepository? topicRepository,
+  }) : _weeklyReportRepository =
+           weeklyReportRepository ?? getIt<WeeklyReportRepository>(),
+       _studySessionRepository =
+           studySessionRepository ?? getIt<StudySessionRepository>(),
+       _topicRepository = topicRepository ?? getIt<TopicRepository>();
 
-  final SupabaseService _supabaseService;
+  final WeeklyReportRepository _weeklyReportRepository;
+  final StudySessionRepository _studySessionRepository;
+  final TopicRepository _topicRepository;
 
   WeeklyReportModel? _weeklyReport;
   bool _isGeneratingWrapped = false;
@@ -36,35 +48,53 @@ class ProgressProvider extends ChangeNotifier {
       ).subtract(Duration(days: now.weekday - 1));
       final weekEnd = weekStart.add(const Duration(days: 6));
 
-      final sessions =
-          await _supabaseService.getStudySessions(userId, now) ?? const [];
-      final topicsForCharts =
-          await _supabaseService.getTopicsNeedingReview(userId) ??
-          const <TopicModel>[];
+      // Fetch study sessions for the week
+      final sessionsResult = await _studySessionRepository
+          .getSessionsByDateRange(startDate: weekStart, endDate: weekEnd);
 
-      final completed = sessions
-          .where((row) => (row['status']?.toString() ?? '') == 'completed')
-          .length;
+      final completed = sessionsResult.fold(
+        (error) => 0,
+        (sessions) => sessions.where((s) => s.status == 'completed').length,
+      );
 
-      final reportPayload = {
-        'user_id': userId,
-        'week_start': weekStart.toIso8601String().split('T').first,
-        'week_end': weekEnd.toIso8601String().split('T').first,
-        'topics_studied': topicsForCharts.length,
-        'topics_planned': topicsForCharts.length,
-        'sessions_completed': completed,
-        'sessions_planned': sessions.length,
-        'average_rating': _averageRating(topicsForCharts),
-        'streak_at_end': 0,
-        'ai_summary': 'Keep your momentum this week.',
-      };
+      final sessionsCount = sessionsResult.fold(
+        (error) => 0,
+        (sessions) => sessions.length,
+      );
 
-      final saved = await _supabaseService.saveWeeklyReport(reportPayload);
-      if (saved == null) {
-        _errorMessage = 'Failed to generate weekly report.';
-      } else {
-        _weeklyReport = WeeklyReportModel.fromJson(saved);
-      }
+      // Fetch topics due for review
+      final topicsResult = await _topicRepository.getTopicsDueForReview();
+
+      final topicsForCharts = topicsResult.fold(
+        (error) => <dynamic>[],
+        (topics) => topics,
+      );
+
+      final averageRating = _averageRating(
+        topicsResult.fold((error) => [], (topics) => topics),
+      );
+
+      // Save the weekly report
+      final saveResult = await _weeklyReportRepository.saveWeeklyReport(
+        weekStart: weekStart,
+        weekEnd: weekEnd,
+        topicsStudied: topicsForCharts.length,
+        topicsPlanned: topicsForCharts.length,
+        sessionsCompleted: completed,
+        sessionsPlanned: sessionsCount,
+        averageRating: averageRating,
+        streakAtEnd: 0,
+        aiSummary: 'Keep your momentum this week.',
+      );
+
+      saveResult.fold(
+        (error) {
+          _errorMessage = error.message;
+        },
+        (report) {
+          _weeklyReport = report;
+        },
+      );
     } catch (error) {
       _errorMessage = 'Failed to generate weekly report: $error';
     } finally {
@@ -79,23 +109,41 @@ class ProgressProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final reports =
-          await _supabaseService.getWeeklyReports(userId, 8) ?? const [];
+      // Fetch weekly reports
+      final reportsResult = await _weeklyReportRepository.getWeeklyReports(8);
 
-      _chartData = {
-        'weeklyReports': reports,
-        'sessionTrend': reports
-            .map((row) => (row['sessions_completed'] as num?)?.toInt() ?? 0)
-            .toList(growable: false),
-        'ratingTrend': reports
-            .map((row) => (row['average_rating'] as num?)?.toDouble() ?? 0)
-            .toList(growable: false),
-      };
+      reportsResult.fold(
+        (error) {
+          _errorMessage = error.message;
+          _chartData = const {};
+        },
+        (reports) {
+          _errorMessage = null;
+          _chartData = {
+            'weeklyReports': reports,
+            'sessionTrend': reports
+                .map((report) => report.sessionsCompleted)
+                .toList(growable: false),
+            'ratingTrend': reports
+                .map((report) => report.averageRating)
+                .toList(growable: false),
+          };
+        },
+      );
 
-      final latest = await _supabaseService.getLastWeekReport(userId);
-      if (latest != null) {
-        _weeklyReport = WeeklyReportModel.fromJson(latest);
-      }
+      // Fetch latest weekly report
+      final latestResult = await _weeklyReportRepository.getLastWeeklyReport();
+      latestResult.fold(
+        (error) {
+          // Error fetching latest, silently ignore
+          debugPrint('Failed to load latest report: ${error.message}');
+        },
+        (report) {
+          if (report != null) {
+            _weeklyReport = report;
+          }
+        },
+      );
     } catch (error) {
       _errorMessage = 'Failed to load analytics data: $error';
     } finally {

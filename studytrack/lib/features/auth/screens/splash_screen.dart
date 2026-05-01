@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../controllers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -30,20 +30,20 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _handleRedirect() async {
-    if (!mounted) return;
-
-    var isLoggedIn = false;
-    try {
-      isLoggedIn = SupabaseService().isLoggedIn();
-    } catch (_) {
-      isLoggedIn = false;
+    if (!mounted) {
+      return;
     }
 
-    if (!mounted) return;
+    final auth = context.read<AuthProvider>();
+    await auth.refreshCurrentUser(silent: true);
+
+    if (!mounted) {
+      return;
+    }
 
     // Let the router's redirect logic handle all navigation
     // This ensures consistent routing based on auth state and onboarding status
-    if (isLoggedIn) {
+    if (auth.isAuthenticated) {
       context.go('/home/timetable');
     } else {
       context.go('/login');

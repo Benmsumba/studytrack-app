@@ -7,7 +7,16 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/repositories/study_group_repository.dart';
+import '../../../core/repositories/study_session_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/result.dart';
+import '../../../models/topic_model.dart';
+import '../../../models/group_member_model.dart';
+import '../../../models/study_session_model.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   const GroupDetailScreen({required this.groupId, super.key, this.group});
@@ -20,7 +29,10 @@ class GroupDetailScreen extends StatefulWidget {
 }
 
 class _GroupDetailScreenState extends State<GroupDetailScreen> {
-  final SupabaseService _service = SupabaseService();
+  late final StudyGroupRepository _groupRepository;
+  late final TopicRepository _topicRepository;
+  late final AuthRepository _authRepository;
+  late final StudySessionRepository _studySessionRepository;
 
   bool _loading = true;
   bool _isAdmin = false;
@@ -35,27 +47,49 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _groupRepository = getIt<StudyGroupRepository>();
+    _topicRepository = getIt<TopicRepository>();
+    _authRepository = getIt<AuthRepository>();
+    _studySessionRepository = getIt<StudySessionRepository>();
     _load();
   }
 
   Future<void> _load() async {
     setState(() => _loading = true);
 
-    final currentUser = _service.getCurrentUser();
-    _currentUserId = currentUser?.id;
+    final currentUserResult = await _authRepository.getCurrentUser();
+    _currentUserId = switch (currentUserResult) {
+      Success(data: final user) => user?.id,
+      Failure(error: final _) => null,
+    };
 
-    final members = await _service.getGroupMembers(widget.groupId) ?? [];
-    _isAdmin = members.any(
-      (member) =>
-          member['user_id']?.toString() == _currentUserId &&
-          member['role']?.toString() == 'admin',
+    final membersResult = await _groupRepository.getGroupMembers(
+      widget.groupId,
     );
+    final members = switch (membersResult) {
+      Success(data: final data) => data,
+      Failure(error: final _) => <GroupMemberModel>[],
+    };
+    _isAdmin = members.any(
+      (member) => member.userId == _currentUserId && member.role == 'admin',
+    );
+
+    final memberRows = members
+        .map(
+          (member) => {
+            'user_id': member.userId,
+            'role': member.role,
+            'joined_at': member.joinedAt.toIso8601String(),
+          },
+        )
+        .toList(growable: false);
 
     // Schema limitation: uploaded_notes has no direct group_id.
     // We show globally shared notes as a practical fallback.
     var sharedNotes = <Map<String, dynamic>>[];
     try {
-      final notes = await _service.client
+      final supabaseService = getIt<SupabaseService>();
+      final notes = await supabaseService.client
           .from('uploaded_notes')
           .select()
           .eq('is_shared_with_group', true)
@@ -72,33 +106,38 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         .where((topicId) => topicId.isNotEmpty)
         .toSet();
     for (final topicId in topicIds) {
-      final topic = await _service.getTopicById(topicId);
+      final topicResult = await _topicRepository.getTopicById(topicId);
+      TopicModel? topic;
+      topicResult.fold((error) {}, (value) => topic = value);
       if (topic != null) {
-        topicNames[topicId] = topic.name;
+        topicNames[topicId] = topic!.name;
       }
     }
 
     var sessions = <Map<String, dynamic>>[];
-    final user = _service.getCurrentUser();
-    if (user != null) {
-      try {
-        final today = DateTime.now();
-        final fromToday = await _service.client
-            .from('study_sessions')
-            .select()
-            .eq('user_id', user.id)
-            .gte('scheduled_date', today.toIso8601String().split('T').first)
-            .order('scheduled_date')
-            .limit(20);
-        sessions = (fromToday as List<dynamic>).cast<Map<String, dynamic>>();
-      } catch (error) {
-        debugPrint('group sessions load error: $error');
-      }
+    if (_currentUserId != null) {
+      final today = DateTime.now();
+      final sessionResult = await _studySessionRepository
+          .getSessionsByDateRange(
+            startDate: DateTime(today.year, today.month, today.day),
+            endDate: DateTime(
+              today.year,
+              today.month,
+              today.day,
+            ).add(const Duration(days: 30)),
+          );
+      final sessionModels = switch (sessionResult) {
+        Success(data: final data) => data,
+        Failure(error: final _) => <StudySessionModel>[],
+      };
+      sessions = sessionModels
+          .map((session) => session.toJson())
+          .toList(growable: false);
     }
 
     if (!mounted) return;
     setState(() {
-      _members = members;
+      _members = memberRows;
       _sharedNotes = sharedNotes;
       _sessions = sessions;
       _topicNames = topicNames;
@@ -107,9 +146,12 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   Future<void> _removeMember(String userId) async {
-    final ok = await _service.removeGroupMember(widget.groupId, userId);
+    final result = await _groupRepository.removeMemberFromGroup(
+      groupId: widget.groupId,
+      userId: userId,
+    );
     if (!mounted) return;
-    if (ok == true) {
+    if (result.isSuccess) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Member removed from group.')),
       );
@@ -155,22 +197,27 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   Future<void> _leaveGroup() async {
-    final user = _service.getCurrentUser();
-    if (user == null) return;
+    final current = await _authRepository.getCurrentUser();
+    final userId = switch (current) {
+      Success(data: final p) => p?.id,
+      Failure(error: final _) => null,
+    };
+    if (userId == null) return;
 
-    final ok = await _service.leaveGroup(widget.groupId, user.id);
+    final result = await _groupRepository.leaveGroup(widget.groupId);
     if (!mounted) return;
 
-    if (ok == true) {
+    if (result.isSuccess) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('You left the group.')));
       context.pop();
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Could not leave group.')));
+      return;
     }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Could not leave group.')));
   }
 
   String _groupName() => widget.group?['name']?.toString() ?? 'Study Group';

@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/study_group_repository.dart';
+import '../../../core/utils/service_locator.dart';
+import '../../../models/study_group_model.dart';
 
 class GroupsScreen extends StatefulWidget {
   const GroupsScreen({super.key});
@@ -13,18 +15,19 @@ class GroupsScreen extends StatefulWidget {
 }
 
 class _GroupsScreenState extends State<GroupsScreen> {
-  final SupabaseService _service = SupabaseService();
+  late final StudyGroupRepository _groupRepository;
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _inviteCodeController = TextEditingController();
 
   bool _isLoading = true;
   bool _isWorking = false;
-  List<Map<String, dynamic>> _groups = [];
+  List<StudyGroupModel> _groups = [];
 
   @override
   void initState() {
     super.initState();
+    _groupRepository = getIt<StudyGroupRepository>();
     _loadGroups();
   }
 
@@ -37,13 +40,12 @@ class _GroupsScreenState extends State<GroupsScreen> {
   }
 
   Future<void> _loadGroups() async {
-    final user = _service.getCurrentUser();
-    if (user == null) return;
-
     if (!mounted) return;
     setState(() => _isLoading = true);
 
-    final groups = await _service.getMyGroups(user.id) ?? [];
+    final result = await _groupRepository.getAllGroups();
+    List<StudyGroupModel> groups = const [];
+    result.fold((error) {}, (value) => groups = value);
 
     if (!mounted) return;
     setState(() {
@@ -53,20 +55,22 @@ class _GroupsScreenState extends State<GroupsScreen> {
   }
 
   Future<void> _createGroup() async {
-    final user = _service.getCurrentUser();
     final name = _nameController.text.trim();
     final description = _descriptionController.text.trim();
 
-    if (user == null || name.isEmpty) return;
+    if (name.isEmpty) return;
 
     setState(() => _isWorking = true);
-    final result = await _service.createGroup(name, description, user.id);
+    final result = await _groupRepository.createGroup(
+      name: name,
+      description: description,
+    );
     setState(() => _isWorking = false);
 
     if (!mounted) return;
     Navigator.of(context).pop();
 
-    if (result == null) {
+    if (result.isFailure) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Failed to create group.')));
@@ -79,18 +83,17 @@ class _GroupsScreenState extends State<GroupsScreen> {
   }
 
   Future<void> _joinGroup() async {
-    final user = _service.getCurrentUser();
     final code = _inviteCodeController.text.trim();
-    if (user == null || code.isEmpty) return;
+    if (code.isEmpty) return;
 
     setState(() => _isWorking = true);
-    final result = await _service.joinGroup(code, user.id);
+    final result = await _groupRepository.joinGroupByCode(code);
     setState(() => _isWorking = false);
 
     if (!mounted) return;
     Navigator.of(context).pop();
 
-    if (result == null) {
+    if (result.isFailure) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Invalid invite code or join failed.')),
       );
@@ -221,14 +224,10 @@ class _GroupsScreenState extends State<GroupsScreen> {
                   )
                 else
                   ..._groups.map((membership) {
-                    final group = Map<String, dynamic>.from(
-                      (membership['study_groups'] as Map?) ?? const {},
-                    );
-                    final groupId = group['id']?.toString() ?? '';
-                    final inviteCode = group['invite_code']?.toString() ?? '-';
-                    final title = group['name']?.toString() ?? 'Untitled Group';
-                    final subtitle =
-                        group['description']?.toString() ?? 'No description';
+                    final groupId = membership.id;
+                    final inviteCode = membership.inviteCode;
+                    final title = membership.name;
+                    final subtitle = membership.description ?? 'No description';
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -255,8 +254,10 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         trailing: const Icon(Icons.chevron_right),
                         onTap: groupId.isEmpty
                             ? null
-                            : () =>
-                                  context.push('/group/$groupId', extra: group),
+                            : () => context.push(
+                                '/group/$groupId',
+                                extra: membership.toJson(),
+                              ),
                       ),
                     );
                   }),

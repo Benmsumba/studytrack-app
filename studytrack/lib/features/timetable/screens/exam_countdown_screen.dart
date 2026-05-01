@@ -5,7 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/exam_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../core/widgets/wrapped_card.dart';
 
 class ExamCountdownScreen extends StatefulWidget {
@@ -16,7 +17,7 @@ class ExamCountdownScreen extends StatefulWidget {
 }
 
 class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
-  final SupabaseService _service = SupabaseService();
+  late final ExamRepository _examRepository;
 
   bool _isLoading = true;
   Map<String, dynamic>? _exam;
@@ -26,48 +27,54 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
   @override
   void initState() {
     super.initState();
+    _examRepository = getIt<ExamRepository>();
     _loadExam();
   }
 
   Future<void> _loadExam() async {
-    final user = _service.getCurrentUser();
-    if (user == null) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      return;
-    }
-
     try {
-      final exams =
-          await _service.getUpcomingExams(user.id) ?? <Map<String, dynamic>>[];
-      final exam = exams.isEmpty ? null : exams.first;
-      final examDate = _parseDate(
-        exam?['exam_date'] ?? exam?['date'] ?? exam?['scheduled_date'],
-      );
-      final daysRemaining = examDate == null
-          ? 0
-          : math.max(examDate.difference(DateTime.now()).inDays, 0);
-      final readiness = examDate == null
-          ? 0.0
-          : (1 - (daysRemaining / 21)).clamp(0.0, 1.0).toDouble();
-
+      final result = await _examRepository.getUpcomingExams();
       if (!mounted) return;
-      setState(() {
-        _exam = exam;
-        _daysRemaining = daysRemaining;
-        _readiness = readiness;
-        _isLoading = false;
-      });
+      result.fold(
+        (error) {
+          setState(() => _isLoading = false);
+        },
+        (exams) {
+          if (exams.isEmpty) {
+            setState(() {
+              _exam = null;
+              _daysRemaining = 0;
+              _readiness = 0;
+              _isLoading = false;
+            });
+            return;
+          }
+
+          final exam = exams.first;
+          final examDate = exam.examDate;
+          final daysRemaining = math.max(
+            examDate.difference(DateTime.now()).inDays,
+            0,
+          );
+          final readiness = (1 - (daysRemaining / 21)).clamp(0.0, 1.0);
+
+          setState(() {
+            _exam = {
+              'title': exam.title,
+              'exam_date': exam.examDate.toIso8601String(),
+              'venue': exam.venue,
+              'exam_time': exam.examTime,
+            };
+            _daysRemaining = daysRemaining;
+            _readiness = readiness;
+            _isLoading = false;
+          });
+        },
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() => _isLoading = false);
     }
-  }
-
-  DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    return DateTime.tryParse(value.toString());
   }
 
   String? _firstText(Map<String, dynamic>? data, List<String> keys) {

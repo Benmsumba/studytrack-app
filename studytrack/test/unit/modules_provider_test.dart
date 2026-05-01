@@ -203,7 +203,10 @@ void main() {
     test('sets errorMessage when service returns null', () async {
       fake.updateResult = null;
 
-      await provider.updateModule(moduleId: 'mod-1', changes: {});
+      await provider.updateModule(
+        moduleId: 'mod-1',
+        changes: <String, dynamic>{},
+      );
 
       expect(provider.errorMessage, 'Failed to update module.');
     });

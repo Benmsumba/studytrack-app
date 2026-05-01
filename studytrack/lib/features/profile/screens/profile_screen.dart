@@ -3,10 +3,19 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/repositories/exam_repository.dart';
+import '../../../core/repositories/module_repository.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/repositories/weekly_report_repository.dart';
 import '../../../core/services/export_service.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/widgets/loading_shimmer_widget.dart';
+import '../../../models/exam_model.dart';
+import '../../../models/module_model.dart';
+import '../../../models/topic_model.dart';
 import '../../../models/weekly_report_model.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -17,7 +26,12 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final SupabaseService _service = SupabaseService();
+  final ProfileRepository _profileRepository = getIt<ProfileRepository>();
+  final ModuleRepository _moduleRepository = getIt<ModuleRepository>();
+  final TopicRepository _topicRepository = getIt<TopicRepository>();
+  final WeeklyReportRepository _weeklyReportRepository =
+      getIt<WeeklyReportRepository>();
+  final ExamRepository _examRepository = getIt<ExamRepository>();
   final ExportService _exportService = ExportService();
 
   bool _isLoading = true;
@@ -37,18 +51,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _load() async {
     try {
-      final user = _service.getCurrentUser();
-      if (user == null) return;
+      final profileResult = await _profileRepository.getCurrentProfile();
+      final profile = switch (profileResult) {
+        Success(data: final data) => data,
+        Failure(error: final _) => null,
+      };
 
-      final profile = await _service.getProfile(user.id);
-      final modules = await _service.getModules(user.id) ?? [];
-      final lastReport = await _service.getLastWeekReport(user.id);
+      if (profile == null) {
+        if (!mounted) return;
+        setState(() {
+          _profile = <String, dynamic>{};
+          _lastWeeklyReport = null;
+          _totalTopics = 0;
+          _masteredTopics = 0;
+          _longestStreak = 0;
+          _isLoading = false;
+        });
+        return;
+      }
+
+      final modules = await _loadModules();
+      final lastReport = await _loadLastWeeklyReport();
 
       var total = 0;
       var mastered = 0;
 
       for (final module in modules) {
-        final topics = await _service.getTopics(module.id) ?? [];
+        final topics = await _loadTopics(module.id);
         total += topics.length;
         mastered += topics.where((t) => (t.currentRating ?? 0) >= 7).length;
       }
@@ -56,23 +85,60 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       setState(() {
         _profile = profile;
-        _lastWeeklyReport = lastReport == null
-            ? null
-            : WeeklyReportModel.fromJson(lastReport);
+        _lastWeeklyReport = lastReport;
         _totalTopics = total;
         _masteredTopics = mastered;
-        _longestStreak = (profile?['streak_count'] as num?)?.toInt() ?? 0;
+        _longestStreak = (profile['streak_count'] as num?)?.toInt() ?? 0;
         _isLoading = false;
       });
     } catch (e) {
       debugPrint('Error loading profile: $e');
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _profile = <String, dynamic>{};
+          _isLoading = false;
+        });
+      }
     }
+  }
+
+  String? get _userId => (_profile?['id'] as String?)?.trim();
+
+  Future<List<ModuleModel>> _loadModules() async {
+    final result = await _moduleRepository.getAllModules();
+    return switch (result) {
+      Success(data: final data) => data,
+      Failure(error: final _) => <ModuleModel>[],
+    };
+  }
+
+  Future<List<TopicModel>> _loadTopics(String moduleId) async {
+    final result = await _topicRepository.getTopicsByModule(moduleId);
+    return switch (result) {
+      Success(data: final data) => data,
+      Failure(error: final _) => <TopicModel>[],
+    };
+  }
+
+  Future<WeeklyReportModel?> _loadLastWeeklyReport() async {
+    final result = await _weeklyReportRepository.getLastWeeklyReport();
+    return switch (result) {
+      Success(data: final data) => data,
+      Failure(error: final _) => null,
+    };
+  }
+
+  Future<List<ExamModel>> _loadUpcomingExams() async {
+    final result = await _examRepository.getUpcomingExams();
+    return switch (result) {
+      Success(data: final data) => data,
+      Failure(error: final _) => <ExamModel>[],
+    };
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading || _profile == null) {
+    if (_isLoading) {
       return const Scaffold(
         backgroundColor: AppColors.backgroundDark,
         body: LoadingShimmerWidget.profile(),
@@ -265,8 +331,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _exportWeeklyReport() async {
-    final user = _service.getCurrentUser();
-    if (user == null) {
+    final userId = _userId;
+    if (userId == null || userId.isEmpty) {
       SnackbarHelper.show(
         context,
         'Please sign in to export your report.',
@@ -314,8 +380,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _backupToGoogleDrive() async {
-    final user = _service.getCurrentUser();
-    if (user == null || _profile == null) {
+    final userId = _userId;
+    if (userId == null || userId.isEmpty || _profile == null) {
       SnackbarHelper.show(
         context,
         'Please sign in to back up your data.',
@@ -326,14 +392,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     setState(() => _isBackingUp = true);
     try {
-      final modules = await _service.getModules(user.id) ?? [];
-      final exams = await _service.getUpcomingExams(user.id) ?? [];
+      final modules = await _loadModules();
+      final exams = await _loadUpcomingExams();
 
       final backup = await _exportService.createBackupJson(
-        userId: user.id,
+        userId: userId,
         profile: _profile!,
         modules: modules.map((module) => module.toJson()).toList(),
-        exams: exams,
+        exams: exams.map((exam) => exam.toJson()).toList(),
       );
 
       await _exportService.shareFileToGoogleDrive(
