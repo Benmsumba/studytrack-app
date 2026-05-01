@@ -4,7 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../controllers/settings_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -15,7 +16,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final SupabaseService _service = SupabaseService();
+  final AuthRepository _authRepository = getIt<AuthRepository>();
 
   @override
   Widget build(BuildContext context) {
@@ -158,7 +159,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () async {
-                    await _service.signOut();
+                    await _authRepository.signOut();
                     if (!context.mounted) return;
                     context.go('/login');
                   },

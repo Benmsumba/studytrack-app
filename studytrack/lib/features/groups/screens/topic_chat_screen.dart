@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/topic_chat_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 
 class TopicChatScreen extends StatefulWidget {
@@ -24,7 +26,8 @@ class TopicChatScreen extends StatefulWidget {
 }
 
 class _TopicChatScreenState extends State<TopicChatScreen> {
-  final SupabaseService _service = SupabaseService();
+  late final TopicChatRepository _topicChatRepository;
+  late final ProfileRepository _profileRepository;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -33,16 +36,21 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
   List<Map<String, dynamic>> _messages = [];
   final Set<String> _struggleUserIds = {};
   final Map<String, Map<String, dynamic>> _senderMeta = {};
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
+    _topicChatRepository = getIt<TopicChatRepository>();
+    _profileRepository = getIt<ProfileRepository>();
     _init();
   }
 
   Future<void> _init() async {
     await _loadMessages();
-    await _service.subscribeToMessages(widget.topicId, (message) {
+    await _topicChatRepository.subscribeToTopicMessages(widget.topicId, (
+      message,
+    ) {
       if (!mounted) return;
       setState(() {
         _messages = [..._messages, message];
@@ -53,7 +61,9 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
   }
 
   Future<void> _loadMessages() async {
-    final messages = await _service.getTopicMessages(widget.topicId) ?? [];
+    final result = await _topicChatRepository.getTopicMessages(widget.topicId);
+    List<Map<String, dynamic>> messages = const [];
+    result.fold((error) {}, (value) => messages = value);
     await _hydrateSenderMeta(messages);
     if (!mounted) return;
     setState(() {
@@ -65,18 +75,21 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
   }
 
   Future<void> _hydrateSenderMeta(List<Map<String, dynamic>> messages) async {
-    final me = _service.getCurrentUser();
-    if (me == null) return;
+    final profileResult = await _profileRepository.getCurrentProfile();
+    Map<String, dynamic>? profile;
+    profileResult.fold((error) {}, (value) => profile = value);
+    if (profile == null) return;
 
-    final profile = await _service.getProfile(me.id);
+    final currentProfile = profile!;
+    _currentUserId = currentProfile['id']?.toString();
     for (final message in messages) {
       final senderId = message['sender_id']?.toString() ?? '';
       if (senderId.isEmpty || _senderMeta.containsKey(senderId)) continue;
-      if (senderId == me.id) {
+      if (senderId == _currentUserId) {
         _senderMeta[senderId] = {
-          'name': profile?['name']?.toString() ?? 'You',
-          'course': profile?['course']?.toString() ?? 'N/A',
-          'year': (profile?['year_level'] as num?)?.toInt(),
+          'name': currentProfile['name']?.toString() ?? 'You',
+          'course': currentProfile['course']?.toString() ?? 'N/A',
+          'year': (currentProfile['year_level'] as num?)?.toInt(),
         };
       } else {
         final short = senderId.length > 8 ? senderId.substring(0, 8) : senderId;
@@ -113,21 +126,27 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
   }
 
   Future<void> _sendMessage([String? quickText]) async {
-    final user = _service.getCurrentUser();
+    final profileResult = await _profileRepository.getCurrentProfile();
+    Map<String, dynamic>? user;
+    profileResult.fold((error) {}, (value) => user = value);
     final text = (quickText ?? _messageController.text).trim();
 
     if (user == null || text.isEmpty || _sending) return;
 
+    final currentUser = user!;
+
     setState(() => _sending = true);
-    final sent = await _service.sendMessage({
-      'topic_id': widget.topicId,
-      'sender_id': user.id,
-      'content': text,
-      'message_type': 'text',
-    });
+    final sentResult = await _topicChatRepository.sendTopicMessage(
+      topicId: widget.topicId,
+      senderId: currentUser['id']?.toString() ?? '',
+      content: text,
+      messageType: 'text',
+    );
     setState(() => _sending = false);
 
     if (!mounted) return;
+    Map<String, dynamic>? sent;
+    sentResult.fold((error) {}, (value) => sent = value);
     if (sent == null) {
       ScaffoldMessenger.of(
         context,
@@ -135,30 +154,39 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
       return;
     }
 
+    final sentMessage = sent!;
     _messageController.clear();
-    await _hydrateSenderMeta([sent]);
+    await _hydrateSenderMeta([sentMessage]);
     setState(() {
-      _messages = [..._messages, sent];
+      _messages = [..._messages, sentMessage];
     });
     _scrollToBottom();
   }
 
   Future<void> _flagStruggleAnonymously() async {
-    final user = _service.getCurrentUser();
+    final profileResult = await _profileRepository.getCurrentProfile();
+    Map<String, dynamic>? user;
+    profileResult.fold((error) {}, (value) => user = value);
     if (user == null) return;
 
-    final sent = await _service.sendMessage({
-      'topic_id': widget.topicId,
-      'sender_id': user.id,
-      'content': '[STRUGGLE_FLAG] I need help with this topic',
-      'message_type': 'system',
-    });
+    final currentUser = user!;
+
+    final sentResult = await _topicChatRepository.sendTopicMessage(
+      topicId: widget.topicId,
+      senderId: currentUser['id']?.toString() ?? '',
+      content: '[STRUGGLE_FLAG] I need help with this topic',
+      messageType: 'system',
+    );
+
+    Map<String, dynamic>? sent;
+    sentResult.fold((error) {}, (value) => sent = value);
 
     if (sent != null && mounted) {
-      await _hydrateSenderMeta([sent]);
+      final sentMessage = sent!;
+      await _hydrateSenderMeta([sentMessage]);
       if (!mounted) return;
       setState(() {
-        _messages = [..._messages, sent];
+        _messages = [..._messages, sentMessage];
       });
       _refreshFlagsFromMessages();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -211,7 +239,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
-    _service.unsubscribeFromMessages();
+    _topicChatRepository.unsubscribeFromTopicMessages();
     super.dispose();
   }
 
@@ -293,8 +321,8 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                         return const SizedBox.shrink();
                       }
 
-                      final me = _service.getCurrentUser();
-                      final isMine = me != null && senderId == me.id;
+                      final isMine =
+                          _currentUserId != null && senderId == _currentUserId;
                       final meta = _senderMeta[senderId] ?? const {};
                       final displayName = meta['name']?.toString() ?? 'Member';
                       final course = meta['course']?.toString() ?? 'N/A';

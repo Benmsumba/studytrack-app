@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/study_session_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/repositories/weekly_report_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../core/services/gemini_service.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../models/topic_model.dart';
+import '../../../models/study_session_model.dart';
+import '../../../models/weekly_report_model.dart';
 
 class WeeklyWrappedScreen extends StatefulWidget {
   const WeeklyWrappedScreen({super.key});
@@ -14,7 +20,10 @@ class WeeklyWrappedScreen extends StatefulWidget {
 }
 
 class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
-  final SupabaseService _supabase = SupabaseService();
+  late final ProfileRepository _profileRepository;
+  late final WeeklyReportRepository _weeklyReportRepository;
+  late final TopicRepository _topicRepository;
+  late final StudySessionRepository _studySessionRepository;
   final GeminiService _gemini = GeminiService();
   final PageController _pageController = PageController();
 
@@ -32,54 +41,59 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   @override
   void initState() {
     super.initState();
+    _profileRepository = getIt<ProfileRepository>();
+    _weeklyReportRepository = getIt<WeeklyReportRepository>();
+    _topicRepository = getIt<TopicRepository>();
+    _studySessionRepository = getIt<StudySessionRepository>();
     _load();
   }
 
   Future<void> _load() async {
     try {
-      final user = _supabase.getCurrentUser();
-      if (user == null) return;
+      final profileResult = await _profileRepository.getCurrentProfile();
+      Map<String, dynamic>? profile;
+      profileResult.fold((error) {}, (value) => profile = value);
+      final userId = profile?['id']?.toString() ?? '';
+      if (profile == null || userId.isEmpty) return;
+      final currentProfile = profile!;
 
-      final profile = await _supabase.getProfile(user.id);
-      studentName = (profile?['name'] as String?) ?? 'Student';
-      streak = (profile?['streak_count'] as num?)?.toInt() ?? 0;
+      final reportResult = await _weeklyReportRepository.getLastWeeklyReport();
+      final topicsResult = await _topicRepository.getTopicsDueForReview();
+      final sessionsResult = await _studySessionRepository
+          .getSessionsByDateRange(
+            startDate: DateTime.now().subtract(const Duration(days: 7)),
+            endDate: DateTime.now(),
+          );
 
-      final report = await _supabase.getLastWeekReport(user.id);
-      final topics =
-          await _supabase.getTopicsNeedingReview(user.id) ??
-          const <TopicModel>[];
-      final sessions =
-          await _supabase.getStudySessions(user.id, DateTime.now()) ??
-          const <Map<String, dynamic>>[];
+      WeeklyReportModel? report;
+      List<TopicModel> topics = const [];
+      List<StudySessionModel> sessions = const [];
 
-      topicsStudied =
-          (report?['topics_studied'] as num?)?.toInt() ?? topics.length;
-      averageRating =
-          (report?['average_rating'] as num?)?.toDouble() ??
-          _averageRating(topics);
-      final bestSubjectFromReport = report?['best_subject']?.toString().trim();
-      bestSubject =
-          bestSubjectFromReport != null && bestSubjectFromReport.isNotEmpty
-          ? bestSubjectFromReport
+      reportResult.fold((error) {}, (value) => report = value);
+      topicsResult.fold((error) {}, (value) => topics = value);
+      sessionsResult.fold((error) {}, (value) => sessions = value);
+
+      studentName = (currentProfile['name'] as String?) ?? 'Student';
+      streak = (currentProfile['streak_count'] as num?)?.toInt() ?? 0;
+
+      topicsStudied = report?.topicsStudied ?? topics.length;
+      averageRating = report?.averageRating ?? _averageRating(topics);
+      bestSubject = report?.bestSubject?.trim().isNotEmpty == true
+          ? report!.bestSubject!.trim()
           : _bestTopicName(topics) ?? 'Top Topic';
-      final weakestSubjectFromReport = report?['weakest_subject']
-          ?.toString()
-          .trim();
-      weakestSubject =
-          weakestSubjectFromReport != null &&
-              weakestSubjectFromReport.isNotEmpty
-          ? weakestSubjectFromReport
+      weakestSubject = report?.weakestSubject?.trim().isNotEmpty == true
+          ? report!.weakestSubject!.trim()
           : _weakestTopicName(topics) ?? 'Focus Topic';
       sessionsCompleted =
-          (report?['sessions_completed'] as num?)?.toInt() ??
-          sessions
-              .where((row) => (row['status']?.toString() ?? '') == 'completed')
-              .length;
+          report?.sessionsCompleted ??
+          sessions.where((session) => session.status == 'completed').length;
       sessionsMissed =
-          (report?['sessions_missed'] as num?)?.toInt() ??
-          (sessions.length - sessionsCompleted).clamp(0, 999);
+          (report == null
+                  ? sessions.length - sessionsCompleted
+                  : sessions.length - sessionsCompleted)
+              .clamp(0, 999);
 
-      final reportSummary = report?['ai_summary']?.toString().trim();
+      final reportSummary = report?.aiSummary?.trim();
       aiSummary = reportSummary != null && reportSummary.isNotEmpty
           ? reportSummary
           : await _gemini.generateWeeklyWrappedSummary(

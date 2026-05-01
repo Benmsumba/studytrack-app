@@ -5,7 +5,14 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/class_timetable_repository.dart';
+import '../../../core/repositories/exam_repository.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/study_session_repository.dart';
+import '../../../core/utils/service_locator.dart';
+import '../../../models/class_slot_model.dart';
+import '../../../models/exam_model.dart';
+import '../../../models/study_session_model.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -15,7 +22,10 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  final SupabaseService _service = SupabaseService();
+  late final ProfileRepository _profileRepository;
+  late final ClassTimetableRepository _classTimetableRepository;
+  late final StudySessionRepository _studySessionRepository;
+  late final ExamRepository _examRepository;
 
   bool _isLoading = true;
   List<_NotificationTileData> _items = const [];
@@ -23,12 +33,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   void initState() {
     super.initState();
+    _profileRepository = getIt<ProfileRepository>();
+    _classTimetableRepository = getIt<ClassTimetableRepository>();
+    _studySessionRepository = getIt<StudySessionRepository>();
+    _examRepository = getIt<ExamRepository>();
     _loadNotifications();
   }
 
   Future<void> _loadNotifications() async {
-    final user = _service.getCurrentUser();
-    if (user == null) {
+    final profileResult = await _profileRepository.getCurrentProfile();
+    Map<String, dynamic>? profile;
+    profileResult.fold((error) {}, (value) => profile = value);
+    if (profile == null) {
+      if (!mounted) return;
+      setState(() {
+        _items = const [];
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final userId = profile!['id']?.toString() ?? '';
+    if (userId.isEmpty) {
       if (!mounted) return;
       setState(() {
         _items = const [];
@@ -38,27 +64,30 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
 
     try {
-      final profile = await _service.getProfile(user.id);
-      final modules =
-          await _service.getClassTimetable(user.id) ?? <Map<String, dynamic>>[];
-      final todaySessions =
-          await _service.getStudySessions(user.id, DateTime.now()) ??
-          <Map<String, dynamic>>[];
-      final upcomingExams =
-          await _service.getUpcomingExams(user.id) ?? <Map<String, dynamic>>[];
+      final today = DateTime.now();
+      final startOfToday = DateTime(today.year, today.month, today.day);
+      final endOfToday = startOfToday.add(const Duration(days: 1));
 
-      final todayClassCount = modules.where((row) {
-        final day = (row['day_of_week'] as num?)?.toInt();
-        return day == DateTime.now().weekday;
-      }).length;
+      final timetableResult = await _classTimetableRepository
+          .getClassSlotsByDay(userId: userId, dayOfWeek: today.weekday);
+      final todaySessionsResult = await _studySessionRepository
+          .getSessionsByDateRange(startDate: startOfToday, endDate: endOfToday);
+      final upcomingExamsResult = await _examRepository.getUpcomingExams();
 
-      final weeklySessions = await _weeklySessionCount(user.id);
-      final streak = (profile?['streak_count'] as num?)?.toInt() ?? 0;
-      final activeSession = _firstMap(todaySessions);
-      final exam = _firstMap(upcomingExams);
-      final examDate = _parseDate(
-        exam?['exam_date'] ?? exam?['date'] ?? exam?['scheduled_date'],
-      );
+      List<ClassSlotModel> modules = const [];
+      List<StudySessionModel> todaySessions = const [];
+      List<ExamModel> upcomingExams = const [];
+
+      timetableResult.fold((error) {}, (value) => modules = value);
+      todaySessionsResult.fold((error) {}, (value) => todaySessions = value);
+      upcomingExamsResult.fold((error) {}, (value) => upcomingExams = value);
+
+      final todayClassCount = modules.length;
+      final weeklySessions = await _weeklySessionCount(userId);
+      final streak = (profile!['streak_count'] as num?)?.toInt() ?? 0;
+      final activeSession = todaySessions.isEmpty ? null : todaySessions.first;
+      final exam = upcomingExams.isEmpty ? null : upcomingExams.first;
+      final examDate = exam?.examDate;
       final daysRemaining = examDate == null
           ? null
           : math.max(examDate.difference(DateTime.now()).inDays, 0);
@@ -86,7 +115,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           _NotificationTileData(
             title: 'Exam Countdown Alert',
             body:
-                '${_firstText(exam, ['title', 'name']) ?? 'Your exam'} is in ${daysRemaining ?? 0} days. Keep momentum high.',
+                '${exam.title} is in ${daysRemaining ?? 0} days. Keep momentum high.',
             timeLabel: 'Latest',
             icon: Icons.warning_amber_rounded,
             iconColor: AppColors.warning,
@@ -122,53 +151,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       now.month,
       now.day,
     ).subtract(Duration(days: now.weekday - 1));
-    var count = 0;
-
-    for (var offset = 0; offset < 7; offset++) {
-      final sessions =
-          await _service.getStudySessions(
-            userId,
-            weekStart.add(Duration(days: offset)),
-          ) ??
-          <Map<String, dynamic>>[];
-      count += sessions.length;
-    }
-
-    return count;
+    final weekEnd = weekStart.add(const Duration(days: 7));
+    final result = await _studySessionRepository.getSessionsByDateRange(
+      startDate: weekStart,
+      endDate: weekEnd,
+    );
+    return result.fold((error) => 0, (sessions) => sessions.length);
   }
 
-  Map<String, dynamic>? _firstMap(List<Map<String, dynamic>> items) {
-    if (items.isEmpty) return null;
-    return items.first;
-  }
-
-  String? _firstText(Map<String, dynamic>? data, List<String> keys) {
-    if (data == null) return null;
-    for (final key in keys) {
-      final value = data[key]?.toString().trim();
-      if (value != null && value.isNotEmpty) {
-        return value;
-      }
-    }
-    return null;
-  }
-
-  DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value;
-    return DateTime.tryParse(value.toString());
-  }
-
-  String _sessionNotificationBody(Map<String, dynamic> session) {
-    final topic =
-        _firstText(session, ['topic_name', 'title', 'name']) ??
-        'A study session';
+  String _sessionNotificationBody(StudySessionModel session) {
+    final topic = session.title;
     final time = _sessionTimeLabel(session);
     return '$topic starts at $time.';
   }
 
-  String _sessionTimeLabel(Map<String, dynamic> session) {
-    final raw = _firstText(session, ['start_time', 'time']);
+  String _sessionTimeLabel(StudySessionModel session) {
+    final raw = session.startTime;
     if (raw == null) return 'Today';
     return _formatTimeLabel(raw);
   }

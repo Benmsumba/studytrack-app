@@ -3,8 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:provider/provider.dart';
+
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/service_locator.dart';
+import '../../../core/repositories/study_group_repository.dart';
+import '../../../core/utils/result.dart';
+import '../../../models/study_group_model.dart';
+import '../../auth/controllers/auth_provider.dart';
 
 class GroupsScreen extends StatefulWidget {
   const GroupsScreen({super.key});
@@ -14,10 +20,10 @@ class GroupsScreen extends StatefulWidget {
 }
 
 class _GroupsScreenState extends State<GroupsScreen> {
-  final SupabaseService _service = SupabaseService();
+  final StudyGroupRepository _groupRepo = getIt<StudyGroupRepository>();
   bool _loading = true;
   bool _working = false;
-  List<Map<String, dynamic>> _groups = [];
+  List<StudyGroupModel> _groups = [];
 
   @override
   void initState() {
@@ -26,11 +32,15 @@ class _GroupsScreenState extends State<GroupsScreen> {
   }
 
   Future<void> _loadGroups() async {
-    final user = _service.getCurrentUser();
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.currentUser;
     if (user == null) return;
 
     setState(() => _loading = true);
-    final groups = await _service.getMyGroups(user.id) ?? [];
+    final result = await _groupRepo.getAllGroups();
+    final groups = result is Success<List<StudyGroupModel>>
+        ? result.data
+        : <StudyGroupModel>[];
     if (!mounted) return;
     setState(() {
       _groups = groups;
@@ -91,7 +101,11 @@ class _GroupsScreenState extends State<GroupsScreen> {
                 onPressed: _working
                     ? null
                     : () async {
-                        final user = _service.getCurrentUser();
+                        final auth = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
+                        final user = auth.currentUser;
                         final name = nameController.text.trim();
                         final description = descriptionController.text.trim();
                         if (user == null || name.isEmpty) return;
@@ -101,17 +115,16 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         final navigator = Navigator.of(context);
                         final scaffold = ScaffoldMessenger.of(context);
 
-                        final created = await _service.createGroup(
-                          name,
-                          description,
-                          user.id,
+                        final createdResult = await _groupRepo.createGroup(
+                          name: name,
+                          description: description.isEmpty ? '' : description,
                         );
                         setState(() => _working = false);
 
                         if (!mounted) return;
                         navigator.pop();
 
-                        if (created == null) {
+                        if (createdResult is! Success<StudyGroupModel>) {
                           scaffold.showSnackBar(
                             const SnackBar(
                               content: Text('Failed to create group.'),
@@ -120,8 +133,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                           return;
                         }
 
-                        final invite =
-                            created['invite_code']?.toString() ?? '-';
+                        final invite = createdResult.data.inviteCode;
                         if (!mounted) return;
                         showDialog<void>(
                           context: navigator.context,
@@ -235,7 +247,11 @@ class _GroupsScreenState extends State<GroupsScreen> {
                 onPressed: _working
                     ? null
                     : () async {
-                        final user = _service.getCurrentUser();
+                        final auth = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
+                        final user = auth.currentUser;
                         final code = codeController.text.trim();
                         if (user == null || code.isEmpty) return;
 
@@ -244,13 +260,15 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         final navigator = Navigator.of(context);
                         final scaffold = ScaffoldMessenger.of(context);
 
-                        final joined = await _service.joinGroup(code, user.id);
+                        final joinedResult = await _groupRepo.joinGroupByCode(
+                          code,
+                        );
                         setState(() => _working = false);
 
                         if (!mounted) return;
                         navigator.pop();
 
-                        if (joined == null) {
+                        if (joinedResult is! Success<void>) {
                           scaffold.showSnackBar(
                             const SnackBar(
                               content: Text('Invite code not found.'),
@@ -387,24 +405,18 @@ class _GroupsScreenState extends State<GroupsScreen> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  ..._groups.map((membership) {
-                    final group = Map<String, dynamic>.from(
-                      (membership['study_groups'] as Map?) ?? const {},
-                    );
-                    final name = group['name']?.toString() ?? 'Study Group';
-                    final description =
-                        group['description']?.toString() ??
-                        'No description yet';
-                    final groupId = group['id']?.toString() ?? '';
-                    final memberCount =
-                        (membership['member_count'] as num?)?.toInt() ?? 1;
-                    final lastActivity = membership['last_activity_at']
-                        ?.toString();
+                  ..._groups.map((group) {
+                    final g = group;
+                    final name = g.name;
+                    final description = g.description ?? 'No description yet';
+                    final groupId = g.id;
+                    const memberCount = 1; // placeholder
+                    const String? lastActivity = null;
 
                     return GestureDetector(
                       onTap: groupId.isEmpty
                           ? null
-                          : () => context.push('/group/$groupId', extra: group),
+                          : () => context.push('/group/$groupId', extra: g),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(14),

@@ -1,10 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/constants/app_constants.dart';
@@ -12,6 +9,7 @@ import 'core/constants/app_text_styles.dart';
 import 'core/widgets/offline_status_banner.dart';
 import 'features/ai_tutor/screens/ai_tutor_screen.dart';
 import 'features/ai_tutor/screens/quiz_screen.dart';
+import 'features/auth/controllers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/onboarding_welcome_screen.dart';
 import 'features/auth/screens/signup_screen.dart';
@@ -67,25 +65,10 @@ String? resolveAppRedirect({
   return null;
 }
 
-// Bridges a Stream into a ChangeNotifier so GoRouter re-evaluates its
-// redirect function whenever the auth state changes (e.g. email confirmed).
-class _GoRouterRefreshStream extends ChangeNotifier {
-  _GoRouterRefreshStream(Stream<dynamic> stream) {
-    notifyListeners();
-    _subscription = stream.asBroadcastStream().listen((_) => notifyListeners());
-  }
-
-  late final StreamSubscription<dynamic> _subscription;
-
-  @override
-  void dispose() {
-    _subscription.cancel();
-    super.dispose();
-  }
-}
-
 class StudyAIdApp extends StatelessWidget {
-  const StudyAIdApp({super.key});
+  const StudyAIdApp({required this.authProvider, super.key});
+
+  final AuthProvider authProvider;
 
   static ThemeData _buildTheme() {
     final base = ThemeData(
@@ -134,15 +117,11 @@ class StudyAIdApp extends StatelessWidget {
     );
   }
 
-  // refreshListenable is set only when Supabase is configured so we don't
-  // access Supabase.instance before it has been initialized.
-  static final GoRouter _router = GoRouter(
+  // refreshListenable is intentionally omitted; redirect decisions are based
+  // on AuthProvider state updates triggered by auth flows and splash refresh.
+  GoRouter _buildRouter() => GoRouter(
     initialLocation: '/splash',
-    refreshListenable: AppConstants.isSupabaseConfigured
-        ? _GoRouterRefreshStream(
-            Supabase.instance.client.auth.onAuthStateChange,
-          )
-        : null,
+    refreshListenable: authProvider,
     redirect: (context, state) async {
       final location = state.matchedLocation;
 
@@ -151,9 +130,12 @@ class StudyAIdApp extends StatelessWidget {
       }
 
       final isSupabaseConfigured = AppConstants.isSupabaseConfigured;
-      final hasUser =
-          isSupabaseConfigured &&
-          Supabase.instance.client.auth.currentUser != null;
+      final hasUser = isSupabaseConfigured && authProvider.isAuthenticated;
+      final isAuthUnknown = authProvider.status == AuthStatus.unknown;
+
+      if (isAuthUnknown) {
+        return null;
+      }
 
       if (!isSupabaseConfigured || !hasUser) {
         return '/login';
@@ -307,7 +289,7 @@ class StudyAIdApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) => MaterialApp.router(
     debugShowCheckedModeBanner: false,
-    routerConfig: _router,
+    routerConfig: _buildRouter(),
     title: 'StudyAId',
     theme: _buildTheme(),
     builder: (context, child) => Stack(

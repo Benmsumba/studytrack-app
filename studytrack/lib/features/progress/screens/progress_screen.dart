@@ -4,7 +4,17 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import 'package:provider/provider.dart';
+
+import '../../../core/utils/service_locator.dart';
+import '../../../core/repositories/module_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/repositories/study_session_repository.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/utils/result.dart';
+import '../../../models/topic_rating_history_model.dart';
+import '../../../models/study_session_model.dart';
+import '../../auth/controllers/auth_provider.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 
@@ -16,7 +26,10 @@ class ProgressScreen extends StatefulWidget {
 }
 
 class _ProgressScreenState extends State<ProgressScreen> {
-  final SupabaseService _service = SupabaseService();
+  final ModuleRepository _moduleRepo = getIt<ModuleRepository>();
+  final TopicRepository _topicRepo = getIt<TopicRepository>();
+  final StudySessionRepository _sessionRepo = getIt<StudySessionRepository>();
+  final ProfileRepository _profileRepo = getIt<ProfileRepository>();
 
   bool _isLoading = true;
   List<ModuleModel> _modules = [];
@@ -38,7 +51,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   Future<void> _loadProgress() async {
-    final user = _service.getCurrentUser();
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.currentUser;
     if (user == null) {
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -47,11 +61,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
     setState(() => _isLoading = true);
 
-    final modules = await _service.getModules(user.id) ?? [];
+    final modulesResult = await _moduleRepo.getAllModules();
+    final modules = modulesResult is Success<List<ModuleModel>>
+        ? modulesResult.data
+        : <ModuleModel>[];
+
     final allTopics = <TopicModel>[];
     for (final module in modules) {
-      final topics = await _service.getTopics(module.id) ?? [];
-      allTopics.addAll(topics);
+      final topicsResult = await _topicRepo.getTopicsByModule(module.id);
+      if (topicsResult is Success<List<TopicModel>>) {
+        allTopics.addAll(topicsResult.data);
+      }
     }
 
     final ratings = allTopics
@@ -66,8 +86,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
         ? 0.0
         : (ratings.reduce((a, b) => a + b) / ratings.length).toDouble();
 
-    final profile = await _service.getProfile(user.id);
-    final currentStreak = (profile?['streak_count'] as num?)?.toInt() ?? 0;
+    final profileResult = await _profileRepo.getProfileById(user.id);
+    final currentStreak = profileResult is Success<Map<String, dynamic>?>
+        ? (profileResult.data?['streak_count'] as num?)?.toInt() ?? 0
+        : 0;
 
     final now = DateTime.now();
     final weekStart = _startOfWeek(now);
@@ -76,10 +98,22 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
     for (var dayIndex = 0; dayIndex < 7; dayIndex++) {
       final date = weekStart.add(Duration(days: dayIndex));
-      final sessions = await _service.getStudySessions(user.id, date) ?? [];
+      final dayStart = DateTime(date.year, date.month, date.day);
+      final dayEnd = dayStart
+          .add(const Duration(days: 1))
+          .subtract(const Duration(milliseconds: 1));
+      final sessionsResult = await _sessionRepo.getSessionsByDateRange(
+        startDate: dayStart,
+        endDate: dayEnd,
+      );
+      final sessions = sessionsResult is Success<List<StudySessionModel>>
+          ? sessionsResult.data
+          : <StudySessionModel>[];
+
       final topicIds = sessions
-          .map((session) => session['topic_id']?.toString() ?? '')
-          .where((topicId) => topicId.isNotEmpty)
+          .map((s) => s.topicId)
+          .where((id) => id != null && id.isNotEmpty)
+          .map((id) => id!)
           .toSet();
 
       weeklyTopicCounts[dayIndex] = topicIds.length;
@@ -90,7 +124,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final heatmapStart = now.subtract(const Duration(days: 83));
     for (var offset = 0; offset < 84; offset++) {
       final date = heatmapStart.add(Duration(days: offset));
-      final sessions = await _service.getStudySessions(user.id, date) ?? [];
+      final dayStart = DateTime(date.year, date.month, date.day);
+      final dayEnd = dayStart
+          .add(const Duration(days: 1))
+          .subtract(const Duration(milliseconds: 1));
+      final sessionsResult = await _sessionRepo.getSessionsByDateRange(
+        startDate: dayStart,
+        endDate: dayEnd,
+      );
+      final sessions = sessionsResult is Success<List<StudySessionModel>>
+          ? sessionsResult.data
+          : <StudySessionModel>[];
       heatmapCounts[_dateKey(date)] = sessions.length;
     }
 
@@ -576,7 +620,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     ? const SizedBox.shrink()
                     : _TopicLineChart(
                         topic: _selectedTopic!,
-                        service: _service,
+                        topicRepo: _topicRepo,
                       ),
               ),
             ],
@@ -623,17 +667,22 @@ class _ProgressScreenState extends State<ProgressScreen> {
 }
 
 class _TopicLineChart extends StatelessWidget {
-  const _TopicLineChart({required this.topic, required this.service});
+  const _TopicLineChart({required this.topic, required this.topicRepo});
 
   final TopicModel topic;
-  final SupabaseService service;
+  final TopicRepository topicRepo;
 
   @override
   Widget build(BuildContext context) =>
-      FutureBuilder<List<Map<String, dynamic>>?>(
-        future: service.getTopicRatingHistory(topic.id, limit: 20),
+      FutureBuilder<List<TopicRatingHistoryModel>?>(
+        future: topicRepo.getTopicRatingHistory(topic.id).then((result) {
+          if (result is Success<List<TopicRatingHistoryModel>>) {
+            return result.data;
+          }
+          return <TopicRatingHistoryModel>[];
+        }),
         builder: (context, snapshot) {
-          final values = snapshot.data ?? [];
+          final values = snapshot.data ?? <TopicRatingHistoryModel>[];
           if (values.isEmpty) {
             return Center(
               child: Text(
@@ -644,7 +693,8 @@ class _TopicLineChart extends StatelessWidget {
           }
 
           final points = values.asMap().entries.map((entry) {
-            final rating = (entry.value['rating'] as num?)?.toDouble() ?? 0;
+            final rating = (entry.value).rating
+                .toDouble();
             return FlSpot(entry.key.toDouble(), rating);
           }).toList();
 

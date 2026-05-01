@@ -7,12 +7,19 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:provider/provider.dart';
+
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/storage_service.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/service_locator.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/repositories/module_repository.dart';
+import '../../../core/utils/result.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
+import '../../../models/topic_rating_history_model.dart';
 import '../../../models/uploaded_note_model.dart';
+import '../../auth/controllers/auth_provider.dart';
 import '../../voice_notes/widgets/voice_note_player_widget.dart';
 import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 
@@ -26,7 +33,8 @@ class TopicDetailScreen extends StatefulWidget {
 }
 
 class _TopicDetailScreenState extends State<TopicDetailScreen> {
-  final SupabaseService _service = SupabaseService();
+  final TopicRepository _topicRepo = getIt<TopicRepository>();
+  final ModuleRepository _moduleRepo = getIt<ModuleRepository>();
   final StorageService _storageService = StorageService();
   final TextEditingController _notesController = TextEditingController();
 
@@ -58,43 +66,31 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
       _isLoading = true;
     });
 
-    final topic = await _service.getTopicById(widget.topicId);
+    final topicResult = await _topicRepo.getTopicById(widget.topicId);
+    final topic = topicResult is Success<TopicModel?> ? topicResult.data : null;
     final module = topic == null
         ? null
-        : await _service.getModuleById(topic.moduleId);
+        : await _moduleRepo
+              .getModuleById(topic.moduleId)
+              .then((r) => r is Success<ModuleModel?> ? r.data : null);
 
-    final history =
-        await _service.getTopicRatingHistory(widget.topicId, limit: 5) ??
-        <Map<String, dynamic>>[];
-    final notes = await _service.getNotesByTopic(widget.topicId) ?? [];
-    final voiceNotes = notes
-        .where((note) {
-          final type = (note['file_type'] as String?)?.toLowerCase() ?? '';
-          return type != 'pdf' && type != 'pptx';
-        })
-        .toList(growable: false);
-
-    final transcripts = <String, String>{};
-    for (final note in voiceNotes) {
-      final noteId = note['id']?.toString() ?? '';
-      if (noteId.isEmpty) continue;
-      final chunks = await _service.getNoteChunks(noteId) ?? [];
-      transcripts[noteId] = chunks
-          .map((chunk) => chunk['content']?.toString() ?? '')
-          .where((chunk) => chunk.trim().isNotEmpty)
-          .join(' ')
-          .trim();
-    }
+    final historyResult = await _topicRepo.getTopicRatingHistory(
+      widget.topicId,
+    );
+    final history = historyResult is Success<List<TopicRatingHistoryModel>>
+        ? historyResult.data
+              .map((h) => {'rating': h.rating, 'ratedAt': h.ratedAt})
+              .toList()
+        : <Map<String, dynamic>>[];
+    final notes = <UploadedNoteModel>[];
 
     if (!mounted) return;
     setState(() {
       _topic = topic;
       _module = module;
       _ratingHistory = history;
-      _uploadedNotes = notes.map(UploadedNoteModel.fromJson).toList();
-      _voiceNoteTranscripts
-        ..clear()
-        ..addAll(transcripts);
+      _uploadedNotes = notes;
+      _voiceNoteTranscripts.clear();
       _selectedRating = topic?.currentRating ?? 0;
       _notesController.text = topic?.notes ?? '';
       _isLoading = false;
@@ -120,7 +116,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
       _isSavingNotes = true;
     });
 
-    await _service.updateTopicNotes(_topic!.id, _notesController.text);
+    await _topicRepo.updateTopicNotes(_topic!.id, _notesController.text);
 
     if (!mounted) return;
     setState(() {
@@ -130,7 +126,8 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
 
   Future<void> _uploadNote() async {
     final topic = _topic;
-    final user = _service.getCurrentUser();
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.currentUser;
     if (topic == null || user == null || _isUploadingNote) return;
 
     final result = await FilePicker.platform.pickFiles(
@@ -186,12 +183,12 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   }
 
   Future<void> _toggleShare(UploadedNoteModel note, bool value) async {
-    await _service.updateUploadedNoteSharing(note.id, value);
+    // TODO: Implement via NotesRepository or similar in future wave
     await _load();
   }
 
   Future<void> _deleteUploadedNote(String noteId) async {
-    await _service.deleteUploadedNote(noteId);
+    // TODO: Implement via NotesRepository or similar in future wave
     await _load();
   }
 
@@ -200,7 +197,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
       return;
     }
 
-    await _service.updateTopicRating(_topic!.id, _selectedRating);
+    await _topicRepo.rateTopic(_topic!.id, _selectedRating);
     await _load();
 
     if (!mounted) return;

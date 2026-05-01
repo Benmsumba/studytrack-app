@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 
-/// Environment configuration for the application
-/// This class reads configuration from dart-define variables passed at build time
+/// Environment configuration for the application.
+///
+/// This class reads configuration from dart-define variables passed at
+/// build time.
 class Environment {
   static const String _supabaseUrlKey = 'SUPABASE_URL';
   static const String _supabaseAnonKeyKey = 'SUPABASE_ANON_KEY';
@@ -11,12 +13,12 @@ class Environment {
   // Fallback values for local development
   static const String _defaultSupabaseUrl = String.fromEnvironment(
     _supabaseUrlKey,
-    defaultValue: 'https://your-project.supabase.co',
+    defaultValue: '',
   );
 
   static const String _defaultSupabaseAnonKey = String.fromEnvironment(
     _supabaseAnonKeyKey,
-    defaultValue: 'your-anon-key',
+    defaultValue: '',
   );
 
   static const String _defaultGeminiApiKey = String.fromEnvironment(
@@ -51,12 +53,10 @@ class Environment {
   static bool get isFullyConfigured {
     final validUrl =
         supabaseUrl.isNotEmpty &&
-        !supabaseUrl.contains('your-project') &&
+        supabaseUrl.startsWith('https://') &&
         supabaseUrl.contains('supabase.co');
 
-    final validAnonKey =
-        supabaseAnonKey.isNotEmpty &&
-        !supabaseAnonKey.contains('your-anon-key');
+    final validAnonKey = supabaseAnonKey.isNotEmpty;
 
     return validUrl && validAnonKey;
   }
@@ -81,13 +81,16 @@ class Environment {
     debugPrint('App Environment: $appEnv');
     debugPrint('Is Production: $isProduction');
     debugPrint(
-      'Supabase URL: ${supabaseUrl.contains('https') ? '✓ Configured' : '✗ Missing'}',
+      'Supabase URL: '
+      '${supabaseUrl.contains('https') ? '✓ Configured' : '✗ Missing'}',
     );
     debugPrint(
-      'Supabase Anon Key: ${supabaseAnonKey.isNotEmpty ? '✓ Configured' : '✗ Missing'}',
+      'Supabase Anon Key: '
+      '${supabaseAnonKey.isNotEmpty ? '✓ Configured' : '✗ Missing'}',
     );
     debugPrint(
-      'Gemini API Key: ${geminiApiKey.isNotEmpty ? '✓ Configured' : '✗ Missing'}',
+      'Gemini API Key: '
+      '${geminiApiKey.isNotEmpty ? '✓ Configured' : '✗ Missing'}',
     );
     debugPrint('========================================');
   }

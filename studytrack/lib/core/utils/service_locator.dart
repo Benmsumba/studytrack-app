@@ -3,18 +3,24 @@ import 'package:get_it/get_it.dart';
 
 import '../repositories/auth_repository.dart';
 import '../repositories/class_timetable_repository.dart';
+import '../repositories/exam_repository.dart';
 import '../repositories/impl/auth_repository_impl.dart';
 import '../repositories/impl/class_timetable_repository_impl.dart';
+import '../repositories/impl/exam_repository_impl.dart';
 import '../repositories/impl/module_repository_impl.dart';
 import '../repositories/impl/profile_repository_impl.dart';
 import '../repositories/impl/study_group_repository_impl.dart';
 import '../repositories/impl/study_session_repository_impl.dart';
+import '../repositories/impl/topic_chat_repository_impl.dart';
 import '../repositories/impl/topic_repository_impl.dart';
+import '../repositories/impl/weekly_report_repository_impl.dart';
 import '../repositories/module_repository.dart';
 import '../repositories/profile_repository.dart';
 import '../repositories/study_group_repository.dart';
 import '../repositories/study_session_repository.dart';
+import '../repositories/topic_chat_repository.dart';
 import '../repositories/topic_repository.dart';
+import '../repositories/weekly_report_repository.dart';
 import '../services/achievement_service.dart';
 import '../services/export_service.dart';
 import '../services/gemini_service.dart';
@@ -60,6 +66,13 @@ Future<void> setupServiceLocator() async {
   );
   getIt.registerSingleton<StudySessionRepository>(
     StudySessionRepositoryImpl(supabaseService),
+  );
+  getIt.registerSingleton<TopicChatRepository>(
+    TopicChatRepositoryImpl(supabaseService),
+  );
+  getIt.registerSingleton<ExamRepository>(ExamRepositoryImpl(supabaseService));
+  getIt.registerSingleton<WeeklyReportRepository>(
+    WeeklyReportRepositoryImpl(supabaseService),
   );
 
   final notificationService = NotificationService();

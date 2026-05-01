@@ -6,7 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/utils/service_locator.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -31,7 +32,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final _pageController = PageController();
   final _nameController = TextEditingController();
   final _courseController = TextEditingController();
-  final _supabaseService = SupabaseService();
+  late final ProfileRepository _profileRepository;
 
   int _currentStep = 0;
   int _yearLevel = 1;
@@ -39,6 +40,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   double _dailyStudyHours = 3;
   String _studyPreference = 'alone';
   bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileRepository = getIt<ProfileRepository>();
+  }
 
   @override
   void dispose() {
@@ -97,8 +104,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     setState(() => _isSaving = true);
     try {
-      final user = _supabaseService.getCurrentUser();
-      if (user == null) {
+      final profileResult = await _profileRepository.getCurrentProfile();
+      final currentProfile = profileResult.fold(
+        (error) => null,
+        (profile) => profile,
+      );
+      if (currentProfile == null) {
         // User should always be logged in at this point, but if not,
         // complete onboarding locally and let them access the app
         final prefs = await SharedPreferences.getInstance();
@@ -108,7 +119,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       }
 
       // Attempt to save profile preferences to backend
-      await _supabaseService.updateProfile(user.id, {
+      await _profileRepository.updateProfile({
         'name': _nameController.text.trim(),
         'course': _courseController.text.trim(),
         'year_level': _yearLevel,

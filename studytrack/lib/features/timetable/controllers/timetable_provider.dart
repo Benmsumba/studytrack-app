@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/repositories/class_timetable_repository.dart';
 import '../../../core/repositories/study_session_repository.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../models/class_slot_model.dart';
@@ -22,16 +21,12 @@ class TimetableActionResult {
 
 class TimetableProvider extends ChangeNotifier {
   TimetableProvider({
-    SupabaseService? supabaseService,
     ClassTimetableRepository? classTimetableRepository,
     StudySessionRepository? studySessionRepository,
-  }) : _supabaseService = supabaseService ?? SupabaseService(),
-       _classTimetableRepository =
+  }) : _classTimetableRepository =
            classTimetableRepository ?? getIt<ClassTimetableRepository>(),
        _studySessionRepository =
            studySessionRepository ?? getIt<StudySessionRepository>();
-
-  final SupabaseService _supabaseService;
   final ClassTimetableRepository _classTimetableRepository;
   final StudySessionRepository _studySessionRepository;
 
@@ -253,30 +248,53 @@ class TimetableProvider extends ChangeNotifier {
     }
 
     _errorMessage = null;
+    // Map the payload to the repository method parameters where possible.
+    final topicId = sessionData['topic_id']?.toString();
+    final duration = (sessionData['duration_minutes'] is int)
+        ? sessionData['duration_minutes'] as int
+        : int.tryParse(sessionData['duration_minutes']?.toString() ?? '') ?? 0;
+    final focusArea = sessionData['title']?.toString() ?? '';
+    final notes = sessionData['notes']?.toString();
 
-    final created = await _supabaseService.addStudySession(sessionData);
-    if (created == null) {
-      _errorMessage = 'Failed to add study session.';
-      notifyListeners();
+    try {
+      final result = await _studySessionRepository.createSession(
+        topicId: topicId ?? '',
+        duration: duration,
+        focusArea: focusArea,
+        notes: notes,
+      );
+
+      if (result is Failure<StudySessionModel>) {
+        _errorMessage = result.error.message;
+        notifyListeners();
+        return TimetableActionResult(
+          success: false,
+          statusCode: 500,
+          message: _errorMessage ?? 'Failed to add study session.',
+        );
+      }
+
+      final model = (result as Success<StudySessionModel>).data;
+      final sameDate = _isSameDate(model.scheduledDate, _selectedDate);
+      if (sameDate) {
+        _studySessions = [..._studySessions, model]
+          ..sort((a, b) => (a.startTime ?? '').compareTo(b.startTime ?? ''));
+        notifyListeners();
+      }
       return const TimetableActionResult(
+        success: true,
+        statusCode: 201,
+        message: 'Study session added successfully.',
+      );
+    } on Exception catch (e) {
+      _errorMessage = 'Failed to add study session: $e';
+      notifyListeners();
+      return TimetableActionResult(
         success: false,
         statusCode: 500,
-        message: 'Failed to add study session.',
+        message: _errorMessage ?? 'Failed to add study session.',
       );
     }
-
-    final model = StudySessionModel.fromJson(created);
-    final sameDate = _isSameDate(model.scheduledDate, _selectedDate);
-    if (sameDate) {
-      _studySessions = [..._studySessions, model]
-        ..sort((a, b) => (a.startTime ?? '').compareTo(b.startTime ?? ''));
-      notifyListeners();
-    }
-    return const TimetableActionResult(
-      success: true,
-      statusCode: 201,
-      message: 'Study session added successfully.',
-    );
   }
 
   Future<TimetableActionResult> completeSession(

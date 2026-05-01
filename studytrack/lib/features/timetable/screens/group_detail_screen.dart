@@ -3,7 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/study_group_repository.dart';
+import '../../../core/utils/service_locator.dart';
+import '../../../models/group_member_model.dart';
 
 class GroupDetailScreen extends StatefulWidget {
   const GroupDetailScreen({required this.groupId, super.key, this.group});
@@ -16,19 +19,24 @@ class GroupDetailScreen extends StatefulWidget {
 }
 
 class _GroupDetailScreenState extends State<GroupDetailScreen> {
-  final SupabaseService _service = SupabaseService();
+  late final StudyGroupRepository _groupRepository;
+  late final ProfileRepository _profileRepository;
 
   bool _isLoading = true;
-  List<Map<String, dynamic>> _members = [];
+  List<GroupMemberModel> _members = [];
 
   @override
   void initState() {
     super.initState();
+    _groupRepository = getIt<StudyGroupRepository>();
+    _profileRepository = getIt<ProfileRepository>();
     _loadMembers();
   }
 
   Future<void> _loadMembers() async {
-    final members = await _service.getGroupMembers(widget.groupId) ?? [];
+    final result = await _groupRepository.getGroupMembers(widget.groupId);
+    List<GroupMemberModel> members = const [];
+    result.fold((error) {}, (value) => members = value);
     if (!mounted) return;
     setState(() {
       _members = members;
@@ -37,13 +45,15 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   Future<void> _leaveGroup() async {
-    final user = _service.getCurrentUser();
-    if (user == null) return;
+    final profileResult = await _profileRepository.getCurrentProfile();
+    Map<String, dynamic>? profile;
+    profileResult.fold((error) {}, (value) => profile = value);
+    if (profile == null) return;
 
-    final ok = await _service.leaveGroup(widget.groupId, user.id);
+    final ok = await _groupRepository.leaveGroup(widget.groupId);
     if (!mounted) return;
 
-    if (ok == true) {
+    if (ok.isSuccess) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Left group successfully.')));
@@ -135,8 +145,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                   )
                 else
                   ..._members.map((member) {
-                    final role = member['role']?.toString() ?? 'member';
-                    final memberUserId = member['user_id']?.toString() ?? '-';
+                    final role = member.role;
+                    final memberUserId = member.userId;
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),
                       padding: const EdgeInsets.all(12),

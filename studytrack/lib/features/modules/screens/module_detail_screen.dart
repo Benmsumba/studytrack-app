@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/module_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 
@@ -18,7 +20,8 @@ class ModuleDetailScreen extends StatefulWidget {
 }
 
 class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
-  final SupabaseService _service = SupabaseService();
+  late final ModuleRepository _moduleRepository;
+  late final TopicRepository _topicRepository;
 
   bool _isLoading = true;
   ModuleModel? _module;
@@ -28,6 +31,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
   @override
   void initState() {
     super.initState();
+    _moduleRepository = getIt<ModuleRepository>();
+    _topicRepository = getIt<TopicRepository>();
     _load();
   }
 
@@ -36,8 +41,16 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
       _isLoading = true;
     });
 
-    final module = await _service.getModuleById(widget.moduleId);
-    final topics = await _service.getTopics(widget.moduleId) ?? [];
+    final moduleResult = await _moduleRepository.getModuleById(widget.moduleId);
+    final topicsResult = await _topicRepository.getTopicsByModule(
+      widget.moduleId,
+    );
+
+    ModuleModel? module;
+    List<TopicModel> topics = const [];
+
+    moduleResult.fold((error) {}, (value) => module = value);
+    topicsResult.fold((error) {}, (value) => topics = value);
 
     if (!mounted) return;
     setState(() {
@@ -60,7 +73,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
   }
 
   Future<void> _deleteTopic(String topicId) async {
-    await _service.deleteTopic(topicId);
+    await _topicRepository.deleteTopic(topicId);
     await _load();
   }
 
@@ -134,12 +147,15 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
               GestureDetector(
                 onTap: () async {
                   final text = controller.text.trim();
-                  final user = _service.getCurrentUser();
-                  if (text.isEmpty || user == null) {
+                  if (text.isEmpty) {
                     return;
                   }
 
-                  await _service.addTopic(widget.moduleId, user.id, text);
+                  await _topicRepository.createTopic(
+                    moduleId: widget.moduleId,
+                    name: text,
+                    description: '',
+                  );
                   if (!context.mounted) return;
                   Navigator.of(context).pop(true);
                 },

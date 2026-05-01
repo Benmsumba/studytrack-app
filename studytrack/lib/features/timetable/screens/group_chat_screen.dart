@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/study_group_repository.dart';
+import '../../../core/utils/service_locator.dart';
+import '../../../models/group_message_model.dart';
 
 class GroupChatScreen extends StatefulWidget {
   const GroupChatScreen({required this.groupId, super.key, this.group});
@@ -15,26 +18,32 @@ class GroupChatScreen extends StatefulWidget {
 }
 
 class _GroupChatScreenState extends State<GroupChatScreen> {
-  final SupabaseService _service = SupabaseService();
+  late final StudyGroupRepository _groupRepository;
+  late final ProfileRepository _profileRepository;
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
   bool _isLoading = true;
   bool _isSending = false;
-  List<Map<String, dynamic>> _messages = [];
+  List<GroupMessageModel> _messages = [];
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
+    _groupRepository = getIt<StudyGroupRepository>();
+    _profileRepository = getIt<ProfileRepository>();
     _init();
   }
 
   Future<void> _init() async {
     await _loadMessages();
-    await _service.subscribeToGroupMessages(widget.groupId, (message) {
+    _groupRepository.subscribeToGroupMessages(widget.groupId).listen((
+      messages,
+    ) {
       if (!mounted) return;
       setState(() {
-        _messages = [..._messages, message];
+        _messages = messages;
       });
       _scrollToBottom();
     });
@@ -44,12 +53,21 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
-    _service.unsubscribeFromMessages();
     super.dispose();
   }
 
   Future<void> _loadMessages() async {
-    final messages = await _service.getGroupMessages(widget.groupId) ?? [];
+    final messagesResult = await _groupRepository.getGroupMessages(
+      widget.groupId,
+    );
+    List<GroupMessageModel> messages = const [];
+    messagesResult.fold((error) {}, (value) => messages = value);
+
+    final profileResult = await _profileRepository.getCurrentProfile();
+    Map<String, dynamic>? profile;
+    profileResult.fold((error) {}, (value) => profile = value);
+    _currentUserId = profile?['id']?.toString();
+
     if (!mounted) return;
     setState(() {
       _messages = messages;
@@ -59,25 +77,24 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Future<void> _sendMessage() async {
-    final user = _service.getCurrentUser();
     final content = _messageController.text.trim();
-    if (user == null || content.isEmpty || _isSending) return;
+    if (_currentUserId == null || content.isEmpty || _isSending) return;
 
     setState(() => _isSending = true);
-    final sent = await _service.sendMessage({
-      'group_id': widget.groupId,
-      'sender_id': user.id,
-      'content': content,
-      'message_type': 'text',
-    });
+    final sentResult = await _groupRepository.sendGroupMessage(
+      groupId: widget.groupId,
+      content: content,
+    );
 
     if (!mounted) return;
     setState(() => _isSending = false);
 
+    GroupMessageModel? sent;
+    sentResult.fold((error) {}, (value) => sent = value);
     if (sent != null) {
       _messageController.clear();
       setState(() {
-        _messages = [..._messages, sent];
+        _messages = [..._messages, sent!];
       });
       _scrollToBottom();
     } else {
@@ -119,9 +136,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final message = _messages[index];
-                      final sender =
-                          message['sender_id']?.toString() ?? 'unknown';
-                      final content = message['content']?.toString() ?? '';
+                      final sender = message.senderId;
+                      final content = message.content;
+                      final isMine =
+                          _currentUserId != null && sender == _currentUserId;
 
                       return Container(
                         margin: const EdgeInsets.only(bottom: 10),
@@ -132,7 +150,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               radius: 14,
                               backgroundColor: AppColors.primary,
                               child: Text(
-                                sender.substring(0, 1).toUpperCase(),
+                                sender.isEmpty
+                                    ? '?'
+                                    : sender.substring(0, 1).toUpperCase(),
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 12,
@@ -144,7 +164,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(10),
                                 decoration: BoxDecoration(
-                                  color: AppColors.cardDark,
+                                  color: isMine
+                                      ? AppColors.primary
+                                      : AppColors.cardDark,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Column(
@@ -153,7 +175,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                     Text(
                                       sender,
                                       style: GoogleFonts.inter(
-                                        color: AppColors.primary,
+                                        color: isMine
+                                            ? Colors.white
+                                            : AppColors.primary,
                                         fontSize: 11,
                                         fontWeight: FontWeight.w700,
                                       ),

@@ -7,7 +7,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/class_slot_model.dart';
 import '../../../models/study_session_model.dart';
 import '../controllers/timetable_provider.dart';
@@ -21,7 +23,7 @@ class TimetableScreen extends StatefulWidget {
 }
 
 class _TimetableScreenState extends State<TimetableScreen> {
-  final SupabaseService _service = SupabaseService();
+  final AuthRepository _authRepository = getIt<AuthRepository>();
 
   final List<String> _dayLabels = const [
     'Mon',
@@ -39,11 +41,25 @@ class _TimetableScreenState extends State<TimetableScreen> {
   void initState() {
     super.initState();
     _selectedDay = DateTime.now().weekday;
-    _currentUserId = _service.getCurrentUser()?.id;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _loadData();
+      _loadCurrentUserIdAndData();
     });
+  }
+
+  Future<void> _loadCurrentUserIdAndData() async {
+    final result = await _authRepository.getCurrentUser();
+    final userId = switch (result) {
+      Success(data: final user) => user?.id,
+      Failure(error: final _) => null,
+    };
+
+    if (!mounted) return;
+    setState(() {
+      _currentUserId = userId;
+    });
+
+    await _loadData();
   }
 
   Future<void> _loadData() async {
@@ -109,8 +125,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) =>
-          _AddScheduleBottomSheet(service: _service, selectedDay: _selectedDay),
+      builder: (context) => _AddScheduleBottomSheet(selectedDay: _selectedDay),
     );
 
     await _handleScheduleSubmission(submission);
@@ -125,7 +140,6 @@ class _TimetableScreenState extends State<TimetableScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => _AddScheduleBottomSheet(
-        service: _service,
         selectedDay: _selectedDay,
         editClassData: slot.toJson(),
       ),
@@ -512,12 +526,10 @@ class _ScheduleSubmission {
 
 class _AddScheduleBottomSheet extends StatefulWidget {
   const _AddScheduleBottomSheet({
-    required this.service,
     required this.selectedDay,
     this.editClassData,
   });
 
-  final SupabaseService service;
   final int selectedDay;
   final Map<String, dynamic>? editClassData;
 
@@ -528,6 +540,7 @@ class _AddScheduleBottomSheet extends StatefulWidget {
 
 class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     with SingleTickerProviderStateMixin {
+  final AuthRepository _authRepository = getIt<AuthRepository>();
   late final TabController _tabController;
 
   final TextEditingController _subjectController = TextEditingController();
@@ -638,8 +651,13 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       return;
     }
 
-    final user = widget.service.getCurrentUser();
-    if (user == null) {
+    final result = await _authRepository.getCurrentUser();
+    final userId = switch (result) {
+      Success(data: final user) => user?.id,
+      Failure(error: final _) => null,
+    };
+
+    if (userId == null || userId.isEmpty) {
       _showSnack('Please sign in again.');
       return;
     }
@@ -649,7 +667,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     });
 
     final payload = {
-      'user_id': user.id,
+      'user_id': userId,
       'subject_name': _subjectController.text.trim(),
       'day_of_week': _classDay,
       'start_time': _to24h(_classStart!),
@@ -678,8 +696,13 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       return;
     }
 
-    final user = widget.service.getCurrentUser();
-    if (user == null) {
+    final result = await _authRepository.getCurrentUser();
+    final userId = switch (result) {
+      Success(data: final user) => user?.id,
+      Failure(error: final _) => null,
+    };
+
+    if (userId == null || userId.isEmpty) {
       _showSnack('Please sign in again.');
       return;
     }
@@ -693,7 +716,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     final duration = (endMinutes - startMinutes).clamp(0, 600);
 
     final payload = {
-      'user_id': user.id,
+      'user_id': userId,
       'topic_id': _selectedTopicId,
       'module_id': _selectedModuleId,
       'title': _sessionTitleController.text.trim(),

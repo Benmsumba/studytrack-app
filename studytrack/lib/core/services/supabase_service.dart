@@ -10,6 +10,7 @@ import '../../models/module_model.dart';
 import '../../models/study_group_model.dart';
 import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
+import '../constants/app_constants.dart';
 import 'offline_sync_service.dart';
 
 class SupabaseService {
@@ -213,7 +214,7 @@ class SupabaseService {
     try {
       final launched = await client.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: kIsWeb ? null : 'com.studytrack.app://callback',
+        redirectTo: kIsWeb ? null : AppConstants.resolvedOAuthRedirectUri,
       );
       if (!launched) {
         _lastAuthError = 'Could not open Google sign-in. Please try again.';

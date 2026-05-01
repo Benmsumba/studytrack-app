@@ -6,8 +6,14 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/exam_repository.dart';
+import '../../../core/repositories/module_repository.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/study_session_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../models/module_model.dart';
+import '../../../models/study_session_model.dart';
+import '../../../models/exam_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -17,7 +23,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final SupabaseService _service = SupabaseService();
+  late final ProfileRepository _profileRepository;
+  late final ModuleRepository _moduleRepository;
+  late final StudySessionRepository _studySessionRepository;
+  late final ExamRepository _examRepository;
 
   bool _isLoading = true;
   String _userName = 'Student';
@@ -35,61 +44,72 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _profileRepository = getIt<ProfileRepository>();
+    _moduleRepository = getIt<ModuleRepository>();
+    _studySessionRepository = getIt<StudySessionRepository>();
+    _examRepository = getIt<ExamRepository>();
     _loadHomeData();
   }
 
   Future<void> _loadHomeData() async {
-    final user = _service.getCurrentUser();
-    if (user == null) {
-      if (!mounted) {
+    try {
+      final profileResult = await _profileRepository.getCurrentProfile();
+      Map<String, dynamic>? profile;
+      profileResult.fold((error) {}, (value) => profile = value);
+      final userId = profile?['id']?.toString() ?? '';
+
+      if (profile == null || userId.isEmpty) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
         return;
       }
-      setState(() => _isLoading = false);
-      return;
-    }
 
-    try {
-      final profile = await _service.getProfile(user.id);
-      final modules =
-          await _service.getModules(user.id) ?? const <ModuleModel>[];
-      final todaySessions =
-          await _service.getStudySessions(user.id, DateTime.now()) ??
-          <Map<String, dynamic>>[];
-      final upcomingExams =
-          await _service.getUpcomingExams(user.id) ?? <Map<String, dynamic>>[];
+      final currentProfile = profile!;
 
-      final activeSession = _firstMap(todaySessions);
-      final upcomingExam = _firstMap(upcomingExams);
-      final examDate = _parseDate(
-        upcomingExam?['exam_date'] ??
-            upcomingExam?['date'] ??
-            upcomingExam?['scheduled_date'],
-      );
+      final today = DateTime.now();
+      final startOfDay = DateTime(today.year, today.month, today.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
+
+      final modulesResult = await _moduleRepository.getAllModules();
+      final sessionsResult = await _studySessionRepository
+          .getSessionsByDateRange(startDate: startOfDay, endDate: endOfDay);
+      final examsResult = await _examRepository.getUpcomingExams();
+
+      List<ModuleModel> modules = const [];
+      List<StudySessionModel> todaySessions = const [];
+      List<ExamModel> upcomingExams = const [];
+
+      modulesResult.fold((error) {}, (value) => modules = value);
+      sessionsResult.fold((error) {}, (value) => todaySessions = value);
+      examsResult.fold((error) {}, (value) => upcomingExams = value);
+
+      final activeSession = todaySessions.isEmpty ? null : todaySessions.first;
+      final upcomingExam = upcomingExams.isEmpty ? null : upcomingExams.first;
 
       final completedMinutes = todaySessions.fold<int>(
         0,
-        (total, session) => total + _sessionMinutes(session),
+        (int total, StudySessionModel session) =>
+            total + _sessionMinutes(session),
       );
 
-      final name = _displayName(profile, user.email);
-      final avatarUrl = profile?['avatar_url']?.toString().trim();
-      final streakCount = (profile?['streak_count'] as num?)?.toInt() ?? 0;
+      final name = _displayName(currentProfile);
+      final avatarUrl = currentProfile['avatar_url']?.toString().trim();
+      final streakCount =
+          (currentProfile['streak_count'] as num?)?.toInt() ?? 0;
       final targetHours =
-          (profile?['study_hours_per_day'] as num?)?.toInt() ?? 3;
+          (currentProfile['study_hours_per_day'] as num?)?.toInt() ?? 3;
       final sessionProgress = targetHours <= 0
           ? 0.0
           : math
-                .min(completedMinutes.toDouble() / (targetHours * 60.0), 1)
+                .min(completedMinutes.toDouble() / (targetHours * 60.0), 1.0)
                 .toDouble();
 
-      final topicName =
-          _firstText(activeSession, ['topic_name', 'title', 'name']) ??
-          'No active session';
+      final topicName = activeSession?.title ?? 'No active session';
       final moduleName =
           _resolveModuleName(activeSession, modules) ?? 'Add a study session';
 
-      final examName =
-          _firstText(upcomingExam, ['title', 'name']) ?? 'No upcoming exam';
+      final examName = upcomingExam?.title ?? 'No upcoming exam';
+      final examDate = upcomingExam?.examDate;
       final daysRemaining = examDate == null
           ? 0
           : math.max(examDate.difference(DateTime.now()).inDays, 0);
@@ -97,9 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ? 0.0
           : (1 - (daysRemaining / 21)).clamp(0.0, 1.0).toDouble();
 
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
       setState(() {
         _userName = name;
         _avatarUrl = avatarUrl;
@@ -114,20 +132,19 @@ class _HomeScreenState extends State<HomeScreen> {
         _examReadiness = examReadiness;
         _isLoading = false;
       });
-    } on Exception {
-      if (!mounted) {
-        return;
+    } catch (e) {
+      debugPrint('Error loading home data: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
       }
-      setState(() => _isLoading = false);
     }
   }
 
-  String _displayName(Map<String, dynamic>? profile, String? email) {
+  String _displayName(Map<String, dynamic> profile) {
     final candidates = [
-      profile?['display_name'],
-      profile?['name'],
-      profile?['full_name'],
-      email?.split('@').first,
+      profile['display_name'],
+      profile['name'],
+      profile['full_name'],
     ];
 
     for (final candidate in candidates) {
@@ -140,36 +157,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return 'Student';
   }
 
-  Map<String, dynamic>? _firstMap(List<Map<String, dynamic>> items) {
-    if (items.isEmpty) {
-      return null;
-    }
-    return items.first;
-  }
-
-  String? _firstText(Map<String, dynamic>? data, List<String> keys) {
-    if (data == null) {
-      return null;
-    }
-    for (final key in keys) {
-      final value = data[key]?.toString().trim();
-      if (value != null && value.isNotEmpty) {
-        return value;
-      }
-    }
-    return null;
-  }
-
   String? _resolveModuleName(
-    Map<String, dynamic>? session,
+    StudySessionModel? session,
     List<ModuleModel> modules,
   ) {
-    final direct = _firstText(session, ['module_name', 'module']);
-    if (direct != null) {
-      return direct;
-    }
-
-    final moduleId = session?['module_id']?.toString();
+    final moduleId = session?.moduleId;
     if (moduleId == null || moduleId.isEmpty) {
       return null;
     }
@@ -183,30 +175,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return null;
   }
 
-  int _sessionMinutes(Map<String, dynamic> session) {
-    final values = [
-      session['actual_duration_minutes'],
-      session['planned_duration_minutes'],
-      session['duration_minutes'],
-    ];
-
-    for (final value in values) {
-      if (value is num) {
-        return value.toInt();
-      }
-    }
-
-    return 0;
-  }
-
-  DateTime? _parseDate(dynamic value) {
-    if (value == null) {
-      return null;
-    }
-    if (value is DateTime) {
-      return value;
-    }
-    return DateTime.tryParse(value.toString());
+  int _sessionMinutes(StudySessionModel session) {
+    return session.actualDurationMinutes ?? session.durationMinutes ?? 0;
   }
 
   @override

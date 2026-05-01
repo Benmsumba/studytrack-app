@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../core/services/gemini_service.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../models/topic_model.dart';
 
 class QuizScreen extends StatefulWidget {
@@ -16,7 +18,8 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  final SupabaseService _supabase = SupabaseService();
+  late final TopicRepository _topicRepository;
+  late final ProfileRepository _profileRepository;
   final GeminiService _gemini = GeminiService();
 
   bool _isLoading = true;
@@ -31,6 +34,8 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
+    _topicRepository = getIt<TopicRepository>();
+    _profileRepository = getIt<ProfileRepository>();
     _prepareQuiz();
   }
 
@@ -44,28 +49,32 @@ class _QuizScreenState extends State<QuizScreen> {
       _answered = false;
     });
 
-    final topic = await _supabase.getTopicById(widget.topicId);
+    final topicResult = await _topicRepository.getTopicById(widget.topicId);
+    TopicModel? topic;
+    topicResult.fold((error) {}, (value) => topic = value);
 
     var course = 'Health Sciences';
-    final user = _supabase.getCurrentUser();
-    if (user != null) {
-      final profile = await _supabase.getProfile(user.id);
-      final profileCourse = profile?['course']?.toString();
+    final profileResult = await _profileRepository.getCurrentProfile();
+    Map<String, dynamic>? profile;
+    profileResult.fold((error) {}, (value) => profile = value);
+    if (profile != null) {
+      final profileCourse = profile!['course']?.toString();
       if (profileCourse != null && profileCourse.trim().isNotEmpty) {
         course = profileCourse;
       }
     }
 
     if (topic != null) {
+      final currentTopic = topic!;
       final questions = await _gemini.generateQuiz(
-        topicName: topic.name,
+        topicName: currentTopic.name,
         course: course,
-        notesContent: topic.notes,
+        notesContent: currentTopic.notes,
       );
 
       if (!mounted) return;
       setState(() {
-        _topic = topic;
+        _topic = currentTopic;
         _questions = questions;
         _isLoading = false;
       });
@@ -119,7 +128,7 @@ class _QuizScreenState extends State<QuizScreen> {
     setState(() {
       _isSubmitting = true;
     });
-    await _supabase.updateTopicRating(topic.id, _suggestedRating());
+    await _topicRepository.rateTopic(topic.id, _suggestedRating());
 
     if (!mounted) return;
     setState(() {

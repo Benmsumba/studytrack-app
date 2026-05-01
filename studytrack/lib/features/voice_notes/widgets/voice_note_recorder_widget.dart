@@ -5,7 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/repositories/profile_repository.dart';
+import '../../../core/utils/service_locator.dart';
 import '../../../core/services/voice_note_service.dart';
 import 'voice_note_player_widget.dart';
 
@@ -34,7 +35,7 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
   final VoiceNoteService _service = VoiceNoteService(
     geminiApiKey: AppConstants.resolvedGeminiApiKey,
   );
-  final SupabaseService _supabaseService = SupabaseService();
+  late final ProfileRepository _profileRepository;
 
   bool _isRecording = false;
   bool _isProcessing = false;
@@ -42,11 +43,25 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
   VoiceNoteResult? _result;
   String? _status;
 
+  @override
+  void initState() {
+    super.initState();
+    _profileRepository = getIt<ProfileRepository>();
+  }
+
   Future<void> _toggleRecording() async {
     if (_isProcessing) return;
 
-    final user = _supabaseService.getCurrentUser();
-    if (user == null) {
+    final profileResult = await _profileRepository.getCurrentProfile();
+    Map<String, dynamic>? profile;
+    profileResult.fold((error) {}, (value) => profile = value);
+    if (profile == null) {
+      setState(() => _status = 'Please login first.');
+      return;
+    }
+
+    final userId = profile!['id']?.toString();
+    if (userId == null || userId.isEmpty) {
       setState(() => _status = 'Please login first.');
       return;
     }
@@ -54,7 +69,7 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
     final topicId = widget.topicId;
     if (!_isRecording) {
       final path = await _service.createRecordingPath(
-        userId: user.id,
+        userId: userId,
         topicId: topicId == null || topicId.isEmpty ? 'chat' : topicId,
       );
       final started = await _service.startRecording(path);
@@ -88,7 +103,7 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
     final result = widget.allowUpload && topicId != null && topicId.isNotEmpty
         ? await _service.transcribeAndUploadRecording(
             topicId: topicId,
-            userId: user.id,
+            userId: userId,
             localPath: stopped,
             isSharedWithGroup: false,
           )
