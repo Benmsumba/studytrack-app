@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/constants/app_colors.dart';
 import 'core/constants/app_constants.dart';
+import 'core/constants/app_spacing.dart';
 import 'core/constants/app_text_styles.dart';
 import 'core/widgets/offline_status_banner.dart';
 import 'features/ai_tutor/screens/ai_tutor_screen.dart';
@@ -24,8 +26,8 @@ import 'features/modules/screens/topic_detail_screen.dart';
 import 'features/notifications/screens/notifications_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
 import 'features/profile/screens/profile_screen.dart';
-import 'features/progress/screens/progress_screen.dart';
 import 'features/progress/screens/exam_countdown_screen.dart';
+import 'features/progress/screens/progress_screen.dart';
 import 'features/progress/screens/weekly_wrapped_screen.dart';
 import 'features/settings/screens/settings_screen.dart';
 import 'features/timetable/screens/study_session_screen.dart';
@@ -72,13 +74,22 @@ class StudyTrackApp extends StatelessWidget {
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppColors.backgroundDark,
       colorScheme: const ColorScheme.dark(
-        primary: Color(0xFF7C3AED),
-        secondary: Color(0xFF06B6D4),
-        surface: Color(0xFF16161E),
-        error: Color(0xFFFF5252),
+        primary: AppColors.neonViolet,
+        onPrimary: Colors.white,
+        secondary: AppColors.neonCyan,
+        onSecondary: Colors.white,
+        surface: AppColors.surfaceDark,
+        onSurface: AppColors.textPrimary,
+        error: AppColors.danger,
+        onError: Colors.white,
+        surfaceContainerHighest: AppColors.surfaceElevated,
+        outline: AppColors.border,
+        outlineVariant: AppColors.borderSoft,
       ),
+      scaffoldBackgroundColor: AppColors.backgroundDark,
+      canvasColor: AppColors.backgroundDark,
+      dividerColor: AppColors.borderSoft,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
@@ -88,10 +99,128 @@ class StudyTrackApp extends StatelessWidget {
           TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
         },
       ),
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        foregroundColor: AppColors.textPrimary,
+        centerTitle: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleTextStyle: AppTextStyles.headingMedium,
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.surfaceDark.withValues(alpha: 0.92),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          side: const BorderSide(color: AppColors.borderSoft),
+        ),
+        margin: EdgeInsets.zero,
+      ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF1C1C26),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor: AppColors.surfaceDark,
+        contentTextStyle: AppTextStyles.bodyMedium,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+          side: const BorderSide(color: AppColors.borderSoft),
+        ),
+        actionTextColor: AppColors.neonCyan,
+        elevation: 0,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.inputFill,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          borderSide: const BorderSide(color: AppColors.borderSoft),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          borderSide: const BorderSide(color: AppColors.borderSoft),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          borderSide: const BorderSide(color: AppColors.neonCyan, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          borderSide: const BorderSide(color: AppColors.danger),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+        ),
+        labelStyle: AppTextStyles.label,
+        hintStyle: AppTextStyles.bodyMediumSecondary,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.neonViolet,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(54),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.md,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+          ),
+          textStyle: AppTextStyles.button,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.neonCyan,
+          textStyle: AppTextStyles.label,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.textGlow,
+          side: const BorderSide(color: AppColors.border),
+          minimumSize: const Size.fromHeight(54),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.md,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+          ),
+          textStyle: AppTextStyles.button,
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.surfaceElevated,
+        selectedColor: AppColors.neonViolet.withValues(alpha: 0.22),
+        disabledColor: AppColors.surfaceElevated,
+        labelStyle: AppTextStyles.label,
+        secondaryLabelStyle: AppTextStyles.label,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
+          side: const BorderSide(color: AppColors.borderSoft),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        showDragHandle: true,
+        modalBackgroundColor: Colors.transparent,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.surfaceDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          side: const BorderSide(color: AppColors.borderSoft),
+        ),
+      ),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.neonCyan,
+        linearTrackColor: AppColors.borderSoft,
+        circularTrackColor: AppColors.borderSoft,
       ),
     );
 
@@ -112,6 +241,25 @@ class StudyTrackApp extends StatelessWidget {
         labelMedium: AppTextStyles.label,
         labelSmall: AppTextStyles.caption,
       ),
+      primaryTextTheme: GoogleFonts.interTextTheme(base.primaryTextTheme)
+          .copyWith(
+            displayLarge: AppTextStyles.displayLarge,
+            displayMedium: AppTextStyles.displayMedium,
+            headlineLarge: AppTextStyles.headingLarge,
+            headlineMedium: AppTextStyles.headingMedium,
+            headlineSmall: AppTextStyles.headingSmall,
+            titleLarge: AppTextStyles.headingSmall,
+            titleMedium: AppTextStyles.label,
+            titleSmall: AppTextStyles.labelSecondary,
+            bodyLarge: AppTextStyles.bodyLarge,
+            bodyMedium: AppTextStyles.bodyMedium,
+            bodySmall: AppTextStyles.bodySmall,
+            labelLarge: AppTextStyles.button,
+            labelMedium: AppTextStyles.label,
+            labelSmall: AppTextStyles.caption,
+          ),
+      visualDensity: VisualDensity.standard,
+      splashFactory: InkSparkle.splashFactory,
     );
   }
 
@@ -282,11 +430,21 @@ class StudyTrackApp extends StatelessWidget {
     routerConfig: _buildRouter(),
     title: 'StudyTrack',
     theme: _buildTheme(),
-    builder: (context, child) => Stack(
-      children: [
-        OfflineStatusBanner(child: child ?? const SizedBox.shrink()),
-        const UpdateOverlay(),
-      ],
+    builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+        systemNavigationBarColor: AppColors.backgroundDark,
+        systemNavigationBarIconBrightness: Brightness.light,
+        systemNavigationBarDividerColor: AppColors.borderSoft,
+      ),
+      child: Stack(
+        children: [
+          OfflineStatusBanner(child: child ?? const SizedBox.shrink()),
+          const UpdateOverlay(),
+        ],
+      ),
     ),
   );
 }

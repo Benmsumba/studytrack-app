@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // ============ Core Backgrounds ============
-  static const Color backgroundDark = Color(0xFF0D0D12);
-  static const Color surfaceDark = Color(0xFF16161E);
-  static const Color cardDark = Color(0xFF1C1C26);
-  static const Color cardDarkAlt = Color(0xFF14131F);
+  static const Color backgroundDeep = Color(0xFF050509);
+  static const Color backgroundDark = Color(0xFF0A0A0F);
+  static const Color surfaceDark = Color(0xFF12121A);
+  static const Color surfaceElevated = Color(0xFF171722);
+  static const Color cardDark = Color(0xFF1A1A25);
+  static const Color cardDarkAlt = Color(0xFF101018);
+  static const Color glassOverlay = Color(0xCC0F0F16);
 
   // ============ Premium Brand Colors (Neon) ============
   /// Exact neon violet from design spec
@@ -25,11 +28,15 @@ class AppColors {
   static const Color cyanGlow = Color(0xAA06B6D4);
   static const Color violetGlowSoft = Color(0x557C3AED);
   static const Color cyanGlowSoft = Color(0x5506B6D4);
+  static const Color borderGlow = Color(0x667C3AED);
+  static const Color borderGlowSoft = Color(0x3D06B6D4);
 
   // ============ UI Elements ============
-  static const Color border = Color(0xFF2D2D3D);
-  static const Color borderGradientStart = Color(0xFF3A3A4D);
-  static const Color borderGradientEnd = Color(0xFF2D2D3D);
+  static const Color border = Color(0xFF262637);
+  static const Color borderSoft = Color(0xFF1F1F2B);
+  static const Color borderGradientStart = Color(0xFF7C3AED);
+  static const Color borderGradientEnd = Color(0xFF06B6D4);
+  static const Color inputFill = Color(0xFF14141D);
   static const Color success = Color(0xFF00E676);
   static const Color warning = Color(0xFFFFB74D);
   static const Color danger = Color(0xFFFF5252);
@@ -40,6 +47,7 @@ class AppColors {
   static const Color textSecondary = Color(0xFFB0B0B8);
   static const Color textMuted = Color(0xFF636370);
   static const Color textDisabled = Color(0xFF4A4A52);
+  static const Color textGlow = Color(0xFFEDE9FF);
 
   // ============ Gradients ============
   /// Primary neon gradient (violet to cyan)
@@ -51,7 +59,7 @@ class AppColors {
 
   /// Card gradient (dark premium)
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFF1C1C26), Color(0xFF12121A)],
+    colors: [Color(0xFF1A1A25), Color(0xFF101018)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -65,7 +73,7 @@ class AppColors {
 
   /// Button gradient (vibrant neon)
   static const LinearGradient buttonGradient = LinearGradient(
-    colors: [Color(0xFF7C3AED), Color(0xFF6D28D9)],
+    colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
@@ -107,8 +115,8 @@ class AppColors {
   ];
 
   // ============ Semantic Colors ============
-  static const Color errorBackground = Color(0xFF1C0B0B);
-  static const Color successBackground = Color(0xFF0B1C0B);
-  static const Color warningBackground = Color(0xFF1C1C0B);
-  static const Color infoBackground = Color(0xFF0B0B1C);
+  static const Color errorBackground = Color(0xFF1C0B0D);
+  static const Color successBackground = Color(0xFF0B1C12);
+  static const Color warningBackground = Color(0xFF1C170B);
+  static const Color infoBackground = Color(0xFF0B111C);
 }

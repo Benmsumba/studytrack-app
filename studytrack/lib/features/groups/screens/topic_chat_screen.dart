@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/topic_chat_repository.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/glass_card.dart';
 import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 
 class TopicChatScreen extends StatefulWidget {
@@ -258,11 +261,10 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title),
+            Text(title, style: AppTextStyles.headingSmall),
             Text(
               subtitle,
-              style: GoogleFonts.inter(
-                fontSize: 12,
+              style: AppTextStyles.caption.copyWith(
                 color: AppColors.textSecondary,
               ),
             ),
@@ -272,31 +274,40 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
       body: Column(
         children: [
           if (_struggleUserIds.length >= 3)
-            Container(
-              margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.warning.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppColors.warning.withValues(alpha: 0.4),
-                ),
+            GlassCard(
+              margin: EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.xs,
+                AppSpacing.md,
+                0,
               ),
+              padding: EdgeInsets.all(AppSpacing.sm),
+              backgroundColor: AppColors.warning.withValues(alpha: 0.15),
+              borderRadius: AppSpacing.xs + 2,
+              borderColors: [
+                AppColors.warning.withValues(alpha: 0.4),
+                AppColors.warning.withValues(alpha: 0.4),
+              ],
               child: Text(
                 'Multiple people are struggling with this topic.',
-                style: GoogleFonts.inter(color: Colors.white70),
+                style: AppTextStyles.caption.copyWith(color: Colors.white70),
               ),
             ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+            padding: EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              AppSpacing.xs,
+              AppSpacing.md,
+              AppSpacing.xxs,
+            ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
                   _promptChip('Anyone struggling with this?'),
-                  const SizedBox(width: 8),
+                  SizedBox(width: AppSpacing.xs),
                   _promptChip('Can someone explain?'),
-                  const SizedBox(width: 8),
+                  SizedBox(width: AppSpacing.xs),
                   _promptChip('Exam question tip 💡'),
                 ],
               ),
@@ -307,7 +318,12 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                    padding: EdgeInsets.fromLTRB(
+                      AppSpacing.md,
+                      AppSpacing.xs,
+                      AppSpacing.md,
+                      AppSpacing.md,
+                    ),
                     itemCount: _messages.length,
                     itemBuilder: (context, index) {
                       final msg = _messages[index];
@@ -334,84 +350,86 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                         alignment: isMine
                             ? Alignment.centerRight
                             : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 10),
+                        child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 320),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: isMine
+                          child: GlassCard(
+                            margin: EdgeInsets.only(bottom: AppSpacing.sm),
+                            padding: EdgeInsets.all(AppSpacing.sm),
+                            backgroundColor: isMine
                                 ? AppColors.primary
                                 : AppColors.cardDark,
-                            borderRadius: BorderRadius.circular(12),
-                            border: isMine
+                            borderRadius: AppSpacing.fieldRadius,
+                            borderColors: isMine
                                 ? null
-                                : Border.all(color: AppColors.border),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: isMine
-                                ? CrossAxisAlignment.end
-                                : CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  CircleAvatar(
-                                    radius: 12,
-                                    backgroundColor: _avatarColor(senderId),
-                                    child: Text(
-                                      displayName.substring(0, 1).toUpperCase(),
-                                      style: GoogleFonts.inter(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Column(
-                                    crossAxisAlignment: isMine
-                                        ? CrossAxisAlignment.end
-                                        : CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        displayName,
-                                        style: GoogleFonts.inter(
-                                          color: isMine
-                                              ? Colors.white70
-                                              : AppColors.accent,
-                                          fontSize: 11,
+                                : [AppColors.border, AppColors.border],
+                            child: Column(
+                              crossAxisAlignment: isMine
+                                  ? CrossAxisAlignment.end
+                                  : CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 12,
+                                      backgroundColor: _avatarColor(senderId),
+                                      child: Text(
+                                        displayName
+                                            .substring(0, 1)
+                                            .toUpperCase(),
+                                        style: AppTextStyles.caption.copyWith(
+                                          color: Colors.white,
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),
-                                      Text(
-                                        subtitle,
-                                        style: GoogleFonts.inter(
-                                          color: Colors.white60,
-                                          fontSize: 10,
+                                    ),
+                                    SizedBox(width: AppSpacing.xxs),
+                                    Column(
+                                      crossAxisAlignment: isMine
+                                          ? CrossAxisAlignment.end
+                                          : CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          displayName,
+                                          style: AppTextStyles.caption.copyWith(
+                                            color: isMine
+                                                ? Colors.white70
+                                                : AppColors.accent,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                content,
-                                style: GoogleFonts.inter(color: Colors.white),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                created.isEmpty
-                                    ? ''
-                                    : created
-                                          .replaceFirst('T', ' ')
-                                          .substring(0, 16),
-                                style: GoogleFonts.inter(
-                                  color: Colors.white60,
-                                  fontSize: 10,
+                                        Text(
+                                          subtitle,
+                                          style: AppTextStyles.caption.copyWith(
+                                            color: Colors.white60,
+                                            fontSize: 10,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
-                              ),
-                            ],
+                                SizedBox(height: AppSpacing.xxs),
+                                Text(
+                                  content,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                SizedBox(height: AppSpacing.xxs),
+                                Text(
+                                  created.isEmpty
+                                      ? ''
+                                      : created
+                                            .replaceFirst('T', ' ')
+                                            .substring(0, 16),
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: Colors.white60,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -421,7 +439,12 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.md,
+                AppSpacing.xs,
+                AppSpacing.md,
+                AppSpacing.md,
+              ),
               child: Column(
                 children: [
                   Row(
@@ -429,7 +452,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                       Expanded(
                         child: TextField(
                           controller: _messageController,
-                          style: const TextStyle(color: Colors.white),
+                          style: AppTextStyles.bodySmall,
                           decoration: const InputDecoration(
                             hintText: 'Ask or share something...',
                             hintStyle: TextStyle(color: AppColors.textMuted),
@@ -437,15 +460,23 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                           onSubmitted: (_) => _sendMessage(),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      SizedBox(width: AppSpacing.xs),
                       IconButton(
-                        onPressed: _openVoiceRecorder,
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          _openVoiceRecorder();
+                        },
                         icon: const Icon(Icons.mic_none_rounded),
                         color: AppColors.accent,
                       ),
-                      const SizedBox(width: 4),
+                      SizedBox(width: AppSpacing.xxs),
                       IconButton.filled(
-                        onPressed: _sending ? null : _sendMessage,
+                        onPressed: _sending
+                            ? null
+                            : () {
+                                HapticFeedback.lightImpact();
+                                _sendMessage();
+                              },
                         icon: _sending
                             ? const SizedBox(
                                 width: 16,
@@ -458,11 +489,14 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  SizedBox(height: AppSpacing.xs),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: _flagStruggleAnonymously,
+                      onPressed: () {
+                        HapticFeedback.selectionClick();
+                        _flagStruggleAnonymously();
+                      },
                       icon: const Icon(Icons.flag_outlined),
                       label: const Text("I'm struggling with this"),
                     ),
@@ -478,9 +512,15 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
 
   Widget _promptChip(String text) => ActionChip(
     label: Text(text),
-    onPressed: () => _sendMessage(text),
+    onPressed: () {
+      HapticFeedback.selectionClick();
+      _sendMessage(text);
+    },
     backgroundColor: AppColors.surfaceDark,
-    labelStyle: GoogleFonts.inter(color: Colors.white, fontSize: 12),
+    labelStyle: AppTextStyles.caption.copyWith(
+      color: Colors.white,
+      fontSize: 12,
+    ),
     side: const BorderSide(color: AppColors.border),
   );
 }

@@ -1,137 +1,45 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../constants/app_colors.dart';
-import '../constants/app_text_styles.dart';
 
-class WrappedCard extends StatelessWidget {
+import '../constants/app_colors.dart';
+import '../constants/app_spacing.dart';
+import '../constants/app_text_styles.dart';
+import 'custom_button.dart';
+import 'glass_card.dart';
+
+class WrappedCard extends GlassCard {
   const WrappedCard({
-    required this.child,
+    required super.child,
     super.key,
     this.customBorderColors,
-    this.padding = 20.0,
-    this.enableGlow = true,
+    super.padding = const EdgeInsets.all(AppSpacing.cardPadding),
+    super.enableGlow = true,
     this.glowColor,
-  });
-  final Widget child;
-  final List<Color>? customBorderColors;
-  final double padding;
-  final bool enableGlow;
-  final Color? glowColor;
+  }) : super(borderColors: customBorderColors, glowColor: glowColor);
 
+  final List<Color>? customBorderColors;
   @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(24),
-      boxShadow: enableGlow
-          ? [
-              BoxShadow(
-                color: glowColor ?? AppColors.violetGlowSoft,
-                blurRadius: 24,
-                spreadRadius: 2,
-                offset: const Offset(0, 8),
-              ),
-              const BoxShadow(
-                color: AppColors.cyanGlowSoft,
-                blurRadius: 16,
-                spreadRadius: 1,
-                offset: Offset(0, 4),
-              ),
-            ]
-          : null,
-    ),
-    child: Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(
-          colors: customBorderColors ?? AppColors.borderGradient.colors,
-          begin: customBorderColors == null
-              ? Alignment.topLeft
-              : Alignment.topLeft,
-          end: customBorderColors == null
-              ? Alignment.bottomRight
-              : Alignment.bottomRight,
-        ),
-      ),
-      padding: const EdgeInsets.all(1.2),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-            child: Container(
-              color: AppColors.cardDark.withValues(alpha: 0.85),
-              padding: EdgeInsets.all(padding),
-              child: child,
-            ),
-          ),
-        ),
-      ),
-    ),
-  );
+  final Color? glowColor;
 }
 
 /// Premium button with gradient and neon glow
-class PremiumButton extends StatefulWidget {
+class PremiumButton extends GlowingButton {
   const PremiumButton({
-    required this.label,
-    required this.onPressed,
+    required super.label,
+    required super.onPressed,
     super.key,
-    this.gradient,
-    this.isLoading = false,
-    this.width,
+    super.gradient,
+    super.isLoading,
+    super.width,
+    super.height,
+    super.borderRadius,
+    super.padding,
+    super.textStyle,
+    super.glowColor,
+    super.enableHaptics,
+    super.icon,
+    super.trailingIcon,
+    super.showPressScale,
   });
-  final String label;
-  final VoidCallback onPressed;
-  final LinearGradient? gradient;
-  final bool isLoading;
-  final double? width;
-
-  @override
-  State<PremiumButton> createState() => _PremiumButtonState();
-}
-
-class _PremiumButtonState extends State<PremiumButton> {
-  @override
-  Widget build(BuildContext context) => Container(
-    width: widget.width,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      boxShadow: [
-        BoxShadow(
-          color: AppColors.neonViolet.withValues(alpha: 0.4),
-          blurRadius: 16,
-          spreadRadius: 1,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: widget.isLoading ? null : widget.onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            gradient: widget.gradient ?? AppColors.primaryGradient,
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-          child: Center(
-            child: widget.isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : Text(widget.label, style: AppTextStyles.button),
-          ),
-        ),
-      ),
-    ),
-  );
 }
 
 /// Premium input field with gradient border and neon focus state

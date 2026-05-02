@@ -1,21 +1,23 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-
-import '../../../core/constants/app_colors.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/utils/service_locator.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/module_repository.dart';
-import '../../../core/repositories/topic_repository.dart';
-import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
+import '../../../core/repositories/study_session_repository.dart';
+import '../../../core/repositories/topic_repository.dart';
 import '../../../core/utils/result.dart';
-import '../../../models/topic_rating_history_model.dart';
-import '../../../models/study_session_model.dart';
-import '../../auth/controllers/auth_provider.dart';
+import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/glass_card.dart';
 import '../../../models/module_model.dart';
+import '../../../models/study_session_model.dart';
 import '../../../models/topic_model.dart';
+import '../../../models/topic_rating_history_model.dart';
+import '../../auth/controllers/auth_provider.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -183,18 +185,23 @@ class _ProgressScreenState extends State<ProgressScreen> {
         : RefreshIndicator(
             onRefresh: _loadProgress,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.screenHorizontal,
+                AppSpacing.xs,
+                AppSpacing.screenHorizontal,
+                AppSpacing.sm,
+              ),
               children: [
                 _buildQuickStats(),
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.md),
                 _buildWeeklyBarChart(),
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.md),
                 _buildRadarChart(),
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.md),
                 _buildHeatmap(),
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.md),
                 _buildTopicRatingHistory(),
-                const SizedBox(height: 16),
+                SizedBox(height: AppSpacing.md),
                 _buildModuleDonuts(),
               ],
             ),
@@ -205,8 +212,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
     shrinkWrap: true,
     physics: const NeverScrollableScrollPhysics(),
     crossAxisCount: 2,
-    crossAxisSpacing: 12,
-    mainAxisSpacing: 12,
+    crossAxisSpacing: AppSpacing.sm,
+    mainAxisSpacing: AppSpacing.sm,
     childAspectRatio: 1.5,
     children: [
       _statCard('Topics Mastered', '$_topicsMastered', Icons.school_rounded),
@@ -228,42 +235,30 @@ class _ProgressScreenState extends State<ProgressScreen> {
     ],
   );
 
-  Widget _statCard(String label, String value, IconData icon) => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: AppColors.cardDark,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.border),
-    ),
+  Widget _statCard(String label, String value, IconData icon) => GlassCard(
+    padding: EdgeInsets.all(AppSpacing.sm),
+    backgroundColor: AppColors.cardDark,
+    borderRadius: AppSpacing.fieldRadius,
+    borderColors: [AppColors.border, AppColors.border],
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Icon(icon, color: AppColors.accent, size: 16),
-            const SizedBox(width: 6),
+            SizedBox(width: AppSpacing.xxs),
             Expanded(
               child: Text(
                 label,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
-                ),
+                style: AppTextStyles.caption,
               ),
             ),
           ],
         ),
         const Spacer(),
-        Text(
-          value,
-          style: GoogleFonts.outfit(
-            color: Colors.white,
-            fontSize: 26,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        Text(value, style: AppTextStyles.statValue),
       ],
     ),
   );
@@ -272,21 +267,16 @@ class _ProgressScreenState extends State<ProgressScreen> {
     String title,
     Widget child, {
     double? fixedHeight,
-  }) => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: AppColors.cardDark,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.border),
-    ),
+  }) => GlassCard(
+    padding: EdgeInsets.all(AppSpacing.md),
+    backgroundColor: AppColors.cardDark,
+    borderRadius: AppSpacing.cardRadius,
+    borderColors: [AppColors.border, AppColors.border],
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 12),
+        Text(title, style: AppTextStyles.headingSmall),
+        SizedBox(height: AppSpacing.sm),
         if (fixedHeight != null)
           SizedBox(height: fixedHeight, child: child)
         else
@@ -314,10 +304,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               getTooltipItem: (group, groupIndex, rod, rodIndex) =>
                   BarTooltipItem(
                     '${rod.toY.toInt()} topics',
-                    GoogleFonts.inter(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    AppTextStyles.bodySmall.copyWith(color: Colors.white),
                   ),
             ),
           ),
@@ -353,7 +340,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 reservedSize: 26,
                 getTitlesWidget: (value, meta) => Text(
                   value.toInt().toString(),
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.caption.copyWith(
                     fontSize: 10,
                     color: AppColors.textMuted,
                   ),
@@ -378,10 +365,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     return const SizedBox.shrink();
                   }
                   return Padding(
-                    padding: const EdgeInsets.only(top: 6),
+                    padding: EdgeInsets.only(top: AppSpacing.xxs),
                     child: Text(
                       labels[index],
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.caption.copyWith(
                         fontSize: 10,
                         color: AppColors.textSecondary,
                       ),
@@ -404,7 +391,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
         Center(
           child: Text(
             'Add modules to view your radar chart.',
-            style: GoogleFonts.inter(color: AppColors.textSecondary),
+            style: AppTextStyles.bodySmall.copyWith(
+              color: AppColors.textSecondary,
+            ),
           ),
         ),
         fixedHeight: 180,
@@ -444,7 +433,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ],
           radarShape: RadarShape.polygon,
-          ticksTextStyle: GoogleFonts.inter(
+          ticksTextStyle: AppTextStyles.caption.copyWith(
             color: AppColors.textMuted,
             fontSize: 10,
           ),
@@ -499,7 +488,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 child: Text(
                   monthLabels[index],
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.caption.copyWith(
                     fontSize: 10,
                     color: AppColors.textMuted,
                   ),
@@ -507,7 +496,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: AppSpacing.xxs),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: List.generate(12, (weekIndex) {
@@ -564,16 +553,18 @@ class _ProgressScreenState extends State<ProgressScreen> {
     'Topic Rating History',
     _topics.isEmpty
         ? Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: Text(
               'Add topics to unlock rating trends.',
-              style: GoogleFonts.inter(color: AppColors.textSecondary),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
           )
         : Column(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceDark,
                   borderRadius: BorderRadius.circular(10),
@@ -583,7 +574,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     value: _selectedTopic,
                     dropdownColor: AppColors.surfaceDark,
                     isExpanded: true,
-                    style: GoogleFonts.inter(color: Colors.white),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: Colors.white,
+                    ),
                     items: _topics
                         .map(
                           (topic) => DropdownMenuItem<TopicModel>(
@@ -594,12 +587,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         .toList(),
                     onChanged: (next) {
                       if (next == null) return;
+                      HapticFeedback.selectionClick();
                       setState(() => _selectedTopic = next);
                     },
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: AppSpacing.sm),
               SizedBox(
                 height: 220,
                 child: _selectedTopic == null
@@ -617,10 +611,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
     'Module Progress Donut Charts',
     _modules.isEmpty
         ? Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: Text(
               'Create modules to view progress donuts.',
-              style: GoogleFonts.inter(color: AppColors.textSecondary),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
           )
         : SizedBox(
@@ -628,7 +624,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _modules.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 14),
+              separatorBuilder: (context, index) =>
+                  SizedBox(width: AppSpacing.sm),
               itemBuilder: (context, index) {
                 final module = _modules[index];
                 final moduleTopics = _topics
@@ -673,7 +670,9 @@ class _TopicLineChart extends StatelessWidget {
             return Center(
               child: Text(
                 'No ratings yet for this topic.',
-                style: GoogleFonts.inter(color: AppColors.textSecondary),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                ),
               ),
             );
           }
@@ -706,7 +705,7 @@ class _TopicLineChart extends StatelessWidget {
                     reservedSize: 28,
                     getTitlesWidget: (value, meta) => Text(
                       value.toInt().toString(),
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.caption.copyWith(
                         color: AppColors.textMuted,
                         fontSize: 10,
                       ),
@@ -757,14 +756,11 @@ class _ModuleDonutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final clampedPercentage = percentage.clamp(0, 100).toDouble();
 
-    return Container(
-      width: 128,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
+    return GlassCard(
+      padding: EdgeInsets.all(AppSpacing.sm),
+      backgroundColor: AppColors.surfaceDark,
+      borderRadius: AppSpacing.fieldRadius,
+      borderColors: [AppColors.border, AppColors.border],
       child: Column(
         children: [
           SizedBox(
@@ -795,23 +791,19 @@ class _ModuleDonutCard extends StatelessWidget {
                 ),
                 Text(
                   '${clampedPercentage.round()}%',
-                  style: GoogleFonts.outfit(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
-                  ),
+                  style: AppTextStyles.label,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: AppSpacing.xs),
           Text(
             moduleName,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: AppTextStyles.caption.copyWith(
               color: AppColors.textSecondary,
-              fontSize: 12,
             ),
           ),
         ],
