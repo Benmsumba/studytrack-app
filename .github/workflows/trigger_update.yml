@@ -15,9 +15,9 @@ on:
 permissions:
   contents: read
 
-      concurrency:
-        group: trigger-update-version-json-${{ github.run_id }}
-        cancel-in-progress: true
+concurrency:
+  group: trigger-update-version-json-${{ github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   push-version-json:
