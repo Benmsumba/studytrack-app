@@ -74,9 +74,29 @@ class TimetableProvider extends ChangeNotifier {
         _classSlots = classResult.data;
       }
 
-      // TODO: Fetch study sessions via repository when StudySessionRepository
-      // has method to fetch by date (currently only has date-range methods)
-      _studySessions = const [];
+      final startOfDay = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+      );
+      final endOfDay = startOfDay.add(const Duration(days: 1));
+      final sessionResult = await _studySessionRepository
+          .getSessionsByDateRange(startDate: startOfDay, endDate: endOfDay);
+
+      if (sessionResult is Failure<List<StudySessionModel>>) {
+        _errorMessage = sessionResult.error.message;
+        _studySessions = const [];
+        return TimetableActionResult(
+          success: false,
+          statusCode: 500,
+          message: _errorMessage ?? 'Failed to load study sessions.',
+        );
+      }
+
+      if (sessionResult is Success<List<StudySessionModel>>) {
+        _studySessions = sessionResult.data
+          ..sort((a, b) => (a.startTime ?? '').compareTo(b.startTime ?? ''));
+      }
 
       return const TimetableActionResult(
         success: true,
