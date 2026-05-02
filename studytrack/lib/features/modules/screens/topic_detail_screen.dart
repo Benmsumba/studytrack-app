@@ -14,6 +14,7 @@ import '../../../core/repositories/topic_repository.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 import '../../../models/topic_rating_history_model.dart';
@@ -35,6 +36,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   final TopicRepository _topicRepo = getIt<TopicRepository>();
   final ModuleRepository _moduleRepo = getIt<ModuleRepository>();
   final StorageService _storageService = StorageService();
+  final SupabaseService _supabaseService = getIt<SupabaseService>();
   final TextEditingController _notesController = TextEditingController();
 
   bool _isLoading = true;
@@ -81,14 +83,17 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
               .map((h) => {'rating': h.rating, 'ratedAt': h.ratedAt})
               .toList()
         : <Map<String, dynamic>>[];
-    final notes = <UploadedNoteModel>[];
+    final notes = await _supabaseService.getNotesByTopic(widget.topicId);
+    final uploadedNotes = (notes ?? <Map<String, dynamic>>[])
+        .map(UploadedNoteModel.fromJson)
+        .toList(growable: false);
 
     if (!mounted) return;
     setState(() {
       _topic = topic;
       _module = module;
       _ratingHistory = history;
-      _uploadedNotes = notes;
+      _uploadedNotes = uploadedNotes;
       _voiceNoteTranscripts.clear();
       _selectedRating = topic?.currentRating ?? 0;
       _notesController.text = topic?.notes ?? '';
@@ -182,12 +187,31 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   }
 
   Future<void> _toggleShare(UploadedNoteModel note, bool value) async {
-    // TODO: Implement via NotesRepository or similar in future wave
+    final updated = await _supabaseService.updateUploadedNoteSharing(
+      note.id,
+      value,
+    );
+    if (!mounted) return;
+    if (updated == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not update note sharing.')),
+      );
+      return;
+    }
+
     await _load();
   }
 
   Future<void> _deleteUploadedNote(String noteId) async {
-    // TODO: Implement via NotesRepository or similar in future wave
+    final deleted = await _supabaseService.deleteUploadedNote(noteId);
+    if (!mounted) return;
+    if (deleted != true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not delete uploaded note.')),
+      );
+      return;
+    }
+
     await _load();
   }
 
