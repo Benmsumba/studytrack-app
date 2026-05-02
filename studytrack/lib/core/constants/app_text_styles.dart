@@ -6,18 +6,18 @@ class AppTextStyles {
   // ============ Display Styles ============
   static final TextStyle displayLarge = GoogleFonts.outfit(
     fontSize: 40,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w800,
     height: 1.1,
-    color: AppColors.textPrimary,
-    letterSpacing: -0.5,
+    color: AppColors.textGlow,
+    letterSpacing: -0.8,
   );
 
   static final TextStyle displayMedium = GoogleFonts.outfit(
     fontSize: 32,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w800,
     height: 1.15,
-    color: AppColors.textPrimary,
-    letterSpacing: -0.3,
+    color: AppColors.textGlow,
+    letterSpacing: -0.5,
   );
 
   // ============ Heading Styles ============
@@ -26,7 +26,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w700,
     height: 1.2,
     color: AppColors.textPrimary,
-    letterSpacing: -0.2,
+    letterSpacing: -0.35,
   );
 
   static final TextStyle headingMedium = GoogleFonts.outfit(
@@ -34,7 +34,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     height: 1.2,
     color: AppColors.textPrimary,
-    letterSpacing: -0.1,
+    letterSpacing: -0.2,
   );
 
   static final TextStyle headingSmall = GoogleFonts.outfit(
@@ -48,21 +48,21 @@ class AppTextStyles {
   static final TextStyle bodyLarge = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    height: 1.5,
+    height: 1.55,
     color: AppColors.textPrimary,
   );
 
   static final TextStyle bodyMedium = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    height: 1.45,
+    height: 1.5,
     color: AppColors.textPrimary,
   );
 
   static final TextStyle bodySmall = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    height: 1.4,
+    height: 1.45,
     color: AppColors.textPrimary,
   );
 
@@ -70,21 +70,21 @@ class AppTextStyles {
   static final TextStyle bodyLargeSecondary = GoogleFonts.inter(
     fontSize: 16,
     fontWeight: FontWeight.w400,
-    height: 1.5,
+    height: 1.55,
     color: AppColors.textSecondary,
   );
 
   static final TextStyle bodyMediumSecondary = GoogleFonts.inter(
     fontSize: 14,
     fontWeight: FontWeight.w400,
-    height: 1.45,
+    height: 1.5,
     color: AppColors.textSecondary,
   );
 
   static final TextStyle bodySmallSecondary = GoogleFonts.inter(
     fontSize: 12,
     fontWeight: FontWeight.w400,
-    height: 1.4,
+    height: 1.45,
     color: AppColors.textSecondary,
   );
 
@@ -92,14 +92,14 @@ class AppTextStyles {
   static final TextStyle caption = GoogleFonts.inter(
     fontSize: 11,
     fontWeight: FontWeight.w400,
-    height: 1.35,
+    height: 1.4,
     color: AppColors.textMuted,
   );
 
   static final TextStyle captionSecondary = GoogleFonts.inter(
     fontSize: 11,
     fontWeight: FontWeight.w400,
-    height: 1.35,
+    height: 1.4,
     color: AppColors.textSecondary,
   );
 
@@ -107,7 +107,8 @@ class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.w500,
     height: 1.2,
-    color: AppColors.textPrimary,
+    color: AppColors.textGlow,
+    letterSpacing: 0.2,
   );
 
   static final TextStyle labelSecondary = GoogleFonts.inter(
@@ -115,23 +116,24 @@ class AppTextStyles {
     fontWeight: FontWeight.w500,
     height: 1.2,
     color: AppColors.textSecondary,
+    letterSpacing: 0.2,
   );
 
   // ============ Button Styles ============
   static final TextStyle button = GoogleFonts.inter(
     fontSize: 15,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     height: 1.2,
-    color: AppColors.textPrimary,
-    letterSpacing: 0.5,
+    color: AppColors.textGlow,
+    letterSpacing: 0.9,
   );
 
   static final TextStyle buttonSmall = GoogleFonts.inter(
     fontSize: 13,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     height: 1.2,
-    color: AppColors.textPrimary,
-    letterSpacing: 0.3,
+    color: AppColors.textGlow,
+    letterSpacing: 0.7,
   );
 
   // ============ Accent/Highlight Styles ============
@@ -140,7 +142,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w700,
     height: 1.2,
     color: AppColors.neonCyan,
-    letterSpacing: 0.2,
+    letterSpacing: 0.25,
   );
 
   static final TextStyle accentMedium = GoogleFonts.outfit(
@@ -148,6 +150,22 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
     height: 1.3,
     color: AppColors.neonViolet,
+  );
+
+  static final TextStyle statValue = GoogleFonts.outfit(
+    fontSize: 26,
+    fontWeight: FontWeight.w800,
+    height: 1.05,
+    color: AppColors.textGlow,
+    letterSpacing: -0.4,
+  );
+
+  static final TextStyle sectionOverline = GoogleFonts.inter(
+    fontSize: 11,
+    fontWeight: FontWeight.w700,
+    height: 1.2,
+    color: AppColors.neonCyan,
+    letterSpacing: 1.2,
   );
 
   // ============ Muted Styles ============

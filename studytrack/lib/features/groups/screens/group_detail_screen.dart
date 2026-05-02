@@ -1,12 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/study_group_repository.dart';
 import '../../../core/repositories/study_session_repository.dart';
@@ -14,6 +16,7 @@ import '../../../core/repositories/topic_repository.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/glass_card.dart';
 import '../../../models/group_member_model.dart';
 import '../../../models/study_session_model.dart';
 import '../../../models/topic_model.dart';
@@ -41,7 +44,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   List<Map<String, dynamic>> _sharedNotes = [];
   List<Map<String, dynamic>> _sessions = [];
   Map<String, String> _topicNames = {};
-
   final Set<String> _rsvpYes = {};
 
   @override
@@ -52,6 +54,20 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     _authRepository = getIt<AuthRepository>();
     _studySessionRepository = getIt<StudySessionRepository>();
     _load();
+  }
+
+  String _groupName() => widget.group?['name']?.toString() ?? 'Study Group';
+
+  String _initials(String name) {
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return 'G';
+    if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
+        .toUpperCase();
   }
 
   Future<void> _load() async {
@@ -84,8 +100,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         )
         .toList(growable: false);
 
-    // Schema limitation: uploaded_notes has no direct group_id.
-    // We show globally shared notes as a practical fallback.
     var sharedNotes = <Map<String, dynamic>>[];
     try {
       final supabaseService = getIt<SupabaseService>();
@@ -151,6 +165,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       userId: userId,
     );
     if (!mounted) return;
+
     if (result.isSuccess) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Member removed from group.')),
@@ -220,8 +235,6 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     ).showSnackBar(const SnackBar(content: Text('Could not leave group.')));
   }
 
-  String _groupName() => widget.group?['name']?.toString() ?? 'Study Group';
-
   @override
   Widget build(BuildContext context) {
     final description =
@@ -235,7 +248,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         backgroundColor: AppColors.backgroundDark,
         appBar: AppBar(
           backgroundColor: AppColors.backgroundDark,
-          title: Text(_groupName()),
+          title: Text(_groupName(), style: AppTextStyles.headingSmall),
           bottom: const TabBar(
             isScrollable: true,
             tabs: [
@@ -257,37 +270,30 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
             ? const Center(child: CircularProgressIndicator())
             : Column(
                 children: [
-                  Container(
-                    width: double.infinity,
-                    margin: const EdgeInsets.all(12),
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardDark,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.border),
-                    ),
+                  GlassCard(
+                    margin: EdgeInsets.all(AppSpacing.sm),
+                    padding: EdgeInsets.all(AppSpacing.sm),
+                    backgroundColor: AppColors.cardDark,
+                    borderRadius: AppSpacing.cardRadius,
+                    borderColors: [AppColors.border, AppColors.border],
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           '${_groupName()} • $memberCount member${memberCount == 1 ? '' : 's'}',
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: AppTextStyles.headingSmall,
                         ),
-                        const SizedBox(height: 6),
+                        SizedBox(height: AppSpacing.xxs),
                         Text(
                           description,
-                          style: GoogleFonts.inter(
+                          style: AppTextStyles.bodySmall.copyWith(
                             color: AppColors.textSecondary,
                           ),
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: AppSpacing.xs),
                         Text(
                           'Invite: $inviteCode',
-                          style: GoogleFonts.inter(
+                          style: AppTextStyles.caption.copyWith(
                             color: AppColors.accent,
                             fontWeight: FontWeight.w700,
                           ),
@@ -316,13 +322,20 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       return Center(
         child: Text(
           'No members yet.',
-          style: GoogleFonts.inter(color: AppColors.textSecondary),
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 16),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.xs,
+        AppSpacing.md,
+        AppSpacing.md,
+      ),
       itemCount: _members.length,
       itemBuilder: (context, index) {
         final member = _members[index];
@@ -333,74 +346,70 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         final yearLevel = (member['year_level'] as num?)?.toInt();
         final joinedAt = member['joined_at']?.toString() ?? '';
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.cardDark,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
-          ),
+        return GlassCard(
+          margin: EdgeInsets.only(bottom: AppSpacing.sm),
+          padding: EdgeInsets.all(AppSpacing.sm),
+          backgroundColor: AppColors.cardDark,
+          borderRadius: AppSpacing.fieldRadius,
+          borderColors: [AppColors.border, AppColors.border],
           child: Row(
             children: [
               CircleAvatar(
+                radius: 22,
                 backgroundColor: AppColors.primary,
-                child: Text(name.substring(0, 1).toUpperCase()),
+                child: Text(_initials(name), style: AppTextStyles.label),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      name,
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
+                    Text(name, style: AppTextStyles.label),
+                    SizedBox(height: AppSpacing.xxs),
                     Text(
                       '$course${yearLevel == null ? '' : ' • Year $yearLevel'}',
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.caption.copyWith(
                         color: AppColors.textSecondary,
-                        fontSize: 12,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    SizedBox(height: AppSpacing.xxs),
                     Text(
                       joinedAt.isEmpty
                           ? 'Member'
                           : 'Joined ${joinedAt.split('T').first}',
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.caption.copyWith(
                         color: AppColors.textMuted,
-                        fontSize: 12,
                       ),
                     ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: role == 'admin'
-                      ? AppColors.primary.withValues(alpha: 0.2)
-                      : AppColors.surfaceDark,
-                  borderRadius: BorderRadius.circular(20),
+              GlassCard(
+                padding: EdgeInsets.symmetric(
+                  horizontal: AppSpacing.xs,
+                  vertical: AppSpacing.xxs,
                 ),
+                borderRadius: 999,
+                enableGlow: false,
+                backgroundColor: role == 'admin'
+                    ? AppColors.primary.withValues(alpha: 0.2)
+                    : AppColors.surfaceDark,
+                borderColors: [
+                  role == 'admin' ? AppColors.primary : AppColors.border,
+                  role == 'admin' ? AppColors.primary : AppColors.border,
+                ],
                 child: Text(
                   role.toUpperCase(),
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.caption.copyWith(
                     color: role == 'admin'
                         ? AppColors.primary
                         : AppColors.textSecondary,
-                    fontSize: 11,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
               if (_isAdmin && userId != _currentUserId) ...[
-                const SizedBox(width: 8),
+                SizedBox(width: AppSpacing.xs),
                 IconButton(
                   tooltip: 'Remove member',
                   onPressed: () => _removeMember(userId),
@@ -427,19 +436,23 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
 
     return Column(
       children: [
-        Container(
-          margin: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.warning.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: AppColors.warning.withValues(alpha: 0.35),
-            ),
+        GlassCard(
+          margin: EdgeInsets.fromLTRB(
+            AppSpacing.md,
+            AppSpacing.xs,
+            AppSpacing.md,
+            AppSpacing.xxs,
           ),
+          padding: EdgeInsets.all(AppSpacing.sm),
+          backgroundColor: AppColors.warning.withValues(alpha: 0.15),
+          borderRadius: AppSpacing.xs + 2,
+          borderColors: [
+            AppColors.warning.withValues(alpha: 0.35),
+            AppColors.warning.withValues(alpha: 0.35),
+          ],
           child: Text(
             'Shared notes are shown from globally shared uploads. Group-specific note linking can be added in a later schema upgrade.',
-            style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+            style: AppTextStyles.caption.copyWith(color: Colors.white70),
           ),
         ),
         Expanded(
@@ -447,35 +460,34 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
               ? Center(
                   child: Text(
                     'No shared notes yet.',
-                    style: GoogleFonts.inter(color: AppColors.textSecondary),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 )
               : ListView(
-                  padding: const EdgeInsets.fromLTRB(12, 6, 12, 16),
+                  padding: EdgeInsets.fromLTRB(
+                    AppSpacing.md,
+                    AppSpacing.xs,
+                    AppSpacing.md,
+                    AppSpacing.md,
+                  ),
                   children: notesByTopic.entries.map((entry) {
                     final topicName = entry.key;
                     final notes = entry.value;
-                    return Container(
-                      margin: const EdgeInsets.only(bottom: 10),
-                      decoration: BoxDecoration(
-                        color: AppColors.cardDark,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
+                    return GlassCard(
+                      margin: EdgeInsets.only(bottom: AppSpacing.sm),
+                      padding: EdgeInsets.zero,
+                      backgroundColor: AppColors.cardDark,
+                      borderRadius: AppSpacing.fieldRadius,
+                      borderColors: [AppColors.border, AppColors.border],
                       child: ExpansionTile(
                         initiallyExpanded: true,
-                        title: Text(
-                          topicName,
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
+                        title: Text(topicName, style: AppTextStyles.label),
                         subtitle: Text(
                           '${notes.length} note${notes.length == 1 ? '' : 's'}',
-                          style: GoogleFonts.inter(
+                          style: AppTextStyles.caption.copyWith(
                             color: AppColors.textSecondary,
-                            fontSize: 12,
                           ),
                         ),
                         children: notes.map((note) {
@@ -495,16 +507,15 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                               fileName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.inter(
+                              style: AppTextStyles.bodySmall.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             subtitle: Text(
                               '$fileType • $status',
-                              style: GoogleFonts.inter(
+                              style: AppTextStyles.caption.copyWith(
                                 color: AppColors.textSecondary,
-                                fontSize: 12,
                               ),
                             ),
                             trailing: PopupMenuButton<String>(
@@ -548,13 +559,20 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       return Center(
         child: Text(
           'No upcoming sessions.',
-          style: GoogleFonts.inter(color: AppColors.textSecondary),
+          style: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textSecondary,
+          ),
         ),
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.xs,
+        AppSpacing.md,
+        AppSpacing.md,
+      ),
       itemCount: _sessions.length,
       itemBuilder: (context, index) {
         final session = _sessions[index];
@@ -565,38 +583,29 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         final status = session['status']?.toString() ?? 'planned';
         final rsvp = _rsvpYes.contains(id);
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: AppColors.cardDark,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.border),
-          ),
+        return GlassCard(
+          margin: EdgeInsets.only(bottom: AppSpacing.sm),
+          padding: EdgeInsets.all(AppSpacing.sm),
+          backgroundColor: AppColors.cardDark,
+          borderRadius: AppSpacing.fieldRadius,
+          borderColors: [AppColors.border, AppColors.border],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 4),
+              Text(title, style: AppTextStyles.label),
+              SizedBox(height: AppSpacing.xxs),
               Text(
                 '$date • $start • ${status.toUpperCase()}',
-                style: GoogleFonts.inter(
+                style: AppTextStyles.caption.copyWith(
                   color: AppColors.textSecondary,
-                  fontSize: 12,
                 ),
               ),
-              const SizedBox(height: 10),
+              SizedBox(height: AppSpacing.xs),
               Row(
                 children: [
                   FilledButton.tonal(
                     onPressed: () {
+                      HapticFeedback.selectionClick();
                       setState(() {
                         if (rsvp) {
                           _rsvpYes.remove(id);
@@ -618,8 +627,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
 
   Widget _chatTab() => Center(
     child: FilledButton.icon(
-      onPressed: () =>
-          context.push('/group/${widget.groupId}/chat', extra: widget.group),
+      onPressed: () {
+        HapticFeedback.lightImpact();
+        context.push('/group/${widget.groupId}/chat', extra: widget.group);
+      },
       icon: const Icon(Icons.chat_bubble_outline),
       label: const Text('Open Group Chat'),
     ),

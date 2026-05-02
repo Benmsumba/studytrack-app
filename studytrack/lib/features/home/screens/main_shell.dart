@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
+import '../../../core/widgets/glass_card.dart';
 
 class MainShell extends StatelessWidget {
   const MainShell({required this.navigationShell, super.key});
@@ -15,6 +18,9 @@ class MainShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final currentIndex = navigationShell.currentIndex;
     final showStudyNow = currentIndex == 0 || currentIndex == 1;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    final navBottom = bottomInset + AppSpacing.md;
+    final shellBottomPadding = showStudyNow ? navBottom + 104 : navBottom + 84;
     final headerActions = currentIndex == 2
         ? [
             TextButton.icon(
@@ -47,19 +53,24 @@ class MainShell extends StatelessWidget {
                   actions: headerActions,
                 ),
               ),
-              Expanded(child: navigationShell),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: shellBottomPadding),
+                  child: navigationShell,
+                ),
+              ),
             ],
           ),
           if (showStudyNow)
             Positioned(
-              right: 20,
-              bottom: 92,
+              right: AppSpacing.screenHorizontal,
+              bottom: navBottom + 80,
               child: _StudyNowFab(onTap: () => context.go('/study-session')),
             ),
           Positioned(
-            left: 20,
-            right: 20,
-            bottom: 16,
+            left: AppSpacing.screenHorizontal,
+            right: AppSpacing.screenHorizontal,
+            bottom: navBottom,
             child: _BottomNavBar(
               currentIndex: currentIndex,
               onTap: (index) => navigationShell.goBranch(
@@ -89,7 +100,12 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
+    padding: const EdgeInsets.fromLTRB(
+      AppSpacing.screenHorizontal,
+      AppSpacing.md,
+      AppSpacing.screenHorizontal,
+      AppSpacing.md,
+    ),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -99,21 +115,12 @@ class _Header extends StatelessWidget {
             children: [
               Text(
                 'StudyTrack',
-                style: GoogleFonts.inter(
+                style: AppTextStyles.sectionOverline.copyWith(
                   color: AppColors.textMuted,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                title,
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text(title, style: AppTextStyles.headingLarge),
             ],
           ),
         ),
@@ -152,19 +159,14 @@ class _BottomNavBar extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-    decoration: BoxDecoration(
-      color: AppColors.surfaceDark,
-      borderRadius: BorderRadius.circular(24),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.3),
-          blurRadius: 24,
-          offset: const Offset(0, 12),
-        ),
-      ],
+  Widget build(BuildContext context) => GlassCard(
+    padding: const EdgeInsets.symmetric(
+      horizontal: AppSpacing.md,
+      vertical: AppSpacing.sm,
     ),
+    borderRadius: AppSpacing.cardRadius,
+    blurSigma: 16,
+    glowColor: AppColors.neonViolet,
     child: Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: List.generate(_items.length, (index) {
@@ -173,7 +175,10 @@ class _BottomNavBar extends StatelessWidget {
 
         return Expanded(
           child: GestureDetector(
-            onTap: () => onTap(index),
+            onTap: () {
+              HapticFeedback.selectionClick();
+              onTap(index);
+            },
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -187,17 +192,18 @@ class _BottomNavBar extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                if (selected)
-                  Text(
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 220),
+                  style: selected
+                      ? AppTextStyles.label.copyWith(color: AppColors.primary)
+                      : AppTextStyles.labelSecondary,
+                  child: Text(
                     item.$2,
-                    style: GoogleFonts.inter(
-                      color: AppColors.primary,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  )
-                else
-                  const SizedBox(height: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
                 const SizedBox(height: 3),
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 220),
@@ -206,7 +212,7 @@ class _BottomNavBar extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: selected ? AppColors.primaryGradient : null,
                     color: selected ? null : Colors.transparent,
-                    borderRadius: BorderRadius.circular(99),
+                    borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
                   ),
                 ),
               ],
@@ -225,32 +231,24 @@ class _StudyNowFab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.4),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+    onTap: () {
+      HapticFeedback.lightImpact();
+      onTap();
+    },
+    child: GlassCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.lg,
+        vertical: AppSpacing.md,
       ),
+      borderRadius: AppSpacing.pillRadius,
+      blurSigma: 18,
+      glowColor: AppColors.neonCyan,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.play_arrow_rounded, color: Colors.white),
           const SizedBox(width: 6),
-          Text(
-            'Study Now',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text('Study Now', style: AppTextStyles.button),
         ],
       ),
     ),

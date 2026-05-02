@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/study_group_repository.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/glass_card.dart';
 import '../../../models/study_group_model.dart';
 import '../../auth/controllers/auth_provider.dart';
 
@@ -56,50 +58,46 @@ class _GroupsScreenState extends State<GroupsScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.surfaceDark,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.cardRadius),
+        ),
       ),
       builder: (sheetContext) => Padding(
         padding: EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          MediaQuery.of(sheetContext).viewInsets.bottom + 24,
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          MediaQuery.of(sheetContext).viewInsets.bottom + AppSpacing.lg,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Create Group',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 16),
+            Text('Create Group', style: AppTextStyles.headingSmall),
+            SizedBox(height: AppSpacing.md),
             TextField(
               controller: nameController,
-              style: const TextStyle(color: Colors.white),
+              style: AppTextStyles.bodySmall,
               decoration: const InputDecoration(labelText: 'Group name'),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: AppSpacing.xs),
             TextField(
               controller: descriptionController,
-              style: const TextStyle(color: Colors.white),
+              style: AppTextStyles.bodySmall,
               minLines: 2,
               maxLines: 3,
               decoration: const InputDecoration(
                 labelText: 'Description (optional)',
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: AppSpacing.md),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
                 onPressed: _working
                     ? null
                     : () async {
+                        HapticFeedback.lightImpact();
                         final auth = Provider.of<AuthProvider>(
                           context,
                           listen: false,
@@ -138,25 +136,24 @@ class _GroupsScreenState extends State<GroupsScreen> {
                           context: navigator.context,
                           builder: (dialogContext) => AlertDialog(
                             backgroundColor: AppColors.cardDark,
-                            title: const Text(
+                            title: Text(
                               'Group Created',
-                              style: TextStyle(color: Colors.white),
+                              style: AppTextStyles.headingSmall,
                             ),
                             content: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text(
+                                Text(
                                   'Share this code with friends:',
-                                  style: TextStyle(color: Colors.white70),
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
-                                const SizedBox(height: 10),
+                                SizedBox(height: AppSpacing.xs),
                                 SelectableText(
                                   invite,
-                                  style: GoogleFonts.outfit(
+                                  style: AppTextStyles.statValue.copyWith(
                                     color: AppColors.accent,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 1.2,
                                   ),
                                 ),
                               ],
@@ -211,41 +208,37 @@ class _GroupsScreenState extends State<GroupsScreen> {
       isScrollControlled: true,
       backgroundColor: AppColors.surfaceDark,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(AppSpacing.cardRadius),
+        ),
       ),
       builder: (context) => Padding(
         padding: EdgeInsets.fromLTRB(
-          16,
-          16,
-          16,
-          MediaQuery.of(context).viewInsets.bottom + 24,
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          MediaQuery.of(context).viewInsets.bottom + AppSpacing.lg,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Join Group',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 16),
+            Text('Join Group', style: AppTextStyles.headingSmall),
+            SizedBox(height: AppSpacing.md),
             TextField(
               controller: codeController,
-              style: const TextStyle(color: Colors.white),
+              style: AppTextStyles.bodySmall,
               textCapitalization: TextCapitalization.characters,
               decoration: const InputDecoration(labelText: 'Enter invite code'),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: AppSpacing.md),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
                 onPressed: _working
                     ? null
                     : () async {
+                        HapticFeedback.lightImpact();
                         final auth = Provider.of<AuthProvider>(
                           context,
                           listen: false,
@@ -337,16 +330,22 @@ class _GroupsScreenState extends State<GroupsScreen> {
         : RefreshIndicator(
             onRefresh: _loadGroups,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 110),
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.screenHorizontal,
+                AppSpacing.lg,
+                AppSpacing.screenHorizontal,
+                AppSpacing.xxxl +
+                    AppSpacing.xxl +
+                    AppSpacing.md +
+                    AppSpacing.xs,
+              ),
               children: [
                 if (_groups.isEmpty) ...[
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: AppColors.cardDark,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: AppColors.border),
-                    ),
+                  GlassCard(
+                    padding: EdgeInsets.all(AppSpacing.md),
+                    backgroundColor: AppColors.cardDark,
+                    borderRadius: AppSpacing.cardRadius,
+                    borderColors: [AppColors.border, AppColors.border],
                     child: Column(
                       children: [
                         const Icon(
@@ -354,37 +353,39 @@ class _GroupsScreenState extends State<GroupsScreen> {
                           size: 56,
                           color: Colors.white70,
                         ),
-                        const SizedBox(height: 12),
+                        SizedBox(height: AppSpacing.sm),
                         Text(
                           'No study groups yet',
-                          style: GoogleFonts.outfit(
-                            color: Colors.white,
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: AppTextStyles.headingSmall,
                         ),
-                        const SizedBox(height: 8),
+                        SizedBox(height: AppSpacing.xs),
                         Text(
                           'Create a group with classmates or join one with an invite code.',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.inter(
+                          style: AppTextStyles.bodySmall.copyWith(
                             color: AppColors.textSecondary,
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: AppSpacing.md),
                         Row(
                           children: [
                             Expanded(
                               child: FilledButton.icon(
-                                onPressed: _showCreateGroupSheet,
+                                onPressed: () {
+                                  HapticFeedback.lightImpact();
+                                  _showCreateGroupSheet();
+                                },
                                 icon: const Icon(Icons.group_add),
                                 label: const Text('Create Group'),
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            SizedBox(width: AppSpacing.xs),
                             Expanded(
                               child: OutlinedButton.icon(
-                                onPressed: _showJoinGroupSheet,
+                                onPressed: () {
+                                  HapticFeedback.lightImpact();
+                                  _showJoinGroupSheet();
+                                },
                                 icon: const Icon(Icons.login),
                                 label: const Text('Join Group'),
                               ),
@@ -395,15 +396,8 @@ class _GroupsScreenState extends State<GroupsScreen> {
                     ),
                   ),
                 ] else ...[
-                  Text(
-                    'My Study Groups',
-                    style: GoogleFonts.outfit(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 22,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+                  Text('My Study Groups', style: AppTextStyles.headingSmall),
+                  SizedBox(height: AppSpacing.sm),
                   ..._groups.map((group) {
                     final g = group;
                     final name = g.name;
@@ -415,15 +409,16 @@ class _GroupsScreenState extends State<GroupsScreen> {
                     return GestureDetector(
                       onTap: groupId.isEmpty
                           ? null
-                          : () => context.push('/group/$groupId', extra: g),
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.cardDark,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                        ),
+                          : () {
+                              HapticFeedback.selectionClick();
+                              context.push('/group/$groupId', extra: g);
+                            },
+                      child: GlassCard(
+                        margin: EdgeInsets.only(bottom: AppSpacing.sm),
+                        padding: EdgeInsets.all(AppSpacing.sm),
+                        backgroundColor: AppColors.cardDark,
+                        borderRadius: AppSpacing.fieldRadius,
+                        borderColors: [AppColors.border, AppColors.border],
                         child: Row(
                           children: [
                             CircleAvatar(
@@ -431,51 +426,37 @@ class _GroupsScreenState extends State<GroupsScreen> {
                               backgroundColor: AppColors.primary,
                               child: Text(
                                 _initials(name),
-                                style: GoogleFonts.outfit(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                style: AppTextStyles.label,
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: AppSpacing.sm),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    name,
-                                    style: GoogleFonts.outfit(
-                                      color: Colors.white,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
+                                  Text(name, style: AppTextStyles.headingSmall),
+                                  SizedBox(height: AppSpacing.xxs),
                                   Text(
                                     description,
                                     maxLines: 2,
                                     overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.inter(
+                                    style: AppTextStyles.bodySmall.copyWith(
                                       color: AppColors.textSecondary,
-                                      fontSize: 13,
                                     ),
                                   ),
-                                  const SizedBox(height: 6),
+                                  SizedBox(height: AppSpacing.xs),
                                   Text(
                                     '$memberCount member${memberCount == 1 ? '' : 's'}',
-                                    style: GoogleFonts.inter(
+                                    style: AppTextStyles.caption.copyWith(
                                       color: AppColors.textMuted,
-                                      fontSize: 11,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  const SizedBox(height: 2),
+                                  SizedBox(height: AppSpacing.xxs),
                                   Text(
                                     _formatLastActivity(lastActivity),
-                                    style: GoogleFonts.inter(
+                                    style: AppTextStyles.caption.copyWith(
                                       color: AppColors.textMuted,
-                                      fontSize: 11,
                                     ),
                                   ),
                                 ],
@@ -496,6 +477,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
           ),
     floatingActionButton: FloatingActionButton.extended(
       onPressed: () async {
+        HapticFeedback.lightImpact();
         await showModalBottomSheet<void>(
           context: context,
           backgroundColor: AppColors.surfaceDark,
@@ -504,7 +486,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
           ),
           builder: (context) => SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(AppSpacing.md),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

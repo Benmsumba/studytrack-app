@@ -1,13 +1,17 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/custom_button.dart';
+import '../../../core/widgets/glass_card.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key});
@@ -32,6 +36,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   final _pageController = PageController();
   final _nameController = TextEditingController();
   final _courseController = TextEditingController();
+  late final ConfettiController _confettiController;
   late final ProfileRepository _profileRepository;
 
   int _currentStep = 0;
@@ -45,6 +50,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   void initState() {
     super.initState();
     _profileRepository = getIt<ProfileRepository>();
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 2),
+    );
   }
 
   @override
@@ -52,12 +60,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     _pageController.dispose();
     _nameController.dispose();
     _courseController.dispose();
+    _confettiController.dispose();
     super.dispose();
   }
 
   Future<void> _nextStep() async {
     final canContinue = _validateStep(_currentStep);
     if (!canContinue) return;
+
+    await HapticFeedback.lightImpact();
 
     if (_currentStep == _steps - 1) {
       await _completeOnboarding();
@@ -75,6 +86,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   Future<void> _skipStep() async {
     if (_currentStep >= _steps - 1) return;
+
+    await HapticFeedback.selectionClick();
 
     final next = _currentStep + 1;
     setState(() => _currentStep = next);
@@ -132,6 +145,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('onboarding_complete', true);
 
+      _confettiController.play();
+
       if (mounted) context.go('/home');
     } catch (e) {
       // Even if backend save fails, mark onboarding as complete locally
@@ -140,6 +155,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       await prefs.setBool('onboarding_complete', true);
 
       if (mounted) {
+        _confettiController.play();
         _showMessage(
           'Your setup has been saved. '
           'We will sync with the cloud when internet is available.',
@@ -165,36 +181,90 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
-    body: SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-        child: Column(
-          children: [
-            _buildDots(),
-            const SizedBox(height: 18),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _stepWelcome(),
-                  _stepCourse(),
-                  _stepYearLevel(),
-                  _stepPrimeTime(),
-                  _stepDailyHours(),
-                  _stepStudyStyle(),
-                ],
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final horizontalPadding = size.width >= 600
+        ? AppSpacing.xl
+        : AppSpacing.screenHorizontal;
+    final maxContentWidth = size.width >= 720 ? 640.0 : double.infinity;
+
+    return Scaffold(
+      backgroundColor: AppColors.backgroundDark,
+      body: Stack(
+        children: [
+          const Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.topCenter,
+                  radius: 1.3,
+                  colors: [
+                    Color(0x332D1B69),
+                    AppColors.backgroundDark,
+                    AppColors.backgroundDeep,
+                  ],
+                  stops: [0, 0.55, 1],
+                ),
               ),
             ),
-            const SizedBox(height: 14),
-            _buildBottomActions(),
-          ],
-        ),
+          ),
+          SafeArea(
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxContentWidth),
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    horizontalPadding,
+                    AppSpacing.md,
+                    horizontalPadding,
+                    AppSpacing.lg,
+                  ),
+                  child: Column(
+                    children: [
+                      _buildDots(),
+                      const SizedBox(height: AppSpacing.lg),
+                      Expanded(
+                        child: PageView(
+                          controller: _pageController,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: [
+                            _stepWelcome(),
+                            _stepCourse(),
+                            _stepYearLevel(),
+                            _stepPrimeTime(),
+                            _stepDailyHours(),
+                            _stepStudyStyle(),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildBottomActions(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              emissionFrequency: 0.05,
+              numberOfParticles: 18,
+              gravity: 0.14,
+              colors: const [
+                AppColors.neonViolet,
+                AppColors.neonCyan,
+                Colors.white,
+              ],
+            ),
+          ),
+        ],
       ),
-    ),
-  );
+    );
+  }
 
   Widget _buildDots() => Row(
     mainAxisAlignment: MainAxisAlignment.center,
@@ -203,12 +273,17 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       return AnimatedContainer(
         duration: const Duration(milliseconds: 240),
         margin: const EdgeInsets.symmetric(horizontal: 4),
-        width: active ? 22 : 8,
+        width: active ? 24 : 8,
         height: 8,
         decoration: BoxDecoration(
           gradient: active ? AppColors.primaryGradient : null,
-          color: active ? null : AppColors.border,
-          borderRadius: BorderRadius.circular(99),
+          color: active ? null : AppColors.borderSoft,
+          borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
+          boxShadow: active
+              ? const [
+                  BoxShadow(color: AppColors.violetGlowSoft, blurRadius: 10),
+                ]
+              : null,
         ),
       );
     }),
@@ -217,52 +292,21 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   Widget _buildBottomActions() {
     final isLast = _currentStep == _steps - 1;
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
+        GlowingButton(
+          label: isLast ? 'Let\'s Go!' : 'Next',
+          onPressed: _isSaving ? null : _nextStep,
+          isLoading: _isSaving,
           width: double.infinity,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: ElevatedButton(
-              onPressed: _isSaving ? null : _nextStep,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.transparent,
-                shadowColor: Colors.transparent,
-                minimumSize: const Size.fromHeight(52),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Text(
-                      isLast ? 'Let\'s Go!' : 'Next',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
-                    ),
-            ),
-          ),
         ),
         if (!isLast)
           TextButton(
             onPressed: _skipStep,
             child: Text(
               'Skip',
-              style: GoogleFonts.inter(
+              style: AppTextStyles.labelSecondary.copyWith(
                 color: AppColors.textSecondary,
-                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -273,47 +317,46 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   Widget _stepWelcome() => _stepContainer(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          'Welcome to StudyTrack 👋',
-          style: GoogleFonts.outfit(
-            color: AppColors.textPrimary,
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            height: 1.1,
-          ),
-        ),
+        Text('Welcome to StudyTrack 👋', style: AppTextStyles.displayMedium),
         const SizedBox(height: 10),
         Text(
           'Let\'s set up your personal study companion',
-          style: GoogleFonts.inter(
-            color: AppColors.textSecondary,
-            fontSize: 14,
-          ),
+          style: AppTextStyles.bodyMediumSecondary,
         ),
         const SizedBox(height: 16),
-        Expanded(
-          child: Center(
-            child:
-                Container(
-                      width: 160,
-                      height: 160,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: AppColors.primaryGradient,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(24),
-                        child: Image.asset(_brandAsset, fit: BoxFit.contain),
-                      ),
-                    )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .scale(
-                      begin: const Offset(0.95, 0.95),
-                      end: const Offset(1.05, 1.05),
-                      duration: 1800.ms,
-                      curve: Curves.easeInOut,
+        Center(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final logoSize = constraints.maxWidth < 360 ? 136.0 : 160.0;
+              return Container(
+                    width: logoSize,
+                    height: logoSize,
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: AppColors.primaryGradient,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.violetGlow,
+                          blurRadius: 36,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Image.asset(_brandAsset, fit: BoxFit.contain),
+                    ),
+                  )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scale(
+                    begin: const Offset(0.95, 0.95),
+                    end: const Offset(1.04, 1.04),
+                    duration: 1800.ms,
+                    curve: Curves.easeInOut,
+                  );
+            },
           ),
         ),
         const SizedBox(height: 10),
@@ -325,6 +368,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   Widget _stepCourse() => _stepContainer(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         _title('What are you studying?'),
         const SizedBox(height: 12),
@@ -336,13 +380,11 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           children: _courseExamples
               .map(
                 (example) => ActionChip(
-                  backgroundColor: AppColors.cardDark,
-                  side: const BorderSide(color: AppColors.border),
-                  label: Text(
-                    example,
-                    style: GoogleFonts.inter(color: AppColors.textSecondary),
-                  ),
+                  backgroundColor: AppColors.surfaceElevated,
+                  side: const BorderSide(color: AppColors.borderSoft),
+                  label: Text(example, style: AppTextStyles.labelSecondary),
                   onPressed: () {
+                    HapticFeedback.selectionClick();
                     setState(() {
                       _courseController.text = example;
                     });
@@ -358,47 +400,63 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   Widget _stepYearLevel() => _stepContainer(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         _title('What year are you in?'),
         const SizedBox(height: 16),
-        Expanded(
-          child: GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 4,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 1.1,
-            ),
-            itemCount: 7,
-            itemBuilder: (context, index) {
-              final year = index + 1;
-              final selected = year == _yearLevel;
-              return InkWell(
-                onTap: () => setState(() => _yearLevel = year),
-                borderRadius: BorderRadius.circular(14),
-                child: Ink(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(14),
-                    gradient: selected ? AppColors.primaryGradient : null,
-                    color: selected ? null : AppColors.cardDark,
-                    border: selected
-                        ? null
-                        : Border.all(color: AppColors.border, width: 1.2),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '$year',
-                      style: GoogleFonts.outfit(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final crossAxisCount = constraints.maxWidth < 360 ? 3 : 4;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: AppSpacing.sm,
+                mainAxisSpacing: AppSpacing.sm,
+                childAspectRatio: 1.08,
+              ),
+              itemCount: 7,
+              itemBuilder: (context, index) {
+                final year = index + 1;
+                final selected = year == _yearLevel;
+                return InkWell(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _yearLevel = year);
+                  },
+                  borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.fieldRadius,
+                      ),
+                      gradient: selected ? AppColors.primaryGradient : null,
+                      color: selected ? null : AppColors.surfaceElevated,
+                      border: selected
+                          ? null
+                          : Border.all(color: AppColors.borderSoft, width: 1.1),
+                      boxShadow: selected
+                          ? const [
+                              BoxShadow(
+                                color: AppColors.violetGlowSoft,
+                                blurRadius: 18,
+                                spreadRadius: 1,
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$year',
+                        style: AppTextStyles.statValue.copyWith(fontSize: 28),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            );
+          },
         ),
       ],
     ).animate().fadeIn(duration: 350.ms),
@@ -415,6 +473,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     return _stepContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           _title('When do you study best?'),
           const SizedBox(height: 14),
@@ -423,21 +482,33 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: InkWell(
-                onTap: () => setState(() => _primeStudyTime = item.$1),
-                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  HapticFeedback.selectionClick();
+                  setState(() => _primeStudyTime = item.$1);
+                },
+                borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
                 child: Ink(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 14,
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.md,
                   ),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
                     gradient: selected ? AppColors.cardGradient : null,
-                    color: selected ? null : AppColors.cardDark,
+                    color: selected ? null : AppColors.surfaceElevated,
                     border: Border.all(
-                      color: selected ? AppColors.accent : AppColors.border,
+                      color: selected ? AppColors.accent : AppColors.borderSoft,
                       width: selected ? 1.5 : 1,
                     ),
+                    boxShadow: selected
+                        ? const [
+                            BoxShadow(
+                              color: AppColors.violetGlowSoft,
+                              blurRadius: 18,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Row(
                     children: [
@@ -447,20 +518,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              item.$3,
-                              style: GoogleFonts.outfit(
-                                color: AppColors.textPrimary,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            Text(item.$3, style: AppTextStyles.headingSmall),
                             Text(
                               item.$4,
-                              style: GoogleFonts.inter(
-                                color: AppColors.textSecondary,
-                                fontSize: 13,
-                              ),
+                              style: AppTextStyles.bodySmallSecondary,
                             ),
                           ],
                         ),
@@ -483,28 +544,18 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     return _stepContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           _title('How many hours can you study daily?'),
           const SizedBox(height: 26),
           Center(
             child: Text(
               '$hours',
-              style: GoogleFonts.outfit(
-                color: AppColors.textPrimary,
-                fontSize: 76,
-                fontWeight: FontWeight.w700,
-                height: 1,
-              ),
+              style: AppTextStyles.displayLarge.copyWith(fontSize: 76),
             ),
           ),
           Center(
-            child: Text(
-              'hours/day',
-              style: GoogleFonts.inter(
-                color: AppColors.textSecondary,
-                fontSize: 14,
-              ),
-            ),
+            child: Text('hours/day', style: AppTextStyles.bodyMediumSecondary),
           ),
           const SizedBox(height: 24),
           SliderTheme(
@@ -528,11 +579,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           Center(
             child: Text(
               'That\'s $weeklyHours hours per week',
-              style: GoogleFonts.inter(
-                color: AppColors.textSecondary,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+              style: AppTextStyles.labelSecondary,
             ),
           ),
         ],
@@ -541,73 +588,69 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   }
 
   Widget _stepStudyStyle() => _stepContainer(
-    child: SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _title('How do you prefer to study?'),
-          const SizedBox(height: 12),
-          _studyStyleCard(
-            selected: _studyPreference == 'alone',
-            emoji: '🎧',
-            title: 'Alone',
-            subtitle: 'I focus best by myself',
-            onTap: () => setState(() => _studyPreference = 'alone'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _title('How do you prefer to study?'),
+        const SizedBox(height: 12),
+        _studyStyleCard(
+          selected: _studyPreference == 'alone',
+          emoji: '🎧',
+          title: 'Alone',
+          subtitle: 'I focus best by myself',
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _studyPreference = 'alone');
+          },
+        ),
+        const SizedBox(height: 10),
+        _studyStyleCard(
+          selected: _studyPreference == 'group',
+          emoji: '👥',
+          title: 'With others',
+          subtitle: 'I learn better with friends',
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _studyPreference = 'group');
+          },
+        ),
+        const SizedBox(height: 18),
+        Text(
+          'Almost ready! Here\'s what we set up for you:',
+          style: AppTextStyles.bodyMediumSecondary,
+        ),
+        const SizedBox(height: 10),
+        GlassCard(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          borderRadius: AppSpacing.fieldRadius,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _summaryRow('Name', _nameController.text.trim()),
+              _summaryRow('Course', _courseController.text.trim()),
+              _summaryRow('Year', '$_yearLevel'),
+              _summaryRow('Best time', _primeStudyTime),
+              _summaryRow('Hours/day', _dailyStudyHours.round().toString()),
+              _summaryRow(
+                'Style',
+                _studyPreference == 'alone' ? 'Alone' : 'With others',
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
-          _studyStyleCard(
-            selected: _studyPreference == 'group',
-            emoji: '👥',
-            title: 'With others',
-            subtitle: 'I learn better with friends',
-            onTap: () => setState(() => _studyPreference = 'group'),
-          ),
-          const SizedBox(height: 18),
-          Text(
-            'Almost ready! Here\'s what we set up for you:',
-            style: GoogleFonts.inter(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.cardDark,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _summaryRow('Name', _nameController.text.trim()),
-                _summaryRow('Course', _courseController.text.trim()),
-                _summaryRow('Year', '$_yearLevel'),
-                _summaryRow('Best time', _primeStudyTime),
-                _summaryRow('Hours/day', _dailyStudyHours.round().toString()),
-                _summaryRow(
-                  'Style',
-                  _studyPreference == 'alone' ? 'Alone' : 'With others',
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     ).animate().fadeIn(duration: 350.ms),
   );
 
-  Widget _stepContainer({required Widget child}) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: AppColors.surfaceDark,
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: AppColors.border),
+  Widget _stepContainer({required Widget child}) => SingleChildScrollView(
+    physics: const BouncingScrollPhysics(),
+    child: GlassCard(
+      animateEntrance: true,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      borderRadius: AppSpacing.cardRadius,
+      child: child,
     ),
-    child: child,
   );
 
   Widget _inputField({
@@ -615,36 +658,14 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     required String label,
   }) => TextField(
     controller: controller,
-    style: GoogleFonts.inter(color: AppColors.textPrimary),
+    style: AppTextStyles.bodyMedium,
     decoration: InputDecoration(
       labelText: label,
-      labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
-      filled: true,
-      fillColor: AppColors.cardDark,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.accent),
-      ),
+      labelStyle: AppTextStyles.labelSecondary,
     ),
   );
 
-  Widget _title(String text) => Text(
-    text,
-    style: GoogleFonts.outfit(
-      color: AppColors.textPrimary,
-      fontSize: 30,
-      fontWeight: FontWeight.w700,
-      height: 1.1,
-    ),
-  );
+  Widget _title(String text) => Text(text, style: AppTextStyles.headingLarge);
 
   Widget _studyStyleCard({
     required bool selected,
@@ -654,17 +675,29 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     required VoidCallback onTap,
   }) => InkWell(
     onTap: onTap,
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
     child: Ink(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.md,
+      ),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
         gradient: selected ? AppColors.cardGradient : null,
-        color: selected ? null : AppColors.cardDark,
+        color: selected ? null : AppColors.surfaceElevated,
         border: Border.all(
-          color: selected ? AppColors.accent : AppColors.border,
+          color: selected ? AppColors.accent : AppColors.borderSoft,
           width: selected ? 1.5 : 1,
         ),
+        boxShadow: selected
+            ? const [
+                BoxShadow(
+                  color: AppColors.violetGlowSoft,
+                  blurRadius: 18,
+                  spreadRadius: 1,
+                ),
+              ]
+            : null,
       ),
       child: Row(
         children: [
@@ -674,21 +707,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: GoogleFonts.outfit(
-                    color: AppColors.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  subtitle,
-                  style: GoogleFonts.inter(
-                    color: AppColors.textSecondary,
-                    fontSize: 13,
-                  ),
-                ),
+                Text(title, style: AppTextStyles.headingSmall),
+                Text(subtitle, style: AppTextStyles.bodySmallSecondary),
               ],
             ),
           ),
@@ -703,22 +723,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       children: [
         SizedBox(
           width: 88,
-          child: Text(
-            '$label:',
-            style: GoogleFonts.inter(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          child: Text('$label:', style: AppTextStyles.labelSecondary),
         ),
         Expanded(
-          child: Text(
-            value.isEmpty ? '-' : value,
-            style: GoogleFonts.inter(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          child: Text(value.isEmpty ? '-' : value, style: AppTextStyles.label),
         ),
       ],
     ),

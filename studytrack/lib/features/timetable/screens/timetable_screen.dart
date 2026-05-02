@@ -1,15 +1,17 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/glass_card.dart';
 import '../../../models/class_slot_model.dart';
 import '../../../models/study_session_model.dart';
 import '../controllers/timetable_provider.dart';
@@ -192,28 +194,30 @@ class _TimetableScreenState extends State<TimetableScreen> {
           backgroundColor: AppColors.surfaceDark,
           onRefresh: _loadData,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenHorizontal,
+              AppSpacing.xs,
+              AppSpacing.screenHorizontal,
+              120,
+            ),
             children: [
               Text(
                 _displayTitleForSelectedDay(),
-                style: GoogleFonts.outfit(
-                  color: AppColors.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.headingSmall,
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: AppSpacing.sm),
               SizedBox(
                 height: 44,
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _dayLabels.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: 8),
+                  separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.xs),
                   itemBuilder: (context, index) {
                     final day = index + 1;
                     final selected = day == _selectedDay;
                     return GestureDetector(
                       onTap: () async {
+                        HapticFeedback.selectionClick();
                         setState(() {
                           _selectedDay = day;
                         });
@@ -221,9 +225,13 @@ class _TimetableScreenState extends State<TimetableScreen> {
                       },
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 220),
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppSpacing.md,
+                        ),
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.cardRadius,
+                          ),
                           gradient: selected ? AppColors.primaryGradient : null,
                           color: selected ? null : AppColors.cardDark,
                           border: Border.all(color: AppColors.border),
@@ -231,34 +239,22 @@ class _TimetableScreenState extends State<TimetableScreen> {
                         alignment: Alignment.center,
                         child: Text(
                           _dayLabels[index],
-                          style: GoogleFonts.inter(
-                            color: AppColors.textPrimary,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyles.label,
                         ),
                       ),
                     );
                   },
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: AppSpacing.md),
               _buildSectionHeader('🎓 Classes', classesForDay.length),
-              const SizedBox(height: 10),
-              Card(
-                color: AppColors.cardDark,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: AppColors.border),
-                ),
+              const SizedBox(height: AppSpacing.xs),
+              GlassCard(
+                backgroundColor: AppColors.cardDark,
+                borderColors: const [AppColors.border, AppColors.border],
                 child: ExpansionTile(
                   initiallyExpanded: true,
-                  title: Text(
-                    'Class Timetable',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  title: Text('Class Timetable', style: AppTextStyles.label),
                   iconColor: AppColors.textPrimary,
                   collapsedIconColor: AppColors.textSecondary,
                   children: classesForDay.isEmpty
@@ -266,24 +262,15 @@ class _TimetableScreenState extends State<TimetableScreen> {
                       : classesForDay.map(_buildClassCard).toList(),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               _buildSectionHeader('📖 Study Sessions', studySessions.length),
-              const SizedBox(height: 10),
-              Card(
-                color: AppColors.cardDark,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: const BorderSide(color: AppColors.border),
-                ),
+              const SizedBox(height: AppSpacing.xs),
+              GlassCard(
+                backgroundColor: AppColors.cardDark,
+                borderColors: const [AppColors.border, AppColors.border],
                 child: ExpansionTile(
                   initiallyExpanded: true,
-                  title: Text(
-                    'Planned Sessions',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  title: Text('Planned Sessions', style: AppTextStyles.label),
                   iconColor: AppColors.textPrimary,
                   collapsedIconColor: AppColors.textSecondary,
                   children: studySessions.isEmpty
@@ -301,7 +288,10 @@ class _TimetableScreenState extends State<TimetableScreen> {
       },
     ),
     floatingActionButton: FloatingActionButton(
-      onPressed: _showAddScheduleBottomSheet,
+      onPressed: () {
+        HapticFeedback.lightImpact();
+        _showAddScheduleBottomSheet();
+      },
       backgroundColor: AppColors.primary,
       child: const Icon(Icons.add, color: Colors.white),
     ),
@@ -309,46 +299,37 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
   Widget _buildSectionHeader(String title, int count) => Row(
     children: [
-      Text(
-        title,
-        style: GoogleFonts.outfit(
-          color: AppColors.textPrimary,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
+      Text(title, style: AppTextStyles.headingSmall),
       const Spacer(),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceDark,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: AppColors.border),
+      GlassCard(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xxs,
         ),
-        child: Text(
-          '$count',
-          style: GoogleFonts.inter(
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        borderRadius: 999,
+        enableGlow: false,
+        backgroundColor: AppColors.surfaceDark,
+        borderColors: const [AppColors.border, AppColors.border],
+        child: Text('$count', style: AppTextStyles.bodySmall),
       ),
     ],
   );
 
   Widget _buildEmptyTile(String message) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-    child: Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      padding: const EdgeInsets.all(14),
+    padding: const EdgeInsets.fromLTRB(
+      AppSpacing.md,
+      0,
+      AppSpacing.md,
+      AppSpacing.md,
+    ),
+    child: GlassCard(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      borderRadius: AppSpacing.cardRadius < 12 ? 12 : AppSpacing.cardRadius,
+      backgroundColor: AppColors.surfaceDark,
+      borderColors: const [AppColors.border, AppColors.border],
       child: Text(
         message,
-        style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 13),
+        style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary),
       ),
     ),
   );
@@ -381,55 +362,47 @@ class _TimetableScreenState extends State<TimetableScreen> {
           ),
         ],
       ),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceDark,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+      child: GlassCard(
+        margin: const EdgeInsets.fromLTRB(
+          AppSpacing.sm,
+          0,
+          AppSpacing.sm,
+          AppSpacing.sm,
         ),
+        backgroundColor: AppColors.surfaceDark,
+        borderRadius: AppSpacing.cardRadius < 12 ? 12 : AppSpacing.cardRadius,
+        borderColors: const [AppColors.border, AppColors.border],
         child: Row(
           children: [
-            Container(
-              width: 4,
-              height: 84,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                ),
-              ),
+            GlassCard(
+              padding: EdgeInsets.zero,
+              borderWidth: 0,
+              enableGlow: false,
+              backgroundColor: color,
+              borderRadius: 12,
+              child: const SizedBox(width: 4, height: 84),
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.sm),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       slot.subjectName,
-                      style: GoogleFonts.inter(
-                        color: AppColors.textPrimary,
-                        fontSize: 15,
+                      style: AppTextStyles.bodyMedium.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       '${slot.startTime} - ${slot.endTime}',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                      ),
+                      style: AppTextStyles.bodySmall,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       '${slot.room ?? 'Room TBA'} • ${slot.lecturer ?? 'Lecturer TBA'}',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textMuted,
-                        fontSize: 12,
-                      ),
+                      style: AppTextStyles.caption,
                     ),
                   ],
                 ),
@@ -451,19 +424,23 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
     return GestureDetector(
       onTap: () {
+        HapticFeedback.selectionClick();
         final topicId = session.topicId;
         if (topicId != null && topicId.isNotEmpty) {
           context.push('/topics/$topicId');
         }
       },
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceDark,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+      child: GlassCard(
+        margin: const EdgeInsets.fromLTRB(
+          AppSpacing.sm,
+          0,
+          AppSpacing.sm,
+          AppSpacing.sm,
         ),
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        backgroundColor: AppColors.surfaceDark,
+        borderRadius: AppSpacing.cardRadius < 12 ? 12 : AppSpacing.cardRadius,
+        borderColors: const [AppColors.border, AppColors.border],
         child: Row(
           children: [
             Expanded(
@@ -472,35 +449,32 @@ class _TimetableScreenState extends State<TimetableScreen> {
                 children: [
                   Text(
                     session.title,
-                    style: GoogleFonts.inter(
-                      color: AppColors.textPrimary,
-                      fontSize: 15,
+                    style: AppTextStyles.bodyMedium.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     '${session.startTime ?? '--:--'} - ${session.endTime ?? '--:--'}',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
+                    style: AppTextStyles.bodySmall,
                   ),
                 ],
               ),
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: badgeColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: badgeColor),
+            GlassCard(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xxs,
               ),
+              borderRadius: 999,
+              enableGlow: false,
+              backgroundColor: badgeColor.withValues(alpha: 0.15),
+              borderColors: [badgeColor, badgeColor],
+              borderWidth: 1,
               child: Text(
                 status,
-                style: GoogleFonts.inter(
+                style: AppTextStyles.caption.copyWith(
                   color: badgeColor,
-                  fontSize: 11,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -744,19 +718,24 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomInset + 16),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        bottomInset + AppSpacing.md,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 42,
-            height: 5,
-            decoration: BoxDecoration(
-              color: AppColors.border,
-              borderRadius: BorderRadius.circular(99),
-            ),
+          const GlassCard(
+            padding: EdgeInsets.zero,
+            borderWidth: 0,
+            enableGlow: false,
+            backgroundColor: AppColors.border,
+            borderRadius: 99,
+            child: SizedBox(width: 42, height: 5),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.sm),
           TabBar(
             controller: _tabController,
             indicatorColor: AppColors.accent,
@@ -767,7 +746,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
               Tab(text: 'Add Study Session'),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.sm),
           SizedBox(
             height: 380,
             child: TabBarView(
@@ -775,13 +754,14 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
               children: [_buildAddClassTab(), _buildAddStudyTab()],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.xs),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _isSaving
                   ? null
                   : () {
+                      HapticFeedback.lightImpact();
                       if (_tabController.index == 0) {
                         _saveClass();
                       } else {
@@ -791,12 +771,12 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               ),
               child: _isSaving
                   ? const SizedBox(
-                      width: 16,
-                      height: 16,
+                      width: AppSpacing.md,
+                      height: AppSpacing.md,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
                   : Text(
@@ -812,9 +792,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   Widget _buildAddClassTab() => ListView(
     children: [
       _buildInput(_subjectController, 'Subject name'),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       _buildDayDropdown(),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       Row(
         children: [
           Expanded(
@@ -824,7 +804,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
               onTap: () => _pickTime(isClass: true, isStart: true),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: _buildTimePicker(
               label: 'End time',
@@ -834,9 +814,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
           ),
         ],
       ),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       _buildInput(_roomController, 'Room (optional)'),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       _buildInput(_lecturerController, 'Lecturer (optional)'),
     ],
   );
@@ -844,9 +824,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   Widget _buildAddStudyTab() => ListView(
     children: [
       _buildInput(_sessionTitleController, 'Session title'),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       _buildDatePicker(),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       Row(
         children: [
           Expanded(
@@ -856,7 +836,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
               onTap: () => _pickTime(isClass: false, isStart: true),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: _buildTimePicker(
               label: 'End time',
@@ -866,7 +846,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
           ),
         ],
       ),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       _buildTopicDropdown(),
     ],
   );
@@ -874,18 +854,20 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   Widget _buildInput(TextEditingController controller, String hint) =>
       TextField(
         controller: controller,
-        style: GoogleFonts.inter(color: AppColors.textPrimary),
+        style: AppTextStyles.bodySmall,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
+          hintStyle: AppTextStyles.bodySmall.copyWith(
+            color: AppColors.textMuted,
+          ),
           filled: true,
           fillColor: AppColors.cardDark,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
             borderSide: const BorderSide(color: AppColors.border),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
             borderSide: const BorderSide(color: AppColors.border),
           ),
         ),
@@ -896,18 +878,20 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     return DropdownButtonFormField<int>(
       initialValue: _classDay,
       dropdownColor: AppColors.surfaceDark,
-      style: GoogleFonts.inter(color: AppColors.textPrimary),
+      style: AppTextStyles.bodySmall,
       decoration: InputDecoration(
         labelText: 'Day',
-        labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
+        labelStyle: AppTextStyles.bodySmall.copyWith(
+          color: AppColors.textSecondary,
+        ),
         filled: true,
         fillColor: AppColors.cardDark,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
           borderSide: const BorderSide(color: AppColors.border),
         ),
       ),
@@ -918,6 +902,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       ),
       onChanged: (value) {
         if (value == null) return;
+        HapticFeedback.selectionClick();
         setState(() {
           _classDay = value;
         });
@@ -926,14 +911,18 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   }
 
   Widget _buildDatePicker() => InkWell(
-    onTap: _pickDate,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+    onTap: () {
+      HapticFeedback.selectionClick();
+      _pickDate();
+    },
+    child: GlassCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.sm,
       ),
+      backgroundColor: AppColors.cardDark,
+      borderRadius: AppSpacing.fieldRadius,
+      borderColors: const [AppColors.border, AppColors.border],
       child: Row(
         children: [
           const Icon(
@@ -941,10 +930,10 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
             color: AppColors.textSecondary,
             size: 18,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.xs),
           Text(
             '${_sessionDate.year}-${_sessionDate.month.toString().padLeft(2, '0')}-${_sessionDate.day.toString().padLeft(2, '0')}',
-            style: GoogleFonts.inter(color: AppColors.textPrimary),
+            style: AppTextStyles.bodySmall,
           ),
         ],
       ),
@@ -956,22 +945,26 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     required TimeOfDay? value,
     required VoidCallback onTap,
   }) => InkWell(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+    onTap: () {
+      HapticFeedback.selectionClick();
+      onTap();
+    },
+    child: GlassCard(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.sm,
       ),
+      backgroundColor: AppColors.cardDark,
+      borderRadius: AppSpacing.fieldRadius,
+      borderColors: const [AppColors.border, AppColors.border],
       child: Row(
         children: [
           const Icon(Icons.schedule, color: AppColors.textSecondary, size: 18),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: Text(
               value == null ? label : value.format(context),
-              style: GoogleFonts.inter(
+              style: AppTextStyles.bodySmall.copyWith(
                 color: value == null
                     ? AppColors.textMuted
                     : AppColors.textPrimary,
@@ -987,18 +980,20 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     builder: (context, provider, _) => DropdownButtonFormField<String>(
       initialValue: _selectedTopicId,
       dropdownColor: AppColors.surfaceDark,
-      style: GoogleFonts.inter(color: AppColors.textPrimary),
+      style: AppTextStyles.bodySmall,
       decoration: InputDecoration(
         labelText: 'Linked topic (optional)',
-        labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
+        labelStyle: AppTextStyles.bodySmall.copyWith(
+          color: AppColors.textSecondary,
+        ),
         filled: true,
         fillColor: AppColors.cardDark,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
           borderSide: const BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
           borderSide: const BorderSide(color: AppColors.border),
         ),
       ),
@@ -1011,6 +1006,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
           )
           .toList(),
       onChanged: (value) {
+        HapticFeedback.selectionClick();
         setState(() {
           _selectedTopicId = value;
           _selectedModuleId = provider.topics
