@@ -32,7 +32,7 @@ class NeonGlowContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(borderRadius);
-    final innerRadius = math.max(0, borderRadius - borderWidth);
+    final innerRadius = math.max(0, borderRadius - borderWidth).toDouble();
     final innerBorderRadius = BorderRadius.circular(innerRadius);
     final resolvedGradient = gradient ?? AppColors.primaryGradient;
 
