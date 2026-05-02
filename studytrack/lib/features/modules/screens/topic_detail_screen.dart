@@ -5,16 +5,17 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 import '../../../models/topic_rating_history_model.dart';
@@ -253,7 +254,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
           ? Center(
               child: Text(
                 'Topic not found.',
-                style: GoogleFonts.inter(color: AppColors.textSecondary),
+                style: AppTextStyles.bodyMediumSecondary,
               ),
             )
           : RefreshIndicator(
@@ -261,18 +262,23 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
               backgroundColor: AppColors.surfaceDark,
               onRefresh: _load,
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.sm,
+                  AppSpacing.md,
+                  120,
+                ),
                 children: [
                   _buildHeader(topic),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpacing.md),
                   _buildActionsGrid(),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpacing.md),
                   _buildNotesSection(topic),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpacing.md),
                   _buildVoiceNotesSection(),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpacing.md),
                   _buildUploadsSection(),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: AppSpacing.md),
                   _buildRatingSection(),
                 ],
               ),
@@ -289,10 +295,10 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
         .toList(growable: false);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -300,30 +306,23 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
         children: [
           Row(
             children: [
-              Text(
-                'Voice Notes',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Text('Voice Notes', style: AppTextStyles.headingSmall),
               const Spacer(),
               const Icon(Icons.mic_rounded, color: AppColors.accent),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.sm),
           VoiceNoteRecorderWidget(
             topicId: widget.topicId,
             onSaved: (_) async {
               await _load();
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.sm),
           if (voiceNotes.isEmpty)
             Text(
               'No voice notes yet. Record a quick explanation or revision summary.',
-              style: GoogleFonts.inter(color: AppColors.textSecondary),
+              style: AppTextStyles.bodySmallSecondary,
             )
           else
             ...voiceNotes.map((note) {
@@ -345,76 +344,55 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   }
 
   Widget _buildHeader(TopicModel topic) => Container(
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.all(AppSpacing.md),
     decoration: BoxDecoration(
       gradient: AppColors.cardGradient,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
       border: Border.all(color: AppColors.border),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          topic.name,
-          style: GoogleFonts.outfit(
-            color: Colors.white,
-            fontSize: 30,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: 4),
+        Text(topic.name, style: AppTextStyles.headingLarge),
+        const SizedBox(height: AppSpacing.xxs),
         Text(
           _module?.name ?? 'Module',
-          style: GoogleFonts.inter(
-            color: AppColors.textSecondary,
-            fontSize: 13,
-          ),
+          style: AppTextStyles.bodySmallSecondary,
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpacing.md),
         Row(
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 color: topic.ratingColor,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
               ),
               child: Text(
                 '${topic.currentRating ?? 0}/10',
-                style: GoogleFonts.outfit(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: AppTextStyles.statValue,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    topic.masteryLevel,
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
+                  Text(topic.masteryLevel, style: AppTextStyles.label),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
                     'Studied ${topic.studyCount} times',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textSecondary,
-                      fontSize: 12,
-                    ),
+                    style: AppTextStyles.caption,
                   ),
                 ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpacing.md),
         SizedBox(
           height: 80,
           child: LineChart(
@@ -481,26 +459,17 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
         return GestureDetector(
           onTap: item.$3,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
             decoration: BoxDecoration(
               color: AppColors.cardDark,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
               border: Border.all(color: AppColors.border),
             ),
             child: Row(
               children: [
                 Text(item.$1, style: const TextStyle(fontSize: 20)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    item.$2,
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(child: Text(item.$2, style: AppTextStyles.bodySmall)),
               ],
             ),
           ),
@@ -518,13 +487,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     child: Column(
       children: [
         ListTile(
-          title: Text(
-            'My Notes',
-            style: GoogleFonts.inter(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          title: Text('My Notes', style: AppTextStyles.label),
           trailing: Icon(
             _notesExpanded
                 ? Icons.expand_less_rounded
@@ -539,21 +502,30 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
         ),
         if (_notesExpanded)
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.md,
+              0,
+              AppSpacing.md,
+              AppSpacing.md,
+            ),
             child: Column(
               children: [
                 TextField(
                   controller: _notesController,
                   minLines: 5,
                   maxLines: 8,
-                  style: GoogleFonts.inter(color: Colors.white),
+                  style: AppTextStyles.bodySmall,
                   decoration: InputDecoration(
                     hintText: 'Add your personal notes...',
-                    hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
+                    hintStyle: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textMuted,
+                    ),
                     filled: true,
                     fillColor: AppColors.surfaceDark,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.fieldRadius,
+                      ),
                       borderSide: const BorderSide(color: AppColors.border),
                     ),
                   ),
@@ -562,15 +534,12 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                   },
                   onEditingComplete: _saveNotes,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.xs),
                 Row(
                   children: [
                     Text(
                       '${_notesController.text.length} chars',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textMuted,
-                        fontSize: 12,
-                      ),
+                      style: AppTextStyles.caption,
                     ),
                     const Spacer(),
                     TextButton(
@@ -583,7 +552,9 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                             )
                           : Text(
                               'Save',
-                              style: GoogleFonts.inter(color: AppColors.accent),
+                              style: AppTextStyles.label.copyWith(
+                                color: AppColors.accent,
+                              ),
                             ),
                     ),
                   ],
@@ -596,10 +567,10 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   );
 
   Widget _buildUploadsSection() => Container(
-    padding: const EdgeInsets.all(14),
+    padding: const EdgeInsets.all(AppSpacing.md),
     decoration: BoxDecoration(
       color: AppColors.cardDark,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
       border: Border.all(color: AppColors.border),
     ),
     child: Column(
@@ -607,14 +578,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
       children: [
         Row(
           children: [
-            Text(
-              'Lecture Notes',
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            Text('Lecture Notes', style: AppTextStyles.headingSmall),
             const Spacer(),
             TextButton.icon(
               onPressed: _uploadNote,
@@ -624,16 +588,16 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
               ),
               label: Text(
                 'Upload',
-                style: GoogleFonts.inter(color: AppColors.accent),
+                style: AppTextStyles.label.copyWith(color: AppColors.accent),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.xs),
         if (_uploadedNotes.isEmpty)
           Text(
             'No uploaded notes yet.',
-            style: GoogleFonts.inter(color: AppColors.textSecondary),
+            style: AppTextStyles.bodySmallSecondary,
           )
         else
           ..._uploadedNotes.map((note) {
@@ -642,11 +606,11 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                 : AppColors.accent;
 
             return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(12),
+              margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: AppColors.surfaceDark,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
                 border: Border.all(color: AppColors.border),
               ),
               child: Column(
@@ -659,10 +623,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                           note.fileName,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTextStyles.label,
                         ),
                       ),
                       IconButton(
@@ -674,45 +635,34 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: AppSpacing.xxs),
                   Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: AppSpacing.xs,
+                          vertical: AppSpacing.xxs,
                         ),
                         decoration: BoxDecoration(
                           color: typeColor.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(
+                            AppSpacing.pillRadius,
+                          ),
                         ),
                         child: Text(
                           note.fileType.toUpperCase(),
-                          style: GoogleFonts.inter(
+                          style: AppTextStyles.caption.copyWith(
                             color: typeColor,
-                            fontSize: 11,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        note.processingStatus,
-                        style: GoogleFonts.inter(
-                          color: AppColors.textSecondary,
-                          fontSize: 12,
-                        ),
-                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(note.processingStatus, style: AppTextStyles.caption),
                       const Spacer(),
                       Row(
                         children: [
-                          Text(
-                            'Share',
-                            style: GoogleFonts.inter(
-                              color: AppColors.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
+                          Text('Share', style: AppTextStyles.caption),
                           Switch(
                             value: note.isSharedWithGroup,
                             onChanged: (value) => _toggleShare(note, value),
@@ -731,10 +681,10 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   );
 
   Widget _buildRatingSection() => Container(
-    padding: const EdgeInsets.all(14),
+    padding: const EdgeInsets.all(AppSpacing.md),
     decoration: BoxDecoration(
       color: AppColors.cardDark,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
       border: Border.all(color: AppColors.border),
     ),
     child: Column(
@@ -742,16 +692,12 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
       children: [
         Text(
           'How well do you understand this?',
-          style: GoogleFonts.inter(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w700,
-          ),
+          style: AppTextStyles.headingSmall,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.xs),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
           children: List.generate(10, (index) {
             final value = index + 1;
             final selected = value == _selectedRating;
@@ -772,36 +718,23 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(color: AppColors.border),
                 ),
-                child: Text(
-                  '$value',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                  ),
-                ),
+                child: Text('$value', style: AppTextStyles.label),
               ),
             );
           }),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: AppSpacing.md),
         GestureDetector(
           onTap: _saveRating,
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             decoration: BoxDecoration(
               gradient: AppColors.primaryGradient,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
             ),
             alignment: Alignment.center,
-            child: Text(
-              'Save Rating',
-              style: GoogleFonts.inter(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            child: Text('Save Rating', style: AppTextStyles.button),
           ),
         ),
       ],
