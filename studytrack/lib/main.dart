@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -28,6 +29,9 @@ import 'features/update/controllers/update_provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
+  if (kReleaseMode) {
+    debugPrint = (String? message, {int? wrapWidth}) {};
+  }
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -77,6 +81,11 @@ Future<void> _bootstrapApp() async {
       CrashReporter.report(error, stack);
     }
   } else {
+    if (kReleaseMode) {
+      throw StateError(
+        'Supabase configuration is required for release builds.',
+      );
+    }
     debugPrint(
       'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY '
       'via --dart-define or update AppConstants.',

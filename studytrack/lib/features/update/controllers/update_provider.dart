@@ -38,6 +38,10 @@ class UpdateProvider extends ChangeNotifier {
       _status == UpdateStatus.error;
 
   Future<void> checkForUpdate() async {
+    if (!kReleaseMode) {
+      return;
+    }
+
     final packageInfo = await PackageInfo.fromPlatform();
     final currentVersionCode =
         int.tryParse(packageInfo.buildNumber) ??
