@@ -3,10 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../controllers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -89,15 +89,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   curve: Curves.easeInOut,
                 ),
             const SizedBox(height: 24),
-            Text(
-                  'StudyTrack',
-                  style: GoogleFonts.outfit(
-                    fontSize: 32,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    height: 1.1,
-                  ),
-                )
+            Text('StudyTrack', style: AppTextStyles.displayMedium)
                 .animate()
                 .fadeIn(duration: 700.ms, delay: 200.ms, curve: Curves.easeOut)
                 .slideY(
@@ -110,12 +102,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Text(
                   'Study smarter. Know where you stand.',
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: AppColors.textSecondary,
-                    height: 1.4,
-                  ),
+                  style: AppTextStyles.bodyMediumSecondary,
                 )
                 .animate()
                 .fadeIn(duration: 700.ms, delay: 350.ms, curve: Curves.easeOut)

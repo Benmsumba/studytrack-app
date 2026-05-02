@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/validators.dart';
 import '../controllers/auth_provider.dart';
 
@@ -122,41 +124,38 @@ class _SignupScreenState extends State<SignupScreen> {
       backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenHorizontal,
+            vertical: AppSpacing.lg,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                    'Create account',
-                    style: GoogleFonts.outfit(
-                      fontSize: 34,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
-                  )
+              Text('Create account', style: AppTextStyles.displayMedium)
                   .animate()
                   .fadeIn(duration: 500.ms)
                   .slideY(begin: 0.2, end: 0, duration: 500.ms),
               const SizedBox(height: 8),
               Text(
                 'Start strong and personalize your study flow.',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
+                style: AppTextStyles.bodyMediumSecondary,
               ).animate().fadeIn(duration: 600.ms, delay: 100.ms),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.lg),
               Container(
                     padding: const EdgeInsets.all(1.2),
                     decoration: BoxDecoration(
                       gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.cardRadius,
+                      ),
                     ),
                     child: Container(
-                      padding: const EdgeInsets.all(18),
+                      padding: const EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceDark,
-                        borderRadius: BorderRadius.circular(17),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.cardRadius - 1,
+                        ),
                       ),
                       child: Form(
                         key: _formKey,
@@ -167,14 +166,14 @@ class _SignupScreenState extends State<SignupScreen> {
                               hintText: 'Full name',
                               validator: Validators.requiredField,
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: AppSpacing.md),
                             _buildTextField(
                               controller: _emailController,
                               hintText: 'Email address',
                               keyboardType: TextInputType.emailAddress,
                               validator: Validators.email,
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: AppSpacing.md),
                             _buildTextField(
                               controller: _passwordController,
                               hintText: 'Password',
@@ -195,12 +194,12 @@ class _SignupScreenState extends State<SignupScreen> {
                               onChanged: (_) => setState(() {}),
                               validator: Validators.password,
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: AppSpacing.xs),
                             _buildPasswordStrengthIndicator(
                               value: passwordStrength,
                               label: strengthLabel,
                             ),
-                            const SizedBox(height: 14),
+                            const SizedBox(height: AppSpacing.md),
                             _buildTextField(
                               controller: _confirmPasswordController,
                               hintText: 'Confirm password',
@@ -224,7 +223,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 _passwordController.text,
                               ),
                             ),
-                            const SizedBox(height: 10),
+                            const SizedBox(height: AppSpacing.xs),
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -243,19 +242,18 @@ class _SignupScreenState extends State<SignupScreen> {
                                 ),
                                 Expanded(
                                   child: Padding(
-                                    padding: const EdgeInsets.only(top: 10),
+                                    padding: const EdgeInsets.only(
+                                      top: AppSpacing.sm,
+                                    ),
                                     child: Text(
                                       'I agree to the terms and conditions',
-                                      style: GoogleFonts.inter(
-                                        color: AppColors.textSecondary,
-                                        fontSize: 13,
-                                      ),
+                                      style: AppTextStyles.bodySmallSecondary,
                                     ),
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: AppSpacing.xs),
                             _buildGradientButton(
                               label: 'Create Account',
                               isLoading: auth.isLoading,
