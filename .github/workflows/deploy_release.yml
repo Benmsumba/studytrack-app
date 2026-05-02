@@ -3,10 +3,18 @@ name: Deploy Release APK
 on:
   push:
     branches: [main]
+    paths:
+      - 'studytrack/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/deploy_release.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: deploy-release-apk-${{ github.ref_name || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
@@ -37,6 +45,7 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
       - name: Validate required secrets
+        id: secrets
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
@@ -46,12 +55,14 @@ jobs:
           missing=0
           for key in SUPABASE_URL SUPABASE_ANON_KEY GEMINI_API_KEY SUPABASE_SERVICE_ROLE_KEY; do
             if [ -z "${!key}" ]; then
-              echo "::error::Missing required secret: $key"
+              echo "::warning::Missing required secret: $key"
               missing=1
             fi
           done
           if [ "$missing" -ne 0 ]; then
-            exit 1
+            echo "missing=true" >> "$GITHUB_OUTPUT"
+            echo "Release build skipped because required secrets are not configured."
+            exit 0
           fi
 
           # Strip whitespace (common copy-paste artifact) and export the clean value
@@ -72,8 +83,10 @@ jobs:
           fi
           echo "SUPABASE_SERVICE_ROLE_KEY format looks valid (length: ${#TRIMMED_KEY})"
           echo "SUPABASE_SERVICE_ROLE_KEY=${TRIMMED_KEY}" >> "$GITHUB_ENV"
+          echo "missing=false" >> "$GITHUB_OUTPUT"
 
       - name: Prepare signing material
+        if: steps.secrets.outputs.missing == 'false'
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
@@ -133,14 +146,17 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Install dependencies
+        if: steps.secrets.outputs.missing == 'false'
         working-directory: studytrack
         run: flutter pub get
 
       - name: Analyze
+        if: steps.secrets.outputs.missing == 'false'
         working-directory: studytrack
         run: flutter analyze --no-fatal-warnings --no-fatal-infos
 
       - name: Extract version from pubspec.yaml
+        if: steps.secrets.outputs.missing == 'false'
         id: ver
         working-directory: studytrack
         run: |
@@ -154,6 +170,7 @@ jobs:
           echo "Detected version=$VERSION build=$BUILD"
 
       - name: Build release APK
+        if: steps.secrets.outputs.missing == 'false'
         working-directory: studytrack
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -175,11 +192,13 @@ jobs:
             --dart-define=GEMINI_API_KEY="${GEMINI_API_KEY}"
 
       - name: Show built APK sizes
+        if: steps.secrets.outputs.missing == 'false'
         run: |
           ls -lh studytrack/build/app/outputs/flutter-apk/
           du -h studytrack/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
 
       - name: Ensure app-updates bucket exists and is public
+        if: steps.secrets.outputs.missing == 'false'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |
@@ -208,6 +227,7 @@ jobs:
           echo "app-updates bucket is public"
 
       - name: Upload APK to Supabase Storage
+        if: steps.secrets.outputs.missing == 'false'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |
@@ -231,6 +251,7 @@ jobs:
           echo "APK uploaded successfully"
 
       - name: Generate and upload version.json
+        if: steps.secrets.outputs.missing == 'false'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |
@@ -239,7 +260,7 @@ jobs:
             "versionCode": ${{ steps.ver.outputs.build }},
             "versionName": "${{ steps.ver.outputs.version }}",
             "downloadUrl": "${SUPABASE_URL}/storage/v1/object/public/app-updates/studytrack-latest.apk",
-            "releaseNotes": "StudyAId ${{ steps.ver.outputs.version }} is available."
+            "releaseNotes": "StudyTrack ${{ steps.ver.outputs.version }} is available."
           }
           JSONEOF
 
