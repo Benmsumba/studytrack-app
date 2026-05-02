@@ -245,10 +245,7 @@ class _SettingsToggle extends StatelessWidget {
           children: [
             Text(title, style: AppTextStyles.label),
             const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: AppTextStyles.caption,
-            ),
+            Text(subtitle, style: AppTextStyles.caption),
           ],
         ),
         Switch(

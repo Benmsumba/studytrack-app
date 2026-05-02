@@ -30,7 +30,7 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   GoogleFonts.config.allowRuntimeFetching = false;
   if (kReleaseMode) {
-    debugPrint = (String? message, {int? wrapWidth}) {};
+    debugPrint = (message, {wrapWidth}) {};
   }
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   SystemChrome.setSystemUIOverlayStyle(

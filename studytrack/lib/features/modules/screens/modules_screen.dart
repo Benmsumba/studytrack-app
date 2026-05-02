@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_text_styles.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -117,7 +117,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
               leading: const Icon(Icons.edit_rounded, color: Colors.white),
               title: Text(
                 'Edit name',
-                style: GoogleFonts.inter(color: Colors.white),
+                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
               ),
               onTap: () {
                 Navigator.of(context).pop();
@@ -128,7 +128,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
               leading: const Icon(Icons.palette_rounded, color: Colors.white),
               title: Text(
                 'Change color',
-                style: GoogleFonts.inter(color: Colors.white),
+                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
               ),
               onTap: () {
                 Navigator.of(context).pop();
@@ -142,7 +142,9 @@ class _ModulesScreenState extends State<ModulesScreen> {
               ),
               title: Text(
                 'Delete',
-                style: GoogleFonts.inter(color: AppColors.danger),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.danger,
+                ),
               ),
               onTap: () async {
                 Navigator.of(context).pop();
@@ -170,10 +172,12 @@ class _ModulesScreenState extends State<ModulesScreen> {
               children: [
                 TextField(
                   controller: _searchController,
-                  style: GoogleFonts.inter(color: Colors.white),
+                  style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
                   decoration: InputDecoration(
                     hintText: 'Search modules',
-                    hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
+                    hintStyle: AppTextStyles.bodyMedium.copyWith(
+                      color: AppColors.textMuted,
+                    ),
                     prefixIcon: const Icon(
                       Icons.search_rounded,
                       color: AppColors.textMuted,
@@ -207,11 +211,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     alignment: Alignment.center,
                     child: Text(
                       'Add Module',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 15,
-                      ),
+                      style: AppTextStyles.button.copyWith(color: Colors.white),
                     ),
                   ),
                 ),
@@ -222,9 +222,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     child: Center(
                       child: Text(
                         'No modules yet. Add your first module.',
-                        style: GoogleFonts.inter(
-                          color: AppColors.textSecondary,
-                        ),
+                        style: AppTextStyles.bodyMediumSecondary,
                       ),
                     ),
                   )
@@ -299,7 +297,7 @@ class _ModuleCard extends StatelessWidget {
             module.name,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.outfit(
+            style: AppTextStyles.headingSmall.copyWith(
               color: Colors.white,
               fontWeight: FontWeight.w700,
               fontSize: 18,
@@ -308,7 +306,7 @@ class _ModuleCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '${stats.totalTopics} topics',
-            style: GoogleFonts.inter(
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
               fontWeight: FontWeight.w500,
             ),
@@ -324,7 +322,7 @@ class _ModuleCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             '${(stats.mastery * 100).round()}% rated 7+',
-            style: GoogleFonts.inter(
+            style: AppTextStyles.caption.copyWith(
               color: AppColors.textSecondary,
               fontSize: 12,
             ),
@@ -346,7 +344,7 @@ class _ModuleCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   '${stats.studiedTopics}/${stats.totalTopics} studied',
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textPrimary,
                     fontWeight: FontWeight.w600,
                     fontSize: 12,
@@ -485,7 +483,7 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
         children: [
           Text(
             widget.module == null ? 'Add Module' : 'Edit Module',
-            style: GoogleFonts.outfit(
+            style: AppTextStyles.headingLarge.copyWith(
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.w700,
@@ -494,10 +492,12 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
           const SizedBox(height: 14),
           TextField(
             controller: _nameController,
-            style: GoogleFonts.inter(color: Colors.white),
+            style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
             decoration: InputDecoration(
               hintText: 'Module name',
-              hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
+              hintStyle: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textMuted,
+              ),
               filled: true,
               fillColor: AppColors.cardDark,
               border: OutlineInputBorder(
@@ -562,7 +562,7 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
                     )
                   : Text(
                       widget.module == null ? 'Add Module' : 'Save Changes',
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.button.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w700,
                       ),

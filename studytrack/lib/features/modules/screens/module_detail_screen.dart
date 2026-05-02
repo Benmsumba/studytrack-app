@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/utils/service_locator.dart';
@@ -49,8 +49,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
     ModuleModel? module;
     var topics = const <TopicModel>[];
 
-    moduleResult.fold((error) {}, (value) => module = value);
-    topicsResult.fold((error) {}, (value) => topics = value);
+    moduleResult.fold((_) {}, (value) => module = value);
+    topicsResult.fold((_) {}, (value) => topics = value);
 
     if (!mounted) return;
     setState(() {
@@ -66,9 +66,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
       return _module?.subjectColor ?? AppColors.primary;
     }
     final sanitized = colorHex.replaceAll('#', '');
-    if (sanitized.length != 6) {
+    if (sanitized.length != 6)
       return _module?.subjectColor ?? AppColors.primary;
-    }
     return Color(int.parse('FF$sanitized', radix: 16));
   }
 
@@ -113,7 +112,6 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
       ),
       builder: (context) {
         final viewInsets = MediaQuery.of(context).viewInsets;
-
         return Padding(
           padding: EdgeInsets.fromLTRB(16, 18, 16, viewInsets.bottom + 22),
           child: Column(
@@ -122,7 +120,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
             children: [
               Text(
                 'Add Topic',
-                style: GoogleFonts.outfit(
+                style: AppTextStyles.headingMedium.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                   fontSize: 24,
@@ -131,10 +129,12 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
-                style: GoogleFonts.inter(color: Colors.white),
+                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: 'Topic name',
-                  hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
+                  hintStyle: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textMuted,
+                  ),
                   filled: true,
                   fillColor: AppColors.cardDark,
                   border: OutlineInputBorder(
@@ -147,10 +147,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
               GestureDetector(
                 onTap: () async {
                   final text = controller.text.trim();
-                  if (text.isEmpty) {
-                    return;
-                  }
-
+                  if (text.isEmpty) return;
                   await _topicRepository.createTopic(
                     moduleId: widget.moduleId,
                     name: text,
@@ -169,7 +166,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                   alignment: Alignment.center,
                   child: Text(
                     'Save Topic',
-                    style: GoogleFonts.inter(
+                    style: AppTextStyles.button.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
                     ),
@@ -183,9 +180,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
     );
 
     controller.dispose();
-    if (changed == true) {
-      await _load();
-    }
+    if (changed == true) await _load();
   }
 
   @override
@@ -206,7 +201,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: Text(
           'Add Topic',
-          style: GoogleFonts.inter(
+          style: AppTextStyles.button.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w700,
           ),
@@ -218,7 +213,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
           ? Center(
               child: Text(
                 'Module not found.',
-                style: GoogleFonts.inter(color: AppColors.textSecondary),
+                style: AppTextStyles.bodyMediumSecondary,
               ),
             )
           : RefreshIndicator(
@@ -247,7 +242,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                       children: [
                         Text(
                           _module!.name,
-                          style: GoogleFonts.outfit(
+                          style: AppTextStyles.headingLarge.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
                             fontSize: 28,
@@ -278,7 +273,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                       return ChoiceChip(
                         label: Text(filter.label),
                         selected: selected,
-                        labelStyle: GoogleFonts.inter(
+                        labelStyle: AppTextStyles.bodyMedium.copyWith(
                           color: selected
                               ? Colors.white
                               : AppColors.textSecondary,
@@ -287,11 +282,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                         selectedColor: AppColors.primary,
                         backgroundColor: AppColors.cardDark,
                         side: const BorderSide(color: AppColors.border),
-                        onSelected: (_) {
-                          setState(() {
-                            _filter = filter;
-                          });
-                        },
+                        onSelected: (_) => setState(() => _filter = filter),
                       );
                     }).toList(),
                   ),
@@ -302,9 +293,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                       child: Center(
                         child: Text(
                           'No topics in this filter.',
-                          style: GoogleFonts.inter(
-                            color: AppColors.textSecondary,
-                          ),
+                          style: AppTextStyles.bodyMediumSecondary,
                         ),
                       ),
                     )
@@ -352,11 +341,12 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                                       Expanded(
                                         child: Text(
                                           topic.name,
-                                          style: GoogleFonts.inter(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 16,
-                                          ),
+                                          style: AppTextStyles.headingSmall
+                                              .copyWith(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 16,
+                                              ),
                                         ),
                                       ),
                                       if (topic.isStudied)
@@ -391,11 +381,12 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                                             const SizedBox(width: 4),
                                             Text(
                                               '${topic.currentRating ?? 0}/10',
-                                              style: GoogleFonts.inter(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.w700,
-                                                fontSize: 12,
-                                              ),
+                                              style: AppTextStyles.bodyMedium
+                                                  .copyWith(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.w700,
+                                                    fontSize: 12,
+                                                  ),
                                             ),
                                           ],
                                         ),
@@ -420,11 +411,12 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                                           ),
                                           child: Text(
                                             'Due for review',
-                                            style: GoogleFonts.inter(
-                                              color: AppColors.warning,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                            ),
+                                            style: AppTextStyles.bodyMedium
+                                                .copyWith(
+                                                  color: AppColors.warning,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                           ),
                                         ),
                                     ],
@@ -444,12 +436,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
 
   Color _ratingBadgeColor(TopicModel topic) {
     final rating = topic.currentRating ?? 0;
-    if (rating <= 4) {
-      return AppColors.danger;
-    }
-    if (rating <= 6) {
-      return AppColors.warning;
-    }
+    if (rating <= 4) return AppColors.danger;
+    if (rating <= 6) return AppColors.warning;
     return AppColors.success;
   }
 }
@@ -468,7 +456,7 @@ class _StatChip extends StatelessWidget {
     ),
     child: Text(
       label,
-      style: GoogleFonts.inter(
+      style: AppTextStyles.bodyMedium.copyWith(
         color: Colors.white,
         fontSize: 12,
         fontWeight: FontWeight.w600,

@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/study_group_repository.dart';
 import '../../../core/utils/service_locator.dart';
@@ -249,7 +249,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                     backgroundColor: _avatarColor(sender),
                                     child: Text(
                                       displayName.substring(0, 1).toUpperCase(),
-                                      style: GoogleFonts.inter(
+                                      style: AppTextStyles.caption.copyWith(
                                         color: Colors.white,
                                         fontSize: 10,
                                         fontWeight: FontWeight.w700,
@@ -264,7 +264,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                     children: [
                                       Text(
                                         displayName,
-                                        style: GoogleFonts.inter(
+                                        style: AppTextStyles.caption.copyWith(
                                           color: mine
                                               ? Colors.white70
                                               : AppColors.accent,
@@ -274,7 +274,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                       ),
                                       Text(
                                         subtitle,
-                                        style: GoogleFonts.inter(
+                                        style: AppTextStyles.caption.copyWith(
                                           color: Colors.white60,
                                           fontSize: 10,
                                         ),
@@ -286,7 +286,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               const SizedBox(height: 6),
                               Text(
                                 content,
-                                style: GoogleFonts.inter(color: Colors.white),
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: Colors.white,
+                                ),
                               ),
                             ],
                           ),
@@ -304,7 +306,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   Expanded(
                     child: TextField(
                       controller: _messageController,
-                      style: const TextStyle(color: Colors.white),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: Colors.white,
+                      ),
                       decoration: const InputDecoration(
                         hintText: 'Write a message...',
                         hintStyle: TextStyle(color: AppColors.textMuted),

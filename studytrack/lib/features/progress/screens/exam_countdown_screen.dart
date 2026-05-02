@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/exam_repository.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../models/exam_model.dart';
@@ -72,7 +72,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
             children: [
               Text(
                 'Upcoming Exams',
-                style: GoogleFonts.outfit(
+                style: AppTextStyles.headingLarge.copyWith(
                   color: AppColors.textPrimary,
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -90,7 +90,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
                   ),
                   child: Text(
                     'No upcoming exams yet',
-                    style: GoogleFonts.inter(
+                    style: AppTextStyles.bodyMedium.copyWith(
                       color: const Color(0xFF9CA3AF),
                       fontSize: 14,
                     ),
@@ -106,7 +106,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
               const SizedBox(height: 24),
               Text(
                 'Study Recommendations',
-                style: GoogleFonts.outfit(
+                style: AppTextStyles.headingSmall.copyWith(
                   color: AppColors.textPrimary,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -136,7 +136,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
                             _exams.isEmpty
                                 ? 'Add an exam to get personalized readiness tips.'
                                 : 'Focus on your weakest topics to boost readiness before the next exam.',
-                            style: GoogleFonts.inter(
+                            style: AppTextStyles.bodyMedium.copyWith(
                               color: const Color(0xFFFDE047),
                               fontSize: 13,
                             ),
@@ -158,7 +158,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
                             _exams.isEmpty
                                 ? 'Keep a steady daily study rhythm to stay ready.'
                                 : 'Maintain a steady daily study rhythm for your next exam.',
-                            style: GoogleFonts.inter(
+                            style: AppTextStyles.bodyMedium.copyWith(
                               color: const Color(0xFFA7F3D0),
                               fontSize: 13,
                             ),
@@ -205,7 +205,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
             children: [
               Text(
                 exam.title,
-                style: GoogleFonts.outfit(
+                style: AppTextStyles.headingSmall.copyWith(
                   color: AppColors.textPrimary,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -219,7 +219,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
                 ),
                 child: Text(
                   urgency,
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.caption.copyWith(
                     color: urgencyColor,
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
@@ -239,7 +239,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
               const SizedBox(width: 8),
               Text(
                 _formatDate(exam.examDate),
-                style: GoogleFonts.inter(
+                style: AppTextStyles.caption.copyWith(
                   color: const Color(0xFF9CA3AF),
                   fontSize: 12,
                 ),
@@ -253,7 +253,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
               const SizedBox(width: 8),
               Text(
                 exam.examTime ?? 'All day',
-                style: GoogleFonts.inter(
+                style: AppTextStyles.caption.copyWith(
                   color: const Color(0xFF9CA3AF),
                   fontSize: 12,
                 ),
@@ -269,7 +269,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
                 children: [
                   Text(
                     'Days Left',
-                    style: GoogleFonts.inter(
+                    style: AppTextStyles.caption.copyWith(
                       color: const Color(0xFF6B7280),
                       fontSize: 11,
                     ),
@@ -277,7 +277,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
                   const SizedBox(height: 2),
                   Text(
                     '$daysLeft',
-                    style: GoogleFonts.outfit(
+                    style: AppTextStyles.headingSmall.copyWith(
                       color: urgencyColor,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -293,14 +293,14 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
                       children: [
                         Text(
                           'Readiness',
-                          style: GoogleFonts.inter(
+                          style: AppTextStyles.caption.copyWith(
                             color: const Color(0xFF6B7280),
                             fontSize: 11,
                           ),
                         ),
                         Text(
                           '${(readiness * 100).toInt()}%',
-                          style: GoogleFonts.inter(
+                          style: AppTextStyles.caption.copyWith(
                             color: const Color(0xFF10B981),
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
@@ -340,7 +340,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
               ),
               child: Text(
                 'Start Prep',
-                style: GoogleFonts.inter(
+                style: AppTextStyles.bodyMedium.copyWith(
                   color: const Color(0xFF7C3AED),
                   fontSize: 13,
                   fontWeight: FontWeight.w600,

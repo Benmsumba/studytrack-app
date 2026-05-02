@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_text_styles.dart';
 
 class AnalyticsScreen extends StatelessWidget {
   const AnalyticsScreen({super.key});
@@ -33,7 +33,7 @@ class AnalyticsScreen extends StatelessWidget {
     children: [
       Text(
         'Analytics',
-        style: GoogleFonts.outfit(
+        style: AppTextStyles.headingLarge.copyWith(
           color: Colors.white,
           fontSize: 28,
           fontWeight: FontWeight.bold,
@@ -53,7 +53,7 @@ class AnalyticsScreen extends StatelessWidget {
           children: [
             Text(
               'See Wrapped ',
-              style: GoogleFonts.outfit(
+              style: AppTextStyles.bodyMedium.copyWith(
                 color: const Color(0xFF7C3AED),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -99,7 +99,7 @@ class AnalyticsScreen extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       s['label']!,
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.caption.copyWith(
                         color: const Color(0xFF9CA3AF),
                         fontSize: 9,
                       ),
@@ -107,7 +107,7 @@ class AnalyticsScreen extends StatelessWidget {
                     ),
                     Text(
                       s['value']!,
-                      style: GoogleFonts.outfit(
+                      style: AppTextStyles.bodyMedium.copyWith(
                         color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -135,7 +135,7 @@ class AnalyticsScreen extends StatelessWidget {
       children: [
         Text(
           'Subject Radar Chart',
-          style: GoogleFonts.outfit(
+          style: AppTextStyles.headingSmall.copyWith(
             color: Colors.white,
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -165,7 +165,7 @@ class AnalyticsScreen extends StatelessWidget {
       children: [
         Text(
           'Study Consistency Heatmap',
-          style: GoogleFonts.outfit(
+          style: AppTextStyles.headingSmall.copyWith(
             color: Colors.white,
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -173,7 +173,7 @@ class AnalyticsScreen extends StatelessWidget {
         ),
         Text(
           'GitHub style',
-          style: GoogleFonts.inter(
+          style: AppTextStyles.caption.copyWith(
             color: const Color(0xFF9CA3AF),
             fontSize: 11,
           ),
@@ -186,14 +186,14 @@ class AnalyticsScreen extends StatelessWidget {
           children: [
             Text(
               '12 weeks × 7 days',
-              style: GoogleFonts.inter(
+              style: AppTextStyles.caption.copyWith(
                 color: const Color(0xFF6B7280),
                 fontSize: 10,
               ),
             ),
             Text(
               '1 week',
-              style: GoogleFonts.inter(
+              style: AppTextStyles.caption.copyWith(
                 color: const Color(0xFF6B7280),
                 fontSize: 10,
               ),

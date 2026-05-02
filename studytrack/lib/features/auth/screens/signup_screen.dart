@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -277,13 +276,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Text(
-                      'or',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textMuted,
-                        fontSize: 13,
-                      ),
-                    ),
+                    child: Text('or', style: AppTextStyles.captionMuted),
                   ),
                   const Expanded(
                     child: Divider(color: AppColors.border, thickness: 1),
@@ -301,19 +294,15 @@ class _SignupScreenState extends State<SignupScreen> {
                   children: [
                     Text(
                       'Already have an account? ',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                      ),
+                      style: AppTextStyles.bodyMediumSecondary,
                     ),
                     GestureDetector(
                       onTap: () => context.go('/login'),
                       child: Text(
                         'Login',
-                        style: GoogleFonts.inter(
+                        style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.accent,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -365,9 +354,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(width: 10),
                     Text(
                       'Continue with Google',
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                      style: AppTextStyles.button.copyWith(
                         color: const Color(0xFF3C4043),
                       ),
                     ),
@@ -392,10 +379,10 @@ class _SignupScreenState extends State<SignupScreen> {
     keyboardType: keyboardType,
     obscureText: obscureText,
     onChanged: onChanged,
-    style: GoogleFonts.inter(color: AppColors.textPrimary),
+    style: AppTextStyles.bodyMedium,
     decoration: InputDecoration(
       hintText: hintText,
-      hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
+      hintStyle: AppTextStyles.bodyMediumSecondary,
       filled: true,
       fillColor: AppColors.cardDark,
       suffixIcon: suffixIcon,
@@ -445,11 +432,7 @@ class _SignupScreenState extends State<SignupScreen> {
         const SizedBox(height: 6),
         Text(
           label,
-          style: GoogleFonts.inter(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: barColor,
-          ),
+          style: AppTextStyles.captionMuted.copyWith(color: barColor),
         ),
       ],
     );
@@ -481,14 +464,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                   ),
                 )
-              : Text(
-                  label,
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                    color: Colors.white,
-                  ),
-                ),
+              : Text(label, style: AppTextStyles.button),
         ),
       ),
     ),

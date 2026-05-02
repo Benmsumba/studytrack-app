@@ -154,7 +154,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: AppColors.backgroundDark,
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(
+          padding: const EdgeInsets.fromLTRB(
             AppSpacing.screenHorizontal,
             AppSpacing.xxxl,
             AppSpacing.screenHorizontal,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 
 /// Weekly Report Card - Shows student's weekly statistics
 class WeeklyReportCard extends StatelessWidget {
@@ -50,7 +50,7 @@ class WeeklyReportCard extends StatelessWidget {
               children: [
                 Text(
                   'Week $weekNumber Report',
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.headingLarge.copyWith(
                     color: AppColors.primary,
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
@@ -59,7 +59,7 @@ class WeeklyReportCard extends StatelessWidget {
                 const SizedBox(height: 16),
                 Text(
                   studentName,
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.headingLarge.copyWith(
                     color: Colors.white,
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
@@ -68,7 +68,7 @@ class WeeklyReportCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   course,
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.bodyLarge.copyWith(
                     color: AppColors.textMuted,
                     fontSize: 24,
                   ),
@@ -104,7 +104,7 @@ class WeeklyReportCard extends StatelessWidget {
               children: [
                 Text(
                   'StudyTrack',
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.headingSmall.copyWith(
                     color: AppColors.primary,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -112,7 +112,7 @@ class WeeklyReportCard extends StatelessWidget {
                 ),
                 Text(
                   'Study smarter. Know where you stand.',
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textMuted,
                     fontSize: 18,
                   ),
@@ -129,7 +129,7 @@ class WeeklyReportCard extends StatelessWidget {
     children: [
       Text(
         label,
-        style: GoogleFonts.inter(
+        style: AppTextStyles.bodyLarge.copyWith(
           color: AppColors.textMuted,
           fontSize: 20,
           height: 1.2,
@@ -139,7 +139,7 @@ class WeeklyReportCard extends StatelessWidget {
       const SizedBox(height: 12),
       Text(
         value,
-        style: GoogleFonts.outfit(
+        style: AppTextStyles.headingLarge.copyWith(
           color: AppColors.primary,
           fontSize: 40,
           fontWeight: FontWeight.bold,
@@ -191,14 +191,14 @@ class TopicMasteredCard extends StatelessWidget {
           children: [
             Text(
               '🏆',
-              style: GoogleFonts.outfit(fontSize: 200),
+              style: AppTextStyles.displayLarge.copyWith(fontSize: 200),
               textAlign: TextAlign.center,
             ),
             Column(
               children: [
                 Text(
                   'Topic Mastered!',
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.headingLarge.copyWith(
                     color: AppColors.success,
                     fontSize: 52,
                     fontWeight: FontWeight.bold,
@@ -208,7 +208,7 @@ class TopicMasteredCard extends StatelessWidget {
                 const SizedBox(height: 24),
                 Text(
                   topicName,
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.headingLarge.copyWith(
                     color: Colors.white,
                     fontSize: 42,
                     fontWeight: FontWeight.bold,
@@ -218,7 +218,7 @@ class TopicMasteredCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   moduleName,
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.bodyLarge.copyWith(
                     color: AppColors.textMuted,
                     fontSize: 24,
                   ),
@@ -230,7 +230,7 @@ class TopicMasteredCard extends StatelessWidget {
               children: [
                 Text(
                   'Rating Journey',
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.bodyLarge.copyWith(
                     color: AppColors.textMuted,
                     fontSize: 20,
                   ),
@@ -241,7 +241,7 @@ class TopicMasteredCard extends StatelessWidget {
                   children: [
                     Text(
                       '$previousRating/10',
-                      style: GoogleFonts.outfit(
+                      style: AppTextStyles.headingLarge.copyWith(
                         color: Colors.white,
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
@@ -250,7 +250,7 @@ class TopicMasteredCard extends StatelessWidget {
                     const SizedBox(width: 24),
                     Text(
                       '→',
-                      style: GoogleFonts.outfit(
+                      style: AppTextStyles.headingLarge.copyWith(
                         color: AppColors.primary,
                         fontSize: 40,
                         fontWeight: FontWeight.bold,
@@ -259,7 +259,7 @@ class TopicMasteredCard extends StatelessWidget {
                     const SizedBox(width: 24),
                     Text(
                       '$rating/10',
-                      style: GoogleFonts.outfit(
+                      style: AppTextStyles.headingLarge.copyWith(
                         color: AppColors.success,
                         fontSize: 36,
                         fontWeight: FontWeight.bold,
@@ -270,7 +270,7 @@ class TopicMasteredCard extends StatelessWidget {
                 const SizedBox(height: 24),
                 Text(
                   'Studied $studyCount times',
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.bodyLarge.copyWith(
                     color: AppColors.textMuted,
                     fontSize: 20,
                   ),
@@ -279,7 +279,7 @@ class TopicMasteredCard extends StatelessWidget {
             ),
             Text(
               'StudyTrack',
-              style: GoogleFonts.outfit(
+              style: AppTextStyles.headingSmall.copyWith(
                 color: AppColors.primary,
                 fontSize: 28,
                 fontWeight: FontWeight.bold,
@@ -338,7 +338,7 @@ class ExamCountdownCard extends StatelessWidget {
                 children: [
                   Text(
                     'Countdown',
-                    style: GoogleFonts.inter(
+                    style: AppTextStyles.bodyLarge.copyWith(
                       color: Colors.white.withAlpha(180),
                       fontSize: 28,
                       fontWeight: FontWeight.w500,
@@ -347,7 +347,7 @@ class ExamCountdownCard extends StatelessWidget {
                   const SizedBox(height: 24),
                   Text(
                     '$daysRemaining',
-                    style: GoogleFonts.outfit(
+                    style: AppTextStyles.displayLarge.copyWith(
                       color: Colors.white,
                       fontSize: 180,
                       fontWeight: FontWeight.bold,
@@ -355,7 +355,7 @@ class ExamCountdownCard extends StatelessWidget {
                   ),
                   Text(
                     'days left',
-                    style: GoogleFonts.inter(
+                    style: AppTextStyles.bodyLarge.copyWith(
                       color: Colors.white.withAlpha(180),
                       fontSize: 32,
                     ),
@@ -366,7 +366,7 @@ class ExamCountdownCard extends StatelessWidget {
                 children: [
                   Text(
                     examName,
-                    style: GoogleFonts.outfit(
+                    style: AppTextStyles.headingLarge.copyWith(
                       color: Colors.white,
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
@@ -396,7 +396,7 @@ class ExamCountdownCard extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     '${readinessPercent.toStringAsFixed(0)}% Ready',
-                    style: GoogleFonts.outfit(
+                    style: AppTextStyles.headingSmall.copyWith(
                       color: Colors.white,
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -406,7 +406,7 @@ class ExamCountdownCard extends StatelessWidget {
               ),
               Text(
                 'StudyTrack',
-                style: GoogleFonts.outfit(
+                style: AppTextStyles.headingSmall.copyWith(
                   color: Colors.white,
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
@@ -453,11 +453,14 @@ class StreakCard extends StatelessWidget {
           children: [
             Column(
               children: [
-                Text('🔥', style: GoogleFonts.outfit(fontSize: 160)),
+                Text(
+                  '🔥',
+                  style: AppTextStyles.displayLarge.copyWith(fontSize: 160),
+                ),
                 const SizedBox(height: 24),
                 Text(
                   'Keep it going!',
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.headingLarge.copyWith(
                     color: const Color(0xFFF59E0B),
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
@@ -467,7 +470,7 @@ class StreakCard extends StatelessWidget {
             ),
             Text(
               '$streakCount',
-              style: GoogleFonts.outfit(
+              style: AppTextStyles.displayLarge.copyWith(
                 color: Colors.white,
                 fontSize: 200,
                 fontWeight: FontWeight.bold,
@@ -478,7 +481,7 @@ class StreakCard extends StatelessWidget {
               children: [
                 Text(
                   'Day Streak',
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.bodyLarge.copyWith(
                     color: AppColors.textMuted,
                     fontSize: 40,
                   ),
@@ -486,7 +489,7 @@ class StreakCard extends StatelessWidget {
                 const SizedBox(height: 24),
                 Text(
                   studentName,
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.headingLarge.copyWith(
                     color: Colors.white,
                     fontSize: 36,
                     fontWeight: FontWeight.bold,
@@ -496,7 +499,7 @@ class StreakCard extends StatelessWidget {
             ),
             Text(
               'StudyTrack',
-              style: GoogleFonts.outfit(
+              style: AppTextStyles.headingSmall.copyWith(
                 color: AppColors.primary,
                 fontSize: 28,
                 fontWeight: FontWeight.bold,

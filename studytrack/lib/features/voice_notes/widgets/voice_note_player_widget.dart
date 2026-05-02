@@ -1,8 +1,8 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 
 class VoiceNotePlayerWidget extends StatefulWidget {
   const VoiceNotePlayerWidget({
@@ -76,7 +76,7 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
             children: [
               Text(
                 widget.title,
-                style: GoogleFonts.outfit(
+                style: AppTextStyles.headingSmall.copyWith(
                   color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -86,7 +86,7 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
                 const SizedBox(height: 4),
                 Text(
                   widget.subtitle!,
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.caption.copyWith(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),

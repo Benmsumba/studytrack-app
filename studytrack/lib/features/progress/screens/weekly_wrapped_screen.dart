@@ -4,12 +4,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gal/gal.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/weekly_report_repository.dart';
 import '../../../core/services/gemini_service.dart';
@@ -332,7 +332,10 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                         : const Icon(Icons.auto_awesome),
                     label: Text(
                       'Generate',
-                      style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
           ),
@@ -361,7 +364,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                 const SizedBox(height: 20),
                 Text(
                   'Your Week in Review',
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.displayMedium.copyWith(
                     fontSize: 38,
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
@@ -371,17 +374,26 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                 const SizedBox(height: 12),
                 Text(
                   weekDateRange,
-                  style: GoogleFonts.inter(fontSize: 14, color: Colors.white70),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontSize: 14,
+                    color: Colors.white70,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   studentName,
-                  style: GoogleFonts.inter(fontSize: 18, color: Colors.white70),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontSize: 18,
+                    color: Colors.white70,
+                  ),
                 ),
                 const SizedBox(height: 40),
                 Text(
                   'Swipe up to see ↑',
-                  style: GoogleFonts.inter(fontSize: 13, color: Colors.white60),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontSize: 13,
+                    color: Colors.white60,
+                  ),
                 ),
               ],
             ),
@@ -398,7 +410,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
       children: [
         Text(
               '$topicsStudied',
-              style: GoogleFonts.outfit(
+              style: AppTextStyles.displayLarge.copyWith(
                 fontSize: 110,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
@@ -409,16 +421,25 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
             .scale(begin: const Offset(0.8, 0.8)),
         Text(
           'topics covered',
-          style: GoogleFonts.inter(fontSize: 24, color: Colors.white),
+          style: AppTextStyles.headingSmall.copyWith(
+            fontSize: 24,
+            color: Colors.white,
+          ),
         ),
         Text(
           'this week',
-          style: GoogleFonts.inter(fontSize: 14, color: Colors.white70),
+          style: AppTextStyles.bodyMedium.copyWith(
+            fontSize: 14,
+            color: Colors.white70,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           _topicsDeltaText(),
-          style: GoogleFonts.inter(fontSize: 14, color: _topicsDeltaColor()),
+          style: AppTextStyles.bodyMedium.copyWith(
+            fontSize: 14,
+            color: _topicsDeltaColor(),
+          ),
         ),
       ],
     ),
@@ -433,12 +454,15 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         const SizedBox(height: 12),
         Text(
           'Your strongest subject',
-          style: GoogleFonts.inter(color: Colors.white70, fontSize: 16),
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: Colors.white70,
+            fontSize: 16,
+          ),
         ),
         const SizedBox(height: 10),
         Text(
           bestSubject,
-          style: GoogleFonts.outfit(
+          style: AppTextStyles.headingLarge.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w700,
             fontSize: 40,
@@ -448,7 +472,10 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         const SizedBox(height: 16),
         Text(
           'Avg rating ${averageRating.toStringAsFixed(1)} / 10',
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 17),
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: Colors.white,
+            fontSize: 17,
+          ),
         ),
         const SizedBox(height: 8),
         Row(
@@ -493,12 +520,15 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         const SizedBox(height: 10),
         Text(
           'Needs more love',
-          style: GoogleFonts.inter(color: Colors.white70, fontSize: 17),
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: Colors.white70,
+            fontSize: 17,
+          ),
         ),
         const SizedBox(height: 10),
         Text(
           weakestSubject,
-          style: GoogleFonts.outfit(
+          style: AppTextStyles.headingLarge.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w700,
             fontSize: 38,
@@ -508,7 +538,10 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         const SizedBox(height: 14),
         Text(
           'You’ve got this 💪',
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 18),
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: Colors.white,
+            fontSize: 18,
+          ),
         ),
       ],
     ),
@@ -523,7 +556,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         const SizedBox(height: 12),
         Text(
           '$streak',
-          style: GoogleFonts.outfit(
+          style: AppTextStyles.displayLarge.copyWith(
             color: Colors.white,
             fontSize: 92,
             fontWeight: FontWeight.w700,
@@ -531,12 +564,18 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         ),
         Text(
           'day streak',
-          style: GoogleFonts.inter(color: Colors.white70, fontSize: 18),
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: Colors.white70,
+            fontSize: 18,
+          ),
         ),
         const SizedBox(height: 14),
         Text(
           _streakMessage(),
-          style: GoogleFonts.inter(color: Colors.white, fontSize: 16),
+          style: AppTextStyles.bodyMedium.copyWith(
+            color: Colors.white,
+            fontSize: 16,
+          ),
         ),
       ],
     ),
@@ -554,7 +593,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         children: [
           Text(
             '$completed of $planned sessions completed',
-            style: GoogleFonts.outfit(
+            style: AppTextStyles.headingLarge.copyWith(
               color: Colors.white,
               fontSize: 30,
               fontWeight: FontWeight.w700,
@@ -576,7 +615,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                 ),
                 Text(
                   '${(percent * 100).round()}%',
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.headingLarge.copyWith(
                     color: Colors.white,
                     fontSize: 36,
                     fontWeight: FontWeight.w700,
@@ -588,7 +627,10 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           const SizedBox(height: 16),
           Text(
             'Missed: ${(planned - completed).clamp(0, 999)}',
-            style: GoogleFonts.inter(color: Colors.white70, fontSize: 15),
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: Colors.white70,
+              fontSize: 15,
+            ),
           ),
         ],
       ),
@@ -610,7 +652,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           const SizedBox(height: 18),
           Text(
             '“',
-            style: GoogleFonts.outfit(
+            style: AppTextStyles.displayMedium.copyWith(
               color: Colors.white,
               fontSize: 46,
               height: 1,
@@ -629,7 +671,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
               final partial = words.take(safeCount).join(' ');
               return Text(
                 partial,
-                style: GoogleFonts.inter(
+                style: AppTextStyles.bodyMedium.copyWith(
                   color: Colors.white,
                   fontSize: 17,
                   height: 1.55,
@@ -669,7 +711,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                   children: [
                     Text(
                       'StudyTrack Weekly Wrapped',
-                      style: GoogleFonts.outfit(
+                      style: AppTextStyles.headingSmall.copyWith(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -678,7 +720,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                     const SizedBox(height: 8),
                     Text(
                       studentName,
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.bodyMedium.copyWith(
                         color: Colors.white,
                         fontSize: 15,
                       ),
@@ -686,7 +728,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                     const SizedBox(height: 2),
                     Text(
                       weekDateRange,
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.caption.copyWith(
                         color: Colors.white70,
                         fontSize: 12,
                       ),
@@ -710,7 +752,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                       alignment: Alignment.bottomRight,
                       child: Text(
                         'studytrack',
-                        style: GoogleFonts.inter(
+                        style: AppTextStyles.caption.copyWith(
                           color: Colors.white70,
                           fontSize: 12,
                         ),
@@ -762,12 +804,15 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
       children: [
         Text(
           label,
-          style: GoogleFonts.inter(color: Colors.white70, fontSize: 12),
+          style: AppTextStyles.caption.copyWith(
+            color: Colors.white70,
+            fontSize: 12,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           value,
-          style: GoogleFonts.outfit(
+          style: AppTextStyles.headingSmall.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w700,
             fontSize: 16,

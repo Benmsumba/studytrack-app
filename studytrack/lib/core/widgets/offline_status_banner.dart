@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../constants/app_colors.dart';
+import '../constants/app_text_styles.dart';
 import '../services/offline_sync_service.dart';
 
 class OfflineStatusBanner extends StatelessWidget {
@@ -48,7 +48,7 @@ class OfflineStatusBanner extends StatelessWidget {
                       isOffline
                           ? 'Offline mode active. Changes will sync when you reconnect.'
                           : 'Syncing pending changes...',
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.caption.copyWith(
                         color: Colors.white,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -58,7 +58,7 @@ class OfflineStatusBanner extends StatelessWidget {
                   if (syncService.hasPendingChanges)
                     Text(
                       '${syncService.pendingChanges} pending',
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.caption.copyWith(
                         color: Colors.white,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,

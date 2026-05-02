@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/services/gemini_service.dart';
@@ -155,7 +155,7 @@ class _QuizScreenState extends State<QuizScreen> {
               const SizedBox(height: 16),
               Text(
                 'Generating quiz from your notes...',
-                style: GoogleFonts.inter(color: AppColors.textSecondary),
+                style: AppTextStyles.bodyMediumSecondary,
               ),
             ],
           ),
@@ -170,7 +170,7 @@ class _QuizScreenState extends State<QuizScreen> {
         body: Center(
           child: Text(
             'Unable to generate quiz right now.',
-            style: GoogleFonts.inter(color: AppColors.textSecondary),
+            style: AppTextStyles.bodyMediumSecondary,
           ),
         ),
       );
@@ -198,7 +198,7 @@ class _QuizScreenState extends State<QuizScreen> {
         backgroundColor: AppColors.backgroundDark,
         title: Text(
           'Quiz',
-          style: GoogleFonts.outfit(
+          style: AppTextStyles.headingSmall.copyWith(
             color: Colors.white,
             fontWeight: FontWeight.w700,
           ),
@@ -211,7 +211,7 @@ class _QuizScreenState extends State<QuizScreen> {
           children: [
             Text(
               'Question ${_currentIndex + 1} of ${_questions.length}',
-              style: GoogleFonts.inter(color: AppColors.textSecondary),
+              style: AppTextStyles.bodyMediumSecondary,
             ),
             const SizedBox(height: 8),
             LinearProgressIndicator(
@@ -222,7 +222,7 @@ class _QuizScreenState extends State<QuizScreen> {
             const SizedBox(height: 18),
             Text(
               question.question,
-              style: GoogleFonts.outfit(
+              style: AppTextStyles.headingLarge.copyWith(
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
@@ -251,7 +251,7 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
                 child: Text(
                   question.explanation,
-                  style: GoogleFonts.inter(color: AppColors.textSecondary),
+                  style: AppTextStyles.bodyMediumSecondary,
                 ),
               ),
               const Spacer(),
@@ -269,10 +269,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     _currentIndex == _questions.length - 1
                         ? 'See Results'
                         : 'Next Question',
-                    style: GoogleFonts.inter(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: AppTextStyles.button.copyWith(color: Colors.white),
                   ),
                 ),
               ),
@@ -364,7 +361,7 @@ class _OptionCard extends StatelessWidget {
               ),
               child: Text(
                 label,
-                style: GoogleFonts.inter(
+                style: AppTextStyles.bodyMedium.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                 ),
@@ -372,7 +369,10 @@ class _OptionCard extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             Expanded(
-              child: Text(text, style: GoogleFonts.inter(color: Colors.white)),
+              child: Text(
+                text,
+                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+              ),
             ),
             if (trailing != null) Icon(trailing, color: border),
           ],
@@ -419,7 +419,7 @@ class _ResultsView extends StatelessWidget {
         children: [
           Text(
             '$score/$total',
-            style: GoogleFonts.outfit(
+            style: AppTextStyles.displayMedium.copyWith(
               color: Colors.white,
               fontSize: 52,
               fontWeight: FontWeight.w800,
@@ -429,7 +429,7 @@ class _ResultsView extends StatelessWidget {
           Text(
             _message(),
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.textSecondary,
               fontSize: 16,
             ),
@@ -437,7 +437,7 @@ class _ResultsView extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'We suggest rating this $suggestedRating/10',
-            style: GoogleFonts.inter(
+            style: AppTextStyles.bodyMedium.copyWith(
               color: AppColors.accent,
               fontWeight: FontWeight.w700,
             ),
@@ -476,10 +476,7 @@ class _PrimaryButton extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         label,
-        style: GoogleFonts.inter(
-          color: Colors.white,
-          fontWeight: FontWeight.w700,
-        ),
+        style: AppTextStyles.button.copyWith(color: Colors.white),
       ),
     ),
   );
@@ -498,9 +495,6 @@ class _SecondaryButton extends StatelessWidget {
       minimumSize: const Size.fromHeight(48),
       side: const BorderSide(color: AppColors.border),
     ),
-    child: Text(
-      label,
-      style: GoogleFonts.inter(color: AppColors.textSecondary),
-    ),
+    child: Text(label, style: AppTextStyles.bodyMediumSecondary),
   );
 }
