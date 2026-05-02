@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/services/spotify_service.dart';
 
 class MusicPlayerWidget extends StatefulWidget {
@@ -49,7 +49,7 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget> {
                   children: [
                     Text(
                       'Study Flow Mode',
-                      style: GoogleFonts.outfit(
+                      style: AppTextStyles.headingSmall.copyWith(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -57,7 +57,7 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget> {
                     ),
                     Text(
                       'Pick a Spotify playlist to set the vibe',
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.caption.copyWith(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -90,7 +90,7 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget> {
                     children: [
                       Text(
                         playlist.title,
-                        style: GoogleFonts.outfit(
+                        style: AppTextStyles.headingSmall.copyWith(
                           color: Colors.white,
                           fontSize: 18,
                           fontWeight: FontWeight.w700,
@@ -99,7 +99,7 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget> {
                       const SizedBox(height: 4),
                       Text(
                         playlist.description,
-                        style: GoogleFonts.inter(
+                        style: AppTextStyles.caption.copyWith(
                           color: AppColors.textSecondary,
                           fontSize: 12,
                         ),
@@ -141,7 +141,7 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget> {
                           item.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
+                          style: AppTextStyles.caption.copyWith(
                             color: Colors.white,
                             fontSize: 11,
                             fontWeight: FontWeight.w700,
@@ -172,10 +172,7 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget> {
                 ),
                 label: Text(
                   'Open in Spotify',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: AppTextStyles.button.copyWith(color: Colors.white),
                 ),
               ),
             ),

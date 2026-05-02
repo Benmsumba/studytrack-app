@@ -1,10 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/services/voice_note_service.dart';
 import '../../../core/utils/service_locator.dart';
@@ -173,7 +173,7 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
                   children: [
                     Text(
                       widget.title,
-                      style: GoogleFonts.outfit(
+                      style: AppTextStyles.headingSmall.copyWith(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -182,7 +182,7 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
                     const SizedBox(height: 2),
                     Text(
                       widget.subtitle,
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.caption.copyWith(
                         color: AppColors.textSecondary,
                         fontSize: 12,
                       ),
@@ -196,7 +196,7 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
           if (_status != null) ...[
             Text(
               _status!,
-              style: GoogleFonts.inter(
+              style: AppTextStyles.caption.copyWith(
                 color: _result == null
                     ? AppColors.textSecondary
                     : AppColors.success,
@@ -236,10 +236,7 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
                     ),
                     label: Text(
                       _isRecording ? 'Stop recording' : 'Start recording',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
+                      style: AppTextStyles.button.copyWith(color: Colors.white),
                     ),
                   ),
                 ),

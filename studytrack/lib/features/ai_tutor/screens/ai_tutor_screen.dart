@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import '../../../core/constants/app_text_styles.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/repositories/module_repository.dart';
@@ -216,7 +216,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
               children: [
                 Text(
                   topicName,
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.headingSmall.copyWith(
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
@@ -224,7 +224,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                 ),
                 Text(
                   'AI Tutor',
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.caption.copyWith(
                     color: AppColors.textSecondary,
                     fontSize: 12,
                   ),
@@ -252,7 +252,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                     ),
                     child: Text(
                       'Based on your uploaded notes',
-                      style: GoogleFonts.inter(
+                      style: AppTextStyles.caption.copyWith(
                         color: AppColors.accent,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -314,10 +314,12 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                           Expanded(
                             child: TextField(
                               controller: _inputController,
-                              style: GoogleFonts.inter(color: Colors.white),
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                color: Colors.white,
+                              ),
                               decoration: InputDecoration(
                                 hintText: 'Ask me anything about $topicName',
-                                hintStyle: GoogleFonts.inter(
+                                hintStyle: AppTextStyles.bodyMedium.copyWith(
                                   color: AppColors.textMuted,
                                 ),
                                 filled: true,
@@ -398,7 +400,10 @@ class _ChatBubble extends StatelessWidget {
         child: message.isUser
             ? Text(
                 message.text,
-                style: GoogleFonts.inter(color: Colors.white, fontSize: 14),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
               )
             : _MarkdownText(text: message.text),
       ),
@@ -421,7 +426,7 @@ class _QuickChip extends StatelessWidget {
       side: const BorderSide(color: AppColors.border),
       label: Text(
         label,
-        style: GoogleFonts.inter(
+        style: AppTextStyles.caption.copyWith(
           color: AppColors.textSecondary,
           fontSize: 12,
           fontWeight: FontWeight.w600,
@@ -452,7 +457,7 @@ class _EmptyTutorState extends StatelessWidget {
           Text(
             'Ask me anything about $topicName',
             textAlign: TextAlign.center,
-            style: GoogleFonts.outfit(
+            style: AppTextStyles.headingLarge.copyWith(
               color: Colors.white,
               fontSize: 24,
               fontWeight: FontWeight.w700,
@@ -462,7 +467,7 @@ class _EmptyTutorState extends StatelessWidget {
           Text(
             'Try: "Explain the core concept", "Give me a mnemonic", or "Predict exam questions"',
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(color: AppColors.textSecondary),
+            style: AppTextStyles.bodyMediumSecondary,
           ),
         ],
       ),
@@ -555,7 +560,10 @@ class _MarkdownText extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('• ', style: GoogleFonts.inter(color: Colors.white)),
+                Text(
+                  '• ',
+                  style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+                ),
                 Expanded(child: _buildInline(trimmed.substring(2))),
               ],
             ),
@@ -592,7 +600,7 @@ class _MarkdownText extends StatelessWidget {
 
     return RichText(
       text: TextSpan(
-        style: GoogleFonts.inter(
+        style: AppTextStyles.bodyMedium.copyWith(
           color: Colors.white,
           fontSize: 14,
           height: 1.4,

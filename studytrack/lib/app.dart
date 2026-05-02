@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/constants/app_colors.dart';
@@ -224,8 +223,11 @@ class StudyTrackApp extends StatelessWidget {
       ),
     );
 
+    final baseTextTheme = base.textTheme;
+    final basePrimaryTextTheme = base.primaryTextTheme;
+
     return base.copyWith(
-      textTheme: GoogleFonts.interTextTheme(base.textTheme).copyWith(
+      textTheme: baseTextTheme.copyWith(
         displayLarge: AppTextStyles.displayLarge,
         displayMedium: AppTextStyles.displayMedium,
         headlineLarge: AppTextStyles.headingLarge,
@@ -241,23 +243,22 @@ class StudyTrackApp extends StatelessWidget {
         labelMedium: AppTextStyles.label,
         labelSmall: AppTextStyles.caption,
       ),
-      primaryTextTheme: GoogleFonts.interTextTheme(base.primaryTextTheme)
-          .copyWith(
-            displayLarge: AppTextStyles.displayLarge,
-            displayMedium: AppTextStyles.displayMedium,
-            headlineLarge: AppTextStyles.headingLarge,
-            headlineMedium: AppTextStyles.headingMedium,
-            headlineSmall: AppTextStyles.headingSmall,
-            titleLarge: AppTextStyles.headingSmall,
-            titleMedium: AppTextStyles.label,
-            titleSmall: AppTextStyles.labelSecondary,
-            bodyLarge: AppTextStyles.bodyLarge,
-            bodyMedium: AppTextStyles.bodyMedium,
-            bodySmall: AppTextStyles.bodySmall,
-            labelLarge: AppTextStyles.button,
-            labelMedium: AppTextStyles.label,
-            labelSmall: AppTextStyles.caption,
-          ),
+      primaryTextTheme: basePrimaryTextTheme.copyWith(
+        displayLarge: AppTextStyles.displayLarge,
+        displayMedium: AppTextStyles.displayMedium,
+        headlineLarge: AppTextStyles.headingLarge,
+        headlineMedium: AppTextStyles.headingMedium,
+        headlineSmall: AppTextStyles.headingSmall,
+        titleLarge: AppTextStyles.headingSmall,
+        titleMedium: AppTextStyles.label,
+        titleSmall: AppTextStyles.labelSecondary,
+        bodyLarge: AppTextStyles.bodyLarge,
+        bodyMedium: AppTextStyles.bodyMedium,
+        bodySmall: AppTextStyles.bodySmall,
+        labelLarge: AppTextStyles.button,
+        labelMedium: AppTextStyles.label,
+        labelSmall: AppTextStyles.caption,
+      ),
       visualDensity: VisualDensity.standard,
       splashFactory: InkSparkle.splashFactory,
     );

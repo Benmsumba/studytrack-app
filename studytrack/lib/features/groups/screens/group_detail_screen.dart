@@ -271,11 +271,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
             : Column(
                 children: [
                   GlassCard(
-                    margin: EdgeInsets.all(AppSpacing.sm),
-                    padding: EdgeInsets.all(AppSpacing.sm),
+                    margin: const EdgeInsets.all(AppSpacing.sm),
+                    padding: const EdgeInsets.all(AppSpacing.sm),
                     backgroundColor: AppColors.cardDark,
                     borderRadius: AppSpacing.cardRadius,
-                    borderColors: [AppColors.border, AppColors.border],
+                    borderColors: const [AppColors.border, AppColors.border],
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -283,14 +283,14 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                           '${_groupName()} • $memberCount member${memberCount == 1 ? '' : 's'}',
                           style: AppTextStyles.headingSmall,
                         ),
-                        SizedBox(height: AppSpacing.xxs),
+                        const SizedBox(height: AppSpacing.xxs),
                         Text(
                           description,
                           style: AppTextStyles.bodySmall.copyWith(
                             color: AppColors.textSecondary,
                           ),
                         ),
-                        SizedBox(height: AppSpacing.xs),
+                        const SizedBox(height: AppSpacing.xs),
                         Text(
                           'Invite: $inviteCode',
                           style: AppTextStyles.caption.copyWith(
@@ -330,7 +330,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     }
 
     return ListView.builder(
-      padding: EdgeInsets.fromLTRB(
+      padding: const EdgeInsets.fromLTRB(
         AppSpacing.md,
         AppSpacing.xs,
         AppSpacing.md,
@@ -347,11 +347,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         final joinedAt = member['joined_at']?.toString() ?? '';
 
         return GlassCard(
-          margin: EdgeInsets.only(bottom: AppSpacing.sm),
-          padding: EdgeInsets.all(AppSpacing.sm),
+          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+          padding: const EdgeInsets.all(AppSpacing.sm),
           backgroundColor: AppColors.cardDark,
           borderRadius: AppSpacing.fieldRadius,
-          borderColors: [AppColors.border, AppColors.border],
+          borderColors: const [AppColors.border, AppColors.border],
           child: Row(
             children: [
               CircleAvatar(
@@ -359,20 +359,20 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 backgroundColor: AppColors.primary,
                 child: Text(_initials(name), style: AppTextStyles.label),
               ),
-              SizedBox(width: AppSpacing.sm),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(name, style: AppTextStyles.label),
-                    SizedBox(height: AppSpacing.xxs),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       '$course${yearLevel == null ? '' : ' • Year $yearLevel'}',
                       style: AppTextStyles.caption.copyWith(
                         color: AppColors.textSecondary,
                       ),
                     ),
-                    SizedBox(height: AppSpacing.xxs),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
                       joinedAt.isEmpty
                           ? 'Member'
@@ -385,7 +385,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 ),
               ),
               GlassCard(
-                padding: EdgeInsets.symmetric(
+                padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.xs,
                   vertical: AppSpacing.xxs,
                 ),
@@ -395,8 +395,8 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                     ? AppColors.primary.withValues(alpha: 0.2)
                     : AppColors.surfaceDark,
                 borderColors: [
-                  role == 'admin' ? AppColors.primary : AppColors.border,
-                  role == 'admin' ? AppColors.primary : AppColors.border,
+                  if (role == 'admin') AppColors.primary else AppColors.border,
+                  if (role == 'admin') AppColors.primary else AppColors.border,
                 ],
                 child: Text(
                   role.toUpperCase(),
@@ -409,7 +409,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 ),
               ),
               if (_isAdmin && userId != _currentUserId) ...[
-                SizedBox(width: AppSpacing.xs),
+                const SizedBox(width: AppSpacing.xs),
                 IconButton(
                   tooltip: 'Remove member',
                   onPressed: () => _removeMember(userId),
@@ -437,13 +437,13 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     return Column(
       children: [
         GlassCard(
-          margin: EdgeInsets.fromLTRB(
+          margin: const EdgeInsets.fromLTRB(
             AppSpacing.md,
             AppSpacing.xs,
             AppSpacing.md,
             AppSpacing.xxs,
           ),
-          padding: EdgeInsets.all(AppSpacing.sm),
+          padding: const EdgeInsets.all(AppSpacing.sm),
           backgroundColor: AppColors.warning.withValues(alpha: 0.15),
           borderRadius: AppSpacing.xs + 2,
           borderColors: [
@@ -466,7 +466,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                   ),
                 )
               : ListView(
-                  padding: EdgeInsets.fromLTRB(
+                  padding: const EdgeInsets.fromLTRB(
                     AppSpacing.md,
                     AppSpacing.xs,
                     AppSpacing.md,
@@ -476,11 +476,11 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                     final topicName = entry.key;
                     final notes = entry.value;
                     return GlassCard(
-                      margin: EdgeInsets.only(bottom: AppSpacing.sm),
+                      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
                       padding: EdgeInsets.zero,
                       backgroundColor: AppColors.cardDark,
                       borderRadius: AppSpacing.fieldRadius,
-                      borderColors: [AppColors.border, AppColors.border],
+                      borderColors: const [AppColors.border, AppColors.border],
                       child: ExpansionTile(
                         initiallyExpanded: true,
                         title: Text(topicName, style: AppTextStyles.label),
@@ -567,7 +567,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     }
 
     return ListView.builder(
-      padding: EdgeInsets.fromLTRB(
+      padding: const EdgeInsets.fromLTRB(
         AppSpacing.md,
         AppSpacing.xs,
         AppSpacing.md,
@@ -584,23 +584,23 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         final rsvp = _rsvpYes.contains(id);
 
         return GlassCard(
-          margin: EdgeInsets.only(bottom: AppSpacing.sm),
-          padding: EdgeInsets.all(AppSpacing.sm),
+          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+          padding: const EdgeInsets.all(AppSpacing.sm),
           backgroundColor: AppColors.cardDark,
           borderRadius: AppSpacing.fieldRadius,
-          borderColors: [AppColors.border, AppColors.border],
+          borderColors: const [AppColors.border, AppColors.border],
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(title, style: AppTextStyles.label),
-              SizedBox(height: AppSpacing.xxs),
+              const SizedBox(height: AppSpacing.xxs),
               Text(
                 '$date • $start • ${status.toUpperCase()}',
                 style: AppTextStyles.caption.copyWith(
                   color: AppColors.textSecondary,
                 ),
               ),
-              SizedBox(height: AppSpacing.xs),
+              const SizedBox(height: AppSpacing.xs),
               Row(
                 children: [
                   FilledButton.tonal(

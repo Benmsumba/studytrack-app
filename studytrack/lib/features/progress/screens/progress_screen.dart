@@ -185,7 +185,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         : RefreshIndicator(
             onRefresh: _loadProgress,
             child: ListView(
-              padding: EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 AppSpacing.screenHorizontal,
                 AppSpacing.xs,
                 AppSpacing.screenHorizontal,
@@ -193,15 +193,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
               children: [
                 _buildQuickStats(),
-                SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.md),
                 _buildWeeklyBarChart(),
-                SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.md),
                 _buildRadarChart(),
-                SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.md),
                 _buildHeatmap(),
-                SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.md),
                 _buildTopicRatingHistory(),
-                SizedBox(height: AppSpacing.md),
+                const SizedBox(height: AppSpacing.md),
                 _buildModuleDonuts(),
               ],
             ),
@@ -236,17 +236,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
   );
 
   Widget _statCard(String label, String value, IconData icon) => GlassCard(
-    padding: EdgeInsets.all(AppSpacing.sm),
+    padding: const EdgeInsets.all(AppSpacing.sm),
     backgroundColor: AppColors.cardDark,
     borderRadius: AppSpacing.fieldRadius,
-    borderColors: [AppColors.border, AppColors.border],
+    borderColors: const [AppColors.border, AppColors.border],
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Icon(icon, color: AppColors.accent, size: 16),
-            SizedBox(width: AppSpacing.xxs),
+            const SizedBox(width: AppSpacing.xxs),
             Expanded(
               child: Text(
                 label,
@@ -268,15 +268,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
     Widget child, {
     double? fixedHeight,
   }) => GlassCard(
-    padding: EdgeInsets.all(AppSpacing.md),
+    padding: const EdgeInsets.all(AppSpacing.md),
     backgroundColor: AppColors.cardDark,
     borderRadius: AppSpacing.cardRadius,
-    borderColors: [AppColors.border, AppColors.border],
+    borderColors: const [AppColors.border, AppColors.border],
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(title, style: AppTextStyles.headingSmall),
-        SizedBox(height: AppSpacing.sm),
+        const SizedBox(height: AppSpacing.sm),
         if (fixedHeight != null)
           SizedBox(height: fixedHeight, child: child)
         else
@@ -365,7 +365,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     return const SizedBox.shrink();
                   }
                   return Padding(
-                    padding: EdgeInsets.only(top: AppSpacing.xxs),
+                    padding: const EdgeInsets.only(top: AppSpacing.xxs),
                     child: Text(
                       labels[index],
                       style: AppTextStyles.caption.copyWith(
@@ -496,7 +496,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
             ),
           ),
-          SizedBox(height: AppSpacing.xxs),
+          const SizedBox(height: AppSpacing.xxs),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: List.generate(12, (weekIndex) {
@@ -553,7 +553,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     'Topic Rating History',
     _topics.isEmpty
         ? Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: Text(
               'Add topics to unlock rating trends.',
               style: AppTextStyles.bodySmall.copyWith(
@@ -564,7 +564,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         : Column(
             children: [
               Container(
-                padding: EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceDark,
                   borderRadius: BorderRadius.circular(10),
@@ -593,7 +593,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: AppSpacing.sm),
               SizedBox(
                 height: 220,
                 child: _selectedTopic == null
@@ -611,7 +611,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     'Module Progress Donut Charts',
     _modules.isEmpty
         ? Padding(
-            padding: EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             child: Text(
               'Create modules to view progress donuts.',
               style: AppTextStyles.bodySmall.copyWith(
@@ -625,7 +625,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               scrollDirection: Axis.horizontal,
               itemCount: _modules.length,
               separatorBuilder: (context, index) =>
-                  SizedBox(width: AppSpacing.sm),
+                  const SizedBox(width: AppSpacing.sm),
               itemBuilder: (context, index) {
                 final module = _modules[index];
                 final moduleTopics = _topics
@@ -757,10 +757,10 @@ class _ModuleDonutCard extends StatelessWidget {
     final clampedPercentage = percentage.clamp(0, 100).toDouble();
 
     return GlassCard(
-      padding: EdgeInsets.all(AppSpacing.sm),
+      padding: const EdgeInsets.all(AppSpacing.sm),
       backgroundColor: AppColors.surfaceDark,
       borderRadius: AppSpacing.fieldRadius,
-      borderColors: [AppColors.border, AppColors.border],
+      borderColors: const [AppColors.border, AppColors.border],
       child: Column(
         children: [
           SizedBox(
@@ -796,7 +796,7 @@ class _ModuleDonutCard extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: AppSpacing.xs),
           Text(
             moduleName,
             maxLines: 2,

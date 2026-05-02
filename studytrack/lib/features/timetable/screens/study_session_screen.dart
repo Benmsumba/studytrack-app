@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/utils/result.dart';
@@ -275,7 +275,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
           backgroundColor: AppColors.surfaceDark,
           title: Text(
             'How well do you understand this now?',
-            style: GoogleFonts.outfit(
+            style: AppTextStyles.headingSmall.copyWith(
               color: AppColors.textPrimary,
               fontWeight: FontWeight.w700,
             ),
@@ -285,7 +285,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
             children: [
               Text(
                 '${tempRating.round()}/10',
-                style: GoogleFonts.outfit(
+                style: AppTextStyles.headingLarge.copyWith(
                   color: AppColors.accent,
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
@@ -389,15 +389,12 @@ class _StudySessionScreenState extends State<StudySessionScreen>
         backgroundColor: AppColors.surfaceDark,
         title: Text(
           'StudyTrack',
-          style: GoogleFonts.outfit(
+          style: AppTextStyles.headingSmall.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w700,
           ),
         ),
-        content: Text(
-          message,
-          style: GoogleFonts.inter(color: AppColors.textSecondary),
-        ),
+        content: Text(message, style: AppTextStyles.bodyMediumSecondary),
         actions: [
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -424,7 +421,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
         elevation: 0,
         title: Text(
           _isBreakMode ? 'Break Time' : 'Study Session',
-          style: GoogleFonts.outfit(
+          style: AppTextStyles.headingSmall.copyWith(
             color: AppColors.textPrimary,
             fontWeight: FontWeight.w700,
           ),
@@ -440,7 +437,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                 Text(
                   _topicName,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.outfit(
+                  style: AppTextStyles.headingLarge.copyWith(
                     color: AppColors.textPrimary,
                     fontSize: 28,
                     fontWeight: FontWeight.w700,
@@ -449,7 +446,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                 const SizedBox(height: 8),
                 Text(
                   _isBreakMode ? 'Recharge for 5 minutes' : 'Deep focus mode',
-                  style: GoogleFonts.inter(
+                  style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                   ),
@@ -482,7 +479,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                         children: [
                           Text(
                             '$minutes:$seconds',
-                            style: GoogleFonts.outfit(
+                            style: AppTextStyles.displayMedium.copyWith(
                               color: AppColors.textPrimary,
                               fontSize: 46,
                               fontWeight: FontWeight.w800,
@@ -490,7 +487,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                           ),
                           Text(
                             _isRunning ? 'In progress' : 'Paused',
-                            style: GoogleFonts.inter(
+                            style: AppTextStyles.caption.copyWith(
                               color: AppColors.textSecondary,
                               fontSize: 13,
                             ),
@@ -515,7 +512,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                         selectedColor: AppColors.primary.withValues(
                           alpha: 0.25,
                         ),
-                        labelStyle: GoogleFonts.inter(
+                        labelStyle: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.textPrimary,
                           fontWeight: FontWeight.w600,
                         ),

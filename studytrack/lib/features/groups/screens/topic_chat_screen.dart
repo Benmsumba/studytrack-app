@@ -275,13 +275,13 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
         children: [
           if (_struggleUserIds.length >= 3)
             GlassCard(
-              margin: EdgeInsets.fromLTRB(
+              margin: const EdgeInsets.fromLTRB(
                 AppSpacing.md,
                 AppSpacing.xs,
                 AppSpacing.md,
                 0,
               ),
-              padding: EdgeInsets.all(AppSpacing.sm),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               backgroundColor: AppColors.warning.withValues(alpha: 0.15),
               borderRadius: AppSpacing.xs + 2,
               borderColors: [
@@ -294,7 +294,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
               ),
             ),
           Padding(
-            padding: EdgeInsets.fromLTRB(
+            padding: const EdgeInsets.fromLTRB(
               AppSpacing.md,
               AppSpacing.xs,
               AppSpacing.md,
@@ -305,9 +305,9 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
               child: Row(
                 children: [
                   _promptChip('Anyone struggling with this?'),
-                  SizedBox(width: AppSpacing.xs),
+                  const SizedBox(width: AppSpacing.xs),
                   _promptChip('Can someone explain?'),
-                  SizedBox(width: AppSpacing.xs),
+                  const SizedBox(width: AppSpacing.xs),
                   _promptChip('Exam question tip 💡'),
                 ],
               ),
@@ -318,7 +318,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: EdgeInsets.fromLTRB(
+                    padding: const EdgeInsets.fromLTRB(
                       AppSpacing.md,
                       AppSpacing.xs,
                       AppSpacing.md,
@@ -353,8 +353,8 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 320),
                           child: GlassCard(
-                            margin: EdgeInsets.only(bottom: AppSpacing.sm),
-                            padding: EdgeInsets.all(AppSpacing.sm),
+                            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                            padding: const EdgeInsets.all(AppSpacing.sm),
                             backgroundColor: isMine
                                 ? AppColors.primary
                                 : AppColors.cardDark,
@@ -383,7 +383,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                                         ),
                                       ),
                                     ),
-                                    SizedBox(width: AppSpacing.xxs),
+                                    const SizedBox(width: AppSpacing.xxs),
                                     Column(
                                       crossAxisAlignment: isMine
                                           ? CrossAxisAlignment.end
@@ -409,14 +409,14 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                                     ),
                                   ],
                                 ),
-                                SizedBox(height: AppSpacing.xxs),
+                                const SizedBox(height: AppSpacing.xxs),
                                 Text(
                                   content,
                                   style: AppTextStyles.bodySmall.copyWith(
                                     color: Colors.white,
                                   ),
                                 ),
-                                SizedBox(height: AppSpacing.xxs),
+                                const SizedBox(height: AppSpacing.xxs),
                                 Text(
                                   created.isEmpty
                                       ? ''
@@ -439,7 +439,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
           SafeArea(
             top: false,
             child: Padding(
-              padding: EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 AppSpacing.md,
                 AppSpacing.xs,
                 AppSpacing.md,
@@ -460,7 +460,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                           onSubmitted: (_) => _sendMessage(),
                         ),
                       ),
-                      SizedBox(width: AppSpacing.xs),
+                      const SizedBox(width: AppSpacing.xs),
                       IconButton(
                         onPressed: () {
                           HapticFeedback.lightImpact();
@@ -469,7 +469,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                         icon: const Icon(Icons.mic_none_rounded),
                         color: AppColors.accent,
                       ),
-                      SizedBox(width: AppSpacing.xxs),
+                      const SizedBox(width: AppSpacing.xxs),
                       IconButton.filled(
                         onPressed: _sending
                             ? null
@@ -489,7 +489,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                       ),
                     ],
                   ),
-                  SizedBox(height: AppSpacing.xs),
+                  const SizedBox(height: AppSpacing.xs),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(

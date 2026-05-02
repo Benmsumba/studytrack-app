@@ -74,13 +74,13 @@ class _GroupsScreenState extends State<GroupsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Create Group', style: AppTextStyles.headingSmall),
-            SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.md),
             TextField(
               controller: nameController,
               style: AppTextStyles.bodySmall,
               decoration: const InputDecoration(labelText: 'Group name'),
             ),
-            SizedBox(height: AppSpacing.xs),
+            const SizedBox(height: AppSpacing.xs),
             TextField(
               controller: descriptionController,
               style: AppTextStyles.bodySmall,
@@ -90,7 +90,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                 labelText: 'Description (optional)',
               ),
             ),
-            SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.md),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -149,7 +149,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                                     color: AppColors.textSecondary,
                                   ),
                                 ),
-                                SizedBox(height: AppSpacing.xs),
+                                const SizedBox(height: AppSpacing.xs),
                                 SelectableText(
                                   invite,
                                   style: AppTextStyles.statValue.copyWith(
@@ -224,14 +224,14 @@ class _GroupsScreenState extends State<GroupsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Join Group', style: AppTextStyles.headingSmall),
-            SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.md),
             TextField(
               controller: codeController,
               style: AppTextStyles.bodySmall,
               textCapitalization: TextCapitalization.characters,
               decoration: const InputDecoration(labelText: 'Enter invite code'),
             ),
-            SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.md),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -330,7 +330,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
         : RefreshIndicator(
             onRefresh: _loadGroups,
             child: ListView(
-              padding: EdgeInsets.fromLTRB(
+              padding: const EdgeInsets.fromLTRB(
                 AppSpacing.screenHorizontal,
                 AppSpacing.lg,
                 AppSpacing.screenHorizontal,
@@ -342,10 +342,10 @@ class _GroupsScreenState extends State<GroupsScreen> {
               children: [
                 if (_groups.isEmpty) ...[
                   GlassCard(
-                    padding: EdgeInsets.all(AppSpacing.md),
+                    padding: const EdgeInsets.all(AppSpacing.md),
                     backgroundColor: AppColors.cardDark,
                     borderRadius: AppSpacing.cardRadius,
-                    borderColors: [AppColors.border, AppColors.border],
+                    borderColors: const [AppColors.border, AppColors.border],
                     child: Column(
                       children: [
                         const Icon(
@@ -353,12 +353,12 @@ class _GroupsScreenState extends State<GroupsScreen> {
                           size: 56,
                           color: Colors.white70,
                         ),
-                        SizedBox(height: AppSpacing.sm),
+                        const SizedBox(height: AppSpacing.sm),
                         Text(
                           'No study groups yet',
                           style: AppTextStyles.headingSmall,
                         ),
-                        SizedBox(height: AppSpacing.xs),
+                        const SizedBox(height: AppSpacing.xs),
                         Text(
                           'Create a group with classmates or join one with an invite code.',
                           textAlign: TextAlign.center,
@@ -366,7 +366,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                             color: AppColors.textSecondary,
                           ),
                         ),
-                        SizedBox(height: AppSpacing.md),
+                        const SizedBox(height: AppSpacing.md),
                         Row(
                           children: [
                             Expanded(
@@ -379,7 +379,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                                 label: const Text('Create Group'),
                               ),
                             ),
-                            SizedBox(width: AppSpacing.xs),
+                            const SizedBox(width: AppSpacing.xs),
                             Expanded(
                               child: OutlinedButton.icon(
                                 onPressed: () {
@@ -397,7 +397,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                   ),
                 ] else ...[
                   Text('My Study Groups', style: AppTextStyles.headingSmall),
-                  SizedBox(height: AppSpacing.sm),
+                  const SizedBox(height: AppSpacing.sm),
                   ..._groups.map((group) {
                     final g = group;
                     final name = g.name;
@@ -414,11 +414,11 @@ class _GroupsScreenState extends State<GroupsScreen> {
                               context.push('/group/$groupId', extra: g);
                             },
                       child: GlassCard(
-                        margin: EdgeInsets.only(bottom: AppSpacing.sm),
-                        padding: EdgeInsets.all(AppSpacing.sm),
+                        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        padding: const EdgeInsets.all(AppSpacing.sm),
                         backgroundColor: AppColors.cardDark,
                         borderRadius: AppSpacing.fieldRadius,
-                        borderColors: [AppColors.border, AppColors.border],
+                        borderColors: const [AppColors.border, AppColors.border],
                         child: Row(
                           children: [
                             CircleAvatar(
@@ -429,13 +429,13 @@ class _GroupsScreenState extends State<GroupsScreen> {
                                 style: AppTextStyles.label,
                               ),
                             ),
-                            SizedBox(width: AppSpacing.sm),
+                            const SizedBox(width: AppSpacing.sm),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(name, style: AppTextStyles.headingSmall),
-                                  SizedBox(height: AppSpacing.xxs),
+                                  const SizedBox(height: AppSpacing.xxs),
                                   Text(
                                     description,
                                     maxLines: 2,
@@ -444,7 +444,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                                       color: AppColors.textSecondary,
                                     ),
                                   ),
-                                  SizedBox(height: AppSpacing.xs),
+                                  const SizedBox(height: AppSpacing.xs),
                                   Text(
                                     '$memberCount member${memberCount == 1 ? '' : 's'}',
                                     style: AppTextStyles.caption.copyWith(
@@ -452,7 +452,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  SizedBox(height: AppSpacing.xxs),
+                                  const SizedBox(height: AppSpacing.xxs),
                                   Text(
                                     _formatLastActivity(lastActivity),
                                     style: AppTextStyles.caption.copyWith(
@@ -486,7 +486,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
           ),
           builder: (context) => SafeArea(
             child: Padding(
-              padding: EdgeInsets.all(AppSpacing.md),
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
