@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/exam_repository.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
@@ -153,7 +154,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: AppColors.backgroundDark,
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 60, 16, 100),
+          padding: EdgeInsets.fromLTRB(
+            AppSpacing.screenHorizontal,
+            AppSpacing.xxxl,
+            AppSpacing.screenHorizontal,
+            AppSpacing.xxxl + AppSpacing.xxl,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -170,30 +176,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Center(
                   child: Text(
                     name.substring(0, 1).toUpperCase(),
-                    style: GoogleFonts.outfit(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                    style: AppTextStyles.displayMedium,
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                name,
-                style: GoogleFonts.outfit(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+              Text(name, style: AppTextStyles.displayMedium),
               const SizedBox(height: 4),
               Text(
                 '$course • Year $yearLevel',
-                style: GoogleFonts.inter(
-                  fontSize: 14,
-                  color: AppColors.textSecondary,
-                ),
+                style: AppTextStyles.bodyMediumSecondary,
               ),
               const SizedBox(height: 32),
 
@@ -223,7 +215,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
               const SizedBox(height: 32),
-
               _SocialCard(
                 name: name,
                 masteredTopics: _masteredTopics,
@@ -234,14 +225,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 20),
 
               // Badges
-              Text(
-                'Achievements',
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+              Text('Achievements', style: AppTextStyles.headingSmall),
               const SizedBox(height: 16),
               GridView.count(
                 crossAxisCount: 4,
@@ -465,22 +449,11 @@ class _SocialCard extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Shareable Social Card',
-          style: GoogleFonts.outfit(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
+        Text('Shareable Social Card', style: AppTextStyles.label),
         const SizedBox(height: 8),
         Text(
           '$name • $masteredTopics/$totalTopics topics mastered • $streak day streak',
-          style: GoogleFonts.inter(
-            color: Colors.white,
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-          ),
+          style: AppTextStyles.bodySmall.copyWith(color: Colors.white),
         ),
         const SizedBox(height: 12),
         OutlinedButton.icon(
@@ -515,22 +488,9 @@ class _StatCard extends StatelessWidget {
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text(
-          value,
-          style: GoogleFonts.outfit(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
+        Text(value, style: AppTextStyles.statValue),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.inter(
-            fontSize: 10,
-            color: AppColors.textSecondary,
-          ),
-        ),
+        Text(label, style: AppTextStyles.captionMuted),
       ],
     ),
   );
@@ -580,8 +540,7 @@ class _BadgeWidget extends StatelessWidget {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 8,
+            style: AppTextStyles.captionMuted.copyWith(
               color: earned ? Colors.white : AppColors.textMuted,
             ),
           ),
