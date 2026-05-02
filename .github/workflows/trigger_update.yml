@@ -10,10 +10,14 @@ on:
       release_notes:
         description: 'Message shown in the update banner'
         required: false
-        default: 'A new version of StudyAId is available.'
+        default: 'A new version of StudyTrack is available.'
 
 permissions:
   contents: read
+
+      concurrency:
+        group: trigger-update-version-json-${{ github.run_id }}
+        cancel-in-progress: true
 
 jobs:
   push-version-json:
@@ -22,18 +26,23 @@ jobs:
 
     steps:
       - name: Validate secrets
+        id: secrets
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           TRIMMED_KEY=$(echo "${SUPABASE_SERVICE_ROLE_KEY}" | tr -d '[:space:]')
           if [ -z "${SUPABASE_URL}" ] || [ -z "${TRIMMED_KEY}" ]; then
-            echo "::error::SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set."
-            exit 1
+            echo "::warning::SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set."
+            echo "missing=true" >> "$GITHUB_OUTPUT"
+            echo "Skipping update notification publish because secrets are not configured."
+            exit 0
           fi
           echo "SUPABASE_SERVICE_ROLE_KEY=${TRIMMED_KEY}" >> "$GITHUB_ENV"
+          echo "missing=false" >> "$GITHUB_OUTPUT"
 
       - name: Ensure app-updates bucket is public
+        if: steps.secrets.outputs.missing == 'false'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |
@@ -47,6 +56,7 @@ jobs:
             -d '{"public":true}'
 
       - name: Build and upload version.json
+        if: steps.secrets.outputs.missing == 'false'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |

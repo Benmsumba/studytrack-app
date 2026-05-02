@@ -9,6 +9,13 @@ on:
       - '.github/workflows/deploy_backend.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-supabase-backend-${{ github.ref_name || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   deploy-supabase:
     runs-on: ubuntu-latest
