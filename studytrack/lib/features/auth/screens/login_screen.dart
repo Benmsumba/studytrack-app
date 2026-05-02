@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/validators.dart';
 import '../controllers/auth_provider.dart';
 
@@ -186,7 +188,10 @@ class _LoginScreenState extends State<LoginScreen> {
     body: SafeArea(
       child: Consumer<AuthProvider>(
         builder: (context, auth, _) => SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenHorizontal,
+            vertical: AppSpacing.lg,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
@@ -211,21 +216,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 Center(
                   child: Text(
                     'Welcome back',
-                    style: GoogleFonts.outfit(
-                      fontSize: 32,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.textPrimary,
-                    ),
+                    style: AppTextStyles.displayMedium,
                   ),
                 ).animate().fadeIn(duration: 500.ms, delay: 100.ms),
                 const SizedBox(height: 6),
                 Center(
                   child: Text(
                     'Study smarter. Know where you stand.',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                    ),
+                    style: AppTextStyles.bodyMediumSecondary,
                   ),
                 ).animate().fadeIn(duration: 500.ms, delay: 150.ms),
                 const SizedBox(height: 36),
@@ -233,10 +231,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       padding: const EdgeInsets.all(1.2),
                       decoration: BoxDecoration(
                         gradient: AppColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(18),
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.cardRadius,
+                        ),
                       ),
                       child: Container(
-                        padding: const EdgeInsets.all(18),
+                        padding: const EdgeInsets.all(AppSpacing.lg),
                         decoration: BoxDecoration(
                           color: AppColors.surfaceDark,
                           borderRadius: BorderRadius.circular(17),

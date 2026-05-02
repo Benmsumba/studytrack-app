@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/utils/service_locator.dart';
 import '../controllers/settings_provider.dart';
@@ -26,29 +27,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: AppColors.backgroundDark,
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 80, 16, 100),
+          padding: const EdgeInsets.fromLTRB(
+            AppSpacing.screenHorizontal,
+            AppSpacing.xxxl + AppSpacing.xxl,
+            AppSpacing.screenHorizontal,
+            AppSpacing.xxxl + AppSpacing.xxl + AppSpacing.lg,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Study Preferences
               const _SectionHeader(title: 'Study Preferences'),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               const _SettingsCard(
                 title: 'Daily Study Goal',
                 subtitle: '5 hours per day',
                 trailing: Icon(Icons.arrow_forward),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: AppSpacing.sm),
               const _SettingsCard(
                 title: 'Pomodoro Duration',
                 subtitle: '25 minutes',
                 trailing: Icon(Icons.arrow_forward),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.xl),
 
               // Notifications
               const _SectionHeader(title: 'Notifications'),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               _SettingsToggle(
                 title: 'Daily Briefing',
                 subtitle: 'Morning study reminder',
@@ -76,22 +82,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 value: settings.weeklyReport,
                 onChanged: settings.setWeeklyReport,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.xl),
 
               // Appearance
               const _SectionHeader(title: 'Appearance'),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               _SettingsToggle(
                 title: 'Dark Mode',
                 subtitle: 'Always on',
                 value: settings.darkMode,
                 onChanged: settings.setDarkMode,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.xl),
 
               // Account
               const _SectionHeader(title: 'Account'),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               _SettingsCard(
                 title: 'Edit Profile',
                 subtitle: 'Update your information',
@@ -110,42 +116,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: 'Download as JSON',
                 trailing: Icon(Icons.download),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: AppSpacing.xl),
 
               // About
               const _SectionHeader(title: 'About'),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.md),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
                   color: AppColors.cardDark,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
                   border: Border.all(color: AppColors.border, width: 1),
                 ),
                 child: Column(
                   children: [
-                    Text(
-                      'StudyTrack',
-                      style: GoogleFonts.outfit(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
+                    Text('StudyTrack', style: AppTextStyles.headingSmall),
                     const SizedBox(height: 4),
-                    Text(
-                      'Version 1.0.0',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
+                    Text('Version 1.0.0', style: AppTextStyles.caption),
                     const SizedBox(height: 16),
                     Text(
                       'Made with ❤️ for health sciences students',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: AppColors.textMuted,
+                      style: AppTextStyles.captionMuted.copyWith(
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -167,13 +158,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     backgroundColor: AppColors.danger,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: Text(
-                    'Logout',
-                    style: GoogleFonts.outfit(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  child: Text('Logout', style: AppTextStyles.button),
                 ),
               ),
             ],
@@ -189,14 +174,7 @@ class _SectionHeader extends StatelessWidget {
   final String title;
 
   @override
-  Widget build(BuildContext context) => Text(
-    title,
-    style: GoogleFonts.outfit(
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
-      color: Colors.white,
-    ),
-  );
+  Widget build(BuildContext context) => Text(title, style: AppTextStyles.label);
 }
 
 class _SettingsCard extends StatelessWidget {
@@ -227,22 +205,9 @@ class _SettingsCard extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                title,
-                style: GoogleFonts.outfit(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+              Text(title, style: AppTextStyles.label),
               const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ),
+              Text(subtitle, style: AppTextStyles.caption),
             ],
           ),
           trailing,
@@ -278,21 +243,11 @@ class _SettingsToggle extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: GoogleFonts.outfit(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
+            Text(title, style: AppTextStyles.label),
             const SizedBox(height: 4),
             Text(
               subtitle,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
+              style: AppTextStyles.caption,
             ),
           ],
         ),
