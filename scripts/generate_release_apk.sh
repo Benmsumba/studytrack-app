@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_DIR="$ROOT_DIR/studytrack"
 RELEASE_DIR="$ROOT_DIR/release"
+SYMBOLS_DIR="$ROOT_DIR/.release-symbols"
 
 REQUIRED_ENV_VARS=(
 	SUPABASE_URL
@@ -24,10 +25,11 @@ done
 cd "$APP_DIR"
 flutter clean
 flutter pub get
+rm -rf "$SYMBOLS_DIR"
 flutter build apk --release --split-per-abi \
 	--tree-shake-icons \
 	--obfuscate \
-	--split-debug-info="$RELEASE_DIR/symbols" \
+	--split-debug-info="$SYMBOLS_DIR" \
 	--dart-define="SUPABASE_URL=$SUPABASE_URL" \
 	--dart-define="SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY" \
 	--dart-define="GEMINI_API_KEY=$GEMINI_API_KEY"
@@ -38,6 +40,9 @@ cp -f build/app/outputs/flutter-apk/*.apk "$RELEASE_DIR"/
 echo
 echo "Generated APK files:"
 ls -lh "$RELEASE_DIR"/*.apk
+
+echo
+echo "Obfuscation symbols kept in: $SYMBOLS_DIR"
 
 echo
 echo "APK ready! Share app-arm64-v8a-release.apk with friends"
