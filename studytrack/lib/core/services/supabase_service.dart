@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_catches_without_on_clauses, unawaited_futures
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -135,15 +137,16 @@ class SupabaseService {
                 'study_preference': studyPreference,
               },
             );
-          } catch (error) {
+          } on Object catch (error, stackTrace) {
             // Account creation already succeeded in Auth. A profile can be
             // created/updated later during onboarding or on next login.
             debugPrint('signUpWithEmail profile upsert error: $error');
+            debugPrint('$stackTrace');
           }
         }
 
         return user;
-      } catch (error) {
+      } on Object catch (error, stackTrace) {
         final errorMessage = error.toString();
         if (_isRetryableAuthErrorMessage(errorMessage) && attempt < 2) {
           await Future<void>.delayed(const Duration(seconds: 2));
@@ -151,6 +154,7 @@ class SupabaseService {
         }
         _lastAuthError = _mapAuthErrorText(errorMessage);
         debugPrint('signUpWithEmail auth error: $errorMessage');
+        debugPrint('$stackTrace');
         return null;
       }
     }
@@ -173,7 +177,7 @@ class SupabaseService {
         }
 
         return response.user;
-      } catch (error) {
+      } on Object catch (error, stackTrace) {
         final errorMessage = error.toString();
         if (_isRetryableAuthErrorMessage(errorMessage) && attempt < 2) {
           await Future<void>.delayed(const Duration(seconds: 2));
@@ -181,6 +185,7 @@ class SupabaseService {
         }
         _lastAuthError = _mapAuthErrorText(errorMessage);
         debugPrint('signInWithEmail auth error: $errorMessage');
+        debugPrint('$stackTrace');
         return null;
       }
     }
@@ -193,8 +198,9 @@ class SupabaseService {
     try {
       await client.auth.signOut();
       return true;
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('signOut error: $error');
+      debugPrint('$stackTrace');
       return null;
     }
   }
@@ -203,8 +209,9 @@ class SupabaseService {
     try {
       await client.auth.resetPasswordForEmail(email.trim());
       return true;
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('resetPasswordForEmail error: $error');
+      debugPrint('$stackTrace');
       return false;
     }
   }
@@ -220,9 +227,10 @@ class SupabaseService {
         _lastAuthError = 'Could not open Google sign-in. Please try again.';
       }
       return launched;
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       _lastAuthError = _mapAuthErrorText(error.toString());
       debugPrint('signInWithGoogle error: $error');
+      debugPrint('$stackTrace');
       return false;
     }
   }
@@ -230,8 +238,9 @@ class SupabaseService {
   User? getCurrentUser() {
     try {
       return client.auth.currentUser;
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('getCurrentUser error: $error');
+      debugPrint('$stackTrace');
       return null;
     }
   }
@@ -239,8 +248,9 @@ class SupabaseService {
   bool isLoggedIn() {
     try {
       return client.auth.currentUser != null;
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('isLoggedIn error: $error');
+      debugPrint('$stackTrace');
       return false;
     }
   }
@@ -264,8 +274,9 @@ class SupabaseService {
       }
 
       return await _cachedRecord('profiles', userId);
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('getProfile error: $error');
+      debugPrint('$stackTrace');
       return _cachedRecord('profiles', userId);
     }
   }
@@ -293,8 +304,9 @@ class SupabaseService {
       final optimistic = {...existing, ...payload};
       await _cacheRecord('profiles', userId, optimistic);
       return optimistic;
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('updateProfile error: $error');
+      debugPrint('$stackTrace');
       try {
         await _queueChange('profiles', 'upsert', payload, recordId: userId);
         final existing =
@@ -302,8 +314,9 @@ class SupabaseService {
         final optimistic = {...existing, ...payload};
         await _cacheRecord('profiles', userId, optimistic);
         return optimistic;
-      } catch (queueError) {
+      } on Object catch (queueError, queueStack) {
         debugPrint('updateProfile queue fallback error: $queueError');
+        debugPrint('$queueStack');
         return null;
       }
     }
@@ -332,9 +345,10 @@ class SupabaseService {
           'streak_count': 0,
         },
       );
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       // Non-fatal: user can still proceed and retry profile updates later.
       debugPrint('ensureProfileExists error: $error');
+      debugPrint('$stackTrace');
     }
   }
 
@@ -435,8 +449,9 @@ class SupabaseService {
         'streak_count': nextStreak,
         'last_study_date': todayDate.toIso8601String().split('T').first,
       });
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('updateStreak error: $error');
+      debugPrint('$stackTrace');
       return null;
     }
   }
@@ -462,8 +477,9 @@ class SupabaseService {
 
       final cached = await _cachedList('modules', userId);
       return cached?.map(ModuleModel.fromJson).toList();
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('getModules error: $error');
+      debugPrint('$stackTrace');
       final cached = await _cachedList('modules', userId);
       return cached?.map(ModuleModel.fromJson).toList();
     }
@@ -488,8 +504,9 @@ class SupabaseService {
 
       final cached = await _cachedRecord('modules', moduleId);
       return cached == null ? null : ModuleModel.fromJson(cached);
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('getModuleById error: $error');
+      debugPrint('$stackTrace');
       final cached = await _cachedRecord('modules', moduleId);
       return cached == null ? null : ModuleModel.fromJson(cached);
     }
@@ -525,8 +542,9 @@ class SupabaseService {
       await _queueChange('modules', 'insert', payload, recordId: moduleId);
       await _cacheRecord('modules', moduleId, payload);
       return payload;
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('addModule error: $error');
+      debugPrint('$stackTrace');
       return null;
     }
   }
@@ -556,8 +574,9 @@ class SupabaseService {
       final optimistic = {...existing, ...data, 'id': moduleId};
       await _cacheRecord('modules', moduleId, optimistic);
       return optimistic;
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('updateModule error: $error');
+      debugPrint('$stackTrace');
       return null;
     }
   }
@@ -577,8 +596,9 @@ class SupabaseService {
         'id': moduleId,
       }, recordId: moduleId);
       return true;
-    } catch (error) {
+    } on Object catch (error, stackTrace) {
       debugPrint('deleteModule error: $error');
+      debugPrint('$stackTrace');
       return null;
     }
   }
@@ -613,9 +633,7 @@ class SupabaseService {
 
   /// Fetch all topics for multiple modules in a single query.
   /// Returns a flat list — callers group by [TopicModel.moduleId].
-  Future<List<TopicModel>> getTopicsByModuleIds(
-    List<String> moduleIds,
-  ) async {
+  Future<List<TopicModel>> getTopicsByModuleIds(List<String> moduleIds) async {
     if (moduleIds.isEmpty) return const [];
     try {
       if (await _isOnline()) {

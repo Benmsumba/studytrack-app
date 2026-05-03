@@ -9,6 +9,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/validators.dart';
 import '../controllers/auth_provider.dart';
+import '../../../core/l10n/app_strings.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -216,14 +217,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 20),
                 Center(
                   child: Text(
-                    'Welcome back',
+                    AppStrings.welcomeBack,
                     style: AppTextStyles.displayMedium,
                   ),
                 ).animate().fadeIn(duration: 500.ms, delay: 100.ms),
                 const SizedBox(height: 6),
                 Center(
                   child: Text(
-                    'Study smarter. Know where you stand.',
+                    AppStrings.welcomeSubtitle,
                     style: AppTextStyles.bodyMediumSecondary,
                   ),
                 ).animate().fadeIn(duration: 500.ms, delay: 150.ms),
@@ -246,7 +247,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           children: [
                             _buildTextField(
                               controller: _emailController,
-                              hintText: 'Email address',
+                              hintText: AppStrings.emailAddress,
                               keyboardType: TextInputType.emailAddress,
                               prefixIcon: Icons.email_outlined,
                               validator: Validators.email,
@@ -254,7 +255,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 14),
                             _buildTextField(
                               controller: _passwordController,
-                              hintText: 'Password',
+                              hintText: AppStrings.password,
                               prefixIcon: Icons.lock_outline,
                               obscureText: _obscurePassword,
                               suffixIcon: IconButton(
@@ -281,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       MaterialTapTargetSize.shrinkWrap,
                                 ),
                                 child: Text(
-                                  'Forgot password?',
+                                  AppStrings.forgotPassword,
                                   style: AppTextStyles.bodyMedium.copyWith(
                                     color: AppColors.accent,
                                     fontSize: 13,
@@ -292,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 16),
                             _buildGradientButton(
-                              label: 'Login',
+                              label: AppStrings.login,
                               isLoading: auth.isLoading,
                               onTap: auth.isLoading ? null : _onLoginTap,
                             ),
@@ -312,7 +313,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       child: Text(
-                        'or',
+                        AppStrings.or,
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.textMuted,
                           fontSize: 13,
@@ -334,7 +335,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        "Don't have an account? ",
+                        AppStrings.noAccount,
                         style: AppTextStyles.bodyMediumSecondary.copyWith(
                           fontSize: 14,
                         ),
@@ -342,7 +343,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       GestureDetector(
                         onTap: () => context.go('/signup'),
                         child: Text(
-                          'Sign up',
+                          AppStrings.signUp,
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.accent,
                             fontSize: 14,
