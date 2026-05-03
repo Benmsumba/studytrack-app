@@ -13,6 +13,7 @@ import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../../../models/study_group_model.dart';
 import '../../auth/controllers/auth_provider.dart';
+import '../../../core/l10n/app_strings.dart';
 
 class GroupsScreen extends StatefulWidget {
   const GroupsScreen({super.key});
@@ -55,7 +56,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
     setState(() {
       _groups = groups;
       _loadError = result is Failure<List<StudyGroupModel>>
-          ? 'We could not load your groups right now. Pull to retry.'
+          ? AppStrings.groupsLoadError
           : null;
       _loading = false;
     });
@@ -85,7 +86,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Create Group', style: AppTextStyles.headingSmall),
+            Text(AppStrings.createGroup, style: AppTextStyles.headingSmall),
             const SizedBox(height: AppSpacing.md),
             TextField(
               controller: nameController,
@@ -98,8 +99,8 @@ class _GroupsScreenState extends State<GroupsScreen> {
               style: AppTextStyles.bodySmall,
               minLines: 2,
               maxLines: 3,
-              decoration: const InputDecoration(
-                labelText: 'Description (optional)',
+              decoration: InputDecoration(
+                labelText: AppStrings.groupDescriptionOptional,
               ),
             ),
             const SizedBox(height: AppSpacing.md),
@@ -135,8 +136,8 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
                         if (createdResult is! Success<StudyGroupModel>) {
                           scaffold.showSnackBar(
-                            const SnackBar(
-                              content: Text('Failed to create group.'),
+                            SnackBar(
+                              content: Text(AppStrings.failedCreateGroup),
                             ),
                           );
                           return;
@@ -149,14 +150,14 @@ class _GroupsScreenState extends State<GroupsScreen> {
                           builder: (dialogContext) => AlertDialog(
                             backgroundColor: AppColors.cardDark,
                             title: Text(
-                              'Group Created',
+                              AppStrings.groupCreated,
                               style: AppTextStyles.headingSmall,
                             ),
                             content: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'Share this code with friends:',
+                                  AppStrings.shareInviteCode,
                                   style: AppTextStyles.bodySmall.copyWith(
                                     color: AppColors.textSecondary,
                                   ),
@@ -179,8 +180,8 @@ class _GroupsScreenState extends State<GroupsScreen> {
                                   if (!dialogContext.mounted) return;
                                   Navigator.of(dialogContext).pop();
                                   scaffold.showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Invite code copied'),
+                                    SnackBar(
+                                      content: Text(AppStrings.inviteCopied),
                                     ),
                                   );
                                 },
@@ -270,9 +271,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
                         if (joinedResult is! Success<void>) {
                           scaffold.showSnackBar(
-                            const SnackBar(
-                              content: Text('Invite code not found.'),
-                            ),
+                            SnackBar(content: Text(AppStrings.inviteNotFound)),
                           );
                           return;
                         }
@@ -280,8 +279,8 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         await _loadGroups();
                         if (!mounted) return;
                         scaffold.showSnackBar(
-                          const SnackBar(
-                            content: Text('Joined group successfully.'),
+                          SnackBar(
+                            content: Text(AppStrings.joinedGroupSuccess),
                           ),
                         );
                       },
@@ -348,7 +347,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                   Padding(
                     padding: const EdgeInsets.only(top: 44),
                     child: AppStateView.error(
-                      title: 'Groups unavailable',
+                      title: AppStrings.groupsUnavailable,
                       message: _loadError!,
                       onRetry: _loadGroups,
                     ),
@@ -368,12 +367,12 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         Text(
-                          'No study groups yet',
+                          AppStrings.noGroupsTitle,
                           style: AppTextStyles.headingSmall,
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          'Create a group with classmates or join one with an invite code.',
+                          AppStrings.noGroupsSubtitle,
                           textAlign: TextAlign.center,
                           style: AppTextStyles.bodySmall.copyWith(
                             color: AppColors.textSecondary,

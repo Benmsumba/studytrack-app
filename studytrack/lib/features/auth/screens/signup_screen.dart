@@ -9,6 +9,7 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/utils/validators.dart';
 import '../controllers/auth_provider.dart';
+import '../../../core/l10n/app_strings.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -135,13 +136,13 @@ class _SignupScreenState extends State<SignupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Create account', style: AppTextStyles.displayMedium)
+              Text(AppStrings.createAccount, style: AppTextStyles.displayMedium)
                   .animate()
                   .fadeIn(duration: 500.ms)
                   .slideY(begin: 0.2, end: 0, duration: 500.ms),
               const SizedBox(height: 8),
               Text(
-                'Start strong and personalize your study flow.',
+                AppStrings.createAccountSubtitle,
                 style: AppTextStyles.bodyMediumSecondary,
               ).animate().fadeIn(duration: 600.ms, delay: 100.ms),
               const SizedBox(height: AppSpacing.lg),
@@ -167,20 +168,20 @@ class _SignupScreenState extends State<SignupScreen> {
                           children: [
                             _buildTextField(
                               controller: _nameController,
-                              hintText: 'Full name',
+                              hintText: AppStrings.fullName,
                               validator: Validators.requiredField,
                             ),
                             const SizedBox(height: AppSpacing.md),
                             _buildTextField(
                               controller: _emailController,
-                              hintText: 'Email address',
+                              hintText: AppStrings.emailAddress,
                               keyboardType: TextInputType.emailAddress,
                               validator: Validators.email,
                             ),
                             const SizedBox(height: AppSpacing.md),
                             _buildTextField(
                               controller: _passwordController,
-                              hintText: 'Password',
+                              hintText: AppStrings.password,
                               obscureText: _obscurePassword,
                               suffixIcon: IconButton(
                                 onPressed: () {
@@ -206,7 +207,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             const SizedBox(height: AppSpacing.md),
                             _buildTextField(
                               controller: _confirmPasswordController,
-                              hintText: 'Confirm password',
+                              hintText: AppStrings.confirmPassword,
                               obscureText: _obscureConfirmPassword,
                               suffixIcon: IconButton(
                                 onPressed: () {
@@ -250,7 +251,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                       top: AppSpacing.sm,
                                     ),
                                     child: Text(
-                                      'I agree to the terms and conditions',
+                                      AppStrings.acceptTerms,
                                       style: AppTextStyles.bodySmallSecondary,
                                     ),
                                   ),
@@ -259,7 +260,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             ),
                             const SizedBox(height: AppSpacing.xs),
                             _buildGradientButton(
-                              label: 'Create Account',
+                              label: AppStrings.createAccount,
                               isLoading: auth.isLoading,
                               onTap: auth.isLoading
                                   ? null
@@ -281,7 +282,10 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 14),
-                    child: Text('or', style: AppTextStyles.captionMuted),
+                    child: Text(
+                      AppStrings.or,
+                      style: AppTextStyles.captionMuted,
+                    ),
                   ),
                   const Expanded(
                     child: Divider(color: AppColors.border, thickness: 1),
@@ -304,7 +308,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     GestureDetector(
                       onTap: () => context.go('/login'),
                       child: Text(
-                        'Login',
+                        AppStrings.login,
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.accent,
                           fontWeight: FontWeight.bold,

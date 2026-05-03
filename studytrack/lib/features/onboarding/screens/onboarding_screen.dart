@@ -12,6 +12,7 @@ import '../../../core/repositories/profile_repository.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/glass_card.dart';
+import '../../../core/l10n/app_strings.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key});
@@ -100,12 +101,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   bool _validateStep(int step) {
     if (step == 0 && _nameController.text.trim().isEmpty) {
-      _showMessage('Please enter your name.');
+      _showMessage(AppStrings.enterName);
       return false;
     }
 
     if (step == 1 && _courseController.text.trim().isEmpty) {
-      _showMessage('Please enter your course.');
+      _showMessage(AppStrings.enterCourse);
       return false;
     }
 
