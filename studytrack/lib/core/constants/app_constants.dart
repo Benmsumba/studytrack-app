@@ -12,7 +12,8 @@ class AppConstants {
   static const String supabaseUrl = 'https://xidpslwjxnyiptebwdff.supabase.co';
   static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
   static const String geminiApiKey = 'YOUR_GEMINI_API_KEY';
-  static const String sentryDsn = 'YOUR_SENTRY_DSN';
+  static const String sentryDsn =
+      'https://e983571c91883cb440b2a13979a608b9@o4511322476314624.ingest.de.sentry.io/4511322491912272';
 
   static String get resolvedSupabaseUrl {
     const fromEnv = String.fromEnvironment('SUPABASE_URL');
