@@ -19,55 +19,73 @@ class OfflineStatusBanner extends StatelessWidget {
 
     final isOffline = !syncService.isOnline;
     final isSyncing = syncService.isSyncing;
+    final hasError = syncService.lastSyncError != null;
+    final hasPending = syncService.hasPendingChanges;
+
+    String message;
+    IconData icon;
+    LinearGradient gradient;
+
+    if (isOffline) {
+      message = 'Offline mode active. Changes will sync when you reconnect.';
+      icon = Icons.cloud_off_rounded;
+      gradient = const LinearGradient(
+        colors: [Color(0xFF7C2D12), Color(0xFFF97316)],
+      );
+    } else if (isSyncing) {
+      message = 'Syncing pending changes...';
+      icon = Icons.sync_rounded;
+      gradient = AppColors.primaryGradient;
+    } else if (hasError) {
+      message = syncService.lastSyncError!;
+      icon = Icons.sync_problem_rounded;
+      gradient = const LinearGradient(
+        colors: [Color(0xFF7F1D1D), Color(0xFFEF4444)],
+      );
+    } else if (hasPending) {
+      message =
+          'Waiting to sync ${syncService.pendingChanges} pending change${syncService.pendingChanges == 1 ? '' : 's'}.';
+      icon = Icons.schedule_rounded;
+      gradient = AppColors.primaryGradient;
+    } else {
+      return child;
+    }
 
     return Column(
       children: [
-        if (isOffline || isSyncing)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              gradient: isOffline
-                  ? const LinearGradient(
-                      colors: [Color(0xFF7C2D12), Color(0xFFF97316)],
-                    )
-                  : AppColors.primaryGradient,
-            ),
-            child: SafeArea(
-              bottom: false,
-              child: Row(
-                children: [
-                  Icon(
-                    isOffline ? Icons.cloud_off_rounded : Icons.sync_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      isOffline
-                          ? 'Offline mode active. Changes will sync when you reconnect.'
-                          : 'Syncing pending changes...',
-                      style: AppTextStyles.caption.copyWith(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(gradient: gradient),
+          child: SafeArea(
+            bottom: false,
+            child: Row(
+              children: [
+                Icon(icon, color: Colors.white, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: AppTextStyles.caption.copyWith(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  if (syncService.hasPendingChanges)
-                    Text(
-                      '${syncService.pendingChanges} pending',
-                      style: AppTextStyles.caption.copyWith(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                      ),
+                ),
+                if (hasPending)
+                  Text(
+                    '${syncService.pendingChanges} pending',
+                    style: AppTextStyles.caption.copyWith(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
           ),
+        ),
         Expanded(child: child),
       ],
     );

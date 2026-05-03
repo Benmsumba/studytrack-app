@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -9,8 +10,10 @@ enum UpdateStatus {
   idle,
   available,
   downloading,
+  verifying,
   awaitingPermission,
   readyToInstall,
+  installing,
   error,
 }
 
@@ -24,17 +27,21 @@ class UpdateProvider extends ChangeNotifier {
   double _progress = 0;
   String? _errorMessage;
   String? _apkPath;
+  bool _wifiOnly = false;
 
   UpdateStatus get status => _status;
   AppUpdateInfo? get updateInfo => _updateInfo;
   double get progress => _progress;
   String? get errorMessage => _errorMessage;
+  bool get wifiOnly => _wifiOnly;
 
   bool get shouldShowOverlay =>
       _status == UpdateStatus.available ||
       _status == UpdateStatus.downloading ||
+      _status == UpdateStatus.verifying ||
       _status == UpdateStatus.awaitingPermission ||
       _status == UpdateStatus.readyToInstall ||
+      _status == UpdateStatus.installing ||
       _status == UpdateStatus.error;
 
   Future<void> checkForUpdate() async {
@@ -47,16 +54,26 @@ class UpdateProvider extends ChangeNotifier {
         int.tryParse(packageInfo.buildNumber) ??
         AppConstants.currentVersionCode;
 
-    final info = await _service.checkForUpdate(
-      checkUrl: AppConstants.updateCheckUrl,
-      currentVersionCode: currentVersionCode,
-    );
-    if (info == null) {
-      return;
+    try {
+      final info = await _service.checkForUpdate(
+        checkUrl: AppConstants.updateCheckUrl,
+        currentVersionCode: currentVersionCode,
+      );
+      if (info == null) {
+        return;
+      }
+
+      _updateInfo = info;
+      _wifiOnly = info.wifiOnly;
+      _status = UpdateStatus.available;
+      _errorMessage = null;
+      notifyListeners();
+    } on Object catch (error) {
+      _status = UpdateStatus.error;
+      _errorMessage = 'Unable to check for updates right now.';
+      notifyListeners();
+      debugPrint('Update check failed: $error');
     }
-    _updateInfo = info;
-    _status = UpdateStatus.available;
-    notifyListeners();
   }
 
   Future<void> startDownload() async {
@@ -68,12 +85,22 @@ class UpdateProvider extends ChangeNotifier {
     final hasPermission = await _requestInstallPermission();
     if (!hasPermission) {
       _status = UpdateStatus.awaitingPermission;
+      _errorMessage = null;
+      notifyListeners();
+      return;
+    }
+
+    if (_wifiOnly && !await _isOnWifi()) {
+      _status = UpdateStatus.error;
+      _errorMessage =
+          'Wi-Fi is required for this update. Connect to Wi-Fi and try again.';
       notifyListeners();
       return;
     }
 
     _status = UpdateStatus.downloading;
     _progress = 0;
+    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -85,10 +112,16 @@ class UpdateProvider extends ChangeNotifier {
         notifyListeners();
       }
 
-      _status = UpdateStatus.readyToInstall;
+      _status = UpdateStatus.verifying;
       notifyListeners();
 
-      await install();
+      await _service.verifyDownloadedApk(
+        filePath: savePath,
+        expectedSha256: info.apkSha256,
+      );
+
+      _status = UpdateStatus.readyToInstall;
+      notifyListeners();
     } on Exception catch (e) {
       _status = UpdateStatus.error;
       _errorMessage = e.toString();
@@ -101,8 +134,14 @@ class UpdateProvider extends ChangeNotifier {
     if (path == null) {
       return;
     }
+
     try {
+      _status = UpdateStatus.installing;
+      notifyListeners();
       await _service.installApk(path);
+      _status = UpdateStatus.idle;
+      _errorMessage = null;
+      notifyListeners();
     } on Exception catch (e) {
       _status = UpdateStatus.error;
       _errorMessage = e.toString();
@@ -115,6 +154,19 @@ class UpdateProvider extends ChangeNotifier {
     if (granted) {
       await startDownload();
     }
+  }
+
+  Future<void> retry() async {
+    if (_updateInfo == null) {
+      await checkForUpdate();
+      return;
+    }
+    await startDownload();
+  }
+
+  void setWifiOnly(bool value) {
+    _wifiOnly = value;
+    notifyListeners();
   }
 
   void dismiss() {
@@ -133,5 +185,11 @@ class UpdateProvider extends ChangeNotifier {
     }
     final result = await Permission.requestInstallPackages.request();
     return result.isGranted;
+  }
+
+  Future<bool> _isOnWifi() async {
+    final result = await Connectivity().checkConnectivity();
+    return result.contains(ConnectivityResult.wifi) ||
+        result.contains(ConnectivityResult.ethernet);
   }
 }

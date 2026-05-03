@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/constants/app_colors.dart';
@@ -28,6 +29,7 @@ import 'features/profile/screens/profile_screen.dart';
 import 'features/progress/screens/exam_countdown_screen.dart';
 import 'features/progress/screens/progress_screen.dart';
 import 'features/progress/screens/weekly_wrapped_screen.dart';
+import 'features/settings/controllers/settings_provider.dart';
 import 'features/settings/screens/settings_screen.dart';
 import 'features/timetable/screens/study_session_screen.dart';
 import 'features/timetable/screens/timetable_screen.dart';
@@ -69,7 +71,7 @@ class StudyTrackApp extends StatelessWidget {
 
   final AuthProvider authProvider;
 
-  static ThemeData _buildTheme() {
+  static ThemeData _buildDarkTheme() {
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
@@ -264,6 +266,75 @@ class StudyTrackApp extends StatelessWidget {
     );
   }
 
+  static ThemeData _buildLightTheme() {
+    final colorScheme = ColorScheme.fromSeed(
+      seedColor: AppColors.neonViolet,
+      brightness: Brightness.light,
+      surface: const Color(0xFFF7F8FC),
+    );
+
+    final base = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.light,
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: const Color(0xFFF7F8FC),
+      canvasColor: const Color(0xFFF7F8FC),
+      dividerColor: colorScheme.outlineVariant,
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.transparent,
+        foregroundColor: colorScheme.onSurface,
+        centerTitle: false,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.white,
+        contentTextStyle: TextStyle(color: colorScheme.onSurface),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.lg,
+          vertical: AppSpacing.md,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          borderSide: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: Colors.white,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(
+        color: colorScheme.primary,
+        linearTrackColor: colorScheme.surfaceContainerHighest,
+        circularTrackColor: colorScheme.surfaceContainerHighest,
+      ),
+    );
+
+    return base.copyWith(visualDensity: VisualDensity.standard);
+  }
+
   // refreshListenable is intentionally omitted; redirect decisions are based
   // on AuthProvider state updates triggered by auth flows and splash refresh.
   GoRouter _buildRouter() => GoRouter(
@@ -426,26 +497,45 @@ class StudyTrackApp extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) => MaterialApp.router(
-    debugShowCheckedModeBanner: false,
-    routerConfig: _buildRouter(),
-    title: 'StudyTrack',
-    theme: _buildTheme(),
-    builder: (context, child) => AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-        systemNavigationBarColor: AppColors.backgroundDark,
-        systemNavigationBarIconBrightness: Brightness.light,
-        systemNavigationBarDividerColor: AppColors.borderSoft,
-      ),
-      child: Stack(
-        children: [
-          OfflineStatusBanner(child: child ?? const SizedBox.shrink()),
-          const UpdateOverlay(),
-        ],
-      ),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final themeMode = context.select<SettingsProvider, ThemeMode>(
+      (settings) => settings.materialThemeMode,
+    );
+
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      routerConfig: _buildRouter(),
+      title: 'StudyTrack',
+      themeMode: themeMode,
+      theme: _buildLightTheme(),
+      darkTheme: _buildDarkTheme(),
+      builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return AnnotatedRegion<SystemUiOverlayStyle>(
+          value: SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: isDark
+                ? Brightness.light
+                : Brightness.dark,
+            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
+            systemNavigationBarColor: isDark
+                ? AppColors.backgroundDark
+                : const Color(0xFFF7F8FC),
+            systemNavigationBarIconBrightness: isDark
+                ? Brightness.light
+                : Brightness.dark,
+            systemNavigationBarDividerColor: isDark
+                ? AppColors.borderSoft
+                : const Color(0xFFDBDCE2),
+          ),
+          child: Stack(
+            children: [
+              OfflineStatusBanner(child: child ?? const SizedBox.shrink()),
+              const UpdateOverlay(),
+            ],
+          ),
+        );
+      },
+    );
+  }
 }

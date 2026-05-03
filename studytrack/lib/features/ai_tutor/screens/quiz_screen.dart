@@ -5,7 +5,9 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/services/gemini_service.dart';
+import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../models/topic_model.dart';
 
 class QuizScreen extends StatefulWidget {
@@ -24,6 +26,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
   bool _isLoading = true;
   bool _isSubmitting = false;
+  String? _loadError;
   TopicModel? _topic;
   List<QuizQuestion> _questions = const [];
   int _currentIndex = 0;
@@ -42,6 +45,7 @@ class _QuizScreenState extends State<QuizScreen> {
   Future<void> _prepareQuiz() async {
     setState(() {
       _isLoading = true;
+      _loadError = null;
       _questions = const [];
       _currentIndex = 0;
       _selectedIndex = null;
@@ -51,11 +55,13 @@ class _QuizScreenState extends State<QuizScreen> {
 
     final topicResult = await _topicRepository.getTopicById(widget.topicId);
     TopicModel? topic;
+    final topicFailed = topicResult is Failure<TopicModel?>;
     topicResult.fold((error) {}, (value) => topic = value);
 
     var course = 'Health Sciences';
     final profileResult = await _profileRepository.getCurrentProfile();
     Map<String, dynamic>? profile;
+    final profileFailed = profileResult is Failure<Map<String, dynamic>?>;
     profileResult.fold((error) {}, (value) => profile = value);
     if (profile != null) {
       final profileCourse = profile!['course']?.toString();
@@ -76,6 +82,11 @@ class _QuizScreenState extends State<QuizScreen> {
       setState(() {
         _topic = currentTopic;
         _questions = questions;
+        _loadError = questions.isEmpty
+            ? 'We could not generate a quiz right now.'
+            : (topicFailed || profileFailed)
+            ? 'We could not load all quiz context right now.'
+            : null;
         _isLoading = false;
       });
       return;
@@ -83,6 +94,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
     if (!mounted) return;
     setState(() {
+      _loadError = 'We could not load this quiz right now.';
       _isLoading = false;
     });
   }
@@ -147,18 +159,18 @@ class _QuizScreenState extends State<QuizScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: AppColors.backgroundDark,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(color: AppColors.primary),
-              const SizedBox(height: 16),
-              Text(
-                'Generating quiz from your notes...',
-                style: AppTextStyles.bodyMediumSecondary,
-              ),
-            ],
-          ),
+        body: AppStateView.loadingList(itemCount: 4, itemHeight: 88),
+      );
+    }
+
+    if (_loadError != null) {
+      return Scaffold(
+        backgroundColor: AppColors.backgroundDark,
+        appBar: AppBar(backgroundColor: AppColors.backgroundDark),
+        body: AppStateView.error(
+          title: 'Quiz unavailable',
+          message: _loadError!,
+          onRetry: _prepareQuiz,
         ),
       );
     }
@@ -167,11 +179,10 @@ class _QuizScreenState extends State<QuizScreen> {
       return Scaffold(
         backgroundColor: AppColors.backgroundDark,
         appBar: AppBar(backgroundColor: AppColors.backgroundDark),
-        body: Center(
-          child: Text(
-            'Unable to generate quiz right now.',
-            style: AppTextStyles.bodyMediumSecondary,
-          ),
+        body: AppStateView.empty(
+          icon: Icons.quiz_outlined,
+          title: 'Unable to generate quiz',
+          message: 'Try again after opening the topic notes once more.',
         ),
       );
     }

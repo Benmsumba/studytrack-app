@@ -24,10 +24,10 @@ class _UpdateSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Material(
     color: Colors.black.withAlpha(180),
-    child: SafeArea(
+    child: const SafeArea(
       child: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: EdgeInsets.symmetric(horizontal: 24),
           child: _UpdateCard(),
         ),
       ),
@@ -36,6 +36,8 @@ class _UpdateSheet extends StatelessWidget {
 }
 
 class _UpdateCard extends StatelessWidget {
+  const _UpdateCard();
+
   @override
   Widget build(BuildContext context) {
     final update = context.watch<UpdateProvider>();
@@ -66,12 +68,34 @@ class _UpdateCard extends StatelessWidget {
             if (info != null) ...[
               _VersionBadge(versionName: info.versionName),
               const SizedBox(height: 16),
-              if (info.releaseNotes.isNotEmpty)
-                _ReleaseNotes(notes: info.releaseNotes),
+              if (info.changelog.isNotEmpty || info.releaseNotes.isNotEmpty)
+                _ReleaseNotes(
+                  notes: info.changelog.isNotEmpty
+                      ? info.changelog
+                      : info.releaseNotes,
+                ),
+              const SizedBox(height: 16),
+              _WifiOnlySection(
+                value: update.wifiOnly,
+                onChanged: update.setWifiOnly,
+              ),
               const SizedBox(height: 24),
             ],
             if (update.status == UpdateStatus.downloading)
-              _ProgressSection(progress: update.progress)
+              _ProgressSection(
+                progress: update.progress,
+                label: 'Downloading...',
+              )
+            else if (update.status == UpdateStatus.verifying)
+              const _ProgressSection(
+                progress: 1,
+                label: 'Verifying download...',
+              )
+            else if (update.status == UpdateStatus.installing)
+              const _ProgressSection(
+                progress: 1,
+                label: 'Launching installer...',
+              )
             else if (update.status == UpdateStatus.error)
               _ErrorSection(message: update.errorMessage)
             else if (update.status == UpdateStatus.awaitingPermission)
@@ -94,9 +118,12 @@ class _UpdateIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = switch (status) {
       UpdateStatus.readyToInstall => Icons.install_mobile_rounded,
+      UpdateStatus.installing => Icons.install_mobile_rounded,
+      UpdateStatus.verifying => Icons.verified_rounded,
       UpdateStatus.error => Icons.error_outline_rounded,
       _ => Icons.system_update_alt_rounded,
     };
+
     return Container(
       width: 72,
       height: 72,
@@ -125,19 +152,25 @@ class _UpdateTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     final title = switch (status) {
       UpdateStatus.downloading => 'Downloading Update',
+      UpdateStatus.verifying => 'Verifying Download',
       UpdateStatus.readyToInstall => 'Ready to Install',
       UpdateStatus.awaitingPermission => 'Permission Required',
-      UpdateStatus.error => 'Download Failed',
+      UpdateStatus.installing => 'Opening Installer',
+      UpdateStatus.error => 'Update Failed',
       _ => 'Update Available',
     };
+
     final subtitle = switch (status) {
       UpdateStatus.downloading => 'Please keep the app open',
+      UpdateStatus.verifying => 'Checking file integrity before install',
       UpdateStatus.readyToInstall => 'Tap below to launch the installer',
       UpdateStatus.awaitingPermission =>
         'Allow "Install unknown apps" to continue',
+      UpdateStatus.installing => 'Switching to the Android installer',
       UpdateStatus.error => 'Something went wrong. Please try again.',
       _ => 'A new version of StudyTrack is ready',
     };
+
     return Column(
       children: [
         Text(
@@ -170,6 +203,7 @@ class _VersionBadge extends StatelessWidget {
     if (versionName.isEmpty) {
       return const SizedBox.shrink();
     }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
@@ -230,21 +264,26 @@ class _ReleaseNotes extends StatelessWidget {
 }
 
 class _ProgressSection extends StatelessWidget {
-  const _ProgressSection({required this.progress});
+  const _ProgressSection({required this.progress, required this.label});
 
   final double progress;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     final percent = (progress * 100).toInt();
+
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Downloading...',
-              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 13,
+              ),
             ),
             Text(
               '$percent%',
@@ -279,6 +318,7 @@ class _ErrorSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final update = context.read<UpdateProvider>();
+
     return Column(
       children: [
         if (message != null)
@@ -288,7 +328,7 @@ class _ErrorSection extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         const SizedBox(height: 16),
-        _GradientButton(label: 'Try Again', onPressed: update.startDownload),
+        _GradientButton(label: 'Try Again', onPressed: update.retry),
         const SizedBox(height: 10),
         _DismissLink(onPressed: update.dismiss),
       ],
@@ -302,6 +342,7 @@ class _PermissionSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final update = context.read<UpdateProvider>();
+
     return Column(
       children: [
         _GradientButton(
@@ -323,6 +364,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final update = context.read<UpdateProvider>();
+
     if (status == UpdateStatus.readyToInstall) {
       return Column(
         children: [
@@ -332,6 +374,7 @@ class _ActionButton extends StatelessWidget {
         ],
       );
     }
+
     return Column(
       children: [
         _GradientButton(label: 'Update Now', onPressed: update.startDownload),
@@ -382,6 +425,29 @@ class _GradientButton extends StatelessWidget {
         ),
       ),
     ),
+  );
+}
+
+class _WifiOnlySection extends StatelessWidget {
+  const _WifiOnlySection({required this.value, required this.onChanged});
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) => SwitchListTile.adaptive(
+    contentPadding: EdgeInsets.zero,
+    title: const Text(
+      'Wi-Fi only',
+      style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
+    ),
+    subtitle: const Text(
+      'Avoid mobile data during downloads',
+      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+    ),
+    value: value,
+    onChanged: onChanged,
+    activeColor: AppColors.neonCyan,
   );
 }
 

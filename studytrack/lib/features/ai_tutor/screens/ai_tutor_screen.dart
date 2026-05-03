@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_text_styles.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/services/gemini_service.dart';
+import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../models/topic_model.dart';
 
 class AiTutorScreen extends StatefulWidget {
@@ -28,6 +30,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
   final ScrollController _scrollController = ScrollController();
 
   bool _isLoading = true;
+  String? _loadError;
   bool _isThinking = false;
   TopicModel? _topic;
   String _course = 'Health Sciences';
@@ -54,6 +57,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
   Future<void> _loadContext() async {
     final topicResult = await _topicRepository.getTopicById(widget.topicId);
     TopicModel? topic;
+    final topicFailed = topicResult is Failure<TopicModel?>;
     topicResult.fold((error) {}, (value) => topic = value);
     var moduleName = 'General';
     if (topic != null) {
@@ -67,6 +71,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
 
     var course = 'Health Sciences';
     final profileResult = await _profileRepository.getCurrentProfile();
+    final profileFailed = profileResult is Failure<Map<String, dynamic>?>;
     profileResult.fold((error) {}, (profile) {
       final profileCourse = profile?['course']?.toString();
       if (profileCourse != null && profileCourse.trim().isNotEmpty) {
@@ -79,6 +84,9 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
       _topic = topic;
       _moduleName = moduleName;
       _course = course;
+      _loadError = topicFailed || profileFailed
+          ? 'We could not load the tutor context right now.'
+          : null;
       _isLoading = false;
     });
   }
@@ -235,7 +243,13 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? AppStateView.loadingList(itemCount: 4, itemHeight: 88)
+          : _loadError != null
+          ? AppStateView.error(
+              title: 'AI Tutor unavailable',
+              message: _loadError!,
+              onRetry: _loadContext,
+            )
           : Column(
               children: [
                 if (hasNotes)

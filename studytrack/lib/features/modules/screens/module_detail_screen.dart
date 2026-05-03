@@ -7,6 +7,8 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 
@@ -24,6 +26,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
   late final TopicRepository _topicRepository;
 
   bool _isLoading = true;
+  String? _loadError;
   ModuleModel? _module;
   List<TopicModel> _topics = const [];
   _TopicFilter _filter = _TopicFilter.all;
@@ -39,6 +42,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
   Future<void> _load() async {
     setState(() {
       _isLoading = true;
+      _loadError = null;
     });
 
     final moduleResult = await _moduleRepository.getModuleById(widget.moduleId);
@@ -48,6 +52,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
 
     ModuleModel? module;
     var topics = const <TopicModel>[];
+    final moduleFailed = moduleResult is Failure<ModuleModel?>;
+    final topicsFailed = topicsResult is Failure<List<TopicModel>>;
 
     moduleResult.fold((_) {}, (value) => module = value);
     topicsResult.fold((_) {}, (value) => topics = value);
@@ -56,6 +62,9 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
     setState(() {
       _module = module;
       _topics = topics;
+      _loadError = moduleFailed || topicsFailed
+          ? 'We could not load this module right now. Pull to retry.'
+          : null;
       _isLoading = false;
     });
   }
@@ -66,8 +75,9 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
       return _module?.subjectColor ?? AppColors.primary;
     }
     final sanitized = colorHex.replaceAll('#', '');
-    if (sanitized.length != 6)
+    if (sanitized.length != 6) {
       return _module?.subjectColor ?? AppColors.primary;
+    }
     return Color(int.parse('FF$sanitized', radix: 16));
   }
 
@@ -208,13 +218,18 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? AppStateView.loadingGrid(itemCount: 4, childAspectRatio: 0.82)
+          : _loadError != null
+          ? AppStateView.error(
+              title: 'Module unavailable',
+              message: _loadError!,
+              onRetry: _load,
+            )
           : _module == null
-          ? Center(
-              child: Text(
-                'Module not found.',
-                style: AppTextStyles.bodyMediumSecondary,
-              ),
+          ? AppStateView.empty(
+              icon: Icons.layers_outlined,
+              title: 'Module not found',
+              message: 'This module may have been removed or renamed.',
             )
           : RefreshIndicator(
               color: AppColors.primary,

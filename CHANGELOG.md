@@ -9,8 +9,16 @@ Versions follow [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Added Sentry crash reporting bootstrap in `main.dart` with a shared crash reporter fallback
+- Switched OTA update manifests to `latest.json` and added APK hash verification before install
+- Hardened offline sync queue deduplication and exposed clearer sync status/error messaging
+- Added app-wide `ThemeMode` support (`system`/`light`/`dark`) with persisted settings and legacy migration
+- Improved settings accessibility semantics and made settings cards adapt to active theme
+- Added shared loading, empty, and error state components with shimmer placeholders on major screens
+- Extended the shared loading and retry states to exam countdown, weekly wrap, notifications, timetable, module/topic detail, group detail/chat, and AI tutor/quiz screens
+
 ### Planned
-- Firebase Crashlytics integration for crash reporting
 - Privacy Policy and Terms of Service pages
 - Google Play Store listing and screenshots
 - ProGuard rules for `supabase_flutter` and `google_generative_ai`

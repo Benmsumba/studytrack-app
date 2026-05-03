@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../services/supabase_service.dart';
+import 'crash_reporter.dart';
 import 'offline_data_store.dart';
 
 class OfflineSyncService extends ChangeNotifier {
@@ -25,11 +26,13 @@ class OfflineSyncService extends ChangeNotifier {
   bool _isSyncing = false;
   int _pendingChanges = 0;
   DateTime? _lastSyncedAt;
+  String? _lastSyncError;
 
   bool get isOnline => _isOnline;
   bool get isSyncing => _isSyncing;
   int get pendingChanges => _pendingChanges;
   DateTime? get lastSyncedAt => _lastSyncedAt;
+  String? get lastSyncError => _lastSyncError;
   bool get hasPendingChanges => _pendingChanges > 0;
 
   Future<void> initialize() async {
@@ -149,20 +152,35 @@ class OfflineSyncService extends ChangeNotifier {
     }
 
     _isSyncing = true;
+    _lastSyncError = null;
     notifyListeners();
+
+    var hadFailures = false;
+    var syncedAnything = false;
 
     try {
       final pendingChanges = await _store.getPendingChanges();
       for (final change in pendingChanges) {
         final success = await _applyChange(change);
         if (success) {
+          syncedAnything = true;
           await _store.removePendingChange(change.id);
+        } else {
+          hadFailures = true;
         }
       }
 
       _pendingChanges = await _store.pendingCount();
-      _lastSyncedAt = DateTime.now();
-      await _updateWidgetSnapshot();
+      if (!hadFailures && syncedAnything) {
+        _lastSyncedAt = DateTime.now();
+        await _updateWidgetSnapshot();
+      } else if (hadFailures) {
+        _lastSyncError =
+            'Some changes could not sync yet. They will retry automatically.';
+      }
+    } catch (error, stack) {
+      _lastSyncError = 'Sync failed. Changes will retry automatically.';
+      CrashReporter.report(error, stack);
     } finally {
       _isSyncing = false;
       _isOnline = await _hasInternetAccess();
@@ -175,7 +193,9 @@ class OfflineSyncService extends ChangeNotifier {
     try {
       switch (change.operation) {
         case 'insert':
-          await client.from(change.entity).insert(change.payload);
+          await client
+              .from(change.entity)
+              .upsert(change.payload, onConflict: 'id');
           return true;
         case 'update':
           final recordId = change.recordId ?? change.payload['id']?.toString();
@@ -184,8 +204,7 @@ class OfflineSyncService extends ChangeNotifier {
           }
           await client
               .from(change.entity)
-              .update(change.payload)
-              .eq('id', recordId);
+              .upsert(change.payload, onConflict: 'id');
           return true;
         case 'delete':
           final recordId = change.recordId ?? change.payload['id']?.toString();
@@ -195,7 +214,9 @@ class OfflineSyncService extends ChangeNotifier {
           await client.from(change.entity).delete().eq('id', recordId);
           return true;
         case 'upsert':
-          await client.from(change.entity).upsert(change.payload);
+          await client
+              .from(change.entity)
+              .upsert(change.payload, onConflict: 'id');
           return true;
         case 'joinGroup':
           if (change.entity != 'group_members') {
@@ -258,6 +279,7 @@ class OfflineSyncService extends ChangeNotifier {
   Future<void> clearOfflineStateForTesting() async {
     await _store.clearAllData();
     _pendingChanges = 0;
+    _lastSyncError = null;
     notifyListeners();
   }
 

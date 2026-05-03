@@ -6,7 +6,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/study_group_repository.dart';
+import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../models/group_message_model.dart';
 import '../../../models/user_model.dart';
 import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
@@ -30,6 +32,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   bool _loading = true;
   bool _sending = false;
+  String? _loadError;
   List<GroupMessageModel> _messages = [];
   final Map<String, Map<String, dynamic>> _senderMeta = {};
   String? _currentUserId;
@@ -59,11 +62,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   Future<void> _loadMessages() async {
     final result = await _groupRepository.getGroupMessages(widget.groupId);
     var messages = const <GroupMessageModel>[];
+    final failed = result is Failure<List<GroupMessageModel>>;
     result.fold((error) {}, (value) => messages = value);
     await _hydrateSenderMeta(messages);
     if (!mounted) return;
     setState(() {
       _messages = messages;
+      _loadError = failed
+          ? 'We could not load messages right now. Pull to retry.'
+          : null;
       _loading = false;
     });
     _scrollToBottom();
@@ -201,7 +208,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         children: [
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? AppStateView.loadingList(itemCount: 4, itemHeight: 88)
+                : _loadError != null
+                ? AppStateView.error(
+                    title: 'Chat unavailable',
+                    message: _loadError!,
+                    onRetry: _loadMessages,
+                  )
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(12),
@@ -326,11 +339,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                   IconButton.filled(
                     onPressed: _sending ? null : _sendMessage,
                     icon: _sending
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const Icon(Icons.hourglass_top_rounded, size: 16)
                         : const Icon(Icons.send),
                   ),
                 ],

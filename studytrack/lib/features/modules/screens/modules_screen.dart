@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/constants/app_text_styles.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 import '../../auth/controllers/auth_provider.dart';
@@ -25,6 +26,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   bool _isLoading = true;
+  String? _loadError;
   String _query = '';
   List<ModuleModel> _modules = const [];
   Map<String, List<TopicModel>> _topicsByModule = const {};
@@ -48,6 +50,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
+        _loadError = null;
       });
       return;
     }
@@ -57,22 +60,30 @@ class _ModulesScreenState extends State<ModulesScreen> {
     });
 
     final modulesResult = await _moduleRepo.getAllModules();
-    final modules = modulesResult is Success<List<ModuleModel>>
-        ? modulesResult.data
-        : <ModuleModel>[];
+    final modules = switch (modulesResult) {
+      Success<List<ModuleModel>>(data: final data) => data,
+      Failure<List<ModuleModel>>() => <ModuleModel>[],
+    };
+    final modulesFailed = modulesResult is Failure<List<ModuleModel>>;
 
     final topicsByModule = <String, List<TopicModel>>{};
+    var topicsFailed = false;
     for (final module in modules) {
       final topicsResult = await _topicRepo.getTopicsByModule(module.id);
-      topicsByModule[module.id] = topicsResult is Success<List<TopicModel>>
-          ? topicsResult.data
-          : <TopicModel>[];
+      topicsByModule[module.id] = switch (topicsResult) {
+        Success<List<TopicModel>>(data: final data) => data,
+        Failure<List<TopicModel>>() => <TopicModel>[],
+      };
+      topicsFailed = topicsFailed || topicsResult is Failure<List<TopicModel>>;
     }
 
     if (!mounted) return;
     setState(() {
       _modules = modules;
       _topicsByModule = topicsByModule;
+      _loadError = modulesFailed || topicsFailed
+          ? 'We could not load your modules right now. Pull to retry.'
+          : null;
       _isLoading = false;
     });
   }
@@ -162,7 +173,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.backgroundDark,
     body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
+        ? AppStateView.loadingGrid(itemCount: 4, childAspectRatio: 0.78)
         : RefreshIndicator(
             color: AppColors.primary,
             backgroundColor: AppColors.surfaceDark,
@@ -216,14 +227,30 @@ class _ModulesScreenState extends State<ModulesScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                if (_filteredModules.isEmpty)
+                if (_loadError != null)
                   Padding(
-                    padding: const EdgeInsets.only(top: 44),
-                    child: Center(
-                      child: Text(
-                        'No modules yet. Add your first module.',
-                        style: AppTextStyles.bodyMediumSecondary,
-                      ),
+                    padding: const EdgeInsets.only(top: 36),
+                    child: AppStateView.error(
+                      title: 'Modules unavailable',
+                      message: _loadError!,
+                      onRetry: _loadModules,
+                    ),
+                  )
+                else if (_filteredModules.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 36),
+                    child: AppStateView.empty(
+                      icon: Icons.layers_outlined,
+                      title: _query.trim().isEmpty
+                          ? 'No modules yet'
+                          : 'No matches found',
+                      message: _query.trim().isEmpty
+                          ? 'Add your first module to start tracking your coursework.'
+                          : 'Try a different search term or clear the filter.',
+                      actionLabel: _query.trim().isEmpty ? 'Add Module' : null,
+                      onAction: _query.trim().isEmpty
+                          ? _showAddOrEditModuleSheet
+                          : null,
                     ),
                   )
                 else

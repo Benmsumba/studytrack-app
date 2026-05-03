@@ -9,6 +9,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/study_group_repository.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../../../models/study_group_model.dart';
 import '../../auth/controllers/auth_provider.dart';
@@ -24,6 +25,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
   final StudyGroupRepository _groupRepo = getIt<StudyGroupRepository>();
   bool _loading = true;
   bool _working = false;
+  String? _loadError;
   List<StudyGroupModel> _groups = [];
 
   @override
@@ -35,7 +37,14 @@ class _GroupsScreenState extends State<GroupsScreen> {
   Future<void> _loadGroups() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.currentUser;
-    if (user == null) return;
+    if (user == null) {
+      if (!mounted) return;
+      setState(() {
+        _loading = false;
+        _loadError = null;
+      });
+      return;
+    }
 
     setState(() => _loading = true);
     final result = await _groupRepo.getAllGroups();
@@ -45,6 +54,9 @@ class _GroupsScreenState extends State<GroupsScreen> {
     if (!mounted) return;
     setState(() {
       _groups = groups;
+      _loadError = result is Failure<List<StudyGroupModel>>
+          ? 'We could not load your groups right now. Pull to retry.'
+          : null;
       _loading = false;
     });
   }
@@ -186,11 +198,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         await _loadGroups();
                       },
                 child: _working
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const Icon(Icons.hourglass_top_rounded, size: 18)
                     : const Text('Create'),
               ),
             ),
@@ -278,11 +286,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         );
                       },
                 child: _working
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
+                    ? const Icon(Icons.hourglass_top_rounded, size: 18)
                     : const Text('Join Group'),
               ),
             ),
@@ -326,7 +330,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.backgroundDark,
     body: _loading
-        ? const Center(child: CircularProgressIndicator())
+        ? AppStateView.loadingList(itemCount: 4, itemHeight: 110)
         : RefreshIndicator(
             onRefresh: _loadGroups,
             child: ListView(
@@ -340,7 +344,16 @@ class _GroupsScreenState extends State<GroupsScreen> {
                     AppSpacing.xs,
               ),
               children: [
-                if (_groups.isEmpty) ...[
+                if (_loadError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 44),
+                    child: AppStateView.error(
+                      title: 'Groups unavailable',
+                      message: _loadError!,
+                      onRetry: _loadGroups,
+                    ),
+                  )
+                else if (_groups.isEmpty) ...[
                   GlassCard(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     backgroundColor: AppColors.cardDark,
@@ -418,7 +431,10 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         padding: const EdgeInsets.all(AppSpacing.sm),
                         backgroundColor: AppColors.cardDark,
                         borderRadius: AppSpacing.fieldRadius,
-                        borderColors: const [AppColors.border, AppColors.border],
+                        borderColors: const [
+                          AppColors.border,
+                          AppColors.border,
+                        ],
                         child: Row(
                           children: [
                             CircleAvatar(

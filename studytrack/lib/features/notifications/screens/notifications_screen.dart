@@ -9,6 +9,7 @@ import '../../../core/repositories/exam_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../models/class_slot_model.dart';
 import '../../../models/exam_model.dart';
 import '../../../models/study_session_model.dart';
@@ -27,6 +28,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   late final ExamRepository _examRepository;
 
   bool _isLoading = true;
+  String? _loadError;
   List<_NotificationTileData> _items = const [];
 
   @override
@@ -47,6 +49,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (!mounted) return;
       setState(() {
         _items = const [];
+        _loadError = 'We could not load notifications right now.';
         _isLoading = false;
       });
       return;
@@ -57,6 +60,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (!mounted) return;
       setState(() {
         _items = const [];
+        _loadError = 'We could not load notifications right now.';
         _isLoading = false;
       });
       return;
@@ -132,12 +136,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       if (!mounted) return;
       setState(() {
         _items = items;
+        _loadError = null;
         _isLoading = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _items = const [];
+        _loadError = 'We could not load notifications right now.';
         _isLoading = false;
       });
     }
@@ -228,21 +234,19 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               backgroundColor: AppColors.surfaceDark,
               onRefresh: _loadNotifications,
               child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? AppStateView.loadingList(itemCount: 4, itemHeight: 88)
+                  : _loadError != null
+                  ? AppStateView.error(
+                      title: 'Notifications unavailable',
+                      message: _loadError!,
+                      onRetry: _loadNotifications,
+                    )
                   : _items.isEmpty
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 120),
-                          child: Center(
-                            child: Text(
-                              'No new notifications',
-                              style: AppTextStyles.bodyMediumSecondary,
-                            ),
-                          ),
-                        ),
-                      ],
+                  ? AppStateView.empty(
+                      icon: Icons.notifications_none_rounded,
+                      title: 'No new notifications',
+                      message:
+                          'You’re all caught up. New reminders will appear here.',
                     )
                   : ListView(
                       physics: const AlwaysScrollableScrollPhysics(),

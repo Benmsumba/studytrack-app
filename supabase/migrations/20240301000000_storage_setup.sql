@@ -6,7 +6,7 @@ values ('studytrack-notes', 'studytrack-notes', true)
 on conflict (id) do update
 set public = excluded.public;
 
--- Public bucket for OTA APK distribution and version.json.
+-- Public bucket for OTA APK distribution and latest.json.
 insert into storage.buckets (id, name, public)
 values ('app-updates', 'app-updates', true)
 on conflict (id) do update
