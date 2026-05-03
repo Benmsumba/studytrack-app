@@ -45,7 +45,7 @@ class UpdateProvider extends ChangeNotifier {
       _status == UpdateStatus.error;
 
   Future<void> checkForUpdate() async {
-    if (!kReleaseMode) {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
       return;
     }
 
@@ -164,6 +164,7 @@ class UpdateProvider extends ChangeNotifier {
     await startDownload();
   }
 
+  // ignore: avoid_positional_boolean_parameters
   void setWifiOnly(bool value) {
     _wifiOnly = value;
     notifyListeners();
