@@ -1,3 +1,4 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
@@ -71,26 +72,30 @@ class StudyTrackApp extends StatelessWidget {
 
   final AuthProvider authProvider;
 
-  static ThemeData _buildDarkTheme() {
+  static ThemeData _buildDarkTheme({ColorScheme? colorScheme}) {
+    final scheme =
+        colorScheme ??
+        const ColorScheme.dark(
+          primary: AppColors.neonViolet,
+          onPrimary: Colors.white,
+          secondary: AppColors.neonCyan,
+          onSecondary: Colors.white,
+          surface: AppColors.surfaceDark,
+          onSurface: AppColors.textPrimary,
+          error: AppColors.danger,
+          onError: Colors.white,
+          surfaceContainerHighest: AppColors.surfaceElevated,
+          outline: AppColors.border,
+          outlineVariant: AppColors.borderSoft,
+        );
+
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      colorScheme: const ColorScheme.dark(
-        primary: AppColors.neonViolet,
-        onPrimary: Colors.white,
-        secondary: AppColors.neonCyan,
-        onSecondary: Colors.white,
-        surface: AppColors.surfaceDark,
-        onSurface: AppColors.textPrimary,
-        error: AppColors.danger,
-        onError: Colors.white,
-        surfaceContainerHighest: AppColors.surfaceElevated,
-        outline: AppColors.border,
-        outlineVariant: AppColors.borderSoft,
-      ),
+      colorScheme: scheme,
       scaffoldBackgroundColor: AppColors.backgroundDark,
       canvasColor: AppColors.backgroundDark,
-      dividerColor: AppColors.borderSoft,
+      dividerColor: scheme.outlineVariant,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
           TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
@@ -266,23 +271,25 @@ class StudyTrackApp extends StatelessWidget {
     );
   }
 
-  static ThemeData _buildLightTheme() {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.neonViolet,
-      brightness: Brightness.light,
-      surface: const Color(0xFFF7F8FC),
-    );
+  static ThemeData _buildLightTheme({ColorScheme? colorScheme}) {
+    final scheme =
+        colorScheme ??
+        ColorScheme.fromSeed(
+          seedColor: AppColors.neonViolet,
+          brightness: Brightness.light,
+          surface: const Color(0xFFF7F8FC),
+        );
 
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
-      colorScheme: colorScheme,
+      colorScheme: scheme,
       scaffoldBackgroundColor: const Color(0xFFF7F8FC),
       canvasColor: const Color(0xFFF7F8FC),
-      dividerColor: colorScheme.outlineVariant,
+      dividerColor: scheme.outlineVariant,
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
-        foregroundColor: colorScheme.onSurface,
+        foregroundColor: scheme.onSurface,
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -290,10 +297,10 @@ class StudyTrackApp extends StatelessWidget {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: Colors.white,
-        contentTextStyle: TextStyle(color: colorScheme.onSurface),
+        contentTextStyle: TextStyle(color: scheme.onSurface),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          side: BorderSide(color: colorScheme.outlineVariant),
+          side: BorderSide(color: scheme.outlineVariant),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -305,15 +312,15 @@ class StudyTrackApp extends StatelessWidget {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: BorderSide(color: colorScheme.outlineVariant),
+          borderSide: BorderSide(color: scheme.outlineVariant),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: BorderSide(color: colorScheme.outlineVariant),
+          borderSide: BorderSide(color: scheme.outlineVariant),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
+          borderSide: BorderSide(color: scheme.primary, width: 1.4),
         ),
       ),
       cardTheme: CardThemeData(
@@ -321,14 +328,14 @@ class StudyTrackApp extends StatelessWidget {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          side: BorderSide(color: colorScheme.outlineVariant),
+          side: BorderSide(color: scheme.outlineVariant),
         ),
         margin: EdgeInsets.zero,
       ),
       progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: colorScheme.primary,
-        linearTrackColor: colorScheme.surfaceContainerHighest,
-        circularTrackColor: colorScheme.surfaceContainerHighest,
+        color: scheme.primary,
+        linearTrackColor: scheme.surfaceContainerHighest,
+        circularTrackColor: scheme.surfaceContainerHighest,
       ),
     );
 
@@ -502,38 +509,43 @@ class StudyTrackApp extends StatelessWidget {
       (settings) => settings.materialThemeMode,
     );
 
-    return MaterialApp.router(
-      debugShowCheckedModeBanner: false,
-      routerConfig: _buildRouter(),
-      title: 'StudyTrack',
-      themeMode: themeMode,
-      theme: _buildLightTheme(),
-      darkTheme: _buildDarkTheme(),
-      builder: (context, child) {
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return AnnotatedRegion<SystemUiOverlayStyle>(
-          value: SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: isDark
-                ? Brightness.light
-                : Brightness.dark,
-            statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
-            systemNavigationBarColor: isDark
-                ? AppColors.backgroundDark
-                : const Color(0xFFF7F8FC),
-            systemNavigationBarIconBrightness: isDark
-                ? Brightness.light
-                : Brightness.dark,
-            systemNavigationBarDividerColor: isDark
-                ? AppColors.borderSoft
-                : const Color(0xFFDBDCE2),
-          ),
-          child: Stack(
-            children: [
-              OfflineStatusBanner(child: child ?? const SizedBox.shrink()),
-              const UpdateOverlay(),
-            ],
-          ),
+    return DynamicColorBuilder(
+      builder: (lightDynamic, darkDynamic) {
+        final lightTheme = _buildLightTheme(colorScheme: lightDynamic);
+        final darkTheme = _buildDarkTheme(colorScheme: darkDynamic);
+
+        return MaterialApp.router(
+          debugShowCheckedModeBanner: false,
+          routerConfig: _buildRouter(),
+          title: 'StudyTrack',
+          themeMode: themeMode,
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          builder: (context, child) {
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            return AnnotatedRegion<SystemUiOverlayStyle>(
+              value: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: isDark
+                    ? Brightness.light
+                    : Brightness.dark,
+                statusBarBrightness: isDark
+                    ? Brightness.dark
+                    : Brightness.light,
+                systemNavigationBarColor: Colors.transparent,
+                systemNavigationBarIconBrightness: isDark
+                    ? Brightness.light
+                    : Brightness.dark,
+                systemNavigationBarDividerColor: Colors.transparent,
+              ),
+              child: Stack(
+                children: [
+                  OfflineStatusBanner(child: child ?? const SizedBox.shrink()),
+                  const UpdateOverlay(),
+                ],
+              ),
+            );
+          },
         );
       },
     );

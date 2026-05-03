@@ -128,9 +128,9 @@ class _GroupsScreenState extends State<GroupsScreen> {
                           name: name,
                           description: description.isEmpty ? '' : description,
                         );
-                        setState(() => _working = false);
 
                         if (!mounted) return;
+                        setState(() => _working = false);
                         navigator.pop();
 
                         if (createdResult is! Success<StudyGroupModel>) {
@@ -263,9 +263,9 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         final joinedResult = await _groupRepo.joinGroupByCode(
                           code,
                         );
-                        setState(() => _working = false);
 
                         if (!mounted) return;
+                        setState(() => _working = false);
                         navigator.pop();
 
                         if (joinedResult is! Success<void>) {
@@ -509,17 +509,17 @@ class _GroupsScreenState extends State<GroupsScreen> {
                   ListTile(
                     leading: const Icon(Icons.group_add),
                     title: const Text('Create Group'),
-                    onTap: () {
+                    onTap: () async {
                       Navigator.of(context).pop();
-                      _showCreateGroupSheet();
+                      await _showCreateGroupSheet();
                     },
                   ),
                   ListTile(
                     leading: const Icon(Icons.login),
                     title: const Text('Join Group'),
-                    onTap: () {
+                    onTap: () async {
                       Navigator.of(context).pop();
-                      _showJoinGroupSheet();
+                      await _showJoinGroupSheet();
                     },
                   ),
                 ],

@@ -5,15 +5,14 @@ class AppConstants {
 
   // Self-update — must match the +build_number in pubspec.yaml.
   // Bump this whenever you publish a new APK.
-  static const int currentVersionCode = 0;
+  static const int currentVersionCode = 1;
 
   // Environment placeholders. Provide real values via --dart-define.
   // Fallback to actual Supabase URL so OTA works even if --dart-define is missing.
   static const String supabaseUrl = 'https://xidpslwjxnyiptebwdff.supabase.co';
   static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
   static const String geminiApiKey = 'YOUR_GEMINI_API_KEY';
-  static const String sentryDsn =
-      'https://e983571c91883cb440b2a13979a608b9@o4511322476314624.ingest.de.sentry.io/4511322491912272';
+  static const String sentryDsn = '';
 
   static String get resolvedSupabaseUrl {
     const fromEnv = String.fromEnvironment('SUPABASE_URL');

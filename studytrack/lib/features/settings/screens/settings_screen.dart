@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/auth_repository.dart';
@@ -138,7 +140,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   children: [
                     Text('StudyTrack', style: AppTextStyles.headingSmall),
                     const SizedBox(height: 4),
-                    Text('Version 1.0.0', style: AppTextStyles.caption),
+                    Text(
+                      'Version ${AppConstants.appVersion}',
+                      style: AppTextStyles.caption,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Made with ❤️ for health sciences students',
@@ -148,6 +153,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(height: 32),
+
+              // Support
+              const _SectionHeader(title: 'Support'),
+              const SizedBox(height: AppSpacing.md),
+              _SettingsCard(
+                title: 'Contact Support',
+                subtitle: 'Report a bug or ask for help',
+                trailing: const Icon(Icons.support_agent_rounded),
+                onTap: () async {
+                  final uri = Uri.parse(
+                    'https://github.com/Benmsumba/studytrack-app/issues/new/choose',
+                  );
+                  final launched = await launchUrl(
+                    uri,
+                    mode: LaunchMode.externalApplication,
+                  );
+                  if (!context.mounted || launched) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Unable to open support page.'),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              _SettingsCard(
+                title: 'View on GitHub',
+                subtitle: 'Open the project repository',
+                trailing: const Icon(Icons.open_in_new),
+                onTap: () async {
+                  final uri = Uri.parse(
+                    'https://github.com/Benmsumba/studytrack-app',
+                  );
+                  final launched = await launchUrl(
+                    uri,
+                    mode: LaunchMode.externalApplication,
+                  );
+                  if (!context.mounted || launched) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Unable to open repository.')),
+                  );
+                },
               ),
               const SizedBox(height: 32),
 

@@ -13,9 +13,6 @@
         android:maxSdkVersion="29" />
     <!-- SelfUpdateService: allow installing downloaded APK updates -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-
-    <!-- Self-update: download APK files -->
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <!-- Self-update: required on Android 12+ to use foreground download reliably -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
