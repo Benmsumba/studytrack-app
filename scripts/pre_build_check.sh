@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && cd .. && pwd)"
 APP_DIR="$ROOT_DIR/studytrack"
 
 PASS_COUNT=0
-TOTAL_COUNT=12
+TOTAL_COUNT=13
 
 GREEN="\033[0;32m"
 RED="\033[0;31m"
@@ -110,6 +110,25 @@ if [[ -f "$ROOT_DIR/.github/workflows/build_apk.yml" ]]; then
   pass "GitHub Actions workflow exists"
 else
   fail "GitHub Actions workflow missing"
+fi
+
+# 13. Asset optimization baseline
+JPEG_SIZE=$(find "$APP_DIR/assets" -name "*.jpeg" -o -name "*.jpg" 2>/dev/null | xargs du -cb 2>/dev/null | tail -1 | awk '{print $1}' || echo 0)
+PNG_SIZE=$(find "$APP_DIR/assets" "$APP_DIR/android" "$APP_DIR/web" -name "*.png" 2>/dev/null | xargs du -cb 2>/dev/null | tail -1 | awk '{print $1}' || echo 0)
+TOTAL_ASSET_SIZE=$((JPEG_SIZE + PNG_SIZE))
+
+if [[ $TOTAL_ASSET_SIZE -gt 0 ]]; then
+  TOTAL_MB=$(echo "scale=2; $TOTAL_ASSET_SIZE / 1048576" | bc)
+  warn "Total asset size: ${TOTAL_MB} MB (Optimization recommended if > 2MB)"
+  
+  if [[ $JPEG_SIZE -gt 0 ]]; then
+    JPEG_MB=$(echo "scale=2; $JPEG_SIZE / 1024" | bc)
+    warn "JPEG assets: ${JPEG_MB} KB (Consider converting to WebP for 25-40% savings)"
+  fi
+  
+  pass "Asset optimization check"
+else
+  pass "Asset optimization check"
 fi
 
 if [[ "$PASS_COUNT" -eq "$TOTAL_COUNT" ]]; then
