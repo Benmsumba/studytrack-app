@@ -714,137 +714,154 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     child: SafeArea(
       child: Padding(
         padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Screenshot(
-              controller: _screenshotController,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF7C3AED), Color(0xFF06B6D4)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'StudyTrack Weekly Wrapped',
-                      style: AppTextStyles.headingSmall.copyWith(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Screenshot(
+                  controller: _screenshotController,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF7C3AED), Color(0xFF06B6D4)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
+                      borderRadius: BorderRadius.circular(18),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      studentName,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: Colors.white,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      weekDateRange,
-                      style: AppTextStyles.caption.copyWith(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _shareStat('Topics', '$topicsStudied'),
-                        _shareStat('Avg', averageRating.toStringAsFixed(1)),
-                        _shareStat('Streak', '$streak'),
-                        _shareStat(
-                          'Sessions',
-                          '$sessionsCompleted/$sessionsPlanned',
+                        Text(
+                          'StudyTrack Weekly Wrapped',
+                          style: AppTextStyles.headingSmall.copyWith(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          studentName,
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: Colors.white,
+                            fontSize: 15,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          weekDateRange,
+                          style: AppTextStyles.caption.copyWith(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            _shareStat('Topics', '$topicsStudied'),
+                            _shareStat('Avg', averageRating.toStringAsFixed(1)),
+                            _shareStat('Streak', '$streak'),
+                            _shareStat(
+                              'Sessions',
+                              '$sessionsCompleted/$sessionsPlanned',
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: Text(
+                            'studytrack',
+                            style: AppTextStyles.caption.copyWith(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Align(
-                      alignment: Alignment.bottomRight,
-                      child: Text(
-                        'studytrack',
-                        style: AppTextStyles.caption.copyWith(
-                          color: Colors.white70,
-                          fontSize: 12,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 500),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: FilledButton.icon(
+                            onPressed: _shareToWhatsApp,
+                            icon: const Icon(Icons.share),
+                            label: const Text('Share to WhatsApp'),
+                          ),
                         ),
-                      ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _saveToGallery,
+                            icon: const Icon(Icons.download),
+                            label: const Text('Save to Gallery'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _shareToWhatsApp,
-                    icon: const Icon(Icons.share),
-                    label: const Text('Share to WhatsApp'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _saveToGallery,
-                    icon: const Icon(Icons.download),
-                    label: const Text('Save to Gallery'),
-                  ),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ),
   );
 
-  Widget _shareStat(String label, String value) => Container(
-    width: 130,
-    padding: const EdgeInsets.all(10),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.18),
-      borderRadius: BorderRadius.circular(10),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: AppTextStyles.caption.copyWith(
-            color: Colors.white70,
-            fontSize: 12,
+  Widget _shareStat(String label, String value) {
+    final statWidth = MediaQuery.sizeOf(context).width > 600 ? 120.0 : 100.0;
+    return Container(
+      width: statWidth,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: Colors.white70,
+              fontSize: 12,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: AppTextStyles.headingSmall.copyWith(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: AppTextStyles.headingSmall.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 
   Widget _solidPage({required Color color, required Widget child}) => Container(
     color: color,
