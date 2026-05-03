@@ -251,6 +251,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               keyboardType: TextInputType.emailAddress,
                               prefixIcon: Icons.email_outlined,
                               validator: Validators.email,
+                              semanticLabel: AppStrings.emailAddress,
+                              helperText: 'example@domain.com',
                             ),
                             const SizedBox(height: 14),
                             _buildTextField(
@@ -258,18 +260,34 @@ class _LoginScreenState extends State<LoginScreen> {
                               hintText: AppStrings.password,
                               prefixIcon: Icons.lock_outline,
                               obscureText: _obscurePassword,
-                              suffixIcon: IconButton(
-                                onPressed: () => setState(
+                              suffixIcon: Semantics(
+                                label: _obscurePassword
+                                    ? 'Show password'
+                                    : 'Hide password',
+                                button: true,
+                                enabled: true,
+                                onTap: () => setState(
                                   () => _obscurePassword = !_obscurePassword,
                                 ),
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_off_rounded
-                                      : Icons.visibility_rounded,
-                                  color: AppColors.textMuted,
+                                child: IconButton(
+                                  onPressed: () => setState(
+                                    () => _obscurePassword = !_obscurePassword,
+                                  ),
+                                  icon: Icon(
+                                    _obscurePassword
+                                        ? Icons.visibility_off_rounded
+                                        : Icons.visibility_rounded,
+                                    color: AppColors.textMuted,
+                                  ),
+                                  tooltip: _obscurePassword
+                                      ? 'Show password'
+                                      : 'Hide password',
                                 ),
                               ),
                               validator: Validators.requiredField,
+                              semanticLabel: AppStrings.password,
+                              helperText: 'At least 8 characters',
+                              obscured: true,
                             ),
                             const SizedBox(height: 6),
                             Align(
@@ -364,42 +382,48 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Widget _buildGoogleButton(bool authLoading) {
     final busy = _googleLoading || authLoading;
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: 'Continue with Google',
+      enabled: !busy,
       onTap: busy ? null : _onGoogleSignInTap,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 200),
-        opacity: busy ? 0.7 : 1,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 13),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFDDDDDD)),
-          ),
-          child: busy
-              ? const Center(
-                  child: Icon(
-                    Icons.hourglass_top_rounded,
-                    color: Color(0xFF4285F4),
-                    size: 18,
-                  ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SvgPicture.string(_googleLogoSvg, width: 20, height: 20),
-                    const SizedBox(width: 10),
-                    Text(
-                      'Continue with Google',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF3C4043),
-                      ),
+      child: GestureDetector(
+        onTap: busy ? null : _onGoogleSignInTap,
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: busy ? 0.7 : 1,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 13),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFDDDDDD)),
+            ),
+            child: busy
+                ? const Center(
+                    child: Icon(
+                      Icons.hourglass_top_rounded,
+                      color: Color(0xFF4285F4),
+                      size: 18,
                     ),
-                  ],
-                ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SvgPicture.string(_googleLogoSvg, width: 20, height: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Continue with Google',
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF3C4043),
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
       ),
     );
@@ -412,42 +436,58 @@ class _LoginScreenState extends State<LoginScreen> {
     String? Function(String?)? validator,
     TextInputType? keyboardType,
     bool obscureText = false,
+    bool obscured = false,
+    String? semanticLabel,
+    String? helperText,
     Widget? suffixIcon,
     void Function(String)? onChanged,
-  }) => TextFormField(
-    controller: controller,
-    validator: validator,
-    keyboardType: keyboardType,
-    obscureText: obscureText,
-    onChanged: onChanged,
-    style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
-    decoration: InputDecoration(
-      hintText: hintText,
-      hintStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
-      prefixIcon: Icon(prefixIcon, color: AppColors.cyan, size: 20),
-      suffixIcon: suffixIcon,
-      filled: true,
-      fillColor: AppColors.cardDark,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.accent),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.danger),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.danger),
+  }) => Semantics(
+    label: semanticLabel ?? hintText,
+    textField: true,
+    enabled: true,
+    obscured: obscured,
+    child: TextFormField(
+      controller: controller,
+      validator: validator,
+      keyboardType: keyboardType,
+      obscureText: obscureText,
+      onChanged: onChanged,
+      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.textPrimary),
+      decoration: InputDecoration(
+        labelText: hintText,
+        hintText: hintText,
+        hintStyle: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.textMuted,
+        ),
+        helperText: helperText,
+        prefixIcon: Icon(prefixIcon, color: AppColors.cyan, size: 20),
+        suffixIcon: suffixIcon,
+        filled: true,
+        fillColor: AppColors.cardDark,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 15,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.border),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.accent),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.danger),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: AppColors.danger),
+        ),
       ),
     ),
   );
