@@ -11,6 +11,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../../../models/class_slot_model.dart';
 import '../../../models/study_session_model.dart';
@@ -186,7 +187,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
         final studySessions = provider.studySessions;
 
         if (provider.isLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return AppStateView.loadingList(itemCount: 4, itemHeight: 110);
         }
 
         return RefreshIndicator(
@@ -211,7 +212,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
                 child: ListView.separated(
                   scrollDirection: Axis.horizontal,
                   itemCount: _dayLabels.length,
-                  separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.xs),
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(width: AppSpacing.xs),
                   itemBuilder: (context, index) {
                     final day = index + 1;
                     final selected = day == _selectedDay;
@@ -774,11 +776,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
                 padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
               ),
               child: _isSaving
-                  ? const SizedBox(
-                      width: AppSpacing.md,
-                      height: AppSpacing.md,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
+                  ? const Icon(Icons.hourglass_top_rounded, size: 18)
                   : Text(
                       widget.editClassData == null ? 'Save' : 'Update Class',
                     ),

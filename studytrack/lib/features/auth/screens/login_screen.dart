@@ -330,7 +330,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       Text(
                         "Don't have an account? ",
-                        style: AppTextStyles.bodyMediumSecondary.copyWith(fontSize: 14),
+                        style: AppTextStyles.bodyMediumSecondary.copyWith(
+                          fontSize: 14,
+                        ),
                       ),
                       GestureDetector(
                         onTap: () => context.go('/signup'),
@@ -370,19 +372,11 @@ class _LoginScreenState extends State<LoginScreen> {
             border: Border.all(color: const Color(0xFFDDDDDD)),
           ),
           child: busy
-              ? const SizedBox(
-                  height: 20,
-                  child: Center(
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.2,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF4285F4),
-                        ),
-                      ),
-                    ),
+              ? const Center(
+                  child: Icon(
+                    Icons.hourglass_top_rounded,
+                    color: Color(0xFF4285F4),
+                    size: 18,
                   ),
                 )
               : Row(
@@ -470,15 +464,12 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
         child: Center(
           child: isLoading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
+              ? const Icon(
+                  Icons.hourglass_top_rounded,
+                  color: Colors.white,
+                  size: 18,
                 )
-                  : Text(
+              : Text(
                   label,
                   style: AppTextStyles.button.copyWith(color: Colors.white),
                 ),

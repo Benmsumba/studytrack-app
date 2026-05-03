@@ -315,7 +315,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
           ),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                ? AppStateView.loadingList(itemCount: 4, itemHeight: 88)
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.fromLTRB(
@@ -353,7 +353,9 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                         child: ConstrainedBox(
                           constraints: const BoxConstraints(maxWidth: 320),
                           child: GlassCard(
-                            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                            margin: const EdgeInsets.only(
+                              bottom: AppSpacing.sm,
+                            ),
                             padding: const EdgeInsets.all(AppSpacing.sm),
                             backgroundColor: isMine
                                 ? AppColors.primary
@@ -478,13 +480,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                                 _sendMessage();
                               },
                         icon: _sending
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
+                            ? const Icon(Icons.hourglass_top_rounded, size: 16)
                             : const Icon(Icons.send),
                       ),
                     ],

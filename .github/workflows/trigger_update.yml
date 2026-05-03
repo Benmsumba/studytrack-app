@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: trigger-update-version-json-${{ github.run_id }}
+  group: trigger-update-latest-json-${{ github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -55,7 +55,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"public":true}'
 
-      - name: Build and upload version.json
+      - name: Build and upload latest.json
         if: steps.secrets.outputs.missing == 'false'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -68,34 +68,38 @@ jobs:
           fi
           NOTES="${{ github.event.inputs.release_notes }}"
 
-          cat > /tmp/version.json <<JSONEOF
+          cat > /tmp/latest.json <<JSONEOF
           {
             "versionCode": ${VERSION_CODE},
             "versionName": "${VERSION_NAME}",
             "downloadUrl": "${SUPABASE_URL}/storage/v1/object/public/app-updates/studytrack-latest.apk",
-            "releaseNotes": "${NOTES}"
+            "download_url": "${SUPABASE_URL}/storage/v1/object/public/app-updates/studytrack-latest.apk",
+            "releaseNotes": "${NOTES}",
+            "release_notes": "${NOTES}",
+            "changelog": "${NOTES}",
+            "wifiOnly": false
           }
           JSONEOF
 
-          echo "Uploading version.json with versionCode=${VERSION_CODE}:"
-          cat /tmp/version.json
+          echo "Uploading latest.json with versionCode=${VERSION_CODE}:"
+          cat /tmp/latest.json
 
           HTTP_STATUS=$(curl --silent --show-error --output /tmp/upload_response.txt \
             --write-out "%{http_code}" \
-            -X PUT "${SUPABASE_URL}/storage/v1/object/app-updates/version.json" \
+            -X PUT "${SUPABASE_URL}/storage/v1/object/app-updates/latest.json" \
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/json" \
             -H "x-upsert: true" \
-            --data-binary @/tmp/version.json)
+            --data-binary @/tmp/latest.json)
 
           echo "HTTP status: ${HTTP_STATUS}"
           cat /tmp/upload_response.txt
 
           if [ "${HTTP_STATUS}" -lt 200 ] || [ "${HTTP_STATUS}" -ge 300 ]; then
-            echo "::error::version.json upload failed with HTTP ${HTTP_STATUS}"
+            echo "::error::latest.json upload failed with HTTP ${HTTP_STATUS}"
             exit 1
           fi
 
           echo ""
           echo "Done. Open the app on your phone — the update banner will appear within seconds."
-          echo "Public URL: ${SUPABASE_URL}/storage/v1/object/public/app-updates/version.json"
+          echo "Public URL: ${SUPABASE_URL}/storage/v1/object/public/app-updates/latest.json"

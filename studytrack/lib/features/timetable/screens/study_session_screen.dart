@@ -566,7 +566,25 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                 if (_isCompleting)
                   const Padding(
                     padding: EdgeInsets.only(top: 6),
-                    child: CircularProgressIndicator(strokeWidth: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.hourglass_top_rounded,
+                          color: AppColors.accent,
+                          size: 16,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Saving progress...',
+                          style: TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
               ],
             ),

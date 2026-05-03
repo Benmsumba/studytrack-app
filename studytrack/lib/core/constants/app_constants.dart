@@ -7,14 +7,12 @@ class AppConstants {
   // Bump this whenever you publish a new APK.
   static const int currentVersionCode = 0;
 
-  // URL that returns the version manifest JSON. Replace with your hosted
-  // JSON URL before building; a getter below constructs the runtime URL.
-
   // Environment placeholders. Provide real values via --dart-define.
   // Fallback to actual Supabase URL so OTA works even if --dart-define is missing.
   static const String supabaseUrl = 'https://xidpslwjxnyiptebwdff.supabase.co';
   static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
   static const String geminiApiKey = 'YOUR_GEMINI_API_KEY';
+  static const String sentryDsn = 'YOUR_SENTRY_DSN';
 
   static String get resolvedSupabaseUrl {
     const fromEnv = String.fromEnvironment('SUPABASE_URL');
@@ -47,13 +45,23 @@ class AppConstants {
     return key.isNotEmpty && key != 'YOUR_GEMINI_API_KEY';
   }
 
-  // OTA self-update: points at the public version.json in Supabase Storage.
+  static String get resolvedSentryDsn {
+    const fromEnv = String.fromEnvironment('SENTRY_DSN');
+    return fromEnv.isNotEmpty ? fromEnv : sentryDsn;
+  }
+
+  static bool get isSentryConfigured {
+    final dsn = resolvedSentryDsn;
+    return dsn.isNotEmpty && dsn != 'YOUR_SENTRY_DSN';
+  }
+
+  // OTA self-update: points at the public latest.json manifest in Supabase Storage.
   static String get updateCheckUrl {
     final base = resolvedSupabaseUrl;
     if (base.isEmpty || base == 'YOUR_SUPABASE_URL') {
       return '';
     }
-    return '$base/storage/v1/object/public/app-updates/version.json';
+    return '$base/storage/v1/object/public/app-updates/latest.json';
   }
 
   // Sections

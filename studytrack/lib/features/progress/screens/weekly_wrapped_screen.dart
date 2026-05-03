@@ -14,6 +14,7 @@ import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/weekly_report_repository.dart';
 import '../../../core/services/gemini_service.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 
 class WeeklyWrappedScreen extends StatefulWidget {
   const WeeklyWrappedScreen({super.key});
@@ -32,6 +33,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   bool _loading = true;
   bool _generating = false;
   bool _hasGeneratedThisWeek = false;
+  String? _loadError;
 
   String studentName = 'Student';
   String weekDateRange = '';
@@ -54,6 +56,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   }
 
   Future<void> _loadWeeklyWrapped() async {
+    _loadError = null;
     try {
       // Fetch profile from repository
       final profileResult = await _profileRepository.getCurrentProfile();
@@ -61,6 +64,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         (error) {
           studentName = 'Student';
           streak = 0;
+          _loadError = 'We could not load your weekly wrap right now.';
         },
         (profile) {
           studentName = (profile?['name'] as String?)?.trim().isNotEmpty == true
@@ -76,12 +80,18 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
       reportsResult.fold(
         (error) {
           debugPrint('Failed to load weekly reports: ${error.message}');
-          _loading = false;
+          _loadError = 'We could not load your weekly wrap right now.';
+          if (mounted) {
+            setState(() => _loading = false);
+          }
         },
         (reports) {
           if (reports.isEmpty) {
             if (mounted) {
-              setState(() => _loading = false);
+              setState(() {
+                _loadError = null;
+                _loading = false;
+              });
             }
             return;
           }
@@ -115,14 +125,20 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           }
 
           if (mounted) {
-            setState(() => _loading = false);
+            setState(() {
+              _loadError = null;
+              _loading = false;
+            });
           }
         },
       );
     } catch (error) {
       debugPrint('WeeklyWrapped load error: $error');
       if (mounted) {
-        setState(() => _loading = false);
+        setState(() {
+          _loadError = 'We could not load your weekly wrap right now.';
+          _loading = false;
+        });
       }
     }
   }
@@ -263,7 +279,19 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        body: AppStateView.loadingList(itemCount: 4, itemHeight: 110),
+      );
+    }
+
+    if (_loadError != null) {
+      return Scaffold(
+        body: AppStateView.error(
+          title: 'Weekly wrap unavailable',
+          message: _loadError!,
+          onRetry: _loadWeeklyWrapped,
+        ),
+      );
     }
 
     return Scaffold(
@@ -324,11 +352,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                 : FilledButton.icon(
                     onPressed: _regenerateSummary,
                     icon: _generating
-                        ? const SizedBox(
-                            width: 14,
-                            height: 14,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const Icon(Icons.hourglass_top_rounded, size: 14)
                         : const Icon(Icons.auto_awesome),
                     label: Text(
                       'Generate',

@@ -22,9 +22,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final pageBackground = theme.scaffoldBackgroundColor;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: pageBackground,
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -87,11 +90,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // Appearance
               const _SectionHeader(title: 'Appearance'),
               const SizedBox(height: AppSpacing.md),
-              _SettingsToggle(
-                title: 'Dark Mode',
-                subtitle: 'Always on',
-                value: settings.darkMode,
-                onChanged: settings.setDarkMode,
+              _ThemeModeSelector(
+                selectedMode: settings.themeMode,
+                onChanged: settings.setThemeMode,
               ),
               const SizedBox(height: AppSpacing.xl),
 
@@ -124,9 +125,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: AppColors.cardDark,
+                  color: isDark ? AppColors.cardDark : Colors.white,
                   borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-                  border: Border.all(color: AppColors.border, width: 1),
+                  border: Border.all(
+                    color: isDark
+                        ? AppColors.border
+                        : theme.colorScheme.outlineVariant,
+                    width: 1,
+                  ),
                 ),
                 child: Column(
                   children: [
@@ -174,7 +180,13 @@ class _SectionHeader extends StatelessWidget {
   final String title;
 
   @override
-  Widget build(BuildContext context) => Text(title, style: AppTextStyles.label);
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurface;
+    return Text(
+      title,
+      style: AppTextStyles.label.copyWith(color: color, fontSize: 13),
+    );
+  }
 }
 
 class _SettingsCard extends StatelessWidget {
@@ -190,31 +202,58 @@ class _SettingsCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border, width: 1),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Semantics(
+      button: true,
+      label: title,
+      hint: subtitle,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: isDark ? AppColors.cardDark : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isDark
+                  ? AppColors.border
+                  : theme.colorScheme.outlineVariant,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(title, style: AppTextStyles.label),
-              const SizedBox(height: 4),
-              Text(subtitle, style: AppTextStyles.caption),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: AppTextStyles.label.copyWith(
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: AppTextStyles.caption.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+              IconTheme(
+                data: IconThemeData(color: theme.colorScheme.onSurfaceVariant),
+                child: trailing,
+              ),
             ],
           ),
-          trailing,
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _SettingsToggle extends StatelessWidget {
@@ -230,30 +269,130 @@ class _SettingsToggle extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: AppColors.cardDark,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: AppColors.border, width: 1),
-    ),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Semantics(
+      toggled: value,
+      label: title,
+      hint: subtitle,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? AppColors.border : theme.colorScheme.outlineVariant,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(title, style: AppTextStyles.label),
-            const SizedBox(height: 4),
-            Text(subtitle, style: AppTextStyles.caption),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.label.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: AppTextStyles.caption.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            Switch(
+              value: value,
+              onChanged: onChanged,
+              activeThumbColor: AppColors.primary,
+            ),
           ],
         ),
-        Switch(
-          value: value,
-          onChanged: onChanged,
-          activeThumbColor: AppColors.primary,
+      ),
+    );
+  }
+}
+
+class _ThemeModeSelector extends StatelessWidget {
+  const _ThemeModeSelector({
+    required this.selectedMode,
+    required this.onChanged,
+  });
+
+  final AppThemeMode selectedMode;
+  final ValueChanged<AppThemeMode> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Semantics(
+      label: 'App theme mode',
+      hint: 'Choose system, light, or dark mode',
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.cardDark : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDark ? AppColors.border : theme.colorScheme.outlineVariant,
+            width: 1,
+          ),
         ),
-      ],
-    ),
-  );
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Theme Mode',
+              style: AppTextStyles.label.copyWith(
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'System default is recommended',
+              style: AppTextStyles.caption.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SegmentedButton<AppThemeMode>(
+              showSelectedIcon: false,
+              segments: const [
+                ButtonSegment<AppThemeMode>(
+                  value: AppThemeMode.system,
+                  label: Text('System'),
+                  icon: Icon(Icons.smartphone_rounded),
+                ),
+                ButtonSegment<AppThemeMode>(
+                  value: AppThemeMode.light,
+                  label: Text('Light'),
+                  icon: Icon(Icons.light_mode_rounded),
+                ),
+                ButtonSegment<AppThemeMode>(
+                  value: AppThemeMode.dark,
+                  label: Text('Dark'),
+                  icon: Icon(Icons.dark_mode_rounded),
+                ),
+              ],
+              selected: {selectedMode},
+              onSelectionChanged: (selection) {
+                if (selection.isEmpty) {
+                  return;
+                }
+                onChanged(selection.first);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -265,11 +265,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _isExporting ? null : _exportWeeklyReport,
                   icon: _isExporting
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                      ? const Icon(Icons.hourglass_top_rounded, size: 16)
                       : const Icon(Icons.download),
                   label: Text(
                     _isExporting
@@ -289,11 +285,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: ElevatedButton.icon(
                   onPressed: _isBackingUp ? null : _backupToGoogleDrive,
                   icon: _isBackingUp
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
+                      ? const Icon(Icons.hourglass_top_rounded, size: 16)
                       : const Icon(Icons.backup),
                   label: Text(
                     _isBackingUp

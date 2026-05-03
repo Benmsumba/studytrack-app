@@ -16,6 +16,7 @@ import '../../../core/services/storage_service.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 import '../../../models/topic_rating_history_model.dart';
@@ -44,6 +45,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   bool _isSavingNotes = false;
   bool _isUploadingNote = false;
   bool _notesExpanded = true;
+  String? _loadError;
   TopicModel? _topic;
   ModuleModel? _module;
   List<Map<String, dynamic>> _ratingHistory = const [];
@@ -66,10 +68,12 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   Future<void> _load() async {
     setState(() {
       _isLoading = true;
+      _loadError = null;
     });
 
     final topicResult = await _topicRepo.getTopicById(widget.topicId);
     final topic = topicResult is Success<TopicModel?> ? topicResult.data : null;
+    final topicFailed = topicResult is Failure<TopicModel?>;
     final module = topic == null
         ? null
         : await _moduleRepo
@@ -84,6 +88,8 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
               .map((h) => {'rating': h.rating, 'ratedAt': h.ratedAt})
               .toList()
         : <Map<String, dynamic>>[];
+    final historyFailed =
+        historyResult is Failure<List<TopicRatingHistoryModel>>;
     final notes = await _supabaseService.getNotesByTopic(widget.topicId);
     final uploadedNotes = (notes ?? <Map<String, dynamic>>[])
         .map(UploadedNoteModel.fromJson)
@@ -98,6 +104,9 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
       _voiceNoteTranscripts.clear();
       _selectedRating = topic?.currentRating ?? 0;
       _notesController.text = topic?.notes ?? '';
+      _loadError = topicFailed || historyFailed
+          ? 'We could not load this topic right now. Pull to retry.'
+          : null;
       _isLoading = false;
     });
   }
@@ -249,13 +258,18 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? AppStateView.loadingList(itemCount: 4, itemHeight: 120)
+          : _loadError != null
+          ? AppStateView.error(
+              title: 'Topic unavailable',
+              message: _loadError!,
+              onRetry: _load,
+            )
           : topic == null
-          ? Center(
-              child: Text(
-                'Topic not found.',
-                style: AppTextStyles.bodyMediumSecondary,
-              ),
+          ? AppStateView.empty(
+              icon: Icons.topic_outlined,
+              title: 'Topic not found',
+              message: 'This topic may have been removed or renamed.',
             )
           : RefreshIndicator(
               color: AppColors.primary,
@@ -545,11 +559,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                     TextButton(
                       onPressed: _saveNotes,
                       child: _isSavingNotes
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
+                          ? const Icon(Icons.hourglass_top_rounded, size: 14)
                           : Text(
                               'Save',
                               style: AppTextStyles.label.copyWith(

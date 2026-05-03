@@ -169,14 +169,50 @@ class OfflineDataStore {
     required Map<String, dynamic> payload,
     String? recordId,
   }) async {
+    final normalizedRecordId = _normalizeRecordId(recordId, payload);
+    final createdAt = DateTime.now().toIso8601String();
+
+    if (normalizedRecordId == null) {
+      _db.execute(
+        'INSERT INTO pending_changes (entity, operation, record_id, payload, created_at) VALUES (?, ?, ?, ?, ?)',
+        [entity, operation, recordId, jsonEncode(payload), createdAt],
+      );
+      return;
+    }
+
+    final rows = _db.select(
+      'SELECT id, operation FROM pending_changes WHERE entity = ? AND record_id = ? ORDER BY id DESC LIMIT 1',
+      [entity, normalizedRecordId],
+    );
+
+    if (rows.isEmpty) {
+      _db.execute(
+        'INSERT INTO pending_changes (entity, operation, record_id, payload, created_at) VALUES (?, ?, ?, ?, ?)',
+        [entity, operation, normalizedRecordId, jsonEncode(payload), createdAt],
+      );
+      return;
+    }
+
+    final existingId = rows.first['id'] as int;
+    final existingOperation = rows.first['operation'] as String? ?? operation;
+
+    if (existingOperation == 'insert' && operation == 'delete') {
+      _db.execute('DELETE FROM pending_changes WHERE id = ?', [existingId]);
+      return;
+    }
+
+    final nextOperation = existingOperation == 'insert' && operation != 'delete'
+        ? 'insert'
+        : operation;
+
     _db.execute(
-      'INSERT INTO pending_changes (entity, operation, record_id, payload, created_at) VALUES (?, ?, ?, ?, ?)',
+      'UPDATE pending_changes SET operation = ?, record_id = ?, payload = ?, created_at = ? WHERE id = ?',
       [
-        entity,
-        operation,
-        recordId,
+        nextOperation,
+        normalizedRecordId,
         jsonEncode(payload),
-        DateTime.now().toIso8601String(),
+        createdAt,
+        existingId,
       ],
     );
   }
@@ -225,6 +261,20 @@ class OfflineDataStore {
 
   String _recordCacheKey(String entity, String recordId) =>
       '$entity::$recordId';
+
+  String? _normalizeRecordId(String? recordId, Map<String, dynamic> payload) {
+    final trimmedRecordId = recordId?.trim();
+    if (trimmedRecordId != null && trimmedRecordId.isNotEmpty) {
+      return trimmedRecordId;
+    }
+
+    final payloadRecordId = payload['id']?.toString().trim();
+    if (payloadRecordId != null && payloadRecordId.isNotEmpty) {
+      return payloadRecordId;
+    }
+
+    return null;
+  }
 
   Map<String, dynamic>? _decodeMap(String? payload) {
     if (payload == null || payload.isEmpty) {

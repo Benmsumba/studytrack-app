@@ -12,6 +12,7 @@ import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../../../models/module_model.dart';
 import '../../../models/study_session_model.dart';
@@ -33,6 +34,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   final ProfileRepository _profileRepo = getIt<ProfileRepository>();
 
   bool _isLoading = true;
+  String? _loadError;
   List<ModuleModel> _modules = [];
   List<TopicModel> _topics = [];
   TopicModel? _selectedTopic;
@@ -56,7 +58,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final user = auth.currentUser;
     if (user == null) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+        _loadError = null;
+      });
       return;
     }
 
@@ -66,12 +71,16 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final modules = modulesResult is Success<List<ModuleModel>>
         ? modulesResult.data
         : <ModuleModel>[];
+    final modulesFailed = modulesResult is Failure<List<ModuleModel>>;
 
     final allTopics = <TopicModel>[];
+    var topicsFailed = false;
     for (final module in modules) {
       final topicsResult = await _topicRepo.getTopicsByModule(module.id);
       if (topicsResult is Success<List<TopicModel>>) {
         allTopics.addAll(topicsResult.data);
+      } else {
+        topicsFailed = true;
       }
     }
 
@@ -91,6 +100,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final currentStreak = profileResult is Success<Map<String, dynamic>?>
         ? (profileResult.data?['streak_count'] as num?)?.toInt() ?? 0
         : 0;
+    final profileFailed = profileResult is Failure<Map<String, dynamic>?>;
 
     final now = DateTime.now();
     final weekStart = _startOfWeek(now);
@@ -112,6 +122,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     final sessions = sessionsResult is Success<List<StudySessionModel>>
         ? sessionsResult.data
         : <StudySessionModel>[];
+    final sessionsFailed = sessionsResult is Failure<List<StudySessionModel>>;
 
     final sessionsByDay = <String, List<StudySessionModel>>{};
     for (final session in sessions) {
@@ -161,6 +172,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
       _heatmapCounts
         ..clear()
         ..addAll(heatmapCounts);
+      _loadError =
+          (modulesFailed || topicsFailed || profileFailed || sessionsFailed)
+          ? 'We could not load your progress data right now. Pull to retry.'
+          : null;
       _isLoading = false;
     });
   }
@@ -181,7 +196,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.backgroundDark,
     body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
+        ? AppStateView.loadingList(itemCount: 4, itemHeight: 120)
         : RefreshIndicator(
             onRefresh: _loadProgress,
             child: ListView(
@@ -192,17 +207,28 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 AppSpacing.sm,
               ),
               children: [
-                _buildQuickStats(),
-                const SizedBox(height: AppSpacing.md),
-                _buildWeeklyBarChart(),
-                const SizedBox(height: AppSpacing.md),
-                _buildRadarChart(),
-                const SizedBox(height: AppSpacing.md),
-                _buildHeatmap(),
-                const SizedBox(height: AppSpacing.md),
-                _buildTopicRatingHistory(),
-                const SizedBox(height: AppSpacing.md),
-                _buildModuleDonuts(),
+                if (_loadError != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                    child: AppStateView.error(
+                      title: 'Progress unavailable',
+                      message: _loadError!,
+                      onRetry: _loadProgress,
+                    ),
+                  )
+                else ...[
+                  _buildQuickStats(),
+                  const SizedBox(height: AppSpacing.md),
+                  _buildWeeklyBarChart(),
+                  const SizedBox(height: AppSpacing.md),
+                  _buildRadarChart(),
+                  const SizedBox(height: AppSpacing.md),
+                  _buildHeatmap(),
+                  const SizedBox(height: AppSpacing.md),
+                  _buildTopicRatingHistory(),
+                  const SizedBox(height: AppSpacing.md),
+                  _buildModuleDonuts(),
+                ],
               ],
             ),
           ),

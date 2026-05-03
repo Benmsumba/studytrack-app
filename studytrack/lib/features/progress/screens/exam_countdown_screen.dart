@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/exam_repository.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../models/exam_model.dart';
 
 class ExamCountdownScreen extends StatefulWidget {
@@ -17,6 +18,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
   late final ExamRepository _examRepository;
 
   bool _isLoading = true;
+  String? _loadError;
   List<ExamModel> _exams = const [];
 
   @override
@@ -34,12 +36,14 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
         (error) {
           setState(() {
             _exams = const [];
+            _loadError = 'We could not load your upcoming exams right now.';
             _isLoading = false;
           });
         },
         (exams) {
           setState(() {
             _exams = exams;
+            _loadError = null;
             _isLoading = false;
           });
         },
@@ -48,6 +52,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
       if (!mounted) return;
       setState(() {
         _exams = const [];
+        _loadError = 'We could not load your upcoming exams right now.';
         _isLoading = false;
       });
     }
@@ -56,9 +61,9 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
+      return Scaffold(
         backgroundColor: Color(0xFF0F0F1A),
-        body: Center(child: CircularProgressIndicator()),
+        body: AppStateView.loadingList(itemCount: 3, itemHeight: 110),
       );
     }
 
@@ -79,22 +84,18 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              if (_exams.isEmpty)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF16213E),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF2D2D44)),
-                  ),
-                  child: Text(
-                    'No upcoming exams yet',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: const Color(0xFF9CA3AF),
-                      fontSize: 14,
-                    ),
-                  ),
+              if (_loadError != null)
+                AppStateView.error(
+                  title: 'Exams unavailable',
+                  message: _loadError!,
+                  onRetry: _loadExams,
+                )
+              else if (_exams.isEmpty)
+                AppStateView.empty(
+                  icon: Icons.event_busy_rounded,
+                  title: 'No upcoming exams yet',
+                  message:
+                      'Add your first exam to get countdowns and study tips.',
                 )
               else
                 ..._exams.map(

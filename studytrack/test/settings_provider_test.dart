@@ -19,7 +19,7 @@ void main() {
     expect(provider.studyReminders, isTrue);
     expect(provider.examAlerts, isTrue);
     expect(provider.weeklyReport, isTrue);
-    expect(provider.darkMode, isTrue);
+    expect(provider.themeMode, AppThemeMode.system);
   });
 
   test('persists toggled settings across instances', () async {
@@ -29,7 +29,7 @@ void main() {
     await provider.setStudyReminders(false);
     await provider.setExamAlerts(false);
     await provider.setWeeklyReport(false);
-    await provider.setDarkMode(false);
+    await provider.setThemeMode(AppThemeMode.light);
 
     final reloaded = SettingsProvider();
     await reloaded.load();
@@ -38,6 +38,17 @@ void main() {
     expect(reloaded.studyReminders, isFalse);
     expect(reloaded.examAlerts, isFalse);
     expect(reloaded.weeklyReport, isFalse);
+    expect(reloaded.themeMode, AppThemeMode.light);
     expect(reloaded.darkMode, isFalse);
+  });
+
+  test('migrates legacy dark mode bool when theme mode is absent', () async {
+    SharedPreferences.setMockInitialValues({'settings_dark_mode': true});
+
+    final provider = SettingsProvider();
+    await provider.load();
+
+    expect(provider.themeMode, AppThemeMode.dark);
+    expect(provider.darkMode, isTrue);
   });
 }

@@ -16,6 +16,7 @@ import '../../../core/repositories/topic_repository.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../../../models/group_member_model.dart';
 import '../../../models/study_session_model.dart';
@@ -38,6 +39,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   late final StudySessionRepository _studySessionRepository;
 
   bool _loading = true;
+  String? _loadError;
   bool _isAdmin = false;
   String? _currentUserId;
   List<Map<String, dynamic>> _members = [];
@@ -71,7 +73,10 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
 
     final currentUserResult = await _authRepository.getCurrentUser();
     _currentUserId = switch (currentUserResult) {
@@ -86,6 +91,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       Success(data: final data) => data,
       Failure(error: final _) => <GroupMemberModel>[],
     };
+    final membersFailed = membersResult is Failure<List<GroupMemberModel>>;
     _isAdmin = members.any(
       (member) => member.userId == _currentUserId && member.role == 'admin',
     );
@@ -144,9 +150,17 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
         Success(data: final data) => data,
         Failure(error: final _) => <StudySessionModel>[],
       };
+      final sessionsFailed = sessionResult is Failure<List<StudySessionModel>>;
       sessions = sessionModels
           .map((session) => session.toJson())
           .toList(growable: false);
+
+      if (membersFailed || sessionsFailed) {
+        _loadError =
+            'We could not load all group data right now. Pull to retry.';
+      }
+    } else if (membersFailed) {
+      _loadError = 'We could not load group members right now. Pull to retry.';
     }
 
     if (!mounted) return;
@@ -155,6 +169,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
       _sharedNotes = sharedNotes;
       _sessions = sessions;
       _topicNames = topicNames;
+      _loadError = _loadError;
       _loading = false;
     });
   }
@@ -267,7 +282,13 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           ],
         ),
         body: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? AppStateView.loadingList(itemCount: 4, itemHeight: 110)
+            : _loadError != null
+            ? AppStateView.error(
+                title: 'Group unavailable',
+                message: _loadError!,
+                onRetry: _load,
+              )
             : Column(
                 children: [
                   GlassCard(
