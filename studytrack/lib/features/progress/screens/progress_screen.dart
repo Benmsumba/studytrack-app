@@ -234,32 +234,37 @@ class _ProgressScreenState extends State<ProgressScreen> {
           ),
   );
 
-  Widget _buildQuickStats() => GridView.count(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    crossAxisCount: 2,
-    crossAxisSpacing: AppSpacing.sm,
-    mainAxisSpacing: AppSpacing.sm,
-    childAspectRatio: 1.5,
-    children: [
-      _statCard('Topics Mastered', '$_topicsMastered', Icons.school_rounded),
-      _statCard(
-        'Current Streak',
-        '$_currentStreak',
-        Icons.local_fire_department,
-      ),
-      _statCard(
-        "This Week's Sessions",
-        '$_weeklySessions',
-        Icons.menu_book_rounded,
-      ),
-      _statCard(
-        'Average Rating',
-        _averageRating.toStringAsFixed(1),
-        Icons.star_rounded,
-      ),
-    ],
-  );
+  Widget _buildQuickStats() {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final crossAxisCount = screenWidth > 900 ? 4 : (screenWidth > 600 ? 3 : 2);
+    final childAspectRatio = screenWidth > 900 ? 1.6 : 1.5;
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: crossAxisCount,
+      crossAxisSpacing: AppSpacing.sm,
+      mainAxisSpacing: AppSpacing.sm,
+      childAspectRatio: childAspectRatio,
+      children: [
+        _statCard('Topics Mastered', '$_topicsMastered', Icons.school_rounded),
+        _statCard(
+          'Current Streak',
+          '$_currentStreak',
+          Icons.local_fire_department,
+        ),
+        _statCard(
+          "This Week's Sessions",
+          '$_weeklySessions',
+          Icons.menu_book_rounded,
+        ),
+        _statCard(
+          'Average Rating',
+          _averageRating.toStringAsFixed(1),
+          Icons.star_rounded,
+        ),
+      ],
+    );
+  }
 
   Widget _statCard(String label, String value, IconData icon) => GlassCard(
     padding: const EdgeInsets.all(AppSpacing.sm),
@@ -406,7 +411,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           ),
         ),
       ),
-      fixedHeight: 220,
+      fixedHeight: _getChartHeight(context, 220),
     );
   }
 
@@ -482,7 +487,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           },
         ),
       ),
-      fixedHeight: 260,
+      fixedHeight: _getChartHeight(context, 260),
     );
   }
 
@@ -575,6 +580,20 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return labels[month - 1];
   }
 
+  double _getChartHeight(BuildContext context, double baseHeight) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    if (screenWidth > 1200) return baseHeight * 1.2;
+    if (screenWidth > 900) return baseHeight * 1.1;
+    return baseHeight;
+  }
+
+  double _getListViewHeight(BuildContext context, double baseHeight) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    if (screenWidth > 1200) return baseHeight * 1.3;
+    if (screenWidth > 900) return baseHeight * 1.15;
+    return baseHeight;
+  }
+
   Widget _buildTopicRatingHistory() => _buildSectionShell(
     'Topic Rating History',
     _topics.isEmpty
@@ -621,7 +640,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
               const SizedBox(height: AppSpacing.sm),
               SizedBox(
-                height: 220,
+                height: _getChartHeight(context, 220),
                 child: _selectedTopic == null
                     ? const SizedBox.shrink()
                     : _TopicLineChart(
@@ -646,7 +665,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           )
         : SizedBox(
-            height: 160,
+            height: _getListViewHeight(context, 160),
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _modules.length,
