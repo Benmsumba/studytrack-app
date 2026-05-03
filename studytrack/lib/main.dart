@@ -34,6 +34,7 @@ Future<void> main() async {
     debugPrint = (message, {wrapWidth}) {};
   }
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -56,6 +57,18 @@ Future<void> main() async {
   };
 
   await runZonedGuarded(() async {
+    CrashReporter.configure((error, stack) {
+      if (!AppConstants.isSentryConfigured) {
+        return;
+      }
+      unawaited(Sentry.captureException(error, stackTrace: stack));
+    });
+
+    if (!AppConstants.isSentryConfigured) {
+      await _bootstrapApp();
+      return;
+    }
+
     await SentryFlutter.init(
       (options) {
         options.dsn = AppConstants.resolvedSentryDsn;
@@ -64,12 +77,6 @@ Future<void> main() async {
         options.enableAutoSessionTracking = false;
       },
       appRunner: () async {
-        CrashReporter.configure((error, stack) {
-          if (!AppConstants.isSentryConfigured) {
-            return;
-          }
-          unawaited(Sentry.captureException(error, stackTrace: stack));
-        });
         await _bootstrapApp();
       },
     );

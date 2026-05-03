@@ -50,17 +50,22 @@ class _SignupScreenState extends State<SignupScreen> {
   Future<void> _onGoogleSignInTap() async {
     final auth = context.read<AuthProvider>();
     setState(() => _googleLoading = true);
-    final result = await auth.signInWithGoogle();
-    if (!mounted) return;
-    setState(() => _googleLoading = false);
-    if (!result.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.message),
-          backgroundColor: AppColors.danger,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+    try {
+      final result = await auth.signInWithGoogle();
+      if (!mounted) return;
+      if (!result.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message),
+            backgroundColor: AppColors.danger,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _googleLoading = false);
+      }
     }
     // Navigation on success is handled by _GoRouterRefreshStream
   }
