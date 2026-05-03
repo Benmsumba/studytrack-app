@@ -7,6 +7,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/topic_chat_repository.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/app_state_view.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../../voice_notes/widgets/voice_note_recorder_widget.dart';
 
