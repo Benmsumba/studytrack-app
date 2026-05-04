@@ -124,7 +124,7 @@ class TopicRepositoryImpl implements TopicRepository {
       final history =
           await _supabaseService.getTopicRatingHistory(topicId) ?? const [];
       return Success(history.map(TopicRatingHistoryModel.fromJson).toList());
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getTopicRatingHistory error: $e');
       return Failure(
         DataException(
@@ -146,7 +146,7 @@ class TopicRepositoryImpl implements TopicRepository {
         maxRating: maxRating,
       );
       return Success(topics);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getRatedTopics error: $e');
       return Failure(
         DataException(
@@ -162,7 +162,7 @@ class TopicRepositoryImpl implements TopicRepository {
     try {
       await _supabaseService.updateTopicNotes(topicId, notes);
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('updateTopicNotes error: $e');
       return Failure(
         DataException(message: 'Failed to update notes: $e', stackTrace: stack),
@@ -175,7 +175,7 @@ class TopicRepositoryImpl implements TopicRepository {
     try {
       final topics = await _supabaseService.getTopicsDueForReview();
       return Success(topics);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getTopicsDueForReview error: $e');
       return Failure(
         DataException(
@@ -191,7 +191,7 @@ class TopicRepositoryImpl implements TopicRepository {
     try {
       await _supabaseService.markTopicAsReviewed(topicId);
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('markTopicAsReviewed error: $e');
       return Failure(
         DataException(
@@ -207,7 +207,7 @@ class TopicRepositoryImpl implements TopicRepository {
     try {
       // Sync handled by offline sync service
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('syncTopics error: $e');
       return Failure(
         DataException(message: 'Failed to sync topics: $e', stackTrace: stack),

@@ -387,7 +387,7 @@ $message
     try {
       final decoded = jsonDecode(jsonText);
       return decoded is Map<String, dynamic> ? decoded : null;
-    } catch (_) {
+    } on Object catch (_) {
       return null;
     }
   }

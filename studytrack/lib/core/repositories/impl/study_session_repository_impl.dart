@@ -16,7 +16,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
     try {
       final sessions = await _supabaseService.getSessions();
       return Success(sessions);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getAllSessions error: $e');
       return Failure(
         DataException(
@@ -38,7 +38,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
         endDate: endDate,
       );
       return Success(sessions);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getSessionsByDateRange error: $e');
       return Failure(
         DataException(
@@ -56,7 +56,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
     try {
       final sessions = await _supabaseService.getSessionsByTopic(topicId);
       return Success(sessions);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getSessionsByTopic error: $e');
       return Failure(
         DataException(
@@ -82,7 +82,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
         notes: notes,
       );
       return Success(session);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('createSession error: $e');
       return Failure(
         DataException(
@@ -100,7 +100,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
     try {
       final updated = await _supabaseService.updateSession(session);
       return Success(updated);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('updateSession error: $e');
       return Failure(
         DataException(
@@ -129,7 +129,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
         );
       }
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('updateSessionStatus error: $e');
       return Failure(
         DataException(
@@ -145,7 +145,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
     try {
       await _supabaseService.deleteSession(sessionId);
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('deleteSession error: $e');
       return Failure(
         DataException(
@@ -161,7 +161,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
     try {
       final session = await _supabaseService.endSession(sessionId);
       return Success(session);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('endSession error: $e');
       return Failure(
         DataException(message: 'Failed to end session: $e', stackTrace: stack),
@@ -174,7 +174,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
     try {
       final total = await _supabaseService.getTotalStudyTime();
       return Success(total);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getTotalStudyTime error: $e');
       return Failure(
         DataException(
@@ -190,7 +190,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
     try {
       final streak = await _supabaseService.getDailyStreak();
       return Success(streak);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getDailyStreak error: $e');
       return Failure(
         DataException(
@@ -206,7 +206,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
     try {
       final sessions = await _supabaseService.getSessionsToday();
       return Success(sessions);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getSessionsToday error: $e');
       return Failure(
         DataException(
@@ -222,7 +222,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
     try {
       final average = await _supabaseService.getAverageSessionDuration();
       return Success(average);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getAverageSessionDuration error: $e');
       return Failure(
         DataException(
@@ -238,7 +238,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
     try {
       // Sync handled by offline sync service
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('syncSessions error: $e');
       return Failure(
         DataException(
