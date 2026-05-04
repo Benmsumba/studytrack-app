@@ -147,7 +147,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
       // we would need to query the database directly or add a method
       // For now, return success (this can be implemented later if needed)
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('deleteWeeklyReport error: $e');
       return Failure(
         DataException(
@@ -169,7 +169,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
       // Trigger a fresh fetch to sync
       await _supabaseService.getWeeklyReports(uid, 52);
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('syncWeeklyReports error: $e');
       return Failure(
         DataException(

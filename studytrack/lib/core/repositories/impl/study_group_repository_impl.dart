@@ -18,7 +18,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
     try {
       final groups = await _supabaseService.getStudyGroups() ?? const [];
       return Success(groups);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getAllGroups error: $e');
       return Failure(
         DataException(message: 'Failed to fetch groups: $e', stackTrace: stack),
@@ -34,7 +34,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
         throw DataException(message: 'Group not found');
       }
       return Success(group);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getGroupById error: $e');
       return Failure(
         DataException(message: 'Failed to fetch group: $e', stackTrace: stack),
@@ -58,7 +58,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
         throw DataException(message: 'Failed to create group');
       }
       return Success(group);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('createGroup error: $e');
       return Failure(
         DataException(message: 'Failed to create group: $e', stackTrace: stack),
@@ -74,7 +74,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
         throw DataException(message: 'Failed to update group');
       }
       return Success(updated);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('updateGroup error: $e');
       return Failure(
         DataException(message: 'Failed to update group: $e', stackTrace: stack),
@@ -87,7 +87,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
     try {
       await _supabaseService.deleteStudyGroup(groupId);
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('deleteGroup error: $e');
       return Failure(
         DataException(message: 'Failed to delete group: $e', stackTrace: stack),
@@ -100,7 +100,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
     try {
       await _supabaseService.joinGroupByCode(inviteCode);
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('joinGroupByCode error: $e');
       return Failure(
         DataException(message: 'Failed to join group: $e', stackTrace: stack),
@@ -113,7 +113,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
     try {
       await _supabaseService.leaveStudyGroup(groupId);
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('leaveGroup error: $e');
       return Failure(
         DataException(message: 'Failed to leave group: $e', stackTrace: stack),
@@ -127,7 +127,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       final members =
           await _supabaseService.getGroupMembersTyped(groupId) ?? const [];
       return Success(members);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getGroupMembers error: $e');
       return Failure(
         DataException(
@@ -146,7 +146,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       final messages =
           await _supabaseService.getGroupMessagesTyped(groupId) ?? const [];
       return Success(messages);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getGroupMessages error: $e');
       return Failure(
         DataException(
@@ -173,7 +173,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
         throw DataException(message: 'Failed to send message');
       }
       return Success(message);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('sendGroupMessage error: $e');
       return Failure(
         DataException(message: 'Failed to send message: $e', stackTrace: stack),
@@ -196,7 +196,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
         userEmail: userEmail,
       );
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('inviteUserToGroup error: $e');
       return Failure(
         DataException(message: 'Failed to invite user: $e', stackTrace: stack),
@@ -215,7 +215,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
         userId: userId,
       );
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('removeMemberFromGroup error: $e');
       return Failure(
         DataException(
@@ -231,7 +231,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
     try {
       // Sync handled by offline sync service
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('syncGroups error: $e');
       return Failure(
         DataException(message: 'Failed to sync groups: $e', stackTrace: stack),

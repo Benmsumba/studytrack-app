@@ -219,7 +219,7 @@ void main() {
       test('Exception preserves stack trace', () {
         try {
           throw AppGenericException(message: 'Test');
-        } catch (e, stack) {
+        } on Object catch (e, stack) {
           final exc = AuthException(message: 'Wrapped', stackTrace: stack);
           expect(exc.stackTrace, isNotNull);
         }

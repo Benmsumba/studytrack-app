@@ -75,7 +75,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       return Success(profile);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('SignUp error: $e');
       return Failure(
         AuthException(message: 'Sign up failed: $e', stackTrace: stack),
@@ -107,7 +107,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
 
       return Success(profile);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('SignIn error: $e');
       return Failure(
         AuthException(message: 'Sign in failed: $e', stackTrace: stack),
@@ -127,7 +127,7 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('GoogleSignIn error: $e');
       return Failure(
         AuthException(message: 'Google sign-in failed: $e', stackTrace: stack),
@@ -140,7 +140,7 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       await _supabaseService.signOut();
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('SignOut error: $e');
       return Failure(
         AuthException(message: 'Sign out failed: $e', stackTrace: stack),
@@ -154,7 +154,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final user = _supabaseService.getCurrentUser();
       final profile = _userToProfileModel(user);
       return Success(profile);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('GetCurrentUser error: $e');
       return Failure(
         DataException(
@@ -178,7 +178,7 @@ class AuthRepositoryImpl implements AuthRepository {
         );
       }
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('ResetPassword error: $e');
       return Failure(
         AuthException(message: 'Password reset failed: $e', stackTrace: stack),
@@ -197,7 +197,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return Failure(
         AuthException(message: 'OTP verification not yet implemented'),
       );
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('VerifyOtp error: $e');
       return Failure(
         AuthException(
@@ -255,7 +255,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       return Success(updatedProfile);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('UpdateProfile error: $e');
       return Failure(
         DataException(message: 'Profile update failed: $e', stackTrace: stack),

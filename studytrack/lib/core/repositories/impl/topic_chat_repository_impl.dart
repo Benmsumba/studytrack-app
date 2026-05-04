@@ -17,7 +17,7 @@ class TopicChatRepositoryImpl implements TopicChatRepository {
     try {
       final messages = await _supabaseService.getTopicMessages(topicId) ?? [];
       return Success(messages);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getTopicMessages error: $e');
       return Failure(
         DataException(
@@ -46,7 +46,7 @@ class TopicChatRepositoryImpl implements TopicChatRepository {
         return Failure(DataException(message: 'Failed to send topic message'));
       }
       return Success(message);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('sendTopicMessage error: $e');
       return Failure(
         DataException(

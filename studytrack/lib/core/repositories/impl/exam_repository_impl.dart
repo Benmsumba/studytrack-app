@@ -23,7 +23,7 @@ class ExamRepositoryImpl implements ExamRepository {
       final exams = await _supabaseService.getExams(uid);
       final models = (exams ?? []).map(ExamModel.fromJson).toList();
       return Success(models);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getAllExams error: $e');
       return Failure(
         DataException(message: 'Failed to fetch exams: $e', stackTrace: stack),
@@ -41,7 +41,7 @@ class ExamRepositoryImpl implements ExamRepository {
       final exams = await _supabaseService.getUpcomingExams(uid);
       final models = (exams ?? []).map(ExamModel.fromJson).toList();
       return Success(models);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getUpcomingExams error: $e');
       return Failure(
         DataException(
@@ -64,7 +64,7 @@ class ExamRepositoryImpl implements ExamRepository {
         return const Success(null);
       }
       return Success(ExamModel.fromJson(examData));
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getExamById error: $e');
       return Failure(
         DataException(message: 'Failed to fetch exam: $e', stackTrace: stack),
@@ -103,7 +103,7 @@ class ExamRepositoryImpl implements ExamRepository {
       }
 
       return Success(ExamModel.fromJson(result));
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('createExam error: $e');
       return Failure(
         DataException(message: 'Failed to create exam: $e', stackTrace: stack),
@@ -128,7 +128,7 @@ class ExamRepositoryImpl implements ExamRepository {
       }
 
       return Success(ExamModel.fromJson(result));
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('updateExam error: $e');
       return Failure(
         DataException(message: 'Failed to update exam: $e', stackTrace: stack),
@@ -144,7 +144,7 @@ class ExamRepositoryImpl implements ExamRepository {
         return Failure(DataException(message: 'Failed to delete exam'));
       }
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('deleteExam error: $e');
       return Failure(
         DataException(message: 'Failed to delete exam: $e', stackTrace: stack),
@@ -167,7 +167,7 @@ class ExamRepositoryImpl implements ExamRepository {
               .toList() ??
           [];
       return Success(filtered);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getExamsByModuleId error: $e');
       return Failure(
         DataException(
@@ -199,7 +199,7 @@ class ExamRepositoryImpl implements ExamRepository {
               .toList() ??
           [];
       return Success(filtered);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('searchExams error: $e');
       return Failure(
         DataException(message: 'Failed to search exams: $e', stackTrace: stack),
@@ -216,7 +216,7 @@ class ExamRepositoryImpl implements ExamRepository {
       }
       final exams = await _supabaseService.getExams(uid);
       return Success(exams?.length ?? 0);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getExamCount error: $e');
       return Failure(
         DataException(
@@ -238,7 +238,7 @@ class ExamRepositoryImpl implements ExamRepository {
       }
       await _supabaseService.getExams(uid);
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('syncExams error: $e');
       return Failure(
         DataException(message: 'Failed to sync exams: $e', stackTrace: stack),

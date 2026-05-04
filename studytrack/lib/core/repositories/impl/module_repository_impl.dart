@@ -23,7 +23,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
       }
       final modules = await _supabaseService.getModules(uid);
       return Success(modules ?? <ModuleModel>[]);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getAllModules error: $e');
       return Failure(
         DataException(
@@ -39,7 +39,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
     try {
       final module = await _supabaseService.getModuleById(moduleId);
       return Success(module);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getModuleById error: $e');
       return Failure(
         DataException(message: 'Failed to fetch module: $e', stackTrace: stack),
@@ -66,7 +66,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
         return Failure(DataException(message: 'Failed to create module'));
       }
       return Success(ModuleModel.fromJson(raw));
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('createModule error: $e');
       return Failure(
         DataException(
@@ -88,7 +88,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
         return Failure(DataException(message: 'Failed to update module'));
       }
       return Success(ModuleModel.fromJson(raw));
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('updateModule error: $e');
       return Failure(
         DataException(
@@ -107,7 +107,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
         return Failure(DataException(message: 'Failed to delete module'));
       }
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('deleteModule error: $e');
       return Failure(
         DataException(
@@ -123,7 +123,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
     try {
       await _supabaseService.updateModule(moduleId, {'is_active': false});
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('archiveModule error: $e');
       return Failure(
         DataException(
@@ -166,7 +166,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
   Future<Result<void>> syncModules() async {
     try {
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('syncModules error: $e');
       return Failure(
         DataException(message: 'Failed to sync modules: $e', stackTrace: stack),

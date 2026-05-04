@@ -20,7 +20,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
       }
       final classSlots = rows.map(ClassSlotModel.fromJson).toList();
       return Success(classSlots);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getClassTimetable error: $e');
       return Failure(
         DataException(
@@ -42,7 +42,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
       }
       final classSlot = ClassSlotModel.fromJson(created);
       return Success(classSlot);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('addClassSlot error: $e');
       return Failure(
         DataException(
@@ -68,7 +68,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
       }
       final classSlot = ClassSlotModel.fromJson(updated);
       return Success(classSlot);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('updateClassSlot error: $e');
       return Failure(
         DataException(
@@ -87,7 +87,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
         return const Success(true);
       }
       return Failure(DataException(message: 'Failed to delete class slot.'));
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('deleteClassSlot error: $e');
       return Failure(
         DataException(
@@ -113,7 +113,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
           .where((slot) => slot.dayOfWeek == dayOfWeek)
           .toList();
       return Success(classSlots);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getClassSlotsByDay error: $e');
       return Failure(
         DataException(
@@ -137,7 +137,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
       }
       final classSlots = rows.map(ClassSlotModel.fromJson).toList();
       return Success(classSlots);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getClassSlotsByDateRange error: $e');
       return Failure(
         DataException(
