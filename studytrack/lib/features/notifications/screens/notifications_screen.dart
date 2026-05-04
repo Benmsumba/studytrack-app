@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/class_timetable_repository.dart';
 import '../../../core/repositories/exam_repository.dart';
@@ -207,12 +208,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+            padding: const EdgeInsets.fromLTRB(AppSpacing.screenHorizontal, AppSpacing.md, AppSpacing.screenHorizontal, AppSpacing.sm),
             child: Row(
               children: [
                 Text(
                   'Notifications',
-                  style: AppTextStyles.headingLarge.copyWith(fontSize: 28),
+                  style: AppTextStyles.headingLarge,
                 ),
                 const Spacer(),
                 TextButton(
@@ -250,7 +251,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     )
                   : ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
                       children: _items
                           .map(
                             (item) => _NotificationTile(
@@ -309,11 +310,11 @@ class _NotificationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.only(bottom: 12),
-    padding: const EdgeInsets.all(14),
+    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+    padding: const EdgeInsets.all(AppSpacing.md),
     decoration: BoxDecoration(
       color: AppColors.cardDark,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
       border: Border.all(
         color: unread ? AppColors.primary : AppColors.border,
         width: unread ? 1.2 : 1,
@@ -327,11 +328,11 @@ class _NotificationTile extends StatelessWidget {
           height: 40,
           decoration: BoxDecoration(
             color: iconColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(AppSpacing.xs),
           ),
           child: Icon(icon, color: iconColor, size: 22),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -341,7 +342,9 @@ class _NotificationTile extends StatelessWidget {
                   Expanded(
                     child: Text(
                       title,
-                      style: AppTextStyles.headingSmall.copyWith(fontSize: 14),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   if (unread)
@@ -349,15 +352,15 @@ class _NotificationTile extends StatelessWidget {
                       width: 8,
                       height: 8,
                       decoration: const BoxDecoration(
-                        color: Color(0xFF06B6D4),
+                        color: AppColors.neonCyan,
                         shape: BoxShape.circle,
                       ),
                     ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xxs),
               Text(body, style: AppTextStyles.bodySmallSecondary),
-              const SizedBox(height: 6),
+              const SizedBox(height: AppSpacing.xs),
               Text(timeLabel, style: AppTextStyles.caption),
             ],
           ),
