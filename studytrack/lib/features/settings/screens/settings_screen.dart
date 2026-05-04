@@ -7,10 +7,10 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/l10n/app_strings.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/services/offline_sync_service.dart';
-import '../../../core/l10n/app_strings.dart';
 import '../../../core/utils/service_locator.dart';
 import '../controllers/settings_provider.dart';
 
