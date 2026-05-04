@@ -7,9 +7,9 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/l10n/app_strings.dart';
 import '../../../core/utils/validators.dart';
 import '../controllers/auth_provider.dart';
-import '../../../core/l10n/app_strings.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

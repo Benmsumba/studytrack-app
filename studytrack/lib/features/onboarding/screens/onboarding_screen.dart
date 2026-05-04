@@ -8,11 +8,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/l10n/app_strings.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/glass_card.dart';
-import '../../../core/l10n/app_strings.dart';
 
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key});

@@ -99,7 +99,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
               style: AppTextStyles.bodySmall,
               minLines: 2,
               maxLines: 3,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: AppStrings.groupDescriptionOptional,
               ),
             ),
@@ -136,7 +136,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
                         if (createdResult is! Success<StudyGroupModel>) {
                           scaffold.showSnackBar(
-                            SnackBar(
+                            const SnackBar(
                               content: Text(AppStrings.failedCreateGroup),
                             ),
                           );
@@ -180,7 +180,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                                   if (!dialogContext.mounted) return;
                                   Navigator.of(dialogContext).pop();
                                   scaffold.showSnackBar(
-                                    SnackBar(
+                                    const SnackBar(
                                       content: Text(AppStrings.inviteCopied),
                                     ),
                                   );
@@ -271,7 +271,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
                         if (joinedResult is! Success<void>) {
                           scaffold.showSnackBar(
-                            SnackBar(content: Text(AppStrings.inviteNotFound)),
+                            const SnackBar(content: Text(AppStrings.inviteNotFound)),
                           );
                           return;
                         }
@@ -279,7 +279,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         await _loadGroups();
                         if (!mounted) return;
                         scaffold.showSnackBar(
-                          SnackBar(
+                          const SnackBar(
                             content: Text(AppStrings.joinedGroupSuccess),
                           ),
                         );
