@@ -3,8 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/module_repository.dart';
+import '../../../core/widgets/custom_button.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
@@ -179,7 +181,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
             backgroundColor: AppColors.surfaceDark,
             onRefresh: _loadModules,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.screenHorizontal, AppSpacing.xs, AppSpacing.screenHorizontal, 120),
               children: [
                 TextField(
                   controller: _searchController,
@@ -210,21 +212,11 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     });
                   },
                 ),
-                const SizedBox(height: 14),
-                GestureDetector(
-                  onTap: _showAddOrEditModuleSheet,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      'Add Module',
-                      style: AppTextStyles.button.copyWith(color: Colors.white),
-                    ),
-                  ),
+                const SizedBox(height: AppSpacing.sm),
+                GlowingButton(
+                  label: 'Add Module',
+                  onPressed: _showAddOrEditModuleSheet,
+                  width: double.infinity,
                 ),
                 const SizedBox(height: 16),
                 if (_loadError != null)
@@ -307,9 +299,9 @@ class _ModuleCard extends StatelessWidget {
     final subjectColor = _parseColor();
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -503,7 +495,7 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
     final viewInsets = MediaQuery.of(context).viewInsets;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 18, 16, viewInsets.bottom + 22),
+      padding: EdgeInsets.fromLTRB(AppSpacing.screenHorizontal, AppSpacing.md, AppSpacing.screenHorizontal, viewInsets.bottom + AppSpacing.lg),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,34 +559,12 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
               },
             ),
           ),
-          const SizedBox(height: 18),
-          GestureDetector(
-            onTap: _save,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: _isSaving
-                  ? const SizedBox(
-                      height: 18,
-                      width: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(
-                      widget.module == null ? 'Add Module' : 'Save Changes',
-                      style: AppTextStyles.button.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-            ),
+          const SizedBox(height: AppSpacing.md),
+          GlowingButton(
+            label: widget.module == null ? 'Add Module' : 'Save Changes',
+            onPressed: _isSaving ? null : _save,
+            isLoading: _isSaving,
+            width: double.infinity,
           ),
         ],
       ),

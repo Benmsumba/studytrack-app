@@ -11,6 +11,7 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/glass_card.dart';
 
@@ -172,13 +173,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   void _showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.danger,
-      ),
-    );
+    SnackbarHelper.show(context, message, type: AppSnackbarType.warning);
   }
 
   @override
