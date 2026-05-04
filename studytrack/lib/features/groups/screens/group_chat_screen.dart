@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -102,6 +103,31 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
         };
       }
     }
+  }
+
+  String _formatTime(DateTime dt) {
+    final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+    final m = dt.minute.toString().padLeft(2, '0');
+    final suffix = dt.hour >= 12 ? 'PM' : 'AM';
+    return '$h:$m $suffix';
+  }
+
+  String _dateSeparatorLabel(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final msgDay = DateTime(dt.year, dt.month, dt.day);
+    final diff = today.difference(msgDay).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Yesterday';
+    return DateFormat('EEE, d MMM').format(dt);
+  }
+
+  bool _showDateSeparator(int index) {
+    if (index == 0) return true;
+    final prev = _messages[index - 1].createdAt;
+    final curr = _messages[index].createdAt;
+    return DateTime(prev.year, prev.month, prev.day) !=
+        DateTime(curr.year, curr.month, curr.day);
   }
 
   Color _avatarColor(String senderId) {
@@ -231,81 +257,119 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       final year = meta['year'] as int?;
                       final subtitle =
                           '$course${year == null ? '' : ' • Year $year'}';
+                      final timestamp = _formatTime(message.createdAt);
+                      final showSeparator = _showDateSeparator(index);
+                      final separatorLabel = showSeparator
+                          ? _dateSeparatorLabel(message.createdAt)
+                          : null;
 
-                      return Align(
-                        alignment: mine
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 10),
-                          constraints: const BoxConstraints(maxWidth: 320),
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            color: mine
-                                ? AppColors.primary
-                                : AppColors.cardDark,
-                            borderRadius: BorderRadius.circular(12),
-                            border: mine
-                                ? null
-                                : Border.all(color: AppColors.border),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: mine
-                                ? CrossAxisAlignment.end
-                                : CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
+                      return Column(
+                        children: [
+                          if (separatorLabel != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
                                 children: [
-                                  CircleAvatar(
-                                    radius: 12,
-                                    backgroundColor: _avatarColor(sender),
+                                  const Expanded(child: Divider(color: AppColors.border)),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
                                     child: Text(
-                                      displayName.substring(0, 1).toUpperCase(),
+                                      separatorLabel,
                                       style: AppTextStyles.caption.copyWith(
-                                        color: Colors.white,
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.textMuted,
+                                        fontSize: 11,
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
-                                  Column(
-                                    crossAxisAlignment: mine
-                                        ? CrossAxisAlignment.end
-                                        : CrossAxisAlignment.start,
+                                  const Expanded(child: Divider(color: AppColors.border)),
+                                ],
+                              ),
+                            ),
+                          Align(
+                            alignment: mine
+                                ? Alignment.centerRight
+                                : Alignment.centerLeft,
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              constraints: const BoxConstraints(maxWidth: 320),
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                gradient: mine ? AppColors.primaryGradient : null,
+                                color: mine ? null : AppColors.cardDark,
+                                borderRadius: BorderRadius.circular(12),
+                                border: mine
+                                    ? null
+                                    : Border.all(color: AppColors.border),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: mine
+                                    ? CrossAxisAlignment.end
+                                    : CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      Text(
-                                        displayName,
-                                        style: AppTextStyles.caption.copyWith(
-                                          color: mine
-                                              ? Colors.white70
-                                              : AppColors.accent,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
+                                      CircleAvatar(
+                                        radius: 12,
+                                        backgroundColor: _avatarColor(sender),
+                                        child: Text(
+                                          displayName.substring(0, 1).toUpperCase(),
+                                          style: AppTextStyles.caption.copyWith(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                          ),
                                         ),
                                       ),
-                                      Text(
-                                        subtitle,
-                                        style: AppTextStyles.caption.copyWith(
-                                          color: Colors.white60,
-                                          fontSize: 10,
-                                        ),
+                                      const SizedBox(width: 6),
+                                      Column(
+                                        crossAxisAlignment: mine
+                                            ? CrossAxisAlignment.end
+                                            : CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            displayName,
+                                            style: AppTextStyles.caption.copyWith(
+                                              color: mine
+                                                  ? Colors.white70
+                                                  : AppColors.accent,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          Text(
+                                            subtitle,
+                                            style: AppTextStyles.caption.copyWith(
+                                              color: Colors.white60,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    content,
+                                    style: AppTextStyles.bodyMedium.copyWith(
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  if (timestamp.isNotEmpty) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      timestamp,
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: Colors.white54,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                content,
-                                style: AppTextStyles.bodyMedium.copyWith(
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        ),
+                        ],
                       );
                     },
                   ),
