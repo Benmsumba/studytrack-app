@@ -217,7 +217,12 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
 
 class _EmailStep extends StatelessWidget {
   const _EmailStep({
-    required this.formKey, required this.emailController, required this.loading, required this.errorMessage, required this.onSend, super.key,
+    required this.formKey,
+    required this.emailController,
+    required this.loading,
+    required this.errorMessage,
+    required this.onSend,
+    super.key,
   });
 
   final GlobalKey<FormState> formKey;
@@ -270,7 +275,14 @@ class _EmailStep extends StatelessWidget {
 
 class _OtpStep extends StatelessWidget {
   const _OtpStep({
-    required this.formKey, required this.otpController, required this.email, required this.loading, required this.errorMessage, required this.onVerify, required this.onResend, super.key,
+    required this.formKey,
+    required this.otpController,
+    required this.email,
+    required this.loading,
+    required this.errorMessage,
+    required this.onVerify,
+    required this.onResend,
+    super.key,
   });
 
   final GlobalKey<FormState> formKey;
