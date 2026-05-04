@@ -187,6 +187,19 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Result<void>> sendOtp(String email) async {
+    try {
+      await _supabaseService.client.auth.signInWithOtp(email: email);
+      return const Success(null);
+    } on Object catch (e, stack) {
+      debugPrint('sendOtp error: $e');
+      return Failure(
+        AuthException(message: 'Failed to send OTP: $e', stackTrace: stack),
+      );
+    }
+  }
+
+  @override
   Future<Result<ProfileModel>> verifyOtp({
     required String email,
     required String otp,

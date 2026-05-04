@@ -68,8 +68,11 @@ jobs:
         run: |
           echo "Deploying Edge Functions..."
           supabase functions deploy gemini-proxy --no-verify-jwt
-          echo "Edge Function deployed."
+          echo "gemini-proxy deployed."
           echo "URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/gemini-proxy"
+          supabase functions deploy delete-account --no-verify-jwt
+          echo "delete-account deployed."
+          echo "URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/delete-account"
 
       - name: List deployed functions
         if: steps.secret_check.outputs.missing == 'false'
