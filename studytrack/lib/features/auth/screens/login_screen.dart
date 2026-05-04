@@ -8,7 +8,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/l10n/app_strings.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/widgets/custom_button.dart';
 import '../controllers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -49,13 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final result = await auth.signInWithGoogle();
       if (!mounted) return;
       if (!result.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.message),
-            backgroundColor: AppColors.danger,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        SnackbarHelper.show(context, result.message, type: AppSnackbarType.error);
       }
     } finally {
       if (mounted) {
@@ -81,13 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(result.message),
-        backgroundColor: AppColors.danger,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    SnackbarHelper.show(context, result.message, type: AppSnackbarType.error);
   }
 
   Future<void> _onForgotPasswordTap() async {
@@ -175,12 +165,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(result.message),
-        backgroundColor: result.success ? AppColors.success : AppColors.danger,
-        behavior: SnackBarBehavior.floating,
-      ),
+    SnackbarHelper.show(
+      context,
+      result.message,
+      type: result.success ? AppSnackbarType.success : AppSnackbarType.error,
     );
   }
 
@@ -310,10 +298,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            _buildGradientButton(
+                            GlowingButton(
                               label: AppStrings.login,
                               isLoading: auth.isLoading,
-                              onTap: auth.isLoading ? null : _onLoginTap,
+                              onPressed: auth.isLoading ? null : _onLoginTap,
+                              width: double.infinity,
                             ),
                           ],
                         ),
@@ -492,35 +481,4 @@ class _LoginScreenState extends State<LoginScreen> {
     ),
   );
 
-  Widget _buildGradientButton({
-    required String label,
-    required bool isLoading,
-    required VoidCallback? onTap,
-  }) => GestureDetector(
-    onTap: onTap,
-    child: AnimatedOpacity(
-      duration: const Duration(milliseconds: 200),
-      opacity: onTap == null ? 0.7 : 1,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Center(
-          child: isLoading
-              ? const Icon(
-                  Icons.hourglass_top_rounded,
-                  color: Colors.white,
-                  size: 18,
-                )
-              : Text(
-                  label,
-                  style: AppTextStyles.button.copyWith(color: Colors.white),
-                ),
-        ),
-      ),
-    ),
-  );
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
@@ -290,22 +291,20 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
               children: [
                 if (hasNotes)
                   Container(
-                    margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                    margin: const EdgeInsets.fromLTRB(AppSpacing.screenHorizontal, AppSpacing.xs, AppSpacing.screenHorizontal, AppSpacing.xxs),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                      horizontal: AppSpacing.sm,
+                      vertical: AppSpacing.xs,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(999),
+                      borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
                       border: Border.all(color: AppColors.accent),
                     ),
                     child: Text(
                       'Based on your uploaded notes',
-                      style: AppTextStyles.caption.copyWith(
+                      style: AppTextStyles.sectionOverline.copyWith(
                         color: AppColors.accent,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -314,7 +313,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                       ? _EmptyTutorState(topicName: topicName)
                       : ListView.builder(
                           controller: _scrollController,
-                          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                          padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.xs, AppSpacing.sm, AppSpacing.xs),
                           itemCount: _messages.length + (_isThinking ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index == _messages.length) {
@@ -332,7 +331,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                         ),
                 ),
                 Container(
-                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.xs, AppSpacing.sm, AppSpacing.sm),
                   decoration: const BoxDecoration(
                     color: AppColors.surfaceDark,
                     border: Border(top: BorderSide(color: AppColors.border)),
@@ -381,7 +380,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                                 filled: true,
                                 fillColor: AppColors.cardDark,
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
                                   borderSide: const BorderSide(
                                     color: AppColors.border,
                                   ),
@@ -390,13 +389,13 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                               onSubmitted: _sendUserMessage,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: AppSpacing.xs),
                           GestureDetector(
                             onTap: () =>
                                 _sendUserMessage(_inputController.text),
                             child: Container(
-                              width: 44,
-                              height: 44,
+                              width: 48,
+                              height: 48,
                               decoration: BoxDecoration(
                                 gradient: (_isThinking || _isStreaming)
                                     ? null
@@ -404,7 +403,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                                 color: (_isThinking || _isStreaming)
                                     ? AppColors.cardDark
                                     : null,
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
                               ),
                               child: Icon(
                                 Icons.send_rounded,
@@ -453,12 +452,12 @@ class _ChatBubble extends StatelessWidget {
       alignment: alignment,
       child: Container(
         constraints: BoxConstraints(maxWidth: maxWidth),
-        margin: const EdgeInsets.symmetric(vertical: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
         decoration: BoxDecoration(
           gradient: message.isUser ? AppColors.primaryGradient : null,
           color: message.isUser ? null : AppColors.cardDark,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
           border: message.isUser ? null : Border.all(color: AppColors.border),
         ),
         child: message.isUser
@@ -510,26 +509,22 @@ class _EmptyTutorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xxl),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(
             Icons.psychology_alt_rounded,
             color: AppColors.accent,
-            size: 50,
+            size: 52,
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.md),
           Text(
             'Ask me anything about $topicName',
             textAlign: TextAlign.center,
-            style: AppTextStyles.headingLarge.copyWith(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-            ),
+            style: AppTextStyles.headingMedium,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.sm),
           Text(
             'Try: "Explain the core concept", "Give me a mnemonic", or "Predict exam questions"',
             textAlign: TextAlign.center,

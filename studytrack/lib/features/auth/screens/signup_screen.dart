@@ -8,7 +8,9 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/l10n/app_strings.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/widgets/custom_button.dart';
 import '../controllers/auth_provider.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -55,13 +57,7 @@ class _SignupScreenState extends State<SignupScreen> {
       final result = await auth.signInWithGoogle();
       if (!mounted) return;
       if (!result.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.message),
-            backgroundColor: AppColors.danger,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
+        SnackbarHelper.show(context, result.message, type: AppSnackbarType.error);
       }
     } finally {
       if (mounted) {
@@ -76,11 +72,10 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_acceptedTerms) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please accept terms and conditions.'),
-          behavior: SnackBarBehavior.floating,
-        ),
+      SnackbarHelper.show(
+        context,
+        'Please accept terms and conditions.',
+        type: AppSnackbarType.warning,
       );
       return;
     }
@@ -97,26 +92,17 @@ class _SignupScreenState extends State<SignupScreen> {
       if (context.read<AuthProvider>().isAuthenticated) {
         context.go('/onboarding');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Account created. Check your email to verify your account, then login.',
-            ),
-            behavior: SnackBarBehavior.floating,
-          ),
+        SnackbarHelper.show(
+          context,
+          'Account created. Check your email to verify your account, then login.',
+          type: AppSnackbarType.success,
         );
         context.go('/login');
       }
       return;
     }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(result.message),
-        backgroundColor: AppColors.danger,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    SnackbarHelper.show(context, result.message, type: AppSnackbarType.error);
   }
 
   @override
@@ -259,12 +245,11 @@ class _SignupScreenState extends State<SignupScreen> {
                               ],
                             ),
                             const SizedBox(height: AppSpacing.xs),
-                            _buildGradientButton(
+                            GlowingButton(
                               label: AppStrings.createAccount,
                               isLoading: auth.isLoading,
-                              onTap: auth.isLoading
-                                  ? null
-                                  : _onCreateAccountTap,
+                              onPressed: auth.isLoading ? null : _onCreateAccountTap,
+                              width: double.infinity,
                             ),
                           ],
                         ),
@@ -439,32 +424,4 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-  Widget _buildGradientButton({
-    required String label,
-    required bool isLoading,
-    required VoidCallback? onTap,
-  }) => GestureDetector(
-    onTap: onTap,
-    child: AnimatedOpacity(
-      duration: const Duration(milliseconds: 200),
-      opacity: onTap == null ? 0.7 : 1,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Center(
-          child: isLoading
-              ? const Icon(
-                  Icons.hourglass_top_rounded,
-                  color: Colors.white,
-                  size: 18,
-                )
-              : Text(label, style: AppTextStyles.button),
-        ),
-      ),
-    ),
-  );
 }
