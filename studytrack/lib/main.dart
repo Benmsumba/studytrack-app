@@ -168,7 +168,7 @@ StreamSubscription? _uniLinksSub;
 
 void _setupUriListener() {
   try {
-    _uniLinksSub = uriLinkStream.listen((Uri? uri) async {
+    _uniLinksSub = uriLinkStream.listen((uri) async {
       if (uri == null) return;
       final code = uri.queryParameters['code'];
       if (code == null || code.isEmpty) return;
