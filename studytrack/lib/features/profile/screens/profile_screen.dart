@@ -13,6 +13,7 @@ import '../../../core/services/export_service.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/utils/snackbar_helper.dart';
+import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/loading_shimmer_widget.dart';
 import '../../../models/exam_model.dart';
 import '../../../models/module_model.dart';
@@ -260,44 +261,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: 32),
 
               // Export Data
-              SizedBox(
+              GlowingButton(
+                label: _isExporting ? 'Preparing PDF...' : 'Export Weekly Report (PDF)',
+                onPressed: _isExporting ? null : _exportWeeklyReport,
+                isLoading: _isExporting,
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _isExporting ? null : _exportWeeklyReport,
-                  icon: _isExporting
-                      ? const Icon(Icons.hourglass_top_rounded, size: 16)
-                      : const Icon(Icons.download),
-                  label: Text(
-                    _isExporting
-                        ? 'Preparing PDF...'
-                        : 'Export Weekly Report (PDF)',
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
+                icon: const Icon(Icons.download, color: Colors.white, size: 18),
               ),
-              const SizedBox(height: 12),
-              SizedBox(
+              const SizedBox(height: AppSpacing.sm),
+              CustomButton(
+                label: _isBackingUp ? 'Preparing Backup...' : 'Backup to Google Drive',
+                onPressed: _isBackingUp ? null : _backupToGoogleDrive,
+                isLoading: _isBackingUp,
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: _isBackingUp ? null : _backupToGoogleDrive,
-                  icon: _isBackingUp
-                      ? const Icon(Icons.hourglass_top_rounded, size: 16)
-                      : const Icon(Icons.backup),
-                  label: Text(
-                    _isBackingUp
-                        ? 'Preparing Backup...'
-                        : 'Backup to Google Drive',
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.surfaceDark,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
+                gradient: AppColors.cardGradient,
+                glowColor: AppColors.neonViolet,
+                icon: const Icon(Icons.backup, color: Colors.white, size: 18),
               ),
             ],
           ),
@@ -433,10 +412,10 @@ class _SocialCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.all(AppSpacing.lg),
     decoration: BoxDecoration(
       gradient: AppColors.primaryGradient,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,10 +450,10 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(12),
+    padding: const EdgeInsets.all(AppSpacing.sm),
     decoration: BoxDecoration(
       color: AppColors.cardDark,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
       border: Border.all(color: AppColors.border, width: 1),
     ),
     child: Column(
@@ -510,7 +489,7 @@ class _BadgeWidget extends StatelessWidget {
         color: earned
             ? AppColors.cardDark
             : AppColors.cardDark.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
         border: Border.all(
           color: earned ? AppColors.primary : AppColors.border,
           width: 1,

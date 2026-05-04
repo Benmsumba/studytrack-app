@@ -9,7 +9,9 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/study_group_repository.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/widgets/app_state_view.dart';
+import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../../../models/study_group_model.dart';
 import '../../auth/controllers/auth_provider.dart';
@@ -104,104 +106,100 @@ class _GroupsScreenState extends State<GroupsScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            SizedBox(
+            GlowingButton(
+              label: 'Create',
+              isLoading: _working,
               width: double.infinity,
-              child: FilledButton(
-                onPressed: _working
-                    ? null
-                    : () async {
-                        HapticFeedback.lightImpact();
-                        final auth = Provider.of<AuthProvider>(
+              onPressed: _working
+                  ? null
+                  : () async {
+                      HapticFeedback.lightImpact();
+                      final auth = Provider.of<AuthProvider>(
+                        context,
+                        listen: false,
+                      );
+                      final user = auth.currentUser;
+                      final name = nameController.text.trim();
+                      final description = descriptionController.text.trim();
+                      if (user == null || name.isEmpty) return;
+
+                      setState(() => _working = true);
+
+                      final navigator = Navigator.of(context);
+
+                      final createdResult = await _groupRepo.createGroup(
+                        name: name,
+                        description: description.isEmpty ? '' : description,
+                      );
+
+                      if (!mounted) return;
+                      setState(() => _working = false);
+                      navigator.pop();
+
+                      if (createdResult is! Success<StudyGroupModel>) {
+                        SnackbarHelper.show(
                           context,
-                          listen: false,
+                          AppStrings.failedCreateGroup,
+                          type: AppSnackbarType.error,
                         );
-                        final user = auth.currentUser;
-                        final name = nameController.text.trim();
-                        final description = descriptionController.text.trim();
-                        if (user == null || name.isEmpty) return;
+                        return;
+                      }
 
-                        setState(() => _working = true);
-
-                        final navigator = Navigator.of(context);
-                        final scaffold = ScaffoldMessenger.of(context);
-
-                        final createdResult = await _groupRepo.createGroup(
-                          name: name,
-                          description: description.isEmpty ? '' : description,
-                        );
-
-                        if (!mounted) return;
-                        setState(() => _working = false);
-                        navigator.pop();
-
-                        if (createdResult is! Success<StudyGroupModel>) {
-                          scaffold.showSnackBar(
-                            const SnackBar(
-                              content: Text(AppStrings.failedCreateGroup),
-                            ),
-                          );
-                          return;
-                        }
-
-                        final invite = createdResult.data.inviteCode;
-                        if (!mounted) return;
-                        showDialog<void>(
-                          context: navigator.context,
-                          builder: (dialogContext) => AlertDialog(
-                            backgroundColor: AppColors.cardDark,
-                            title: Text(
-                              AppStrings.groupCreated,
-                              style: AppTextStyles.headingSmall,
-                            ),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  AppStrings.shareInviteCode,
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    color: AppColors.textSecondary,
-                                  ),
+                      final invite = createdResult.data.inviteCode;
+                      if (!mounted) return;
+                      showDialog<void>(
+                        context: navigator.context,
+                        builder: (dialogContext) => AlertDialog(
+                          backgroundColor: AppColors.cardDark,
+                          title: Text(
+                            AppStrings.groupCreated,
+                            style: AppTextStyles.headingSmall,
+                          ),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                AppStrings.shareInviteCode,
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.textSecondary,
                                 ),
-                                const SizedBox(height: AppSpacing.xs),
-                                SelectableText(
-                                  invite,
-                                  style: AppTextStyles.statValue.copyWith(
-                                    color: AppColors.accent,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () async {
-                                  await Clipboard.setData(
-                                    ClipboardData(text: invite),
-                                  );
-                                  if (!dialogContext.mounted) return;
-                                  Navigator.of(dialogContext).pop();
-                                  scaffold.showSnackBar(
-                                    const SnackBar(
-                                      content: Text(AppStrings.inviteCopied),
-                                    ),
-                                  );
-                                },
-                                child: const Text('Copy'),
                               ),
-                              FilledButton(
-                                onPressed: () =>
-                                    Navigator.of(dialogContext).pop(),
-                                child: const Text('Done'),
+                              const SizedBox(height: AppSpacing.xs),
+                              SelectableText(
+                                invite,
+                                style: AppTextStyles.statValue.copyWith(
+                                  color: AppColors.accent,
+                                ),
                               ),
                             ],
                           ),
-                        );
+                          actions: [
+                            TextButton(
+                              onPressed: () async {
+                                await Clipboard.setData(
+                                  ClipboardData(text: invite),
+                                );
+                                if (!dialogContext.mounted) return;
+                                Navigator.of(dialogContext).pop();
+                                if (!mounted) return;
+                                SnackbarHelper.show(
+                                  context,
+                                  AppStrings.inviteCopied,
+                                  type: AppSnackbarType.success,
+                                );
+                              },
+                              child: const Text('Copy'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.of(dialogContext).pop(),
+                              child: const Text('Done'),
+                            ),
+                          ],
+                        ),
+                      );
 
-                        await _loadGroups();
-                      },
-                child: _working
-                    ? const Icon(Icons.hourglass_top_rounded, size: 18)
-                    : const Text('Create'),
-              ),
+                      await _loadGroups();
+                    },
             ),
           ],
         ),
@@ -241,55 +239,49 @@ class _GroupsScreenState extends State<GroupsScreen> {
               decoration: const InputDecoration(labelText: 'Enter invite code'),
             ),
             const SizedBox(height: AppSpacing.md),
-            SizedBox(
+            GlowingButton(
+              label: 'Join Group',
+              isLoading: _working,
               width: double.infinity,
-              child: FilledButton(
-                onPressed: _working
-                    ? null
-                    : () async {
-                        HapticFeedback.lightImpact();
-                        final auth = Provider.of<AuthProvider>(
+              onPressed: _working
+                  ? null
+                  : () async {
+                      HapticFeedback.lightImpact();
+                      final auth = Provider.of<AuthProvider>(
+                        context,
+                        listen: false,
+                      );
+                      final user = auth.currentUser;
+                      final code = codeController.text.trim();
+                      if (user == null || code.isEmpty) return;
+
+                      setState(() => _working = true);
+
+                      final navigator = Navigator.of(context);
+
+                      final joinedResult = await _groupRepo.joinGroupByCode(code);
+
+                      if (!mounted) return;
+                      setState(() => _working = false);
+                      navigator.pop();
+
+                      if (joinedResult is! Success<void>) {
+                        SnackbarHelper.show(
                           context,
-                          listen: false,
+                          AppStrings.inviteNotFound,
+                          type: AppSnackbarType.error,
                         );
-                        final user = auth.currentUser;
-                        final code = codeController.text.trim();
-                        if (user == null || code.isEmpty) return;
+                        return;
+                      }
 
-                        setState(() => _working = true);
-
-                        final navigator = Navigator.of(context);
-                        final scaffold = ScaffoldMessenger.of(context);
-
-                        final joinedResult = await _groupRepo.joinGroupByCode(
-                          code,
-                        );
-
-                        if (!mounted) return;
-                        setState(() => _working = false);
-                        navigator.pop();
-
-                        if (joinedResult is! Success<void>) {
-                          scaffold.showSnackBar(
-                            const SnackBar(
-                              content: Text(AppStrings.inviteNotFound),
-                            ),
-                          );
-                          return;
-                        }
-
-                        await _loadGroups();
-                        if (!mounted) return;
-                        scaffold.showSnackBar(
-                          const SnackBar(
-                            content: Text(AppStrings.joinedGroupSuccess),
-                          ),
-                        );
-                      },
-                child: _working
-                    ? const Icon(Icons.hourglass_top_rounded, size: 18)
-                    : const Text('Join Group'),
-              ),
+                      await _loadGroups();
+                      if (!mounted) return;
+                      SnackbarHelper.show(
+                        context,
+                        AppStrings.joinedGroupSuccess,
+                        type: AppSnackbarType.success,
+                      );
+                    },
             ),
           ],
         ),
@@ -355,59 +347,47 @@ class _GroupsScreenState extends State<GroupsScreen> {
                     ),
                   )
                 else if (_groups.isEmpty) ...[
-                  GlassCard(
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    backgroundColor: AppColors.cardDark,
-                    borderRadius: AppSpacing.cardRadius,
-                    borderColors: const [AppColors.border, AppColors.border],
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.groups_2_outlined,
-                          size: 56,
-                          color: Colors.white70,
+                  AppStateView.empty(
+                    icon: Icons.groups_2_outlined,
+                    title: AppStrings.noGroupsTitle,
+                    message: AppStrings.noGroupsSubtitle,
+                    actionLabel: 'Create or Join a Group',
+                    onAction: () async {
+                      HapticFeedback.lightImpact();
+                      await showModalBottomSheet<void>(
+                        context: context,
+                        backgroundColor: AppColors.surfaceDark,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius)),
                         ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          AppStrings.noGroupsTitle,
-                          style: AppTextStyles.headingSmall,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          AppStrings.noGroupsSubtitle,
-                          textAlign: TextAlign.center,
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
+                        builder: (context) => SafeArea(
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                ListTile(
+                                  leading: const Icon(Icons.group_add, color: AppColors.accent),
+                                  title: const Text('Create Group'),
+                                  onTap: () async {
+                                    Navigator.of(context).pop();
+                                    await _showCreateGroupSheet();
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.login, color: AppColors.accent),
+                                  title: const Text('Join Group'),
+                                  onTap: () async {
+                                    Navigator.of(context).pop();
+                                    await _showJoinGroupSheet();
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: FilledButton.icon(
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  _showCreateGroupSheet();
-                                },
-                                icon: const Icon(Icons.group_add),
-                                label: const Text('Create Group'),
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.xs),
-                            Expanded(
-                              child: OutlinedButton.icon(
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  _showJoinGroupSheet();
-                                },
-                                icon: const Icon(Icons.login),
-                                label: const Text('Join Group'),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ] else ...[
                   Text('My Study Groups', style: AppTextStyles.headingSmall),
@@ -481,7 +461,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                             ),
                             const Icon(
                               Icons.chevron_right,
-                              color: Colors.white70,
+                              color: AppColors.textSecondary,
                             ),
                           ],
                         ),
@@ -508,16 +488,16 @@ class _GroupsScreenState extends State<GroupsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ListTile(
-                    leading: const Icon(Icons.group_add),
-                    title: const Text('Create Group'),
+                    leading: const Icon(Icons.group_add, color: AppColors.accent),
+                    title: Text('Create Group', style: AppTextStyles.bodyMedium),
                     onTap: () async {
                       Navigator.of(context).pop();
                       await _showCreateGroupSheet();
                     },
                   ),
                   ListTile(
-                    leading: const Icon(Icons.login),
-                    title: const Text('Join Group'),
+                    leading: const Icon(Icons.login, color: AppColors.accent),
+                    title: Text('Join Group', style: AppTextStyles.bodyMedium),
                     onTap: () async {
                       Navigator.of(context).pop();
                       await _showJoinGroupSheet();
