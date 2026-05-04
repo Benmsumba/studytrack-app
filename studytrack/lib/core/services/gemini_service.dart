@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/app_constants.dart';
 
@@ -49,33 +51,58 @@ class QuizQuestion {
   };
 }
 
+/// Holds the student's personal study preferences loaded from their profile.
+/// Injected into AI prompts to personalise responses.
+class StudyPersonalization {
+  const StudyPersonalization({
+    this.primeStudyTime,
+    this.studyPreference,
+    this.studyHoursPerDay,
+  });
+
+  final String? primeStudyTime;
+  final String? studyPreference;
+  final int? studyHoursPerDay;
+
+  bool get hasAnyData =>
+      primeStudyTime != null ||
+      studyPreference != null ||
+      studyHoursPerDay != null;
+
+  String toPromptSnippet() {
+    if (!hasAnyData) return '';
+    final lines = <String>[];
+    if (studyPreference != null) {
+      lines.add('- Study style: ${studyPreference!} (solo vs group)');
+    }
+    if (primeStudyTime != null) {
+      lines.add('- Peak focus time: ${primeStudyTime!}');
+    }
+    if (studyHoursPerDay != null) {
+      lines.add('- Daily study target: ${studyHoursPerDay!} hrs/day');
+    }
+    return '\nStudent study profile:\n${lines.join('\n')}';
+  }
+}
+
 class GeminiService {
   factory GeminiService() => _instance;
   GeminiService._internal();
 
   static final GeminiService _instance = GeminiService._internal();
 
-  late final GenerativeModel _model = GenerativeModel(
-    model: 'gemini-2.0-flash',
-    apiKey: _resolvedApiKey,
-  );
-
   final Map<int, _CacheEntry> _cache = {};
   static const _cacheTtl = Duration(hours: 1);
   static const _maxCacheEntries = 100;
   static const _maxRetries = 3;
-
-  String get _resolvedApiKey {
-    const fromEnv = String.fromEnvironment('GEMINI_API_KEY');
-    if (fromEnv.isNotEmpty) {
-      return fromEnv;
-    }
-    return AppConstants.geminiApiKey;
-  }
-
-  // Minimum gap between API requests — prevents runaway usage from rapid fire.
   static const _minRequestInterval = Duration(milliseconds: 500);
+
   DateTime? _lastRequestAt;
+
+  bool get _isEdgeFunctionConfigured => AppConstants.isSupabaseConfigured;
+
+  String get _edgeFunctionUrl =>
+      '${AppConstants.resolvedSupabaseUrl}/functions/v1/gemini-proxy';
 
   void clearCache() => _cache.clear();
 
@@ -85,10 +112,11 @@ class GeminiService {
     required String course,
     required int currentRating,
     String? notesContent,
+    StudyPersonalization? personalization,
   }) async {
-    final prompt =
-        '''
+    final prompt = '''
 You are an expert academic tutor for health sciences students.
+${personalization?.toPromptSnippet() ?? ''}
 
 Student course: $course
 Module: $moduleName
@@ -117,10 +145,11 @@ ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' :
     required String topicName,
     required String course,
     String? notesContent,
+    StudyPersonalization? personalization,
   }) async {
-    final prompt =
-        '''
+    final prompt = '''
 Generate 5 multiple-choice questions for the topic "$topicName" (course: $course).
+${personalization?.toPromptSnippet() ?? ''}
 
 Rules:
 - Exactly 5 questions.
@@ -175,8 +204,7 @@ ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' :
     required String topicName,
     required String content,
   }) async {
-    final prompt =
-        '''
+    final prompt = '''
 Create a creative and memorable mnemonic for this topic:
 Topic: $topicName
 Content: $content
@@ -196,8 +224,7 @@ Return:
     required String topicName,
     required String notesContent,
   }) async {
-    final prompt =
-        '''
+    final prompt = '''
 Summarize these notes for topic "$topicName" in under 300 words.
 Use concise bullet points and prioritize exam-relevant facts.
 
@@ -216,8 +243,7 @@ $notesContent
     required String moduleName,
     String? notesContent,
   }) async {
-    final prompt =
-        '''
+    final prompt = '''
 Predict 5 likely exam questions for:
 Topic: $topicName
 Module: $moduleName
@@ -244,8 +270,7 @@ ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' :
     required int sessionsCompleted,
     required int sessionsMissed,
   }) async {
-    final prompt =
-        '''
+    final prompt = '''
 Write a 3-4 sentence motivational weekly summary.
 Tone: encouraging coach.
 
@@ -273,8 +298,7 @@ Mention wins first, then gaps, then practical next-week advice.
     required List<String> upcomingExams,
     required String primeStudyTime,
   }) async {
-    final prompt =
-        '''
+    final prompt = '''
 Create a short 2-line actionable study suggestion.
 
 Student: $studentName
@@ -291,13 +315,115 @@ Keep it practical and specific for today.
     );
   }
 
+  /// Returns a single response (non-streaming) for the AI chat.
   Future<String> chatWithTutor({
     required String message,
     required List<Map<String, dynamic>> conversationHistory,
     required String currentTopic,
     required String course,
     String? notesContext,
+    StudyPersonalization? personalization,
   }) async {
+    final prompt = _buildChatPrompt(
+      message: message,
+      conversationHistory: conversationHistory,
+      currentTopic: currentTopic,
+      course: course,
+      notesContext: notesContext,
+      personalization: personalization,
+    );
+
+    return _generateText(
+      prompt,
+      fallback: 'Tutor is currently unavailable. Please try again.',
+    );
+  }
+
+  /// Streams the AI tutor response token-by-token via the Edge Function SSE endpoint.
+  /// Emits text chunks as they arrive so the UI can render them incrementally.
+  Stream<String> chatWithTutorStream({
+    required String message,
+    required List<Map<String, dynamic>> conversationHistory,
+    required String currentTopic,
+    required String course,
+    String? notesContext,
+    StudyPersonalization? personalization,
+  }) async* {
+    if (!_isEdgeFunctionConfigured) {
+      yield 'AI Tutor is not configured — Supabase URL is missing.';
+      return;
+    }
+
+    final prompt = _buildChatPrompt(
+      message: message,
+      conversationHistory: conversationHistory,
+      currentTopic: currentTopic,
+      course: course,
+      notesContext: notesContext,
+      personalization: personalization,
+    );
+
+    await _throttle();
+
+    final session = Supabase.instance.client.auth.currentSession;
+    final authToken =
+        session?.accessToken ?? AppConstants.resolvedSupabaseAnonKey;
+
+    final request = http.Request('POST', Uri.parse(_edgeFunctionUrl));
+    request.headers['Content-Type'] = 'application/json';
+    request.headers['Authorization'] = 'Bearer $authToken';
+    request.headers['apikey'] = AppConstants.resolvedSupabaseAnonKey;
+    request.body = jsonEncode({
+      'method': 'streamChat',
+      'params': {'prompt': prompt},
+    });
+
+    http.StreamedResponse response;
+    try {
+      response = await http.Client().send(request);
+    } on Object catch (err) {
+      yield 'Connection failed: $err';
+      return;
+    }
+
+    if (response.statusCode != 200) {
+      yield 'AI Tutor unavailable (HTTP ${response.statusCode}). Please try again.';
+      return;
+    }
+
+    final lines = response.stream
+        .transform(utf8.decoder)
+        .transform(const LineSplitter());
+
+    await for (final line in lines) {
+      if (!line.startsWith('data: ')) continue;
+      final payload = line.substring(6).trim();
+      if (payload == '[DONE]') break;
+
+      try {
+        final json = jsonDecode(payload) as Map<String, dynamic>;
+        if (json.containsKey('error')) {
+          yield 'Error: ${json['error']}';
+          break;
+        }
+        final text = json['text'] as String?;
+        if (text != null && text.isNotEmpty) {
+          yield text;
+        }
+      } on Object catch (_) {
+        // Malformed SSE chunk — skip silently
+      }
+    }
+  }
+
+  String _buildChatPrompt({
+    required String message,
+    required List<Map<String, dynamic>> conversationHistory,
+    required String currentTopic,
+    required String course,
+    String? notesContext,
+    StudyPersonalization? personalization,
+  }) {
     final history = conversationHistory
         .map(
           (entry) =>
@@ -305,11 +431,11 @@ Keep it practical and specific for today.
         )
         .join('\n');
 
-    final prompt =
-        '''
+    return '''
 You are StudyTrack AI Tutor.
 Stay focused on academic help only.
 If user asks off-topic requests, politely redirect to study help.
+${personalization?.toPromptSnippet() ?? ''}
 
 Current topic: $currentTopic
 Course: $course
@@ -323,19 +449,14 @@ $history
 New user message:
 $message
 ''';
-
-    return _generateText(
-      prompt,
-      fallback: 'Tutor is currently unavailable. Please try again.',
-    );
   }
 
   Future<String> _generateText(
     String prompt, {
     required String fallback,
   }) async {
-    if (_resolvedApiKey.isEmpty || _resolvedApiKey == 'YOUR_GEMINI_API_KEY') {
-      return 'Gemini API key is not configured.';
+    if (!_isEdgeFunctionConfigured) {
+      return 'AI Tutor is not configured — Supabase URL is missing.';
     }
 
     final cacheKey = prompt.hashCode;
@@ -349,11 +470,23 @@ $message
     Exception? lastError;
     for (var attempt = 0; attempt < _maxRetries; attempt++) {
       try {
-        final response = await _model.generateContent([Content.text(prompt)]);
-        final text = response.text?.trim() ?? '';
-        if (text.isEmpty) {
-          return fallback;
+        final response = await Supabase.instance.client.functions.invoke(
+          'gemini-proxy',
+          body: {
+            'method': 'generateText',
+            'params': {'prompt': prompt},
+          },
+        );
+
+        final data = response.data as Map<String, dynamic>?;
+        if (data == null) return fallback;
+
+        if (data.containsKey('error')) {
+          throw Exception(data['error'].toString());
         }
+
+        final text = (data['text'] as String?)?.trim() ?? '';
+        if (text.isEmpty) return fallback;
 
         if (_cache.length >= _maxCacheEntries) {
           _cache.remove(_cache.keys.first);

@@ -1,3 +1,11 @@
+-- =============================================================================
+-- !! WARNING — LOCAL / EMERGENCY DEBUGGING ONLY !!
+-- =============================================================================
+-- This script DISABLES Row Level Security on all tables.
+-- NEVER run this against your production Supabase project.
+-- If you need to fix permission errors in production, use quick_unblock.sql
+-- which grants correct privileges WITHOUT touching RLS.
+-- =============================================================================
 -- StudyTrack RLS Disable for Service Role Backend
 -- ALTERNATIVE: Simpler approach - disable RLS on all tables
 -- The backend service uses service_role which should bypass all RLS

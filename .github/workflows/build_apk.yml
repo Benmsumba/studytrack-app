@@ -49,6 +49,10 @@ jobs:
         working-directory: studytrack
         run: flutter pub get
 
+      - name: Check formatting
+        working-directory: studytrack
+        run: dart format --set-exit-if-changed .
+
       - name: Analyze
         working-directory: studytrack
         run: flutter analyze --no-fatal-warnings
