@@ -2292,6 +2292,31 @@ class SupabaseService {
     }
   }
 
+  Future<List<Map<String, dynamic>>?> getSharedUploadedNotes({
+    int limit = 40,
+  }) async {
+    try {
+      if (await _isOnline()) {
+        final response = await client
+            .from('uploaded_notes')
+            .select()
+            .eq('is_shared', true)
+            .order('created_at', ascending: false)
+            .limit(limit);
+        final rows = (response as List<dynamic>)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
+        await _cacheList('shared_uploaded_notes', 'all', rows);
+        return rows;
+      }
+
+      return _cachedList('shared_uploaded_notes', 'all');
+    } catch (error) {
+      debugPrint('getSharedUploadedNotes error: $error');
+      return _cachedList('shared_uploaded_notes', 'all');
+    }
+  }
+
   Future<Map<String, dynamic>?> updateNoteProcessingStatus(
     String noteId,
     String status,
