@@ -30,9 +30,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.surfaceDark,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           'Delete account',
           style: AppTextStyles.headingSmall.copyWith(color: AppColors.danger),
@@ -49,9 +47,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.danger,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('Delete forever'),
           ),
         ],
@@ -226,7 +222,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Consumer<OfflineSyncService>(
                 builder: (context, sync, _) {
                   final subtitle = sync.isSyncing
-                      ? 'Syncing  ' // keep spacing
+                      ? 'Syncing' // keep spacing
                       : (sync.lastSyncError != null
                             ? 'Error: ${sync.lastSyncError}'
                             : (sync.hasPendingChanges

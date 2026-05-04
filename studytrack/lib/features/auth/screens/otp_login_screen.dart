@@ -173,25 +173,25 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
     children: [
       // Animated icon
       Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: const [
-            BoxShadow(
-              color: AppColors.violetGlowSoft,
-              blurRadius: 20,
-              spreadRadius: 2,
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [
+                BoxShadow(
+                  color: AppColors.violetGlowSoft,
+                  blurRadius: 20,
+                  spreadRadius: 2,
+                ),
+              ],
             ),
-          ],
-        ),
-        child: const Icon(
-          Icons.mark_email_unread_rounded,
-          color: Colors.white,
-          size: 28,
-        ),
-      )
+            child: const Icon(
+              Icons.mark_email_unread_rounded,
+              color: Colors.white,
+              size: 28,
+            ),
+          )
           .animate()
           .fadeIn(duration: 400.ms)
           .scale(begin: const Offset(0.8, 0.8), duration: 400.ms),
@@ -242,7 +242,7 @@ class _EmailStep extends StatelessWidget {
           keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.done,
           onFieldSubmitted: (_) => onSend(),
-          validator: (v) => Validators.validateEmail(v ?? ''),
+          validator: Validators.email,
           style: AppTextStyles.bodyMedium.copyWith(
             color: AppColors.textPrimary,
           ),
