@@ -37,7 +37,7 @@ Future<void> main() async {
   }
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setSystemUIOverlayStyle(
+  SystemChrome..setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
@@ -164,34 +164,30 @@ Future<void> _bootstrapApp() async {
   unawaited(updateProvider.checkForUpdate());
 }
 
-StreamSubscription? _uniLinksSub;
+late final StreamSubscription<Uri?> _uniLinksSub;
 
 void _setupUriListener() {
-  try {
-    _uniLinksSub = uriLinkStream.listen(
-      (uri) async {
-        if (uri == null) return;
-        final code = uri.queryParameters['code'];
-        if (code == null || code.isEmpty) return;
+  _uniLinksSub = uriLinkStream.listen(
+    (uri) async {
+      if (uri == null) return;
+      final code = uri.queryParameters['code'];
+      if (code == null || code.isEmpty) return;
 
-        final verifier = await SpotifyService.retrieveCodeVerifier();
-        final clientId = AppConstants.resolvedSpotifyClientId;
-        if (verifier != null && clientId.isNotEmpty) {
-          await SpotifyService.handleAuthCodeExchange(
-            code: code,
-            codeVerifier: verifier,
-            clientId: clientId,
-          );
-          await SpotifyService.clearCodeVerifier();
-        }
-      },
-      onError: (err) {
-        debugPrint('uni_links error: $err');
-      },
-    );
-  } on Object catch (e) {
-    debugPrint('Failed to initialize uni_links listener: $e');
-  }
+      final verifier = await SpotifyService.retrieveCodeVerifier();
+      final clientId = AppConstants.resolvedSpotifyClientId;
+      if (verifier != null && clientId.isNotEmpty) {
+        await SpotifyService.handleAuthCodeExchange(
+          code: code,
+          codeVerifier: verifier,
+          clientId: clientId,
+        );
+        await SpotifyService.clearCodeVerifier();
+      }
+    },
+    onError: (Object err) {
+      debugPrint('uni_links error: $err');
+    },
+  );
 }
 
 Future<void> _safeInit(Future<void> Function() action) async {
