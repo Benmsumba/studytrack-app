@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import '../../services/supabase_service.dart';
 import '../../utils/app_exception.dart';
@@ -149,8 +150,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
       final client = _supabaseService.client;
 
-      // Delete user-owned rows from every table (RLS allows this).
-      // Order matters: child tables before parent tables.
+      // Delete user-owned rows (RLS allows this). Order: child → parent.
       for (final table in const [
         'group_messages',
         'group_members',
@@ -168,7 +168,15 @@ class ProfileRepositoryImpl implements ProfileRepository {
         await client.from(table).delete().eq('user_id', uid);
       }
 
-      // Sign out so the auth session is cleared on this device.
+      // Call the delete-account edge function which uses the service-role key
+      // to call auth.admin.deleteUser — the only way to hard-delete the auth
+      // record from client-side code.
+      await client.functions.invoke(
+        'delete-account',
+        method: supabase.HttpMethod.post,
+      );
+
+      // Sign out last so the JWT is still valid for the function call above.
       await client.auth.signOut();
 
       return const Success(null);

@@ -33,6 +33,9 @@ abstract class AuthRepository {
   /// Reset password
   Future<Result<void>> resetPassword(String email);
 
+  /// Send a one-time passcode to [email] for passwordless sign-in.
+  Future<Result<void>> sendOtp(String email);
+
   /// Verify OTP
   Future<Result<ProfileModel>> verifyOtp({
     required String email,

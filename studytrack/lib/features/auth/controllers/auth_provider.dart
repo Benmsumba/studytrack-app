@@ -158,6 +158,47 @@ class AuthProvider extends ChangeNotifier {
     );
   }
 
+  Future<AuthCommandResult> sendOtp(String email) async {
+    final normalizedEmail = email.trim();
+    final emailValidation = _validateEmail(normalizedEmail);
+    if (emailValidation != null) {
+      return _validationFailure(emailValidation);
+    }
+
+    _setLoading(true);
+    _clearError();
+
+    final result = await _authRepository!.sendOtp(normalizedEmail);
+    return _handleVoidCommand(
+      result,
+      successStatusCode: 200,
+      successMessage: 'OTP sent. Check your inbox.',
+    );
+  }
+
+  Future<AuthCommandResult> verifyOtpCode({
+    required String email,
+    required String otp,
+  }) async {
+    if (otp.trim().isEmpty) {
+      return _validationFailure('Enter the code from your email.');
+    }
+
+    _setLoading(true);
+    _clearError();
+
+    final result = await _authRepository!.verifyOtp(
+      email: email.trim(),
+      otp: otp.trim(),
+    );
+
+    return _handleProfileCommand(
+      result,
+      successStatusCode: 200,
+      successMessage: 'Signed in successfully.',
+    );
+  }
+
   Future<AuthCommandResult> resetPassword(String email) async {
     if (_legacySupabaseService != null) {
       return _legacyResetPassword(email);
