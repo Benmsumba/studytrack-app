@@ -11,6 +11,54 @@ import 'package:url_launcher/url_launcher.dart';
 import '../constants/app_constants.dart';
 import 'supabase_service.dart';
 
+// ---------------------------------------------------------------------------
+// Playback state model
+// ---------------------------------------------------------------------------
+
+class SpotifyPlaybackState {
+  const SpotifyPlaybackState({
+    required this.isPlaying,
+    required this.trackName,
+    required this.artistName,
+    required this.albumArtUrl,
+    required this.progressMs,
+    required this.durationMs,
+  });
+
+  factory SpotifyPlaybackState.fromJson(Map<String, dynamic> json) {
+    final item = json['item'] as Map<String, dynamic>?;
+    final artists = (item?['artists'] as List<dynamic>?)
+            ?.map((a) => (a as Map<String, dynamic>)['name']?.toString() ?? '')
+            .where((n) => n.isNotEmpty)
+            .join(', ') ??
+        '';
+    final images =
+        ((item?['album'] as Map<String, dynamic>?)?['images'] as List<dynamic>?) ?? [];
+    final artUrl = images.isNotEmpty
+        ? (images.first as Map<String, dynamic>)['url']?.toString()
+        : null;
+
+    return SpotifyPlaybackState(
+      isPlaying: json['is_playing'] as bool? ?? false,
+      trackName: item?['name']?.toString() ?? '',
+      artistName: artists,
+      albumArtUrl: artUrl,
+      progressMs: (json['progress_ms'] as num?)?.toInt() ?? 0,
+      durationMs: (item?['duration_ms'] as num?)?.toInt() ?? 1,
+    );
+  }
+
+  final bool isPlaying;
+  final String trackName;
+  final String artistName;
+  final String? albumArtUrl;
+  final int progressMs;
+  final int durationMs;
+
+  double get progressFraction =>
+      durationMs > 0 ? (progressMs / durationMs).clamp(0.0, 1.0) : 0.0;
+}
+
 class SpotifyStudyPlaylist {
   const SpotifyStudyPlaylist({
     required this.title,
@@ -119,7 +167,13 @@ class SpotifyService {
   /// [handleAuthCodeExchange]. The redirect handling must be wired in the
   /// app (deep link) and the resulting `code` passed to
   /// [handleAuthCodeExchange].
-  static Future<String?> startAuth({required String clientId, String scope = 'user-read-private user-read-email'}) async {
+  static Future<String?> startAuth({
+    required String clientId,
+    String scope =
+        'user-read-private user-read-email '
+        'user-read-playback-state user-modify-playback-state '
+        'user-read-currently-playing',
+  }) async {
     final codeVerifier = _randomString(128);
     final codeChallenge = codeChallengeFromVerifier(codeVerifier);
 
@@ -357,5 +411,96 @@ class SpotifyService {
       );
     }
     return refreshed;
+  }
+
+  // -------------------------------------------------------------------------
+  // Spotify Web API — playback control
+  // -------------------------------------------------------------------------
+
+  static const _apiBase = 'https://api.spotify.com/v1';
+
+  /// Returns the current playback state, or null when nothing is playing
+  /// or the token is missing / expired.
+  static Future<SpotifyPlaybackState?> getPlaybackState() async {
+    final token = await readAccessToken();
+    if (token == null || token.isEmpty) return null;
+    try {
+      final resp = await http.get(
+        Uri.parse('$_apiBase/me/player'),
+        headers: {'Authorization': 'Bearer $token'},
+      ).timeout(const Duration(seconds: 8));
+
+      if (resp.statusCode == 204) return null; // No active device
+      if (resp.statusCode != 200) {
+        debugPrint('getPlaybackState HTTP ${resp.statusCode}: ${resp.body}');
+        return null;
+      }
+      final json = jsonDecode(resp.body) as Map<String, dynamic>;
+      return SpotifyPlaybackState.fromJson(json);
+    } on Object catch (e) {
+      debugPrint('getPlaybackState error: $e');
+      return null;
+    }
+  }
+
+  /// Toggles play/pause. Pass [currentlyPlaying] = true to pause, false to
+  /// resume. Returns true when the request succeeded (HTTP 204).
+  static Future<bool> togglePlayPause({required bool currentlyPlaying}) async {
+    final token = await readAccessToken();
+    if (token == null || token.isEmpty) return false;
+    final endpoint = currentlyPlaying
+        ? '$_apiBase/me/player/pause'
+        : '$_apiBase/me/player/play';
+    try {
+      final resp = await http.put(
+        Uri.parse(endpoint),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Length': '0',
+        },
+      ).timeout(const Duration(seconds: 8));
+      return resp.statusCode == 204;
+    } on Object catch (e) {
+      debugPrint('togglePlayPause error: $e');
+      return false;
+    }
+  }
+
+  /// Skips to the next track. Returns true on HTTP 204.
+  static Future<bool> skipToNext() async {
+    final token = await readAccessToken();
+    if (token == null || token.isEmpty) return false;
+    try {
+      final resp = await http.post(
+        Uri.parse('$_apiBase/me/player/next'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Length': '0',
+        },
+      ).timeout(const Duration(seconds: 8));
+      return resp.statusCode == 204;
+    } on Object catch (e) {
+      debugPrint('skipToNext error: $e');
+      return false;
+    }
+  }
+
+  /// Skips to the previous track. Returns true on HTTP 204.
+  static Future<bool> skipToPrevious() async {
+    final token = await readAccessToken();
+    if (token == null || token.isEmpty) return false;
+    try {
+      final resp = await http.post(
+        Uri.parse('$_apiBase/me/player/previous'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Length': '0',
+        },
+      ).timeout(const Duration(seconds: 8));
+      return resp.statusCode == 204;
+    } on Object catch (e) {
+      debugPrint('skipToPrevious error: $e');
+      return false;
+    }
   }
 }
