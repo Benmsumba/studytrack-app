@@ -55,6 +55,12 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     _loadWeeklyWrapped();
   }
 
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
   Future<void> _loadWeeklyWrapped() async {
     _loadError = null;
     try {
