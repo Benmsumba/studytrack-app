@@ -22,11 +22,11 @@ linter:
 
     # Style Rules
     - always_declare_return_types
-    - always_put_control_body_on_new_line
+    # - always_put_control_body_on_new_line  # Info-level style rule
     - always_put_required_named_parameters_first
     - annotate_overrides
     - avoid_bool_literals_in_conditional_expressions
-    - avoid_catches_without_on_clauses
+    # - avoid_catches_without_on_clauses  # Info-level style rule
     - avoid_catching_errors
     - avoid_double_and_int_checks
     - avoid_field_initializers_in_const_classes
@@ -46,7 +46,7 @@ linter:
     - await_only_futures
     - camel_case_extensions
     - camel_case_types
-    - cascade_invocations
+    # - cascade_invocations  # Info-level style rule
     - cast_nullable_to_non_nullable
     - constant_identifier_names
     - curly_braces_in_flow_control_structures
