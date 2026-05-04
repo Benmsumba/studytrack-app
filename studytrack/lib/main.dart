@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uni_links/uni_links.dart';
 
 import 'app.dart';
 import 'core/constants/app_constants.dart';
@@ -15,6 +16,7 @@ import 'core/services/app_update_service.dart';
 import 'core/services/crash_reporter.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/offline_sync_service.dart';
+import 'core/services/spotify_service.dart';
 import 'core/utils/service_locator.dart';
 import 'features/auth/controllers/auth_provider.dart';
 import 'features/groups/controllers/groups_provider.dart';
@@ -94,6 +96,7 @@ Future<void> _bootstrapApp() async {
         anonKey: AppConstants.resolvedSupabaseAnonKey,
       );
       await _completeAuthCodeExchangeIfPresent();
+      _setupUriListener();
     } on Object catch (error, stack) {
       CrashReporter.report(error, stack);
     }
@@ -106,6 +109,14 @@ Future<void> _bootstrapApp() async {
     debugPrint(
       'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY '
       'via --dart-define or update AppConstants.',
+    );
+  }
+
+  if (AppConstants.resolvedSpotifyClientId.isNotEmpty) {
+    unawaited(
+      SpotifyService.startTokenRefreshMonitor(
+        clientId: AppConstants.resolvedSpotifyClientId,
+      ),
     );
   }
 
@@ -151,6 +162,33 @@ Future<void> _bootstrapApp() async {
   );
 
   unawaited(updateProvider.checkForUpdate());
+}
+
+StreamSubscription? _uniLinksSub;
+
+void _setupUriListener() {
+  try {
+    _uniLinksSub = uriLinkStream.listen((Uri? uri) async {
+      if (uri == null) return;
+      final code = uri.queryParameters['code'];
+      if (code == null || code.isEmpty) return;
+
+      final verifier = await SpotifyService.retrieveCodeVerifier();
+      final clientId = AppConstants.resolvedSpotifyClientId;
+      if (verifier != null && clientId.isNotEmpty) {
+        await SpotifyService.handleAuthCodeExchange(
+          code: code,
+          codeVerifier: verifier,
+          clientId: clientId,
+        );
+        await SpotifyService.clearCodeVerifier();
+      }
+    }, onError: (err) {
+      debugPrint('uni_links error: $err');
+    });
+  } on Object catch (e) {
+    debugPrint('Failed to initialize uni_links listener: $e');
+  }
 }
 
 Future<void> _safeInit(Future<void> Function() action) async {

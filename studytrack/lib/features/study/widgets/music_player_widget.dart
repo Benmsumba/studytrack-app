@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/services/spotify_service.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/spotify_service.dart';
 
 class MusicPlayerWidget extends StatefulWidget {
   const MusicPlayerWidget({super.key});
@@ -12,8 +12,68 @@ class MusicPlayerWidget extends StatefulWidget {
   State<MusicPlayerWidget> createState() => _MusicPlayerWidgetState();
 }
 
-class _MusicPlayerWidgetState extends State<MusicPlayerWidget> {
+class _MusicPlayerWidgetState extends State<MusicPlayerWidget>
+  with WidgetsBindingObserver {
   int _selectedIndex = 0;
+  bool _isConnected = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadConnectionState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadConnectionState();
+    }
+  }
+
+  Future<void> _loadConnectionState() async {
+    final connected = await SpotifyService.hasStoredSession();
+    if (!mounted) return;
+    setState(() => _isConnected = connected);
+  }
+
+  Future<void> _connectSpotify() async {
+    final clientId = AppConstants.resolvedSpotifyClientId;
+    if (clientId.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Spotify client id is not configured')),
+      );
+      return;
+    }
+
+    final verifier = await SpotifyService.startAuth(clientId: clientId);
+    if (!mounted) return;
+    if (verifier == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to start Spotify auth')),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Spotify login opened')),
+    );
+  }
+
+  Future<void> _disconnectSpotify() async {
+    await SpotifyService.clearStoredSession();
+    if (!mounted) return;
+    setState(() => _isConnected = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Spotify disconnected')),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,43 +221,52 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget> {
           Row(
             children: [
               Expanded(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TextButton.icon(
-                    onPressed: () => SpotifyService.openPlaylist(playlist),
-                    icon: const Icon(
-                      Icons.open_in_new_rounded,
-                      color: Colors.white,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _isConnected ? 'Spotify connected' : 'Spotify disconnected',
+                      style: AppTextStyles.caption.copyWith(
+                        color: _isConnected ? AppColors.success : AppColors.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    label: Text(
-                      'Open in Spotify',
-                      style: AppTextStyles.button.copyWith(color: Colors.white),
+                    const SizedBox(height: 8),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TextButton.icon(
+                        onPressed: () => SpotifyService.openPlaylist(playlist),
+                        icon: const Icon(
+                          Icons.open_in_new_rounded,
+                          color: Colors.white,
+                        ),
+                        label: Text(
+                          'Open in Spotify',
+                          style: AppTextStyles.button.copyWith(color: Colors.white),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
               const SizedBox(width: 8),
-              if (AppConstants.resolvedSpotifyClientId.isNotEmpty)
-                OutlinedButton(
-                  onPressed: () async {
-                    final verifier = await SpotifyService.startAuth(
-                      clientId: AppConstants.resolvedSpotifyClientId,
-                    );
-                    if (verifier == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Failed to start Spotify auth')),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Opened Spotify login')),
-                      );
-                    }
-                  },
-                  child: const Icon(Icons.link),
-                ),
+              Column(
+                children: [
+                  OutlinedButton(
+                    onPressed: _connectSpotify,
+                    child: Text(_isConnected ? 'Reconnect' : 'Connect'),
+                  ),
+                  if (_isConnected)
+                    TextButton(
+                      onPressed: _disconnectSpotify,
+                      child: const Text('Disconnect'),
+                    ),
+                ],
+              ),
             ],
           ),
         ],

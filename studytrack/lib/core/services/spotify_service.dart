@@ -1,10 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/app_constants.dart';
@@ -33,6 +34,13 @@ class SpotifyStudyPlaylist {
 }
 
 class SpotifyService {
+  static const _storage = FlutterSecureStorage();
+  static const _codeVerifierKey = 'spotify_code_verifier';
+  static const _accessTokenKey = 'spotify_access_token';
+  static const _refreshTokenKey = 'spotify_refresh_token';
+  static const _expiresAtKey = 'spotify_token_expires_at';
+  static Timer? _refreshMonitorTimer;
+
   static const List<SpotifyStudyPlaylist> studyPlaylists = [
     SpotifyStudyPlaylist(
       title: 'Lo-Fi Focus',
@@ -129,8 +137,7 @@ class SpotifyService {
     try {
       await launchUrl(authUri, mode: LaunchMode.externalApplication);
       try {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('spotify_code_verifier', codeVerifier);
+        await _storage.write(key: _codeVerifierKey, value: codeVerifier);
       } on Object catch (e) {
         debugPrint('Failed to persist code verifier: $e');
       }
@@ -173,17 +180,21 @@ class SpotifyService {
       final expiresIn = (data['expires_in'] as num?)?.toInt();
 
       final user = SupabaseService().getCurrentUser();
-      if (user == null) return false;
+      if (user == null || accessToken == null) return false;
 
-      final expiresAt = expiresIn != null ? DateTime.now().add(Duration(seconds: expiresIn)).toIso8601String() : null;
+      final expiresAt = expiresIn != null
+          ? DateTime.now().add(Duration(seconds: expiresIn)).toIso8601String()
+          : null;
 
-      final update = <String, dynamic>{
-        if (accessToken != null) 'spotify_access_token': accessToken,
-        if (refreshToken != null) 'spotify_refresh_token': refreshToken,
-        if (expiresAt != null) 'spotify_token_expires_at': expiresAt,
-      };
-
-      await SupabaseService().updateProfile(user.id, update);
+      await _storage.write(key: _accessTokenKey, value: accessToken);
+      if (refreshToken != null) {
+        await _storage.write(key: _refreshTokenKey, value: refreshToken);
+      }
+      if (expiresAt != null) {
+        await _storage.write(key: _expiresAtKey, value: expiresAt);
+      }
+      await clearCodeVerifier();
+      await scheduleTokenRefresh(clientId: clientId);
       return true;
     } on Object catch (e) {
       debugPrint('handleAuthCodeExchange error: $e');
@@ -193,8 +204,7 @@ class SpotifyService {
 
   static Future<String?> retrieveCodeVerifier() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getString('spotify_code_verifier');
+      return _storage.read(key: _codeVerifierKey);
     } on Object catch (e) {
       debugPrint('retrieveCodeVerifier error: $e');
       return null;
@@ -203,21 +213,64 @@ class SpotifyService {
 
   static Future<void> clearCodeVerifier() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('spotify_code_verifier');
+      await _storage.delete(key: _codeVerifierKey);
     } on Object catch (e) {
       debugPrint('clearCodeVerifier error: $e');
+    }
+  }
+
+  static Future<String?> readAccessToken() async {
+    try {
+      return _storage.read(key: _accessTokenKey);
+    } on Object catch (e) {
+      debugPrint('readAccessToken error: $e');
+      return null;
+    }
+  }
+
+  static Future<String?> readRefreshToken() async {
+    try {
+      return _storage.read(key: _refreshTokenKey);
+    } on Object catch (e) {
+      debugPrint('readRefreshToken error: $e');
+      return null;
+    }
+  }
+
+  static Future<DateTime?> readExpiresAt() async {
+    try {
+      final raw = await _storage.read(key: _expiresAtKey);
+      if (raw == null || raw.isEmpty) return null;
+      return DateTime.tryParse(raw);
+    } on Object catch (e) {
+      debugPrint('readExpiresAt error: $e');
+      return null;
+    }
+  }
+
+  static Future<bool> hasStoredSession() async {
+    final accessToken = await readAccessToken();
+    final refreshToken = await readRefreshToken();
+    return (accessToken != null && accessToken.isNotEmpty) ||
+        (refreshToken != null && refreshToken.isNotEmpty);
+  }
+
+  static Future<void> clearStoredSession() async {
+    try {
+      await _storage.delete(key: _accessTokenKey);
+      await _storage.delete(key: _refreshTokenKey);
+      await _storage.delete(key: _expiresAtKey);
+      stopTokenRefreshMonitor();
+    } on Object catch (e) {
+      debugPrint('clearStoredSession error: $e');
     }
   }
 
   /// Refresh stored Spotify token using refresh token from profile.
   static Future<bool> refreshToken({required String clientId}) async {
     try {
-      final user = SupabaseService().getCurrentUser();
-      if (user == null) return false;
-      final profile = await SupabaseService().getProfile(user.id);
-      final refreshToken = profile?['spotify_refresh_token'] as String?;
-      if (refreshToken == null) return false;
+      final refreshToken = await readRefreshToken();
+      if (refreshToken == null || refreshToken.isEmpty) return false;
 
       final resp = await http.post(
         Uri.parse('https://accounts.spotify.com/api/token'),
@@ -238,18 +291,71 @@ class SpotifyService {
       final accessToken = data['access_token'] as String?;
       final expiresIn = (data['expires_in'] as num?)?.toInt();
 
-      final expiresAt = expiresIn != null ? DateTime.now().add(Duration(seconds: expiresIn)).toIso8601String() : null;
+      if (accessToken == null) return false;
 
-      final update = <String, dynamic>{
-        if (accessToken != null) 'spotify_access_token': accessToken,
-        if (expiresAt != null) 'spotify_token_expires_at': expiresAt,
-      };
+      final expiresAt = expiresIn != null
+          ? DateTime.now().add(Duration(seconds: expiresIn)).toIso8601String()
+          : null;
 
-      await SupabaseService().updateProfile(user.id, update);
+      await _storage.write(key: _accessTokenKey, value: accessToken);
+      if (expiresAt != null) {
+        await _storage.write(key: _expiresAtKey, value: expiresAt);
+      }
+      await scheduleTokenRefresh(clientId: clientId);
       return true;
     } on Object catch (e) {
       debugPrint('refreshToken error: $e');
       return false;
     }
+  }
+
+  static Future<void> startTokenRefreshMonitor({required String clientId}) async {
+    stopTokenRefreshMonitor();
+    await _maybeRefreshNow(clientId: clientId);
+    _refreshMonitorTimer = Timer.periodic(
+      const Duration(minutes: 10),
+      (_) => unawaited(_maybeRefreshNow(clientId: clientId)),
+    );
+  }
+
+  static Future<void> scheduleTokenRefresh({required String clientId}) async {
+    final expiresAt = await readExpiresAt();
+    if (expiresAt == null) return;
+
+    final refreshAt = expiresAt.subtract(const Duration(minutes: 5));
+    final delay = refreshAt.difference(DateTime.now());
+    final wait = delay.isNegative ? Duration.zero : delay;
+
+    _refreshMonitorTimer?.cancel();
+    _refreshMonitorTimer = Timer(wait, () async {
+      final refreshed = await refreshToken(clientId: clientId);
+      if (!refreshed) {
+        _refreshMonitorTimer = Timer(
+          const Duration(minutes: 2),
+          () => unawaited(refreshToken(clientId: clientId)),
+        );
+      }
+    });
+  }
+
+  static void stopTokenRefreshMonitor() {
+    _refreshMonitorTimer?.cancel();
+    _refreshMonitorTimer = null;
+  }
+
+  static Future<bool> _maybeRefreshNow({required String clientId}) async {
+    final expiresAt = await readExpiresAt();
+    if (expiresAt == null) return false;
+
+    final shouldRefresh = DateTime.now().isAfter(expiresAt.subtract(const Duration(minutes: 10)));
+    if (!shouldRefresh) return false;
+    final refreshed = await refreshToken(clientId: clientId);
+    if (!refreshed) {
+      _refreshMonitorTimer = Timer(
+        const Duration(minutes: 2),
+        () => unawaited(refreshToken(clientId: clientId)),
+      );
+    }
+    return refreshed;
   }
 }
