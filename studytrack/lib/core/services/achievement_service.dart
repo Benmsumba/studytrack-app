@@ -130,7 +130,7 @@ class AchievementService {
       }
 
       return BadgeModel.fromJson(row);
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('awardBadge error: $error');
       return null;
     }
@@ -147,7 +147,7 @@ class AchievementService {
       return (rows as List<dynamic>)
           .map((row) => BadgeModel.fromJson(row as Map<String, dynamic>))
           .toList(growable: true);
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('load badges error: $error');
       return <BadgeModel>[];
     }

@@ -74,7 +74,7 @@ class VoiceNoteService {
       );
       _isRecording = true;
       return outputPath;
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('startRecording error: $error');
       return null;
     }
@@ -85,7 +85,7 @@ class VoiceNoteService {
       final path = await _recorder.stop();
       _isRecording = false;
       return path;
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('stopRecording error: $error');
       _isRecording = false;
       return null;
@@ -99,7 +99,7 @@ class VoiceNoteService {
       } else {
         await _player.play(DeviceFileSource(pathOrUrl));
       }
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('play voice note error: $error');
     }
   }
@@ -136,7 +136,7 @@ class VoiceNoteService {
       ]);
 
       return response.text?.trim();
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('transcribeAudio error: $error');
       return null;
     }
@@ -198,7 +198,7 @@ class VoiceNoteService {
         noteId: noteId,
         fileUrl: fileUrl,
       );
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('uploadVoiceNote error: $error');
       return null;
     }

@@ -624,7 +624,7 @@ class SupabaseService {
 
       final cached = await _cachedList('topics', moduleId);
       return cached?.map(TopicModel.fromJson).toList();
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('getTopics error: $error');
       final cached = await _cachedList('topics', moduleId);
       return cached?.map(TopicModel.fromJson).toList();
@@ -658,7 +658,7 @@ class SupabaseService {
         if (cached != null) all.addAll(cached.map(TopicModel.fromJson));
       }
       return all;
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('getTopicsByModuleIds error: $error');
       final all = <TopicModel>[];
       for (final moduleId in moduleIds) {
@@ -688,7 +688,7 @@ class SupabaseService {
 
       final cached = await _cachedRecord('topics', topicId);
       return cached == null ? null : TopicModel.fromJson(cached);
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('getTopicById error: $error');
       final cached = await _cachedRecord('topics', topicId);
       return cached == null ? null : TopicModel.fromJson(cached);
@@ -1828,6 +1828,7 @@ class SupabaseService {
 
     controller.onCancel = () async {
       await unsubscribeFromMessages();
+      if (!controller.isClosed) await controller.close();
     };
 
     return controller.stream;

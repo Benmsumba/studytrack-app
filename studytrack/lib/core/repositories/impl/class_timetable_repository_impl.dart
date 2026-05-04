@@ -18,9 +18,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
       if (rows == null) {
         return const Success([]);
       }
-      final classSlots = rows
-          .map(ClassSlotModel.fromJson)
-          .toList();
+      final classSlots = rows.map(ClassSlotModel.fromJson).toList();
       return Success(classSlots);
     } catch (e, stack) {
       debugPrint('getClassTimetable error: $e');
@@ -137,9 +135,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
       if (rows == null) {
         return const Success([]);
       }
-      final classSlots = rows
-          .map(ClassSlotModel.fromJson)
-          .toList();
+      final classSlots = rows.map(ClassSlotModel.fromJson).toList();
       return Success(classSlots);
     } catch (e, stack) {
       debugPrint('getClassSlotsByDateRange error: $e');

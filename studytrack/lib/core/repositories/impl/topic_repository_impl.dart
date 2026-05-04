@@ -17,7 +17,7 @@ class TopicRepositoryImpl implements TopicRepository {
     try {
       final topics = await _supabaseService.getTopics(moduleId) ?? const [];
       return Success(topics);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getTopicsByModule error: $e');
       return Failure(
         DataException(message: 'Failed to fetch topics: $e', stackTrace: stack),
@@ -32,13 +32,10 @@ class TopicRepositoryImpl implements TopicRepository {
     try {
       final topics = await _supabaseService.getTopicsByModuleIds(moduleIds);
       return Success(topics);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getTopicsByModuleIds error: $e');
       return Failure(
-        DataException(
-          message: 'Failed to fetch topics: $e',
-          stackTrace: stack,
-        ),
+        DataException(message: 'Failed to fetch topics: $e', stackTrace: stack),
       );
     }
   }
@@ -51,7 +48,7 @@ class TopicRepositoryImpl implements TopicRepository {
         throw DataException(message: 'Topic not found');
       }
       return Success(topic);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getTopicById error: $e');
       return Failure(
         DataException(message: 'Failed to fetch topic: $e', stackTrace: stack),
@@ -72,7 +69,7 @@ class TopicRepositoryImpl implements TopicRepository {
         description: description,
       );
       return Success(topic);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('createTopic error: $e');
       return Failure(
         DataException(message: 'Failed to create topic: $e', stackTrace: stack),
@@ -85,7 +82,7 @@ class TopicRepositoryImpl implements TopicRepository {
     try {
       final updated = await _supabaseService.updateTopic(topic);
       return Success(updated);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('updateTopic error: $e');
       return Failure(
         DataException(message: 'Failed to update topic: $e', stackTrace: stack),
@@ -98,7 +95,7 @@ class TopicRepositoryImpl implements TopicRepository {
     try {
       await _supabaseService.deleteTopic(topicId);
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('deleteTopic error: $e');
       return Failure(
         DataException(message: 'Failed to delete topic: $e', stackTrace: stack),
@@ -111,7 +108,7 @@ class TopicRepositoryImpl implements TopicRepository {
     try {
       await _supabaseService.rateTopic(topicId, rating);
       return const Success(null);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('rateTopic error: $e');
       return Failure(
         DataException(message: 'Failed to rate topic: $e', stackTrace: stack),

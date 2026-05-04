@@ -15,14 +15,14 @@ class AppStateView extends StatelessWidget {
     String? actionLabel,
     VoidCallback? onAction,
   }) => AppStateView._(
-      child: _EmptyStateCard(
-        icon: icon,
-        title: title,
-        message: message,
-        actionLabel: actionLabel,
-        onAction: onAction,
-      ),
-    );
+    child: _EmptyStateCard(
+      icon: icon,
+      title: title,
+      message: message,
+      actionLabel: actionLabel,
+      onAction: onAction,
+    ),
+  );
 
   factory AppStateView.error({
     required String title,
@@ -30,32 +30,32 @@ class AppStateView extends StatelessWidget {
     String retryLabel = 'Try again',
     VoidCallback? onRetry,
   }) => AppStateView._(
-      child: _ErrorStateCard(
-        title: title,
-        message: message,
-        retryLabel: retryLabel,
-        onRetry: onRetry,
-      ),
-    );
+    child: _ErrorStateCard(
+      title: title,
+      message: message,
+      retryLabel: retryLabel,
+      onRetry: onRetry,
+    ),
+  );
 
   factory AppStateView.loadingList({
     int itemCount = 4,
     double itemHeight = 84,
   }) => AppStateView._(
-      child: _LoadingList(itemCount: itemCount, itemHeight: itemHeight),
-    );
+    child: _LoadingList(itemCount: itemCount, itemHeight: itemHeight),
+  );
 
   factory AppStateView.loadingGrid({
     int itemCount = 4,
     int crossAxisCount = 2,
     double childAspectRatio = 0.8,
   }) => AppStateView._(
-      child: _LoadingGrid(
-        itemCount: itemCount,
-        crossAxisCount: crossAxisCount,
-        childAspectRatio: childAspectRatio,
-      ),
-    );
+    child: _LoadingGrid(
+      itemCount: itemCount,
+      crossAxisCount: crossAxisCount,
+      childAspectRatio: childAspectRatio,
+    ),
+  );
 
   final Widget child;
 

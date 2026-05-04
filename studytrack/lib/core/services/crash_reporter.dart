@@ -27,7 +27,7 @@ class CrashReporter {
     if (_callback != null) {
       try {
         _callback!(error, stack);
-      } catch (_) {
+      } on Object catch (_) {
         // Never let the reporter itself crash the app.
       }
       return;

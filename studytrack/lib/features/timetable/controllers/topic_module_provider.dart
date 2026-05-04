@@ -36,13 +36,10 @@ class TopicModuleProvider extends ChangeNotifier {
     try {
       final moduleResult = await _moduleRepository.getAllModules();
 
-      moduleResult.fold(
-        (error) {
-          _errorMessage = error.message;
-          return;
-        },
-        (modules) => _modules = modules,
-      );
+      moduleResult.fold((error) {
+        _errorMessage = error.message;
+        return;
+      }, (modules) => _modules = modules);
 
       if (_errorMessage != null) return;
 
@@ -52,8 +49,9 @@ class TopicModuleProvider extends ChangeNotifier {
         return;
       }
 
-      final topicResult =
-          await _topicRepository.getTopicsByModuleIds(moduleIds);
+      final topicResult = await _topicRepository.getTopicsByModuleIds(
+        moduleIds,
+      );
 
       topicResult.fold(
         (error) => _errorMessage = error.message,
@@ -68,7 +66,8 @@ class TopicModuleProvider extends ChangeNotifier {
   }
 
   /// Get topics for a specific module
-  List<TopicModel> getTopicsForModule(String moduleId) => _topics.where((t) => t.moduleId == moduleId).toList();
+  List<TopicModel> getTopicsForModule(String moduleId) =>
+      _topics.where((t) => t.moduleId == moduleId).toList();
 
   void _setLoading(bool value) {
     _isLoading = value;

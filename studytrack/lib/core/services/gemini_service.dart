@@ -166,7 +166,7 @@ ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' :
       }
 
       return questions.take(5).toList();
-    } catch (error) {
+    } on Object catch (error) {
       return _fallbackQuiz('Quiz generation failed: $error');
     }
   }
@@ -360,7 +360,7 @@ $message
         }
         _cache[cacheKey] = _CacheEntry(text);
         return text;
-      } catch (error) {
+      } on Object catch (error) {
         lastError = error is Exception ? error : Exception(error.toString());
         if (attempt < _maxRetries - 1) {
           await Future<void>.delayed(Duration(seconds: 1 << attempt));
