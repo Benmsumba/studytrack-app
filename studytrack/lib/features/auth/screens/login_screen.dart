@@ -51,7 +51,11 @@ class _LoginScreenState extends State<LoginScreen> {
       final result = await auth.signInWithGoogle();
       if (!mounted) return;
       if (!result.success) {
-        SnackbarHelper.show(context, result.message, type: AppSnackbarType.error);
+        SnackbarHelper.show(
+          context,
+          result.message,
+          type: AppSnackbarType.error,
+        );
       }
     } finally {
       if (mounted) {
@@ -497,5 +501,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     ),
   );
-
 }

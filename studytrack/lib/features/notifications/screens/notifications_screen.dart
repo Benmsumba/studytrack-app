@@ -208,13 +208,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.screenHorizontal, AppSpacing.md, AppSpacing.screenHorizontal, AppSpacing.sm),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenHorizontal,
+              AppSpacing.md,
+              AppSpacing.screenHorizontal,
+              AppSpacing.sm,
+            ),
             child: Row(
               children: [
-                Text(
-                  'Notifications',
-                  style: AppTextStyles.headingLarge,
-                ),
+                Text('Notifications', style: AppTextStyles.headingLarge),
                 const Spacer(),
                 TextButton(
                   onPressed: _loadNotifications,
@@ -251,7 +253,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     )
                   : ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenHorizontal),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.screenHorizontal,
+                      ),
                       children: _items
                           .map(
                             (item) => _NotificationTile(

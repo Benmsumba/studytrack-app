@@ -87,8 +87,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
       personalization = StudyPersonalization(
         primeStudyTime: profile?['prime_study_time'] as String?,
         studyPreference: profile?['study_preference'] as String?,
-        studyHoursPerDay:
-            (profile?['study_hours_per_day'] as num?)?.toInt(),
+        studyHoursPerDay: (profile?['study_hours_per_day'] as num?)?.toInt(),
       );
     });
 
@@ -291,14 +290,21 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
               children: [
                 if (hasNotes)
                   Container(
-                    margin: const EdgeInsets.fromLTRB(AppSpacing.screenHorizontal, AppSpacing.xs, AppSpacing.screenHorizontal, AppSpacing.xxs),
+                    margin: const EdgeInsets.fromLTRB(
+                      AppSpacing.screenHorizontal,
+                      AppSpacing.xs,
+                      AppSpacing.screenHorizontal,
+                      AppSpacing.xxs,
+                    ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppSpacing.sm,
                       vertical: AppSpacing.xs,
                     ),
                     decoration: BoxDecoration(
                       color: AppColors.accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.pillRadius,
+                      ),
                       border: Border.all(color: AppColors.accent),
                     ),
                     child: Text(
@@ -313,14 +319,20 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                       ? _EmptyTutorState(topicName: topicName)
                       : ListView.builder(
                           controller: _scrollController,
-                          padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.xs, AppSpacing.sm, AppSpacing.xs),
+                          padding: const EdgeInsets.fromLTRB(
+                            AppSpacing.sm,
+                            AppSpacing.xs,
+                            AppSpacing.sm,
+                            AppSpacing.xs,
+                          ),
                           itemCount: _messages.length + (_isThinking ? 1 : 0),
                           itemBuilder: (context, index) {
                             if (index == _messages.length) {
                               return const _TypingBubble();
                             }
                             final message = _messages[index];
-                            final isLastAiMessage = !message.isUser &&
+                            final isLastAiMessage =
+                                !message.isUser &&
                                 index == _messages.length - 1 &&
                                 _isStreaming;
                             return _ChatBubble(
@@ -331,7 +343,12 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                         ),
                 ),
                 Container(
-                  padding: const EdgeInsets.fromLTRB(AppSpacing.sm, AppSpacing.xs, AppSpacing.sm, AppSpacing.sm),
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.sm,
+                    AppSpacing.xs,
+                    AppSpacing.sm,
+                    AppSpacing.sm,
+                  ),
                   decoration: const BoxDecoration(
                     color: AppColors.surfaceDark,
                     border: Border(top: BorderSide(color: AppColors.border)),
@@ -380,7 +397,9 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                                 filled: true,
                                 fillColor: AppColors.cardDark,
                                 border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+                                  borderRadius: BorderRadius.circular(
+                                    AppSpacing.fieldRadius,
+                                  ),
                                   borderSide: const BorderSide(
                                     color: AppColors.border,
                                   ),
@@ -403,7 +422,9 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                                 color: (_isThinking || _isStreaming)
                                     ? AppColors.cardDark
                                     : null,
-                                borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+                                borderRadius: BorderRadius.circular(
+                                  AppSpacing.fieldRadius,
+                                ),
                               ),
                               child: Icon(
                                 Icons.send_rounded,
@@ -453,7 +474,10 @@ class _ChatBubble extends StatelessWidget {
       child: Container(
         constraints: BoxConstraints(maxWidth: maxWidth),
         margin: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xs,
+        ),
         decoration: BoxDecoration(
           gradient: message.isUser ? AppColors.primaryGradient : null,
           color: message.isUser ? null : AppColors.cardDark,

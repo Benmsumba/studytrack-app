@@ -168,24 +168,27 @@ StreamSubscription? _uniLinksSub;
 
 void _setupUriListener() {
   try {
-    _uniLinksSub = uriLinkStream.listen((uri) async {
-      if (uri == null) return;
-      final code = uri.queryParameters['code'];
-      if (code == null || code.isEmpty) return;
+    _uniLinksSub = uriLinkStream.listen(
+      (uri) async {
+        if (uri == null) return;
+        final code = uri.queryParameters['code'];
+        if (code == null || code.isEmpty) return;
 
-      final verifier = await SpotifyService.retrieveCodeVerifier();
-      final clientId = AppConstants.resolvedSpotifyClientId;
-      if (verifier != null && clientId.isNotEmpty) {
-        await SpotifyService.handleAuthCodeExchange(
-          code: code,
-          codeVerifier: verifier,
-          clientId: clientId,
-        );
-        await SpotifyService.clearCodeVerifier();
-      }
-    }, onError: (err) {
-      debugPrint('uni_links error: $err');
-    });
+        final verifier = await SpotifyService.retrieveCodeVerifier();
+        final clientId = AppConstants.resolvedSpotifyClientId;
+        if (verifier != null && clientId.isNotEmpty) {
+          await SpotifyService.handleAuthCodeExchange(
+            code: code,
+            codeVerifier: verifier,
+            clientId: clientId,
+          );
+          await SpotifyService.clearCodeVerifier();
+        }
+      },
+      onError: (err) {
+        debugPrint('uni_links error: $err');
+      },
+    );
   } on Object catch (e) {
     debugPrint('Failed to initialize uni_links listener: $e');
   }

@@ -57,7 +57,11 @@ class _SignupScreenState extends State<SignupScreen> {
       final result = await auth.signInWithGoogle();
       if (!mounted) return;
       if (!result.success) {
-        SnackbarHelper.show(context, result.message, type: AppSnackbarType.error);
+        SnackbarHelper.show(
+          context,
+          result.message,
+          type: AppSnackbarType.error,
+        );
       }
     } finally {
       if (mounted) {
@@ -248,7 +252,9 @@ class _SignupScreenState extends State<SignupScreen> {
                             GlowingButton(
                               label: AppStrings.createAccount,
                               isLoading: auth.isLoading,
-                              onPressed: auth.isLoading ? null : _onCreateAccountTap,
+                              onPressed: auth.isLoading
+                                  ? null
+                                  : _onCreateAccountTap,
                               width: double.infinity,
                             ),
                           ],
@@ -423,5 +429,4 @@ class _SignupScreenState extends State<SignupScreen> {
       ],
     );
   }
-
 }

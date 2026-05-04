@@ -40,7 +40,6 @@ ErrorEvent(
 /// Comprehensive error handling and monitoring service
 /// Tracks errors, monitors app health, and integrates with crash reporting
 class ErrorHandler {
-
   factory ErrorHandler() => _instance;
 
   ErrorHandler._internal();
@@ -205,10 +204,12 @@ class ErrorHandler {
   }
 
   /// Get errors by severity
-  List<ErrorEvent> getErrorsBySeverity(ErrorSeverity severity) => _errorHistory.where((e) => e.severity == severity).toList();
+  List<ErrorEvent> getErrorsBySeverity(ErrorSeverity severity) =>
+      _errorHistory.where((e) => e.severity == severity).toList();
 
   /// Check if there are critical errors
-  bool hasCriticalErrors() => _errorHistory.any((e) => e.severity == ErrorSeverity.critical);
+  bool hasCriticalErrors() =>
+      _errorHistory.any((e) => e.severity == ErrorSeverity.critical);
 
   /// Dispose of all listeners
   void dispose() {

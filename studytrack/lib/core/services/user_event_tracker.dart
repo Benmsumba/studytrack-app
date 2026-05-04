@@ -26,7 +26,6 @@ class UserEvent {
 /// User event tracking and analytics service
 /// Monitors key user interactions for app usage insights
 class UserEventTracker {
-
   factory UserEventTracker() => _instance;
 
   UserEventTracker._internal();
@@ -135,16 +134,17 @@ class UserEventTracker {
 
   /// Get analytics summary
   Map<String, dynamic> getAnalyticsSummary() => {
-      'total_events': _eventHistory.length,
-      'session_duration_seconds': sessionDuration.inSeconds,
-      'user_id': _currentUserId,
-      'event_counts': getEventCounts(),
-      'session_start': _sessionStart?.toIso8601String(),
-      'session_end': DateTime.now().toIso8601String(),
-    };
+    'total_events': _eventHistory.length,
+    'session_duration_seconds': sessionDuration.inSeconds,
+    'user_id': _currentUserId,
+    'event_counts': getEventCounts(),
+    'session_start': _sessionStart?.toIso8601String(),
+    'session_end': DateTime.now().toIso8601String(),
+  };
 
   /// Export events as JSON
-  List<Map<String, dynamic>> exportEventsAsJson() => _eventHistory.map((event) => event.toJson()).toList();
+  List<Map<String, dynamic>> exportEventsAsJson() =>
+      _eventHistory.map((event) => event.toJson()).toList();
 
   /// Clear event history
   void clearHistory() {
@@ -152,12 +152,14 @@ class UserEventTracker {
   }
 
   /// Get events by name
-  List<UserEvent> getEventsByName(String eventName) => _eventHistory.where((e) => e.eventName == eventName).toList();
+  List<UserEvent> getEventsByName(String eventName) =>
+      _eventHistory.where((e) => e.eventName == eventName).toList();
 
   /// Get recent events
-  List<UserEvent> getRecentEvents({int limit = 20}) => _eventHistory.length > limit
-        ? _eventHistory.sublist(_eventHistory.length - limit)
-        : _eventHistory;
+  List<UserEvent> getRecentEvents({int limit = 20}) =>
+      _eventHistory.length > limit
+      ? _eventHistory.sublist(_eventHistory.length - limit)
+      : _eventHistory;
 
   /// End session and get summary
   Map<String, dynamic> endSession() {

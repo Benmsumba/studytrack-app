@@ -72,8 +72,9 @@ void main() {
         }
       });
 
-      testWidgets('Sign in with valid credentials shows main shell',
-          (tester) async {
+      testWidgets('Sign in with valid credentials shows main shell', (
+        tester,
+      ) async {
         if (_testEmail.isEmpty || _testPassword.isEmpty) {
           markTestSkipped(
             'TEST_EMAIL and TEST_PASSWORD not set — skipping live auth test.',
@@ -105,8 +106,9 @@ void main() {
         expect(find.byType(NavigationBar), findsOneWidget);
       });
 
-      testWidgets('Navigating to Modules tab shows module list',
-          (tester) async {
+      testWidgets('Navigating to Modules tab shows module list', (
+        tester,
+      ) async {
         if (_testEmail.isEmpty || _testPassword.isEmpty) {
           markTestSkipped('TEST_EMAIL and TEST_PASSWORD not set.');
           return;
@@ -134,8 +136,9 @@ void main() {
         );
       });
 
-      testWidgets('Opening AI Tutor for a topic shows chat interface',
-          (tester) async {
+      testWidgets('Opening AI Tutor for a topic shows chat interface', (
+        tester,
+      ) async {
         if (_testEmail.isEmpty || _testPassword.isEmpty) {
           markTestSkipped('TEST_EMAIL and TEST_PASSWORD not set.');
           return;
@@ -186,8 +189,9 @@ void main() {
         expect(find.text('AI Tutor'), findsOneWidget);
       });
 
-      testWidgets('Sending a chat message shows a response bubble',
-          (tester) async {
+      testWidgets('Sending a chat message shows a response bubble', (
+        tester,
+      ) async {
         if (_testEmail.isEmpty || _testPassword.isEmpty) {
           markTestSkipped('TEST_EMAIL and TEST_PASSWORD not set.');
           return;
