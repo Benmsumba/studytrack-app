@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import '../../services/supabase_service.dart';
 import '../../utils/app_exception.dart';
@@ -173,7 +173,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       // record from client-side code.
       await client.functions.invoke(
         'delete-account',
-        method: HttpMethod.post,
+        method: supabase.HttpMethod.post,
       );
 
       // Sign out last so the JWT is still valid for the function call above.
