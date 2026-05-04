@@ -21,3 +21,27 @@
 
 # Preserve home_widget provider classes.
 -keep class es.antonborri.home_widget.** { *; }
+
+# google_generative_ai — reflection-heavy; keep all public API surface.
+-keep class com.google.ai.** { *; }
+-keep class com.google.generativeai.** { *; }
+-keepnames class com.google.protobuf.** { *; }
+-keep class com.google.protobuf.** { *; }
+-dontwarn com.google.ai.**
+-dontwarn com.google.generativeai.**
+
+# supabase_flutter / postgrest / realtime — OkHttp + Kotlin serialization.
+-keep class io.supabase.** { *; }
+-keep class io.github.jan.supabase.** { *; }
+-keepclassmembers class * {
+    @kotlinx.serialization.SerialName <fields>;
+}
+-keep @kotlinx.serialization.Serializable class * { *; }
+-dontwarn io.supabase.**
+-dontwarn io.github.jan.supabase.**
+
+# OkHttp (transitive dep of supabase_flutter network layer).
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
