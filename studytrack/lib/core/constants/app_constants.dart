@@ -50,6 +50,13 @@ class AppConstants {
     return fromEnv.isNotEmpty ? fromEnv : sentryDsn;
   }
 
+  // Spotify
+  static const String spotifyClientId = '';
+  static String get resolvedSpotifyClientId {
+    const fromEnv = String.fromEnvironment('SPOTIFY_CLIENT_ID');
+    return fromEnv.isNotEmpty ? fromEnv : spotifyClientId;
+  }
+
   static bool get isSentryConfigured {
     final dsn = resolvedSentryDsn;
     return dsn.isNotEmpty && dsn != 'YOUR_SENTRY_DSN';
