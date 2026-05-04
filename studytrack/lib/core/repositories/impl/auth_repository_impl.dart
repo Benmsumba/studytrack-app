@@ -192,11 +192,16 @@ class AuthRepositoryImpl implements AuthRepository {
     required String otp,
   }) async {
     try {
-      // Note: verifyOtp is not currently implemented in SupabaseService
-      // This is a placeholder for future implementation
-      return Failure(
-        AuthException(message: 'OTP verification not yet implemented'),
+      final response = await _supabaseService.client.auth.verifyOTP(
+        email: email,
+        token: otp,
+        type: OtpType.email,
       );
+      final profile = _userToProfileModel(response.user);
+      if (profile == null) {
+        return Failure(AuthException(message: 'OTP verification failed'));
+      }
+      return Success(profile);
     } on Object catch (e, stack) {
       debugPrint('VerifyOtp error: $e');
       return Failure(

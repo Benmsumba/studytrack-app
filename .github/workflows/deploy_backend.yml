@@ -67,9 +67,9 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           echo "Deploying Edge Functions..."
-          supabase functions deploy process-document --no-verify-jwt
+          supabase functions deploy gemini-proxy --no-verify-jwt
           echo "Edge Function deployed."
-          echo "URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/process-document"
+          echo "URL: https://${{ secrets.SUPABASE_PROJECT_REF }}.supabase.co/functions/v1/gemini-proxy"
 
       - name: List deployed functions
         if: steps.secret_check.outputs.missing == 'false'
