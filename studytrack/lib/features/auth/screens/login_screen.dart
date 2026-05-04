@@ -372,6 +372,23 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ).animate().fadeIn(duration: 500.ms, delay: 400.ms),
+                const SizedBox(height: 12),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => context.push('/otp-login'),
+                    icon: const Icon(
+                      Icons.mark_email_unread_rounded,
+                      size: 16,
+                      color: AppColors.textMuted,
+                    ),
+                    label: Text(
+                      'Sign in with email code (no password)',
+                      style: AppTextStyles.bodySmall.copyWith(
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ).animate().fadeIn(duration: 500.ms, delay: 450.ms),
               ],
             ),
           ),

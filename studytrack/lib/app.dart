@@ -14,6 +14,7 @@ import 'features/ai_tutor/screens/ai_tutor_screen.dart';
 import 'features/ai_tutor/screens/quiz_screen.dart';
 import 'features/auth/controllers/auth_provider.dart';
 import 'features/auth/screens/login_screen.dart';
+import 'features/auth/screens/otp_login_screen.dart';
 import 'features/auth/screens/signup_screen.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'features/groups/screens/group_chat_screen.dart';
@@ -36,7 +37,7 @@ import 'features/timetable/screens/study_session_screen.dart';
 import 'features/timetable/screens/timetable_screen.dart';
 import 'features/update/widgets/update_overlay.dart';
 
-const _publicRoutes = {'/splash', '/login', '/signup'};
+const _publicRoutes = {'/splash', '/login', '/signup', '/otp-login'};
 
 String? resolveAppRedirect({
   required String location,
@@ -386,6 +387,10 @@ class StudyTrackApp extends StatelessWidget {
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
+      ),
+      GoRoute(
+        path: '/otp-login',
+        builder: (context, state) => const OtpLoginScreen(),
       ),
       GoRoute(
         path: '/onboarding',
