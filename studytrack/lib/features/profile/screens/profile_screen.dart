@@ -262,7 +262,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // Export Data
               GlowingButton(
-                label: _isExporting ? 'Preparing PDF...' : 'Export Weekly Report (PDF)',
+                label: _isExporting
+                    ? 'Preparing PDF...'
+                    : 'Export Weekly Report (PDF)',
                 onPressed: _isExporting ? null : _exportWeeklyReport,
                 isLoading: _isExporting,
                 width: double.infinity,
@@ -270,7 +272,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: AppSpacing.sm),
               CustomButton(
-                label: _isBackingUp ? 'Preparing Backup...' : 'Backup to Google Drive',
+                label: _isBackingUp
+                    ? 'Preparing Backup...'
+                    : 'Backup to Google Drive',
                 onPressed: _isBackingUp ? null : _backupToGoogleDrive,
                 isLoading: _isBackingUp,
                 width: double.infinity,

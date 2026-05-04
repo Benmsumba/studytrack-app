@@ -275,14 +275,8 @@ class OfflineDataStore {
         .toIso8601String();
 
     // TTL-based eviction
-    _db.execute(
-      'DELETE FROM cached_records WHERE updated_at < ?',
-      [cutoff],
-    );
-    _db.execute(
-      'DELETE FROM cached_queries WHERE updated_at < ?',
-      [cutoff],
-    );
+    _db.execute('DELETE FROM cached_records WHERE updated_at < ?', [cutoff]);
+    _db.execute('DELETE FROM cached_queries WHERE updated_at < ?', [cutoff]);
 
     // Row-count cap: keep the most-recently-updated rows up to the limit.
     _db.execute('''

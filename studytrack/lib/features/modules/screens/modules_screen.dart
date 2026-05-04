@@ -181,7 +181,12 @@ class _ModulesScreenState extends State<ModulesScreen> {
             backgroundColor: AppColors.surfaceDark,
             onRefresh: _loadModules,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.screenHorizontal, AppSpacing.xs, AppSpacing.screenHorizontal, 120),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenHorizontal,
+                AppSpacing.xs,
+                AppSpacing.screenHorizontal,
+                120,
+              ),
               children: [
                 TextField(
                   controller: _searchController,
@@ -495,7 +500,12 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
     final viewInsets = MediaQuery.of(context).viewInsets;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(AppSpacing.screenHorizontal, AppSpacing.md, AppSpacing.screenHorizontal, viewInsets.bottom + AppSpacing.lg),
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.screenHorizontal,
+        AppSpacing.md,
+        AppSpacing.screenHorizontal,
+        viewInsets.bottom + AppSpacing.lg,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

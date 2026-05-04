@@ -114,7 +114,8 @@ class GeminiService {
     String? notesContent,
     StudyPersonalization? personalization,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 You are an expert academic tutor for health sciences students.
 ${personalization?.toPromptSnippet() ?? ''}
 
@@ -147,7 +148,8 @@ ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' :
     String? notesContent,
     StudyPersonalization? personalization,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Generate 5 multiple-choice questions for the topic "$topicName" (course: $course).
 ${personalization?.toPromptSnippet() ?? ''}
 
@@ -204,7 +206,8 @@ ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' :
     required String topicName,
     required String content,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Create a creative and memorable mnemonic for this topic:
 Topic: $topicName
 Content: $content
@@ -224,7 +227,8 @@ Return:
     required String topicName,
     required String notesContent,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Summarize these notes for topic "$topicName" in under 300 words.
 Use concise bullet points and prioritize exam-relevant facts.
 
@@ -243,7 +247,8 @@ $notesContent
     required String moduleName,
     String? notesContent,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Predict 5 likely exam questions for:
 Topic: $topicName
 Module: $moduleName
@@ -270,7 +275,8 @@ ${(notesContent == null || notesContent.trim().isEmpty) ? 'No notes provided.' :
     required int sessionsCompleted,
     required int sessionsMissed,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Write a 3-4 sentence motivational weekly summary.
 Tone: encouraging coach.
 
@@ -298,7 +304,8 @@ Mention wins first, then gaps, then practical next-week advice.
     required List<String> upcomingExams,
     required String primeStudyTime,
   }) async {
-    final prompt = '''
+    final prompt =
+        '''
 Create a short 2-line actionable study suggestion.
 
 Student: $studentName

@@ -191,7 +191,8 @@ class _GroupsScreenState extends State<GroupsScreen> {
                               child: const Text('Copy'),
                             ),
                             TextButton(
-                              onPressed: () => Navigator.of(dialogContext).pop(),
+                              onPressed: () =>
+                                  Navigator.of(dialogContext).pop(),
                               child: const Text('Done'),
                             ),
                           ],
@@ -259,7 +260,9 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
                       final navigator = Navigator.of(context);
 
-                      final joinedResult = await _groupRepo.joinGroupByCode(code);
+                      final joinedResult = await _groupRepo.joinGroupByCode(
+                        code,
+                      );
 
                       if (!mounted) return;
                       setState(() => _working = false);
@@ -358,7 +361,9 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         context: context,
                         backgroundColor: AppColors.surfaceDark,
                         shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(top: Radius.circular(AppSpacing.cardRadius)),
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(AppSpacing.cardRadius),
+                          ),
                         ),
                         builder: (context) => SafeArea(
                           child: Padding(
@@ -367,7 +372,10 @@ class _GroupsScreenState extends State<GroupsScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 ListTile(
-                                  leading: const Icon(Icons.group_add, color: AppColors.accent),
+                                  leading: const Icon(
+                                    Icons.group_add,
+                                    color: AppColors.accent,
+                                  ),
                                   title: const Text('Create Group'),
                                   onTap: () async {
                                     Navigator.of(context).pop();
@@ -375,7 +383,10 @@ class _GroupsScreenState extends State<GroupsScreen> {
                                   },
                                 ),
                                 ListTile(
-                                  leading: const Icon(Icons.login, color: AppColors.accent),
+                                  leading: const Icon(
+                                    Icons.login,
+                                    color: AppColors.accent,
+                                  ),
                                   title: const Text('Join Group'),
                                   onTap: () async {
                                     Navigator.of(context).pop();
@@ -488,8 +499,14 @@ class _GroupsScreenState extends State<GroupsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ListTile(
-                    leading: const Icon(Icons.group_add, color: AppColors.accent),
-                    title: Text('Create Group', style: AppTextStyles.bodyMedium),
+                    leading: const Icon(
+                      Icons.group_add,
+                      color: AppColors.accent,
+                    ),
+                    title: Text(
+                      'Create Group',
+                      style: AppTextStyles.bodyMedium,
+                    ),
                     onTap: () async {
                       Navigator.of(context).pop();
                       await _showCreateGroupSheet();

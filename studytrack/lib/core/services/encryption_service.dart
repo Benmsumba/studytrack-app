@@ -8,7 +8,6 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 /// Production-grade encryption service for offline cache security
 /// Uses AES-256 encryption with secure key management via flutter_secure_storage
 class EncryptionService {
-
   factory EncryptionService() => _instance;
 
   EncryptionService._internal() : _secureStorage = const FlutterSecureStorage();
