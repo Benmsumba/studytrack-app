@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/services/spotify_service.dart';
+import '../../../core/constants/app_constants.dart';
 
 class MusicPlayerWidget extends StatefulWidget {
   const MusicPlayerWidget({super.key});
@@ -157,25 +158,47 @@ class _MusicPlayerWidgetState extends State<MusicPlayerWidget> {
             ),
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            width: double.infinity,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: AppColors.primaryGradient,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: TextButton.icon(
-                onPressed: () => SpotifyService.openPlaylist(playlist),
-                icon: const Icon(
-                  Icons.open_in_new_rounded,
-                  color: Colors.white,
+          Row(
+            children: [
+              Expanded(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: AppColors.primaryGradient,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TextButton.icon(
+                    onPressed: () => SpotifyService.openPlaylist(playlist),
+                    icon: const Icon(
+                      Icons.open_in_new_rounded,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      'Open in Spotify',
+                      style: AppTextStyles.button.copyWith(color: Colors.white),
+                    ),
+                  ),
                 ),
-                label: Text(
-                  'Open in Spotify',
-                  style: AppTextStyles.button.copyWith(color: Colors.white),
-                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              if (AppConstants.resolvedSpotifyClientId.isNotEmpty)
+                OutlinedButton(
+                  onPressed: () async {
+                    final verifier = await SpotifyService.startAuth(
+                      clientId: AppConstants.resolvedSpotifyClientId,
+                    );
+                    if (verifier == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Failed to start Spotify auth')),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Opened Spotify login')),
+                      );
+                    }
+                  },
+                  child: const Icon(Icons.link),
+                ),
+            ],
           ),
         ],
       ),

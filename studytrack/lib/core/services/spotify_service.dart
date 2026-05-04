@@ -4,8 +4,10 @@ import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../constants/app_constants.dart';
 import 'supabase_service.dart';
 
 class SpotifyStudyPlaylist {
@@ -126,6 +128,12 @@ class SpotifyService {
 
     try {
       await launchUrl(authUri, mode: LaunchMode.externalApplication);
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('spotify_code_verifier', codeVerifier);
+      } on Object catch (e) {
+        debugPrint('Failed to persist code verifier: $e');
+      }
       return codeVerifier;
     } on Object catch (e) {
       debugPrint('startAuth error: $e');
@@ -180,6 +188,25 @@ class SpotifyService {
     } on Object catch (e) {
       debugPrint('handleAuthCodeExchange error: $e');
       return false;
+    }
+  }
+
+  static Future<String?> retrieveCodeVerifier() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('spotify_code_verifier');
+    } on Object catch (e) {
+      debugPrint('retrieveCodeVerifier error: $e');
+      return null;
+    }
+  }
+
+  static Future<void> clearCodeVerifier() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('spotify_code_verifier');
+    } on Object catch (e) {
+      debugPrint('clearCodeVerifier error: $e');
     }
   }
 
