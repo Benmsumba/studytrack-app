@@ -61,7 +61,7 @@ class SelfUpdateService {
         return remote;
       }
       return null;
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('SelfUpdateService.checkForUpdate error: $error');
       return null;
     }
@@ -121,7 +121,7 @@ class SelfUpdateService {
 
       final result = await OpenFile.open(apkFile.path);
       return result.type == ResultType.done;
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('SelfUpdateService.downloadAndInstall error: $error');
       return false;
     } finally {

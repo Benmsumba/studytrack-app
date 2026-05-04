@@ -71,7 +71,7 @@ class SpotifyService {
         return launchUrl(deepLink, mode: LaunchMode.externalApplication);
       }
       return launchUrl(webLink, mode: LaunchMode.externalApplication);
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('openPlaylist error: $error');
       return false;
     }

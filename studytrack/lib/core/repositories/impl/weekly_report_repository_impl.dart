@@ -50,7 +50,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
       }
 
       return Success(WeeklyReportModel.fromJson(result));
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('saveWeeklyReport error: $e');
       return Failure(
         DataException(
@@ -72,7 +72,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
       final reports = await _supabaseService.getWeeklyReports(uid, limit);
       final models = (reports ?? []).map(WeeklyReportModel.fromJson).toList();
       return Success(models);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getWeeklyReports error: $e');
       return Failure(
         DataException(
@@ -97,7 +97,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
       }
 
       return Success(WeeklyReportModel.fromJson(report));
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getLastWeeklyReport error: $e');
       return Failure(
         DataException(
@@ -129,7 +129,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
       }).toList();
 
       return Success(filtered);
-    } catch (e, stack) {
+    } on Object catch (e, stack) {
       debugPrint('getWeeklyReportsByDateRange error: $e');
       return Failure(
         DataException(

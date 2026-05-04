@@ -40,7 +40,7 @@ Future<void> setupServiceLocator() async {
   final offlineDataStore = OfflineDataStore.instance;
   try {
     await offlineDataStore.initialize();
-  } catch (e) {
+  } on Object catch (e) {
     debugPrint('OfflineDataStore init failed: $e');
   }
   getIt.registerSingleton<OfflineDataStore>(offlineDataStore);
@@ -78,7 +78,7 @@ Future<void> setupServiceLocator() async {
   final notificationService = NotificationService();
   try {
     await notificationService.initialize();
-  } catch (e) {
+  } on Object catch (e) {
     debugPrint('NotificationService init failed: $e');
   }
   getIt.registerSingleton<NotificationService>(notificationService);

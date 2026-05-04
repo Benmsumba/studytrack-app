@@ -20,7 +20,7 @@ class ModuleActionResult {
 
 class ModulesProvider extends ChangeNotifier {
   ModulesProvider({ModuleRepository? moduleRepository})
-      : _repo = moduleRepository ?? getIt<ModuleRepository>();
+    : _repo = moduleRepository ?? getIt<ModuleRepository>();
 
   final ModuleRepository _repo;
 
@@ -178,9 +178,7 @@ class ModulesProvider extends ChangeNotifier {
     final previousSelected = _selectedModule;
 
     // Apply optimistically before the async call.
-    _modules = _modules
-        .where((m) => m.id != moduleId)
-        .toList(growable: false);
+    _modules = _modules.where((m) => m.id != moduleId).toList(growable: false);
     if (_selectedModule?.id == moduleId) {
       _selectedModule = null;
     }

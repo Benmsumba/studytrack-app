@@ -71,7 +71,8 @@ class _FakeModuleRepository implements ModuleRepository {
   }
 
   @override
-  Future<Result<void>> archiveModule(String moduleId) async => const Success(null);
+  Future<Result<void>> archiveModule(String moduleId) async =>
+      const Success(null);
 
   @override
   Future<Result<List<ModuleModel>>> getModulesBySemester(

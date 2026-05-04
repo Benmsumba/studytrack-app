@@ -102,7 +102,7 @@ class NotificationService {
         final exam = ExamModel.fromJson(row);
         await scheduleExamCountdown(exam: exam);
       }
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('Notification bootstrap failed: $error');
     }
   }
@@ -154,7 +154,7 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.alarmClock,
         matchDateTimeComponents: DateTimeComponents.time,
       );
-    } catch (e) {
+    } on Object catch (e) {
       debugPrint('Error scheduling daily briefing: $e');
     }
   }
@@ -183,7 +183,7 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.alarmClock,
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       );
-    } catch (e) {
+    } on Object catch (e) {
       debugPrint('Error scheduling weekly report: $e');
     }
   }
@@ -230,7 +230,7 @@ class NotificationService {
         ),
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
-    } catch (e) {
+    } on Object catch (e) {
       debugPrint('Error scheduling study session: $e');
     }
   }
@@ -264,7 +264,7 @@ class NotificationService {
         ),
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
-    } catch (e) {
+    } on Object catch (e) {
       debugPrint('Error scheduling spaced repetition reminder: $e');
     }
   }
@@ -315,7 +315,7 @@ class NotificationService {
           _notificationId('exam0_${exam.id}'),
         );
       }
-    } catch (e) {
+    } on Object catch (e) {
       debugPrint('Error scheduling exam countdown: $e');
     }
   }
@@ -405,7 +405,7 @@ class NotificationService {
         ),
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
-    } catch (e) {
+    } on Object catch (e) {
       debugPrint('Error scheduling exam notification: $e');
     }
   }

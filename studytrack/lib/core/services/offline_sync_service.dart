@@ -76,7 +76,7 @@ class OfflineSyncService extends ChangeNotifier {
     try {
       final lookup = await InternetAddress.lookup('google.com');
       return lookup.isNotEmpty && lookup.first.rawAddress.isNotEmpty;
-    } catch (_) {
+    } on Object catch (_) {
       return false;
     }
   }
@@ -178,7 +178,7 @@ class OfflineSyncService extends ChangeNotifier {
         _lastSyncError =
             'Some changes could not sync yet. They will retry automatically.';
       }
-    } catch (error, stack) {
+    } on Object catch (error, stack) {
       _lastSyncError = 'Sync failed. Changes will retry automatically.';
       CrashReporter.report(error, stack);
     } finally {
@@ -266,7 +266,7 @@ class OfflineSyncService extends ChangeNotifier {
         default:
           return false;
       }
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint(
         'sync change failed (${change.entity}/${change.operation}): $error',
       );
@@ -341,7 +341,7 @@ class OfflineSyncService extends ChangeNotifier {
 
     try {
       await saveWidgetSnapshot(userId: user.id);
-    } catch (error) {
+    } on Object catch (error) {
       debugPrint('saveWidgetSnapshot error: $error');
     }
   }

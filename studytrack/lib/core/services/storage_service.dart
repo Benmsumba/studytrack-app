@@ -86,7 +86,7 @@ class StorageService {
 
       uploadProgress.value = 1;
       return UploadResult(noteId: noteId, fileUrl: fileUrl);
-    } catch (_) {
+    } on Object catch (_) {
       return null;
     }
   }

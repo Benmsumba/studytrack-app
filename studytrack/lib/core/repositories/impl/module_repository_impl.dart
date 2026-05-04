@@ -26,7 +26,10 @@ class ModuleRepositoryImpl implements ModuleRepository {
     } catch (e, stack) {
       debugPrint('getAllModules error: $e');
       return Failure(
-        DataException(message: 'Failed to fetch modules: $e', stackTrace: stack),
+        DataException(
+          message: 'Failed to fetch modules: $e',
+          stackTrace: stack,
+        ),
       );
     }
   }
@@ -66,7 +69,10 @@ class ModuleRepositoryImpl implements ModuleRepository {
     } catch (e, stack) {
       debugPrint('createModule error: $e');
       return Failure(
-        DataException(message: 'Failed to create module: $e', stackTrace: stack),
+        DataException(
+          message: 'Failed to create module: $e',
+          stackTrace: stack,
+        ),
       );
     }
   }
@@ -85,7 +91,10 @@ class ModuleRepositoryImpl implements ModuleRepository {
     } catch (e, stack) {
       debugPrint('updateModule error: $e');
       return Failure(
-        DataException(message: 'Failed to update module: $e', stackTrace: stack),
+        DataException(
+          message: 'Failed to update module: $e',
+          stackTrace: stack,
+        ),
       );
     }
   }

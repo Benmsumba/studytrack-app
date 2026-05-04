@@ -271,7 +271,9 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
                         if (joinedResult is! Success<void>) {
                           scaffold.showSnackBar(
-                            const SnackBar(content: Text(AppStrings.inviteNotFound)),
+                            const SnackBar(
+                              content: Text(AppStrings.inviteNotFound),
+                            ),
                           );
                           return;
                         }
