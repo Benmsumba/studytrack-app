@@ -635,7 +635,7 @@ packages:
     source: hosted
     version: "0.4.7"
   gotrue:
-    dependency: transitive
+    dependency: "direct dev"
     description:
       name: gotrue
       sha256: "7a4172601553e61716f5c3dd243aa3297e13308e07eb85b7853c941ba585dcf5"
