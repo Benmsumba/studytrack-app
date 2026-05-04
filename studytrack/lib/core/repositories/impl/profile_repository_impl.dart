@@ -147,8 +147,30 @@ class ProfileRepositoryImpl implements ProfileRepository {
         return Failure(AuthException(message: 'User not authenticated'));
       }
 
-      // Note: Actual deletion would need to be implemented in backend
-      // For now, this is a placeholder
+      final client = _supabaseService.client;
+
+      // Delete user-owned rows from every table (RLS allows this).
+      // Order matters: child tables before parent tables.
+      for (final table in const [
+        'group_messages',
+        'group_members',
+        'study_sessions',
+        'topic_ratings',
+        'uploaded_notes',
+        'topics',
+        'modules',
+        'class_slots',
+        'exams',
+        'badges',
+        'weekly_reports',
+        'profiles',
+      ]) {
+        await client.from(table).delete().eq('user_id', uid);
+      }
+
+      // Sign out so the auth session is cleared on this device.
+      await client.auth.signOut();
+
       return const Success(null);
     } on Exception catch (e, stack) {
       debugPrint('deleteAccount error: $e');
@@ -169,8 +191,29 @@ class ProfileRepositoryImpl implements ProfileRepository {
         return Failure(AuthException(message: 'User not authenticated'));
       }
 
-      // Placeholder for fetching user statistics
-      return const Success({});
+      final client = _supabaseService.client;
+
+      final sessions = await client
+          .from('study_sessions')
+          .select('duration_minutes')
+          .eq('user_id', uid);
+
+      final totalSessions = (sessions as List).length;
+      final totalMinutes = sessions.fold<int>(
+        0,
+        (sum, row) => sum + ((row['duration_minutes'] as num?)?.toInt() ?? 0),
+      );
+
+      final modules = await client
+          .from('modules')
+          .select('id')
+          .eq('user_id', uid);
+
+      return Success({
+        'total_sessions': totalSessions,
+        'total_study_minutes': totalMinutes,
+        'total_modules': (modules as List).length,
+      });
     } on Exception catch (e, stack) {
       debugPrint('getUserStatistics error: $e');
       return Failure(
