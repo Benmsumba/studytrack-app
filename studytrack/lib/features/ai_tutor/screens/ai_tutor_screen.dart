@@ -32,9 +32,13 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
   bool _isLoading = true;
   String? _loadError;
   bool _isThinking = false;
+  bool _isStreaming = false;
   TopicModel? _topic;
   String _course = 'Health Sciences';
   String _moduleName = 'General';
+
+  // Personalization fields loaded from the user's profile
+  StudyPersonalization _personalization = const StudyPersonalization();
 
   final List<_ChatMessage> _messages = [];
 
@@ -59,6 +63,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
     TopicModel? topic;
     final topicFailed = topicResult is Failure<TopicModel?>;
     topicResult.fold((error) {}, (value) => topic = value);
+
     var moduleName = 'General';
     if (topic != null) {
       final moduleResult = await _moduleRepository.getModuleById(
@@ -70,6 +75,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
     }
 
     var course = 'Health Sciences';
+    var personalization = const StudyPersonalization();
     final profileResult = await _profileRepository.getCurrentProfile();
     final profileFailed = profileResult is Failure<Map<String, dynamic>?>;
     profileResult.fold((error) {}, (profile) {
@@ -77,6 +83,12 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
       if (profileCourse != null && profileCourse.trim().isNotEmpty) {
         course = profileCourse;
       }
+      personalization = StudyPersonalization(
+        primeStudyTime: profile?['prime_study_time'] as String?,
+        studyPreference: profile?['study_preference'] as String?,
+        studyHoursPerDay:
+            (profile?['study_hours_per_day'] as num?)?.toInt(),
+      );
     });
 
     if (!mounted) return;
@@ -84,6 +96,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
       _topic = topic;
       _moduleName = moduleName;
       _course = course;
+      _personalization = personalization;
       _loadError = topicFailed || profileFailed
           ? 'We could not load the tutor context right now.'
           : null;
@@ -93,7 +106,9 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
 
   Future<void> _sendUserMessage(String text) async {
     final message = text.trim();
-    if (message.isEmpty || _isThinking || _topic == null) return;
+    if (message.isEmpty || _isThinking || _isStreaming || _topic == null) {
+      return;
+    }
 
     setState(() {
       _messages.add(_ChatMessage.user(message));
@@ -102,30 +117,50 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
     _inputController.clear();
     _scrollToBottom();
 
+    // Build conversation history from all messages so far (excluding the one
+    // we just added so the prompt doesn't repeat the new message twice).
     final history = _messages
+        .take(_messages.length - 1)
         .map(
           (m) => {'role': m.isUser ? 'user' : 'assistant', 'content': m.text},
         )
         .toList();
 
-    final aiText = await _gemini.chatWithTutor(
+    // Add an empty AI bubble that will fill in as chunks arrive.
+    setState(() {
+      _messages.add(_ChatMessage.ai(''));
+      _isThinking = false;
+      _isStreaming = true;
+    });
+    _scrollToBottom();
+
+    final stream = _gemini.chatWithTutorStream(
       message: message,
       conversationHistory: history,
       currentTopic: _topic!.name,
       course: _course,
       notesContext: _topic!.notes,
+      personalization: _personalization,
     );
 
+    await for (final chunk in stream) {
+      if (!mounted) return;
+      setState(() {
+        final lastIndex = _messages.length - 1;
+        _messages[lastIndex] = _ChatMessage.ai(
+          _messages[lastIndex].text + chunk,
+        );
+      });
+      _scrollToBottom();
+    }
+
     if (!mounted) return;
-    setState(() {
-      _messages.add(_ChatMessage.ai(aiText));
-      _isThinking = false;
-    });
+    setState(() => _isStreaming = false);
     _scrollToBottom();
   }
 
   Future<void> _runExplain() async {
-    if (_isThinking || _topic == null) return;
+    if (_isThinking || _isStreaming || _topic == null) return;
     setState(() {
       _messages.add(_ChatMessage.user('Explain this topic'));
       _isThinking = true;
@@ -138,6 +173,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
       course: _course,
       currentRating: _topic!.currentRating ?? 0,
       notesContent: _topic!.notes,
+      personalization: _personalization,
     );
 
     if (!mounted) return;
@@ -149,7 +185,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
   }
 
   Future<void> _runMnemonic() async {
-    if (_isThinking || _topic == null) return;
+    if (_isThinking || _isStreaming || _topic == null) return;
     setState(() {
       _messages.add(_ChatMessage.user('Give a mnemonic'));
       _isThinking = true;
@@ -172,7 +208,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
   }
 
   Future<void> _runPredictQuestions() async {
-    if (_isThinking || _topic == null) return;
+    if (_isThinking || _isStreaming || _topic == null) return;
     setState(() {
       _messages.add(_ChatMessage.user('Predict questions'));
       _isThinking = true;
@@ -285,7 +321,13 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                               return const _TypingBubble();
                             }
                             final message = _messages[index];
-                            return _ChatBubble(message: message);
+                            final isLastAiMessage = !message.isUser &&
+                                index == _messages.length - 1 &&
+                                _isStreaming;
+                            return _ChatBubble(
+                              message: message,
+                              showCursor: isLastAiMessage,
+                            );
                           },
                         ),
                 ),
@@ -356,12 +398,19 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                               width: 44,
                               height: 44,
                               decoration: BoxDecoration(
-                                gradient: AppColors.primaryGradient,
+                                gradient: (_isThinking || _isStreaming)
+                                    ? null
+                                    : AppColors.primaryGradient,
+                                color: (_isThinking || _isStreaming)
+                                    ? AppColors.cardDark
+                                    : null,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.send_rounded,
-                                color: Colors.white,
+                                color: (_isThinking || _isStreaming)
+                                    ? AppColors.textMuted
+                                    : Colors.white,
                               ),
                             ),
                           ),
@@ -388,9 +437,10 @@ class _ChatMessage {
 }
 
 class _ChatBubble extends StatelessWidget {
-  const _ChatBubble({required this.message});
+  const _ChatBubble({required this.message, this.showCursor = false});
 
   final _ChatMessage message;
+  final bool showCursor;
 
   @override
   Widget build(BuildContext context) {
@@ -419,7 +469,9 @@ class _ChatBubble extends StatelessWidget {
                   fontSize: 14,
                 ),
               )
-            : _MarkdownText(text: message.text),
+            : message.text.isEmpty
+            ? const _StreamingDots()
+            : _MarkdownText(text: message.text, showCursor: showCursor),
       ),
     );
   }
@@ -503,17 +555,25 @@ class _TypingBubble extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _Dot(delay: 0),
-          SizedBox(width: 4),
-          _Dot(delay: 180),
-          SizedBox(width: 4),
-          _Dot(delay: 360),
-        ],
-      ),
+      child: const _StreamingDots(),
     ),
+  );
+}
+
+/// Three animated dots shown while waiting for the first streaming chunk.
+class _StreamingDots extends StatelessWidget {
+  const _StreamingDots();
+
+  @override
+  Widget build(BuildContext context) => const Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      _Dot(delay: 0),
+      SizedBox(width: 4),
+      _Dot(delay: 180),
+      SizedBox(width: 4),
+      _Dot(delay: 360),
+    ],
   );
 }
 
@@ -557,37 +617,52 @@ class _DotState extends State<_Dot> with SingleTickerProviderStateMixin {
 }
 
 class _MarkdownText extends StatelessWidget {
-  const _MarkdownText({required this.text});
+  const _MarkdownText({required this.text, this.showCursor = false});
 
   final String text;
+  final bool showCursor;
 
   @override
   Widget build(BuildContext context) {
     final lines = text.split('\n');
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: lines.map((line) {
-        final trimmed = line.trim();
-        if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+      children: [
+        ...lines.map((line) {
+          final trimmed = line.trim();
+          if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '• ',
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: Colors.white,
+                    ),
+                  ),
+                  Expanded(child: _buildInline(trimmed.substring(2))),
+                ],
+              ),
+            );
+          }
           return Padding(
             padding: const EdgeInsets.only(bottom: 2),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '• ',
-                  style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
-                ),
-                Expanded(child: _buildInline(trimmed.substring(2))),
-              ],
-            ),
+            child: _buildInline(line),
           );
-        }
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 2),
-          child: _buildInline(line),
-        );
-      }).toList(),
+        }),
+        if (showCursor)
+          Container(
+            width: 8,
+            height: 14,
+            margin: const EdgeInsets.only(top: 2),
+            decoration: BoxDecoration(
+              color: AppColors.accent,
+              borderRadius: BorderRadius.circular(1),
+            ),
+          ),
+      ],
     );
   }
 

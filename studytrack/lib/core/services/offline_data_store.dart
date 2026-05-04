@@ -29,6 +29,12 @@ class OfflineDataStore {
 
   Database? _database;
 
+  // Cache entries older than this are deleted on startup.
+  static const _cacheTtlDays = 30;
+  // Hard row-count caps to prevent unbounded growth.
+  static const _maxCachedRecords = 500;
+  static const _maxCachedQueries = 200;
+
   Future<void> initialize({String? databasePath}) async {
     if (_database != null) {
       return;
@@ -37,6 +43,7 @@ class OfflineDataStore {
     final path = databasePath ?? await _defaultDatabasePath();
     _database = sqlite3.open(path);
     _createTables();
+    pruneStaleEntries();
   }
 
   Future<String> _defaultDatabasePath() async {
@@ -257,6 +264,43 @@ class OfflineDataStore {
     _db.execute('DELETE FROM pending_changes');
     _db.execute('DELETE FROM cached_queries');
     _db.execute('DELETE FROM cached_records');
+  }
+
+  /// Removes cache entries that are older than [_cacheTtlDays] days and
+  /// enforces hard row-count limits on both cache tables. Called automatically
+  /// during [initialize] so it runs once at app startup.
+  void pruneStaleEntries() {
+    final cutoff = DateTime.now()
+        .subtract(const Duration(days: _cacheTtlDays))
+        .toIso8601String();
+
+    // TTL-based eviction
+    _db.execute(
+      'DELETE FROM cached_records WHERE updated_at < ?',
+      [cutoff],
+    );
+    _db.execute(
+      'DELETE FROM cached_queries WHERE updated_at < ?',
+      [cutoff],
+    );
+
+    // Row-count cap: keep the most-recently-updated rows up to the limit.
+    _db.execute('''
+      DELETE FROM cached_records
+      WHERE cache_key NOT IN (
+        SELECT cache_key FROM cached_records
+        ORDER BY updated_at DESC
+        LIMIT $_maxCachedRecords
+      )
+    ''');
+    _db.execute('''
+      DELETE FROM cached_queries
+      WHERE query_key NOT IN (
+        SELECT query_key FROM cached_queries
+        ORDER BY updated_at DESC
+        LIMIT $_maxCachedQueries
+      )
+    ''');
   }
 
   String _recordCacheKey(String entity, String recordId) =>
