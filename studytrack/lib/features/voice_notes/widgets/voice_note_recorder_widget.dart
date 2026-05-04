@@ -50,19 +50,25 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
   }
 
   Future<void> _toggleRecording() async {
-    if (_isProcessing) return;
+    if (_isProcessing) {
+      return;
+    }
 
     final profileResult = await _profileRepository.getCurrentProfile();
     Map<String, dynamic>? profile;
     profileResult.fold((error) {}, (value) => profile = value);
     if (profile == null) {
-      setState(() => _status = 'Please login first.');
+      setState(() {
+        _status = 'Please login first.';
+      });
       return;
     }
 
     final userId = profile!['id']?.toString();
     if (userId == null || userId.isEmpty) {
-      setState(() => _status = 'Please login first.');
+      setState(() {
+        _status = 'Please login first.';
+      });
       return;
     }
 
