@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,7 +9,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uni_links/uni_links.dart';
 
 import 'app.dart';
 import 'core/constants/app_constants.dart';
@@ -164,14 +164,13 @@ Future<void> _bootstrapApp() async {
   unawaited(updateProvider.checkForUpdate());
 }
 
-late final StreamSubscription<Uri?> _uniLinksSub;
-
 void _setupUriListener() {
-  _uniLinksSub = uriLinkStream.listen(
+  AppLinks().uriLinkStream.listen(
     (uri) async {
-      if (uri == null) return;
       final code = uri.queryParameters['code'];
-      if (code == null || code.isEmpty) return;
+      if (code == null || code.isEmpty) {
+        return;
+      }
 
       final verifier = await SpotifyService.retrieveCodeVerifier();
       final clientId = AppConstants.resolvedSpotifyClientId;
