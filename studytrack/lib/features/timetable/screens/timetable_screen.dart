@@ -45,7 +45,9 @@ class _TimetableScreenState extends State<TimetableScreen> {
     super.initState();
     _selectedDay = DateTime.now().weekday;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       _loadCurrentUserIdAndData();
     });
   }
@@ -57,7 +59,9 @@ class _TimetableScreenState extends State<TimetableScreen> {
       Failure(error: final _) => null,
     };
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     setState(() {
       _currentUserId = userId;
     });
@@ -72,9 +76,12 @@ class _TimetableScreenState extends State<TimetableScreen> {
     }
 
     final provider = context.read<TimetableProvider>();
-    provider.setSelectedDate(_dateForSelectedDay());
+    final selectedDate = _dateForSelectedDay();
+    provider.setSelectedDate(selectedDate);
     final result = await provider.loadTimetable(userId);
-    if (!mounted || result.success) return;
+    if (!mounted || result.success) {
+      return;
+    }
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(result.message)));
@@ -114,7 +121,9 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
   Future<void> _deleteClassSlot(String id) async {
     final result = await context.read<TimetableProvider>().deleteClassSlot(id);
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(result.message)));
@@ -172,7 +181,9 @@ class _TimetableScreenState extends State<TimetableScreen> {
           : await provider.addStudySession(submission.payload);
     }
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(result.message)));
@@ -219,7 +230,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
                     final selected = day == _selectedDay;
                     return GestureDetector(
                       onTap: () async {
-                        HapticFeedback.selectionClick();
+                        await HapticFeedback.selectionClick();
                         setState(() {
                           _selectedDay = day;
                         });
@@ -403,7 +414,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
                     ),
                     const SizedBox(height: AppSpacing.xxs),
                     Text(
-                      '${slot.room ?? 'Room TBA'} • ${slot.lecturer ?? 'Lecturer TBA'}',
+                      '${slot.room ?? 'Room TBA'} • '
+                      '${slot.lecturer ?? 'Lecturer TBA'}',
                       style: AppTextStyles.caption,
                     ),
                   ],
@@ -425,11 +437,14 @@ class _TimetableScreenState extends State<TimetableScreen> {
     };
 
     return GestureDetector(
-      onTap: () {
-        HapticFeedback.selectionClick();
+      onTap: () async {
+        await HapticFeedback.selectionClick();
         final topicId = session.topicId;
+        if (!mounted) {
+          return;
+        }
         if (topicId != null && topicId.isNotEmpty) {
-          context.push('/topics/$topicId');
+          await context.push('/topics/$topicId');
         }
       },
       child: GlassCard(
@@ -457,7 +472,8 @@ class _TimetableScreenState extends State<TimetableScreen> {
                   ),
                   const SizedBox(height: AppSpacing.xxs),
                   Text(
-                    '${session.startTime ?? '--:--'} - ${session.endTime ?? '--:--'}',
+                    '${session.startTime ?? '--:--'} - '
+                    '${session.endTime ?? '--:--'}',
                     style: AppTextStyles.bodySmall,
                   ),
                 ],
@@ -597,12 +613,22 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       initialTime: TimeOfDay.now(),
     );
 
-    if (selected == null || !mounted) return;
+    if (selected == null || !mounted) {
+      return;
+    }
     setState(() {
-      if (isClass && isStart) _classStart = selected;
-      if (isClass && !isStart) _classEnd = selected;
-      if (!isClass && isStart) _sessionStart = selected;
-      if (!isClass && !isStart) _sessionEnd = selected;
+      if (isClass && isStart) {
+        _classStart = selected;
+      }
+      if (isClass && !isStart) {
+        _classEnd = selected;
+      }
+      if (!isClass && isStart) {
+        _sessionStart = selected;
+      }
+      if (!isClass && !isStart) {
+        _sessionEnd = selected;
+      }
     });
   }
 
@@ -613,7 +639,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       firstDate: DateTime.now().subtract(const Duration(days: 30)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
-    if (picked == null || !mounted) return;
+    if (picked == null || !mounted) {
+      return;
+    }
     setState(() {
       _sessionDate = picked;
     });
@@ -658,7 +686,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     };
 
     final editId = widget.editClassData?['id']?.toString();
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     Navigator.of(context).pop(
       _ScheduleSubmission(isClass: true, payload: payload, editClassId: editId),
     );
@@ -703,7 +733,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       'status': 'planned',
     };
 
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     Navigator.of(
       context,
     ).pop(_ScheduleSubmission(isClass: false, payload: payload));
@@ -898,9 +930,11 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
         (index) =>
             DropdownMenuItem(value: index + 1, child: Text(labels[index])),
       ),
-      onChanged: (value) {
-        if (value == null) return;
-        HapticFeedback.selectionClick();
+      onChanged: (value) async {
+        if (value == null) {
+          return;
+        }
+        await HapticFeedback.selectionClick();
         setState(() {
           _classDay = value;
         });
@@ -909,9 +943,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   }
 
   Widget _buildDatePicker() => InkWell(
-    onTap: () {
-      HapticFeedback.selectionClick();
-      _pickDate();
+    onTap: () async {
+      await HapticFeedback.selectionClick();
+      await _pickDate();
     },
     child: GlassCard(
       padding: const EdgeInsets.symmetric(
@@ -930,7 +964,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
           ),
           const SizedBox(width: AppSpacing.xs),
           Text(
-            '${_sessionDate.year}-${_sessionDate.month.toString().padLeft(2, '0')}-${_sessionDate.day.toString().padLeft(2, '0')}',
+            '${_sessionDate.year}-'
+            '${_sessionDate.month.toString().padLeft(2, '0')}-'
+            '${_sessionDate.day.toString().padLeft(2, '0')}',
             style: AppTextStyles.bodySmall,
           ),
         ],
@@ -943,8 +979,8 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     required TimeOfDay? value,
     required VoidCallback onTap,
   }) => InkWell(
-    onTap: () {
-      HapticFeedback.selectionClick();
+    onTap: () async {
+      await HapticFeedback.selectionClick();
       onTap();
     },
     child: GlassCard(
@@ -1003,8 +1039,8 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
             ),
           )
           .toList(),
-      onChanged: (value) {
-        HapticFeedback.selectionClick();
+      onChanged: (value) async {
+        await HapticFeedback.selectionClick();
         setState(() {
           _selectedTopicId = value;
           _selectedModuleId = provider.topics

@@ -447,7 +447,7 @@ class _WifiOnlySection extends StatelessWidget {
     ),
     value: value,
     onChanged: onChanged,
-    activeColor: AppColors.neonCyan,
+    activeThumbColor: AppColors.neonCyan,
   );
 }
 
