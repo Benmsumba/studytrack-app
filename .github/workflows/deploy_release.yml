@@ -21,6 +21,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Show commit info
+        run: |
+          echo "GitHub context SHA: ${{ github.sha }}"
+          git --no-pager log -1 --oneline || true
+          echo "Workflow file SHA256:" && sha256sum .github/workflows/deploy_release.yml || true
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
