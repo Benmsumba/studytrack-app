@@ -1,20 +1,16 @@
-name: Build and Publish Release APK
+name: Release APK Builder
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
     paths:
       - 'studytrack/**'
-      - 'studytrack/pubspec.yaml'
       - '.github/workflows/deploy_release.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
-
-concurrency:
-  group: deploy-release-apk-${{ github.ref_name || github.run_id }}
-  cancel-in-progress: true
 
 jobs:
   deploy:
