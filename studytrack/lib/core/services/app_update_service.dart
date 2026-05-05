@@ -58,13 +58,17 @@ class AppUpdateService {
     required int currentVersionCode,
   }) async {
     if (checkUrl.isEmpty || checkUrl == 'YOUR_UPDATE_CHECK_URL') {
+      debugPrint('[AppUpdateService] Update check skipped: empty or placeholder URL');
       return null;
     }
     final client = HttpClient();
     try {
+      debugPrint('[AppUpdateService] Fetching update manifest from: $checkUrl');
       final request = await client.getUrl(Uri.parse(checkUrl));
       request.headers.set(HttpHeaders.cacheControlHeader, 'no-cache');
       final response = await request.close();
+      debugPrint('[AppUpdateService] HTTP response status: ${response.statusCode}');
+      
       if (response.statusCode != 200) {
         throw HttpException(
           'Unable to fetch update manifest (${response.statusCode}).',
@@ -72,20 +76,27 @@ class AppUpdateService {
         );
       }
       final body = await response.transform(utf8.decoder).join();
+      debugPrint('[AppUpdateService] Manifest body: $body');
+      
       final json = jsonDecode(body);
       if (json is! Map) {
         throw const FormatException('Update manifest must be a JSON object.');
       }
       final info = AppUpdateInfo.fromJson(Map<String, dynamic>.from(json));
+      debugPrint('[AppUpdateService] Parsed manifest: versionCode=${info.versionCode}, versionName=${info.versionName}');
+      
       if (info.versionCode <= currentVersionCode) {
+        debugPrint('[AppUpdateService] No update needed: remote versionCode ${info.versionCode} ≤ current $currentVersionCode');
         return null;
       }
       if (info.downloadUrl.isEmpty) {
         throw const FormatException('Update manifest is missing downloadUrl.');
       }
+      debugPrint('[AppUpdateService] Update available! versionCode: ${info.versionCode}, downloadUrl: ${info.downloadUrl}');
       return info;
     } on Exception catch (e) {
-      debugPrint('Update check failed: $e');
+      debugPrint('[AppUpdateService] Update check failed: $e');
+      debugPrint('[AppUpdateService] Exception type: ${e.runtimeType}');
       rethrow;
     } finally {
       client.close();

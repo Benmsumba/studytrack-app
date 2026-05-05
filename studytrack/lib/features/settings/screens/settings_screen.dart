@@ -12,6 +12,7 @@ import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/services/offline_sync_service.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../update/controllers/update_provider.dart';
 import '../controllers/settings_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -266,6 +267,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ],
                     ),
+                  );
+                },
+              ),
+              const SizedBox(height: 32),
+
+              // Update Check (Debug)
+              const _SectionHeader(title: 'Update Check'),
+              const SizedBox(height: AppSpacing.md),
+              Consumer<UpdateProvider>(
+                builder: (context, update, _) {
+                  return Column(
+                    children: [
+                      _SettingsCard(
+                        title: 'Check for Updates',
+                        subtitle: 'Manually check for new versions',
+                        trailing: FilledButton(
+                          onPressed: () => update.checkForUpdate(),
+                          child: const Text('Check'),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _SettingsCard(
+                        title: 'Update Status',
+                        subtitle: update.status.toString(),
+                      ),
+                      if (update.updateInfo != null) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        _SettingsCard(
+                          title: 'Version Available',
+                          subtitle:
+                              'Code ${update.updateInfo!.versionCode} (v${update.updateInfo!.versionName})',
+                        ),
+                      ],
+                    ],
                   );
                 },
               ),
