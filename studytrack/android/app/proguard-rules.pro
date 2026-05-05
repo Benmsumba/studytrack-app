@@ -45,3 +45,8 @@
 -dontwarn okio.**
 -keep class okhttp3.** { *; }
 -keep interface okhttp3.** { *; }
+
+# Google Play Core library (for split installs and app updates).
+-keep class com.google.android.play.core.** { *; }
+-keep interface com.google.android.play.core.** { *; }
+-dontwarn com.google.android.play.core.**
