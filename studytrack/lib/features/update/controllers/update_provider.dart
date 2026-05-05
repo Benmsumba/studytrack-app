@@ -46,6 +46,7 @@ class UpdateProvider extends ChangeNotifier {
 
   Future<void> checkForUpdate() async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
+      debugPrint('Update check skipped: Web or non-Android platform');
       return;
     }
 
@@ -54,25 +55,43 @@ class UpdateProvider extends ChangeNotifier {
         int.tryParse(packageInfo.buildNumber) ??
         AppConstants.currentVersionCode;
 
+    final checkUrl = AppConstants.updateCheckUrl;
+    debugPrint('[Update] Starting update check...');
+    debugPrint(
+      '[Update] Current app: versionCode=$currentVersionCode, buildNumber="${packageInfo.buildNumber}"',
+    );
+    debugPrint('[Update] Check URL: $checkUrl');
+
     try {
       final info = await _service.checkForUpdate(
-        checkUrl: AppConstants.updateCheckUrl,
+        checkUrl: checkUrl,
         currentVersionCode: currentVersionCode,
       );
+
       if (info == null) {
+        debugPrint(
+          '[Update] No new version available (remote versionCode ≤ current)',
+        );
         return;
       }
+
+      debugPrint('[Update] New version found!');
+      debugPrint(
+        '[Update] Remote: versionCode=${info.versionCode}, versionName=${info.versionName}',
+      );
+      debugPrint('[Update] Download URL: ${info.downloadUrl}');
 
       _updateInfo = info;
       _wifiOnly = info.wifiOnly;
       _status = UpdateStatus.available;
       _errorMessage = null;
       notifyListeners();
-    } on Object catch (error) {
+    } on Object catch (error, stackTrace) {
       _status = UpdateStatus.error;
       _errorMessage = 'Unable to check for updates right now.';
       notifyListeners();
-      debugPrint('Update check failed: $error');
+      debugPrint('[Update] Update check failed: $error');
+      debugPrint('[Update] Stack trace: $stackTrace');
     }
   }
 
