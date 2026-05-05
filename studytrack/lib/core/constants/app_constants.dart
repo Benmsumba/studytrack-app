@@ -1,7 +1,7 @@
 class AppConstants {
   // App metadata
   static const String appName = 'StudyTrack';
-  static const String appVersion = '1.0.0';
+  static const String appVersion = '1.1.0';
 
   // Self-update — must match the +build_number in pubspec.yaml.
   // Bump this whenever you publish a new APK.

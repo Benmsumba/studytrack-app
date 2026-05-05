@@ -165,7 +165,9 @@ Future<void> _bootstrapApp() async {
 }
 
 void _setupUriListener() {
-  AppLinks().uriLinkStream.listen(
+  final appLinks = AppLinks();
+
+  appLinks.uriLinkStream.listen(
     (uri) async {
       final code = uri.queryParameters['code'];
       if (code == null || code.isEmpty) {
@@ -184,7 +186,7 @@ void _setupUriListener() {
       }
     },
     onError: (Object err) {
-      debugPrint('uni_links error: $err');
+      debugPrint('app_links error: $err');
     },
   );
 }

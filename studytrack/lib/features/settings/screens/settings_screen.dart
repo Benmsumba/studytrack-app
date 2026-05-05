@@ -276,33 +276,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const _SectionHeader(title: 'Update Check'),
               const SizedBox(height: AppSpacing.md),
               Consumer<UpdateProvider>(
-                builder: (context, update, _) {
-                  return Column(
-                    children: [
-                      _SettingsCard(
-                        title: 'Check for Updates',
-                        subtitle: 'Manually check for new versions',
-                        trailing: FilledButton(
-                          onPressed: () => update.checkForUpdate(),
-                          child: const Text('Check'),
-                        ),
+                builder: (context, update, _) => Column(
+                  children: [
+                    _SettingsCard(
+                      title: 'Check for Updates',
+                      subtitle: 'Manually check for new versions',
+                      trailing: FilledButton(
+                        onPressed: () => update.checkForUpdate(),
+                        child: const Text('Check'),
                       ),
+                    ),
+                    const SizedBox(height: AppSpacing.md),
+                    _SettingsCard(
+                      title: 'Update Status',
+                      subtitle: update.status.toString(),
+                      trailing: const SizedBox.shrink(),
+                    ),
+                    if (update.updateInfo != null) ...[
                       const SizedBox(height: AppSpacing.md),
                       _SettingsCard(
-                        title: 'Update Status',
-                        subtitle: update.status.toString(),
+                        title: 'Version Available',
+                        subtitle:
+                            'Code ${update.updateInfo!.versionCode} (v${update.updateInfo!.versionName})',
+                        trailing: const SizedBox.shrink(),
                       ),
-                      if (update.updateInfo != null) ...[
-                        const SizedBox(height: AppSpacing.md),
-                        _SettingsCard(
-                          title: 'Version Available',
-                          subtitle:
-                              'Code ${update.updateInfo!.versionCode} (v${update.updateInfo!.versionName})',
-                        ),
-                      ],
                     ],
-                  );
-                },
+                  ],
+                ),
               ),
               const SizedBox(height: 32),
 
