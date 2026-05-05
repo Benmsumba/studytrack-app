@@ -61,7 +61,7 @@ jobs:
       - name: Run tests
         run: |
           cd studytrack
-          flutter test --coverage --lcov-file=coverage/lcov.info
+          flutter test --coverage
       
       - name: Upload coverage
         uses: codecov/codecov-action@v3
