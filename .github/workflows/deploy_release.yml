@@ -274,18 +274,17 @@ jobs:
           echo "Calculating SHA256 for: $APK_PATH"
           APK_SHA256=$(sha256sum "${APK_PATH}" | awk '{print $1}')
           echo "SHA256: $APK_SHA256"
-          
-          printf '{
-  "versionCode": ${{ steps.ver.outputs.build }},
-  "versionName": "${{ steps.ver.outputs.version }}",
-  "downloadUrl": "%s/storage/v1/object/public/app-updates/studytrack-latest.apk",
-  "download_url": "%s/storage/v1/object/public/app-updates/studytrack-latest.apk",
-  "releaseNotes": "StudyTrack ${{ steps.ver.outputs.version }} is available.",
-  "release_notes": "StudyTrack ${{ steps.ver.outputs.version }} is available.",
-  "changelog": "StudyTrack ${{ steps.ver.outputs.version }} is available.",
-  "apkSha256": "%s",
-  "wifiOnly": false
-}\n' "${SUPABASE_URL}" "${SUPABASE_URL}" "${APK_SHA256}" > /tmp/latest.json
+          cat > /tmp/latest.json << 'EOF'
+          {
+            "versionCode": ${{ steps.ver.outputs.build }},
+            "versionName": "${{ steps.ver.outputs.version }}",
+            "downloadUrl": "${{ secrets.SUPABASE_URL }}/storage/v1/object/public/app-updates/studytrack-latest.apk",
+            "releaseNotes": "StudyTrack ${{ steps.ver.outputs.version }} is available.",
+            "apkSha256": "SHA256PLACEHOLDER",
+            "wifiOnly": false
+          }
+          EOF
+          sed -i "s/SHA256PLACEHOLDER/${APK_SHA256}/g" /tmp/latest.json
 
           HTTP_STATUS=$(curl --silent --show-error --output /tmp/latest_upload_response.txt \
             --write-out "%{http_code}" \
