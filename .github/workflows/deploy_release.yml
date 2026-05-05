@@ -1,4 +1,4 @@
-name: Deploy Release APK
+name: Build and Publish Release APK
 
 on:
   push:
@@ -44,7 +44,7 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
-      - name: Validate required secrets
+      - name: Verify required secrets
         id: secrets
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -53,36 +53,29 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           missing=0
-          for key in SUPABASE_URL SUPABASE_ANON_KEY GEMINI_API_KEY SUPABASE_SERVICE_ROLE_KEY; do
+          for key in SUPABASE_URL SUPABASE_ANON_KEY GEMINI_API_KEY; do
             if [ -z "${!key}" ]; then
-              echo "::warning::Missing required secret: $key"
+              echo "::warning::Missing secret: $key"
               missing=1
             fi
           done
           if [ "$missing" -ne 0 ]; then
             echo "missing=true" >> "$GITHUB_OUTPUT"
-            echo "Release build skipped because required secrets are not configured."
+            echo "Release build skipped; required secrets are not configured."
             exit 0
           fi
 
-          # Strip whitespace (common copy-paste artifact) and export the clean value
-          TRIMMED_KEY=$(echo "${SUPABASE_SERVICE_ROLE_KEY}" | tr -d '[:space:]')
-          if [ -z "${TRIMMED_KEY}" ]; then
-            echo "::error::SUPABASE_SERVICE_ROLE_KEY is empty after trimming whitespace."
-            exit 1
+          if [ -n "${SUPABASE_SERVICE_ROLE_KEY}" ]; then
+            TRIMMED_KEY=$(echo "${SUPABASE_SERVICE_ROLE_KEY}" | tr -d '[:space:]')
+            if [ -n "${TRIMMED_KEY}" ]; then
+              echo "SUPABASE_SERVICE_ROLE_KEY=${TRIMMED_KEY}" >> "$GITHUB_ENV"
+              echo "can_publish=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "can_publish=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "can_publish=false" >> "$GITHUB_OUTPUT"
           fi
-          # The Storage REST API requires a JWT Bearer token (starts with eyJ).
-          # New-format sb_secret_ keys are NOT JWTs and will be rejected by the Storage API.
-          if [[ "${TRIMMED_KEY}" == sb_secret_* || "${TRIMMED_KEY}" == sb_publishable_* ]]; then
-            echo "::error::SUPABASE_SERVICE_ROLE_KEY is in Supabase's new key format (sb_secret_...) which is NOT accepted by the Storage REST API. You need the legacy JWT service_role key. In Supabase: Project Settings → API → scroll down to 'JWT Settings' or look for a 'Show legacy keys' / 'service_role (JWT)' option. The JWT starts with eyJ..."
-            exit 1
-          fi
-          if [[ "${TRIMMED_KEY}" != eyJ* ]]; then
-            echo "::error::SUPABASE_SERVICE_ROLE_KEY does not look like a valid JWT (should start with eyJ). Re-paste from Supabase → Project Settings → API → service_role."
-            exit 1
-          fi
-          echo "SUPABASE_SERVICE_ROLE_KEY format looks valid (length: ${#TRIMMED_KEY})"
-          echo "SUPABASE_SERVICE_ROLE_KEY=${TRIMMED_KEY}" >> "$GITHUB_ENV"
           echo "missing=false" >> "$GITHUB_OUTPUT"
 
       - name: Prepare signing material
@@ -94,8 +87,6 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
           mkdir -p ~/.android
-          
-          # Use provided keystore if all secrets are available
           if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
             KEYSTORE_FILE="$HOME/.android/production.jks"
             echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_FILE"
@@ -103,7 +94,7 @@ jobs:
               echo "::error::Failed to decode keystore from base64"
               exit 1
             fi
-            echo "Using production keystore from repository secrets"
+            echo "Using production signing keystore."
             {
               echo "KEYSTORE_PATH=$KEYSTORE_FILE"
               echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
@@ -113,13 +104,9 @@ jobs:
             exit 0
           fi
 
-          # Fallback: use Android SDK debug keystore (always available)
-          echo "Using Android SDK debug keystore for CI builds"
+          echo "Using Android debug keystore for CI builds."
           DEBUG_KEYSTORE="$HOME/.android/debug.keystore"
-          
-          # Create debug keystore if it doesn't exist (first time)
           if [ ! -f "$DEBUG_KEYSTORE" ]; then
-            echo "Creating debug keystore..."
             keytool -genkeypair \
               -alias androiddebugkey \
               -keyalg RSA \
@@ -131,8 +118,6 @@ jobs:
               -noprompt \
               -dname "CN=Android Debug, O=Android, C=US" || true
           fi
-          
-          # Verify debug keystore exists and is readable
           if [ ! -f "$DEBUG_KEYSTORE" ]; then
             echo "::error::Debug keystore not found and cannot be created"
             exit 1
@@ -150,44 +135,32 @@ jobs:
         working-directory: studytrack
         run: flutter pub get
 
-      - name: Analyze
+      - name: Analyze project
         if: steps.secrets.outputs.missing == 'false'
         working-directory: studytrack
         run: flutter analyze --no-fatal-warnings --no-fatal-infos
 
-      - name: Extract version from pubspec.yaml
+      - name: Read version from pubspec.yaml
         if: steps.secrets.outputs.missing == 'false'
         id: ver
         working-directory: studytrack
         run: |
           RAW=$(grep '^version:' pubspec.yaml | sed 's/version:[[:space:]]*//')
           VERSION=$(echo "$RAW" | cut -d'+' -f1)
-          # Base offset ensures CI builds always exceed any manually-installed APK
-          # (pubspec default is 1; debug builds from build_apk.yml are also 1).
           BUILD=$((10000 + GITHUB_RUN_NUMBER))
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "build=$BUILD"     >> "$GITHUB_OUTPUT"
-          echo "Detected version=$VERSION build=$BUILD"
+          echo "Version $VERSION, build $BUILD"
 
-      - name: Verify update URL configuration
-        if: steps.secrets.outputs.missing == 'false'
+      - name: Check update URL
+        if: steps.secrets.outputs.missing == 'false' && steps.secrets.outputs.can_publish == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |
-          echo "Update Configuration:"
-          echo "  SUPABASE_URL: ${SUPABASE_URL:0:30}... (length: ${#SUPABASE_URL})"
           UPDATE_URL="${SUPABASE_URL}/storage/v1/object/public/app-updates/latest.json"
-          echo "  Resulting update check URL:"
-          echo "    $UPDATE_URL"
-          echo ""
-          echo "App will use this URL to fetch latest.json:"
-          echo "  (Pass 1) Try from --dart-define (CI builds)"
-          echo "  (Pass 2) Fallback to hardcoded URL in app_constants.dart"
-          echo ""
-          echo "Application version info:"
-          echo "  App Version: ${{ steps.ver.outputs.version }}"
-          echo "  Build Version: ${{ steps.ver.outputs.build }}"
-          echo "  Build Name: ${{ steps.ver.outputs.version }}"
+          echo "Update URL: $UPDATE_URL"
+          echo "App version: ${{ steps.ver.outputs.version }}"
+          echo "Build number: ${{ steps.ver.outputs.build }}"
 
       - name: Build release APK
         if: steps.secrets.outputs.missing == 'false'
@@ -201,11 +174,7 @@ jobs:
           KEY_ALIAS: ${{ env.KEY_ALIAS }}
           KEY_PASSWORD: ${{ env.KEY_PASSWORD }}
         run: |
-          echo "Building with configuration:"
-          echo "  Build name: ${{ steps.ver.outputs.version }}"
-          echo "  Build number: ${{ steps.ver.outputs.build }}"
-          echo "  SUPABASE_URL prefix: ${SUPABASE_URL:0:30}..."
-          echo "  Dart codegen: enabled"
+          echo "Building release APK..."
           flutter build apk --release --target-platform=android-arm64 \
             --build-name="${{ steps.ver.outputs.version }}" \
             --build-number="${{ steps.ver.outputs.build }}" \
@@ -217,26 +186,20 @@ jobs:
             --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}" \
             --dart-define=GEMINI_API_KEY="${GEMINI_API_KEY}"
 
-      - name: Show built APK sizes
+      - name: Inspect build outputs
         if: steps.secrets.outputs.missing == 'false'
         run: |
-          echo "Build output directory:"
           ls -lh studytrack/build/app/outputs/flutter-apk/ || echo "flutter-apk dir not found"
-          echo ""
-          echo "Looking for release APK..."
           find studytrack/build/app/outputs -name "*release*.apk" -ls
           APK_FILE=$(find studytrack/build/app/outputs -name "*release*.apk" | head -1)
           if [ -n "$APK_FILE" ]; then
-            echo "APK file: $APK_FILE"
+            echo "Release APK: $APK_FILE"
             du -h "$APK_FILE"
           else
-            echo "ERROR: No release APK found!"
+            echo "::error::No release APK found."
             exit 1
           fi
-          
-          # Verify APK contains debug symbols separately (good optimization)
           if [ -d "studytrack/build/app/outputs/symbols" ]; then
-            echo ""
             echo "Debug symbols size:"
             du -sh studytrack/build/app/outputs/symbols/
           fi
@@ -249,27 +212,23 @@ jobs:
           path: studytrack/build/app/outputs/flutter-apk/*release*.apk
           retention-days: 30
 
-      - name: Ensure app-updates bucket exists and is public
-        if: steps.secrets.outputs.missing == 'false'
+      - name: Ensure app-updates bucket is public
+        if: steps.secrets.outputs.missing == 'false' && steps.secrets.outputs.can_publish == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |
-          # Create bucket (succeeds on first run, 409 if already exists — both are fine)
           CREATE_STATUS=$(curl --silent --output /tmp/bucket_create.txt --write-out "%{http_code}" \
             -X POST "${SUPABASE_URL}/storage/v1/bucket" \
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/json" \
             -d '{"id":"app-updates","name":"app-updates","public":true}')
-          echo "Create bucket status: ${CREATE_STATUS}"
           cat /tmp/bucket_create.txt
 
-          # Ensure it is public regardless (idempotent PUT)
           UPDATE_STATUS=$(curl --silent --output /tmp/bucket_update.txt --write-out "%{http_code}" \
             -X PUT "${SUPABASE_URL}/storage/v1/bucket/app-updates" \
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
             -H "Content-Type: application/json" \
             -d '{"public":true}')
-          echo "Update bucket status: ${UPDATE_STATUS}"
           cat /tmp/bucket_update.txt
 
           if [ "${UPDATE_STATUS}" -lt 200 ] || [ "${UPDATE_STATUS}" -ge 300 ]; then
@@ -279,23 +238,17 @@ jobs:
           echo "app-updates bucket is public"
 
       - name: Upload APK to Supabase Storage
-        if: steps.secrets.outputs.missing == 'false'
+        if: steps.secrets.outputs.missing == 'false' && steps.secrets.outputs.can_publish == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |
-          # Find the built APK (should be app-release.apk with target-platform=android-arm64)
           APK_FILE=$(find studytrack/build/app/outputs -name "*release*.apk" | head -1)
           if [ -z "$APK_FILE" ]; then
             echo "::error::No release APK found in build outputs"
             exit 1
           fi
-          
           echo "Uploading APK: $APK_FILE"
           du -h "$APK_FILE"
-          
-          # PUT supports raw binary body; POST requires multipart/form-data.
-          # x-upsert: true makes PUT create-or-replace (idempotent).
-          # SUPABASE_SERVICE_ROLE_KEY is the whitespace-trimmed value exported by the validate step.
           HTTP_STATUS=$(curl --silent --show-error --output /tmp/apk_upload_response.txt \
             --write-out "%{http_code}" \
             -X PUT \
@@ -312,18 +265,16 @@ jobs:
           fi
           echo "APK uploaded successfully"
 
-      - name: Generate and upload latest.json
-        if: steps.secrets.outputs.missing == 'false'
+      - name: Publish latest.json
+        if: steps.secrets.outputs.missing == 'false' && steps.secrets.outputs.can_publish == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |
-          # Find the built APK
           APK_PATH=$(find studytrack/build/app/outputs -name "*release*.apk" | head -1)
           if [ -z "$APK_PATH" ]; then
             echo "::error::No release APK found for SHA256 calculation"
             exit 1
           fi
-          
           echo "Calculating SHA256 for: $APK_PATH"
           APK_SHA256=$(sha256sum "${APK_PATH}" | awk '{print $1}')
           echo "SHA256: $APK_SHA256"
