@@ -185,7 +185,7 @@ jobs:
           echo "  (Pass 2) Fallback to hardcoded URL in app_constants.dart"
           echo ""
           echo "Application version info:"
-          echo "  App Version: 1.0.0"
+          echo "  App Version: ${{ steps.ver.outputs.version }}"
           echo "  Build Version: ${{ steps.ver.outputs.build }}"
           echo "  Build Name: ${{ steps.ver.outputs.version }}"
 
@@ -246,7 +246,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: StudyTrack-release-arm64
-          path: studytrack/build/app/outputs/flutter-apk/app-release.apk
+          path: studytrack/build/app/outputs/flutter-apk/*release*.apk
           retention-days: 30
 
       - name: Ensure app-updates bucket exists and is public
