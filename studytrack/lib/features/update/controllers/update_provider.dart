@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -46,52 +48,97 @@ class UpdateProvider extends ChangeNotifier {
 
   Future<void> checkForUpdate() async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
-      debugPrint('Update check skipped: Web or non-Android platform');
+      debugPrint('[Update] Update check skipped: Web or non-Android platform');
       return;
     }
 
-    final packageInfo = await PackageInfo.fromPlatform();
-    final currentVersionCode =
-        int.tryParse(packageInfo.buildNumber) ??
-        AppConstants.currentVersionCode;
-
-    final checkUrl = AppConstants.updateCheckUrl;
-    debugPrint('[Update] Starting update check...');
-    debugPrint(
-      '[Update] Current app: versionCode=$currentVersionCode, buildNumber="${packageInfo.buildNumber}"',
-    );
-    debugPrint('[Update] Check URL: $checkUrl');
-
     try {
-      final info = await _service.checkForUpdate(
-        checkUrl: checkUrl,
-        currentVersionCode: currentVersionCode,
-      );
+      final packageInfo = await PackageInfo.fromPlatform();
 
-      if (info == null) {
+      // Parse buildNumber carefully - should be numeric
+      int currentVersionCode;
+      if (packageInfo.buildNumber.isEmpty) {
         debugPrint(
-          '[Update] No new version available (remote versionCode ≤ current)',
+          '[Update] WARNING: PackageInfo.buildNumber is empty, using fallback ${AppConstants.currentVersionCode}',
         );
-        return;
+        currentVersionCode = AppConstants.currentVersionCode;
+      } else {
+        final parsed = int.tryParse(packageInfo.buildNumber);
+        if (parsed == null) {
+          debugPrint(
+            '[Update] WARNING: PackageInfo.buildNumber "${packageInfo.buildNumber}" is not a valid integer',
+          );
+          currentVersionCode = AppConstants.currentVersionCode;
+        } else {
+          currentVersionCode = parsed;
+        }
       }
 
-      debugPrint('[Update] New version found!');
-      debugPrint(
-        '[Update] Remote: versionCode=${info.versionCode}, versionName=${info.versionName}',
-      );
-      debugPrint('[Update] Download URL: ${info.downloadUrl}');
+      final checkUrl = AppConstants.updateCheckUrl;
+      debugPrint('[Update] =================================');
+      debugPrint('[Update] Starting update check...');
+      debugPrint('[Update] Current app:');
+      debugPrint('[Update]   - versionCode=$currentVersionCode');
+      debugPrint('[Update]   - buildNumber="${packageInfo.buildNumber}"');
+      debugPrint('[Update]   - appVersion="${packageInfo.version}"');
+      debugPrint('[Update] Check URL: $checkUrl');
 
-      _updateInfo = info;
-      _wifiOnly = info.wifiOnly;
-      _status = UpdateStatus.available;
-      _errorMessage = null;
-      notifyListeners();
-    } on Object catch (error, stackTrace) {
+      try {
+        final info = await _service.checkForUpdate(
+          checkUrl: checkUrl,
+          currentVersionCode: currentVersionCode,
+        );
+
+        if (info == null) {
+          debugPrint('[Update] No new version available');
+          debugPrint('[Update] =================================');
+          return;
+        }
+
+        debugPrint('[Update] ✓ NEW VERSION DETECTED! ✓');
+        debugPrint('[Update] Remote:');
+        debugPrint('[Update]   - versionCode=${info.versionCode}');
+        debugPrint('[Update]   - versionName=${info.versionName}');
+        debugPrint('[Update] Download URL: ${info.downloadUrl}');
+
+        _updateInfo = info;
+        _wifiOnly = info.wifiOnly;
+        _status = UpdateStatus.available;
+        _errorMessage = null;
+        notifyListeners();
+        debugPrint('[Update] Update status changed to: AVAILABLE');
+        debugPrint('[Update] =================================');
+      } on SocketException catch (e) {
+        _status = UpdateStatus.error;
+        _errorMessage = 'Network error. Check your internet connection.';
+        notifyListeners();
+        debugPrint('[Update] ✗ NETWORK ERROR: $e');
+        debugPrint('[Update] =================================');
+      } on HttpException catch (e) {
+        _status = UpdateStatus.error;
+        _errorMessage = 'Unable to fetch updates (HTTP error).';
+        notifyListeners();
+        debugPrint('[Update] ✗ HTTP ERROR: $e');
+        debugPrint('[Update] =================================');
+      } on FormatException catch (e) {
+        _status = UpdateStatus.error;
+        _errorMessage = 'Invalid update metadata format.';
+        notifyListeners();
+        debugPrint('[Update] ✗ FORMAT ERROR: $e');
+        debugPrint('[Update] =================================');
+      } on Object catch (error, stackTrace) {
+        _status = UpdateStatus.error;
+        _errorMessage = 'Update check failed.';
+        notifyListeners();
+        debugPrint('[Update] ✗ UNEXPECTED ERROR: $error');
+        debugPrint('[Update] Stack trace: $stackTrace');
+        debugPrint('[Update] =================================');
+      }
+    } on Object catch (e) {
+      debugPrint('[Update] ✗ FAILED TO GET PACKAGE INFO: $e');
       _status = UpdateStatus.error;
-      _errorMessage = 'Unable to check for updates right now.';
+      _errorMessage = 'Unable to check app version.';
       notifyListeners();
-      debugPrint('[Update] Update check failed: $error');
-      debugPrint('[Update] Stack trace: $stackTrace');
     }
   }
 

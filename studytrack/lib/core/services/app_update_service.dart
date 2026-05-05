@@ -58,45 +58,93 @@ class AppUpdateService {
     required int currentVersionCode,
   }) async {
     if (checkUrl.isEmpty || checkUrl == 'YOUR_UPDATE_CHECK_URL') {
-      debugPrint('[AppUpdateService] Update check skipped: empty or placeholder URL');
+      debugPrint(
+        '[AppUpdateService] Update check skipped: empty or placeholder URL',
+      );
       return null;
     }
+
     final client = HttpClient();
+    client.connectionTimeout = const Duration(seconds: 10);
+
     try {
-      debugPrint('[AppUpdateService] Fetching update manifest from: $checkUrl');
+      debugPrint('[AppUpdateService] Fetching update manifest...');
+      debugPrint('[AppUpdateService] URL: $checkUrl');
+
       final request = await client.getUrl(Uri.parse(checkUrl));
       request.headers.set(HttpHeaders.cacheControlHeader, 'no-cache');
+      request.headers.set(
+        HttpHeaders.userAgentHeader,
+        'StudyTrack-UpdateCheck/1.0',
+      );
+
       final response = await request.close();
-      debugPrint('[AppUpdateService] HTTP response status: ${response.statusCode}');
-      
+      debugPrint(
+        '[AppUpdateService] HTTP response status: ${response.statusCode}',
+      );
+
       if (response.statusCode != 200) {
         throw HttpException(
-          'Unable to fetch update manifest (${response.statusCode}).',
+          'HTTP ${response.statusCode}: Unable to fetch update manifest',
           uri: Uri.parse(checkUrl),
         );
       }
+
       final body = await response.transform(utf8.decoder).join();
-      debugPrint('[AppUpdateService] Manifest body: $body');
-      
+      debugPrint(
+        '[AppUpdateService] Response body length: ${body.length} bytes',
+      );
+
+      if (body.isEmpty) {
+        throw const FormatException('Update manifest is empty');
+      }
+
       final json = jsonDecode(body);
       if (json is! Map) {
-        throw const FormatException('Update manifest must be a JSON object.');
+        throw const FormatException('Update manifest must be a JSON object');
       }
+
       final info = AppUpdateInfo.fromJson(Map<String, dynamic>.from(json));
-      debugPrint('[AppUpdateService] Parsed manifest: versionCode=${info.versionCode}, versionName=${info.versionName}');
-      
+      debugPrint('[AppUpdateService] Parsed manifest:');
+      debugPrint('[AppUpdateService]   - versionCode: ${info.versionCode}');
+      debugPrint('[AppUpdateService]   - versionName: ${info.versionName}');
+      debugPrint(
+        '[AppUpdateService]   - downloadUrl: ${info.downloadUrl.isNotEmpty}',
+      );
+      debugPrint(
+        '[AppUpdateService]   - apkSha256: ${info.apkSha256.isNotEmpty}',
+      );
+
       if (info.versionCode <= currentVersionCode) {
-        debugPrint('[AppUpdateService] No update needed: remote versionCode ${info.versionCode} ≤ current $currentVersionCode');
+        debugPrint('[AppUpdateService] No update needed:');
+        debugPrint(
+          '[AppUpdateService]   Remote versionCode (${info.versionCode}) ≤ Current ($currentVersionCode)',
+        );
         return null;
       }
+
       if (info.downloadUrl.isEmpty) {
-        throw const FormatException('Update manifest is missing downloadUrl.');
+        throw const FormatException('Update manifest is missing downloadUrl');
       }
-      debugPrint('[AppUpdateService] Update available! versionCode: ${info.versionCode}, downloadUrl: ${info.downloadUrl}');
+
+      debugPrint('[AppUpdateService] ✓ UPDATE AVAILABLE!');
+      debugPrint(
+        '[AppUpdateService]   Upgrade: $currentVersionCode → ${info.versionCode}',
+      );
       return info;
+    } on SocketException catch (e) {
+      debugPrint('[AppUpdateService] ✗ SOCKET ERROR: ${e.message}');
+      debugPrint('[AppUpdateService]   (Network connectivity issue)');
+      rethrow;
+    } on HttpException catch (e) {
+      debugPrint('[AppUpdateService] ✗ HTTP ERROR: $e');
+      rethrow;
+    } on FormatException catch (e) {
+      debugPrint('[AppUpdateService] ✗ FORMAT ERROR: $e');
+      rethrow;
     } on Exception catch (e) {
-      debugPrint('[AppUpdateService] Update check failed: $e');
-      debugPrint('[AppUpdateService] Exception type: ${e.runtimeType}');
+      debugPrint('[AppUpdateService] ✗ EXCEPTION: ${e.runtimeType}');
+      debugPrint('[AppUpdateService]   Error: $e');
       rethrow;
     } finally {
       client.close();
