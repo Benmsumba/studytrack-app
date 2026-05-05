@@ -169,6 +169,26 @@ jobs:
           echo "build=$BUILD"     >> "$GITHUB_OUTPUT"
           echo "Detected version=$VERSION build=$BUILD"
 
+      - name: Verify update URL configuration
+        if: steps.secrets.outputs.missing == 'false'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          echo "Update Configuration:"
+          echo "  SUPABASE_URL: ${SUPABASE_URL:0:30}... (length: ${#SUPABASE_URL})"
+          UPDATE_URL="${SUPABASE_URL}/storage/v1/object/public/app-updates/latest.json"
+          echo "  Resulting update check URL:"
+          echo "    $UPDATE_URL"
+          echo ""
+          echo "App will use this URL to fetch latest.json:"
+          echo "  (Pass 1) Try from --dart-define (CI builds)"
+          echo "  (Pass 2) Fallback to hardcoded URL in app_constants.dart"
+          echo ""
+          echo "Application version info:"
+          echo "  App Version: 1.0.0"
+          echo "  Build Version: ${{ steps.ver.outputs.build }}"
+          echo "  Build Name: ${{ steps.ver.outputs.version }}"
+
       - name: Build release APK
         if: steps.secrets.outputs.missing == 'false'
         working-directory: studytrack
@@ -212,6 +232,13 @@ jobs:
           else
             echo "ERROR: No release APK found!"
             exit 1
+          fi
+          
+          # Verify APK contains debug symbols separately (good optimization)
+          if [ -d "studytrack/build/app/outputs/symbols" ]; then
+            echo ""
+            echo "Debug symbols size:"
+            du -sh studytrack/build/app/outputs/symbols/
           fi
 
       - name: Upload release APK artifact
