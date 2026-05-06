@@ -51,6 +51,8 @@ class MainShell extends StatelessWidget {
                   onProfileTap: () => context.go('/profile'),
                   onNotificationTap: () => context.push('/notifications'),
                   onSettingsTap: () => context.push('/settings'),
+                  onVoiceNotesTap: () => context.push('/voice-notes'),
+                  onAnalyticsTap: () => context.push('/analytics'),
                   actions: headerActions,
                 ),
               ),
@@ -92,6 +94,8 @@ class _Header extends StatelessWidget {
     required this.onProfileTap,
     required this.onNotificationTap,
     required this.onSettingsTap,
+    required this.onVoiceNotesTap,
+    required this.onAnalyticsTap,
     required this.actions,
   });
 
@@ -99,6 +103,8 @@ class _Header extends StatelessWidget {
   final VoidCallback onProfileTap;
   final VoidCallback onNotificationTap;
   final VoidCallback onSettingsTap;
+  final VoidCallback onVoiceNotesTap;
+  final VoidCallback onAnalyticsTap;
   final List<Widget> actions;
 
   @override
@@ -128,12 +134,42 @@ class _Header extends StatelessWidget {
           ),
         ),
         ...actions,
+        PopupMenuButton<String>(
+          onSelected: (value) {
+            if (value == 'voice-notes') {
+              onVoiceNotesTap();
+            } else if (value == 'analytics') {
+              onAnalyticsTap();
+            }
+          },
+          itemBuilder: (BuildContext context) => [
+            const PopupMenuItem<String>(
+              value: 'voice-notes',
+              child: Row(
+                children: [
+                  Icon(Icons.mic_rounded, size: 18, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('Voice Notes'),
+                ],
+              ),
+            ),
+            const PopupMenuItem<String>(
+              value: 'analytics',
+              child: Row(
+                children: [
+                  Icon(Icons.analytics_rounded, size: 18, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('Analytics'),
+                ],
+              ),
+            ),
+          ],
+          icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+          color: AppColors.cardDark,
+        ),
         IconButton(
           onPressed: onSettingsTap,
-          icon: const Icon(
-            Icons.settings_rounded,
-            color: Colors.white,
-          ),
+          icon: const Icon(Icons.settings_rounded, color: Colors.white),
         ),
         IconButton(
           onPressed: onNotificationTap,
