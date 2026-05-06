@@ -670,9 +670,7 @@ class _TopicLineChart extends StatelessWidget {
             );
           }
 
-          final points = history.asMap().entries.map((entry) {
-            return FlSpot(entry.key.toDouble(), entry.value.rating.toDouble());
-          }).toList();
+          final points = history.asMap().entries.map((entry) => FlSpot(entry.key.toDouble(), entry.value.rating.toDouble())).toList();
 
           return LineChart(
             LineChartData(
