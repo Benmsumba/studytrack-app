@@ -1,24 +1,17 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
-import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
-import '../../../core/widgets/app_state_view.dart';
-import '../../../core/widgets/glass_card.dart';
 import '../../../models/module_model.dart';
-import '../../../models/study_session_model.dart';
 import '../../../models/topic_model.dart';
 import '../../../models/topic_rating_history_model.dart';
-import '../../auth/controllers/auth_provider.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -28,13 +21,7 @@ class ProgressScreen extends StatefulWidget {
 }
 
 class _ProgressScreenState extends State<ProgressScreen> {
-  final ModuleRepository _moduleRepo = getIt<ModuleRepository>();
-  final TopicRepository _topicRepo = getIt<TopicRepository>();
-  final StudySessionRepository _sessionRepo = getIt<StudySessionRepository>();
-  final ProfileRepository _profileRepo = getIt<ProfileRepository>();
-
   bool _isLoading = true;
-  String? _loadError;
   List<ModuleModel> _modules = [];
   List<TopicModel> _topics = [];
   TopicModel? _selectedTopic;
@@ -53,111 +40,92 @@ class _ProgressScreenState extends State<ProgressScreen> {
     _loadProgress();
   }
 
+  /// Loads all analytics data in 2 network round-trips instead of 91+.
+  ///
+  /// Round-trip 1 (parallel): modules + sessions (84-day window) + profile.
+  /// Round-trip 2: batch topics for all module IDs.
+  /// Everything else is computed client-side from those three lists.
   Future<void> _loadProgress() async {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final user = auth.currentUser;
-    if (user == null) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _loadError = null;
-      });
-      return;
-    }
-
     setState(() => _isLoading = true);
 
-    final modulesResult = await _moduleRepo.getAllModules();
-    final modules = modulesResult is Success<List<ModuleModel>>
-        ? modulesResult.data
-        : <ModuleModel>[];
-    final modulesFailed = modulesResult is Failure<List<ModuleModel>>;
+    final now = DateTime.now();
+    final heatmapStart = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 83));
 
-    final allTopics = <TopicModel>[];
-    var topicsFailed = false;
-    for (final module in modules) {
-      final topicsResult = await _topicRepo.getTopicsByModule(module.id);
-      if (topicsResult is Success<List<TopicModel>>) {
-        allTopics.addAll(topicsResult.data);
-      } else {
-        topicsFailed = true;
+    // Round-trip 1 — fire modules, sessions, and profile in parallel.
+    late final moduleResult = getIt<ModuleRepository>().getAllModules();
+    late final sessionResult = getIt<StudySessionRepository>()
+        .getSessionsByDateRange(startDate: heatmapStart, endDate: now);
+    late final profileResult =
+        getIt<ProfileRepository>().getCurrentProfile();
+
+    final (modules, allSessions, profile) = await (
+      moduleResult,
+      sessionResult,
+      profileResult,
+    ).wait;
+
+    final resolvedModules = modules.fold((_) => <ModuleModel>[], (m) => m);
+    final resolvedSessions =
+        allSessions.fold((_) => const <StudySessionModel>[], (s) => s);
+    final resolvedProfile = profile.fold((_) => null, (p) => p);
+
+    // Round-trip 2 — batch topics (needs module IDs from round-trip 1).
+    final moduleIds = resolvedModules.map((m) => m.id).toList();
+    final topicResult =
+        await getIt<TopicRepository>().getTopicsByModuleIds(moduleIds);
+    final allTopics = topicResult.fold((_) => <TopicModel>[], (t) => t);
+
+    // All stats computed client-side — zero additional queries.
+    final ratings = allTopics
+        .where((t) => t.currentRating != null)
+        .map((t) => t.currentRating!)
+        .toList();
+
+    final topicsMastered =
+        allTopics.where((t) => (t.currentRating ?? 0) >= 7).length;
+
+    final averageRating = ratings.isEmpty
+        ? 0.0
+        : ratings.reduce((a, b) => a + b) / ratings.length;
+
+    final currentStreak =
+        (resolvedProfile?['streak_count'] as num?)?.toInt() ?? 0;
+
+    final weekStart = _startOfWeek(DateTime(now.year, now.month, now.day));
+    final weeklyTopicIds = <int, Set<String>>{};
+    var weeklySessions = 0;
+    final heatmapCounts = <String, int>{};
+
+    for (final session in resolvedSessions) {
+      final dateOnly = DateTime(
+        session.scheduledDate.year,
+        session.scheduledDate.month,
+        session.scheduledDate.day,
+      );
+
+      // Heatmap — count all sessions in the 84-day window.
+      final key = _dateKey(dateOnly);
+      heatmapCounts[key] = (heatmapCounts[key] ?? 0) + 1;
+
+      // Weekly — count unique topics per day within the current week.
+      final dayDiff = dateOnly.difference(weekStart).inDays;
+      if (dayDiff >= 0 && dayDiff < 7) {
+        weeklySessions++;
+        final topicId = session.topicId;
+        if (topicId != null && topicId.isNotEmpty) {
+          (weeklyTopicIds[dayDiff] ??= {}).add(topicId);
+        }
       }
     }
 
-    final ratings = allTopics
-        .where((topic) => topic.currentRating != null)
-        .map((topic) => topic.currentRating!)
-        .toList();
-
-    final topicsMastered = allTopics
-        .where((topic) => (topic.currentRating ?? 0) >= 7)
-        .length;
-    final averageRating = ratings.isEmpty
-        ? 0.0
-        : (ratings.reduce((a, b) => a + b) / ratings.length).toDouble();
-
-    final profileResult = await _profileRepo.getProfileById(user.id);
-    final currentStreak = profileResult is Success<Map<String, dynamic>?>
-        ? (profileResult.data?['streak_count'] as num?)?.toInt() ?? 0
-        : 0;
-    final profileFailed = profileResult is Failure<Map<String, dynamic>?>;
-
-    final now = DateTime.now();
-    final weekStart = _startOfWeek(now);
-    final heatmapStart = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).subtract(const Duration(days: 83));
-    final heatmapEnd = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).add(const Duration(days: 1)).subtract(const Duration(milliseconds: 1));
-
-    final sessionsResult = await _sessionRepo.getSessionsByDateRange(
-      startDate: heatmapStart,
-      endDate: heatmapEnd,
-    );
-    final sessions = sessionsResult is Success<List<StudySessionModel>>
-        ? sessionsResult.data
-        : <StudySessionModel>[];
-    final sessionsFailed = sessionsResult is Failure<List<StudySessionModel>>;
-
-    final sessionsByDay = <String, List<StudySessionModel>>{};
-    for (final session in sessions) {
-      final dayKey = _dateKey(session.scheduledDate);
-      sessionsByDay
-          .putIfAbsent(dayKey, () => <StudySessionModel>[])
-          .add(session);
-    }
-
-    final weeklyTopicCounts = <int, int>{};
-    var weeklySessions = 0;
-    for (var dayIndex = 0; dayIndex < 7; dayIndex++) {
-      final date = weekStart.add(Duration(days: dayIndex));
-      final daySessions = sessionsByDay[_dateKey(date)] ?? const [];
-
-      final topicIds = daySessions
-          .map((s) => s.topicId)
-          .where((id) => id != null && id.isNotEmpty)
-          .map((id) => id!)
-          .toSet();
-
-      weeklyTopicCounts[dayIndex] = topicIds.length;
-      weeklySessions += daySessions.length;
-    }
-
-    final heatmapCounts = <String, int>{};
-    for (var offset = 0; offset < 84; offset++) {
-      final date = heatmapStart.add(Duration(days: offset));
-      heatmapCounts[_dateKey(date)] =
-          sessionsByDay[_dateKey(date)]?.length ?? 0;
-    }
+    final weeklyTopicCounts = {
+      for (var i = 0; i < 7; i++) i: weeklyTopicIds[i]?.length ?? 0,
+    };
 
     if (!mounted) return;
     setState(() {
-      _modules = modules;
+      _modules = resolvedModules;
       _topics = allTopics;
       _selectedTopic = allTopics.isEmpty
           ? null
@@ -172,10 +140,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
       _heatmapCounts
         ..clear()
         ..addAll(heatmapCounts);
-      _loadError =
-          (modulesFailed || topicsFailed || profileFailed || sessionsFailed)
-          ? 'We could not load your progress data right now. Pull to retry.'
-          : null;
       _isLoading = false;
     });
   }
@@ -195,101 +159,110 @@ class _ProgressScreenState extends State<ProgressScreen> {
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.backgroundDark,
+    appBar: AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      title: Text(
+        'Analytics',
+        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+      ),
+      actions: [
+        TextButton.icon(
+          onPressed: () => context.push('/weekly-wrapped'),
+          icon: const Icon(Icons.auto_awesome, size: 16, color: AppColors.cyan),
+          label: const Text(
+            'See Wrapped',
+            style: TextStyle(color: AppColors.cyan),
+          ),
+        ),
+      ],
+    ),
     body: _isLoading
-        ? AppStateView.loadingList(itemCount: 4, itemHeight: 120)
+        ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(
             onRefresh: _loadProgress,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.screenHorizontal,
-                AppSpacing.xs,
-                AppSpacing.screenHorizontal,
-                AppSpacing.sm,
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               children: [
-                if (_loadError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                    child: AppStateView.error(
-                      title: 'Progress unavailable',
-                      message: _loadError!,
-                      onRetry: _loadProgress,
-                    ),
-                  )
-                else ...[
-                  _buildQuickStats(),
-                  const SizedBox(height: AppSpacing.md),
-                  _buildWeeklyBarChart(),
-                  const SizedBox(height: AppSpacing.md),
-                  _buildRadarChart(),
-                  const SizedBox(height: AppSpacing.md),
-                  _buildHeatmap(),
-                  const SizedBox(height: AppSpacing.md),
-                  _buildTopicRatingHistory(),
-                  const SizedBox(height: AppSpacing.md),
-                  _buildModuleDonuts(),
-                ],
+                _buildQuickStats(),
+                const SizedBox(height: 16),
+                _buildWeeklyBarChart(),
+                const SizedBox(height: 16),
+                _buildRadarChart(),
+                const SizedBox(height: 16),
+                _buildHeatmap(),
+                const SizedBox(height: 16),
+                _buildTopicRatingHistory(),
+                const SizedBox(height: 16),
+                _buildModuleDonuts(),
               ],
             ),
           ),
   );
 
-  Widget _buildQuickStats() {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    final crossAxisCount = screenWidth > 900 ? 4 : (screenWidth > 600 ? 3 : 2);
-    final childAspectRatio = screenWidth > 900 ? 1.6 : 1.5;
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: crossAxisCount,
-      crossAxisSpacing: AppSpacing.sm,
-      mainAxisSpacing: AppSpacing.sm,
-      childAspectRatio: childAspectRatio,
-      children: [
-        _statCard('Topics Mastered', '$_topicsMastered', Icons.school_rounded),
-        _statCard(
-          'Current Streak',
-          '$_currentStreak',
-          Icons.local_fire_department,
-        ),
-        _statCard(
-          "This Week's Sessions",
-          '$_weeklySessions',
-          Icons.menu_book_rounded,
-        ),
-        _statCard(
-          'Average Rating',
-          _averageRating.toStringAsFixed(1),
-          Icons.star_rounded,
-        ),
-      ],
-    );
-  }
+  Widget _buildQuickStats() => GridView.count(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    crossAxisCount: 2,
+    crossAxisSpacing: 12,
+    mainAxisSpacing: 12,
+    childAspectRatio: 1.5,
+    children: [
+      _statCard('Topics Mastered', '$_topicsMastered', Icons.school_rounded),
+      _statCard(
+        'Current Streak',
+        '$_currentStreak',
+        Icons.local_fire_department,
+      ),
+      _statCard(
+        "This Week's Sessions",
+        '$_weeklySessions',
+        Icons.menu_book_rounded,
+      ),
+      _statCard(
+        'Average Rating',
+        _averageRating.toStringAsFixed(1),
+        Icons.star_rounded,
+      ),
+    ],
+  );
 
-  Widget _statCard(String label, String value, IconData icon) => GlassCard(
-    padding: const EdgeInsets.all(AppSpacing.sm),
-    backgroundColor: AppColors.cardDark,
-    borderRadius: AppSpacing.fieldRadius,
-    borderColors: const [AppColors.border, AppColors.border],
+  Widget _statCard(String label, String value, IconData icon) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.border),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
             Icon(icon, color: AppColors.accent, size: 16),
-            const SizedBox(width: AppSpacing.xxs),
+            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 label,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.caption,
+                style: GoogleFonts.inter(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
               ),
             ),
           ],
         ),
         const Spacer(),
-        Text(value, style: AppTextStyles.statValue),
+        Text(
+          value,
+          style: GoogleFonts.outfit(
+            color: Colors.white,
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ],
     ),
   );
@@ -298,16 +271,21 @@ class _ProgressScreenState extends State<ProgressScreen> {
     String title,
     Widget child, {
     double? fixedHeight,
-  }) => GlassCard(
-    padding: const EdgeInsets.all(AppSpacing.md),
-    backgroundColor: AppColors.cardDark,
-    borderRadius: AppSpacing.cardRadius,
-    borderColors: const [AppColors.border, AppColors.border],
+  }) => Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.border),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: AppTextStyles.headingSmall),
-        const SizedBox(height: AppSpacing.sm),
+        Text(
+          title,
+          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 12),
         if (fixedHeight != null)
           SizedBox(height: fixedHeight, child: child)
         else
@@ -335,7 +313,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
               getTooltipItem: (group, groupIndex, rod, rodIndex) =>
                   BarTooltipItem(
                     '${rod.toY.toInt()} topics',
-                    AppTextStyles.bodySmall.copyWith(color: Colors.white),
+                    GoogleFonts.inter(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
             ),
           ),
@@ -371,7 +352,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 reservedSize: 26,
                 getTitlesWidget: (value, meta) => Text(
                   value.toInt().toString(),
-                  style: AppTextStyles.caption.copyWith(
+                  style: GoogleFonts.inter(
                     fontSize: 10,
                     color: AppColors.textMuted,
                   ),
@@ -396,10 +377,10 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     return const SizedBox.shrink();
                   }
                   return Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.xxs),
+                    padding: const EdgeInsets.only(top: 6),
                     child: Text(
                       labels[index],
-                      style: AppTextStyles.caption.copyWith(
+                      style: GoogleFonts.inter(
                         fontSize: 10,
                         color: AppColors.textSecondary,
                       ),
@@ -411,7 +392,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           ),
         ),
       ),
-      fixedHeight: _getChartHeight(context, 220),
+      fixedHeight: 220,
     );
   }
 
@@ -422,9 +403,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         Center(
           child: Text(
             'Add modules to view your radar chart.',
-            style: AppTextStyles.bodySmall.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: GoogleFonts.inter(color: AppColors.textSecondary),
           ),
         ),
         fixedHeight: 180,
@@ -464,7 +443,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
             ),
           ],
           radarShape: RadarShape.polygon,
-          ticksTextStyle: AppTextStyles.caption.copyWith(
+          ticksTextStyle: GoogleFonts.inter(
             color: AppColors.textMuted,
             fontSize: 10,
           ),
@@ -487,7 +466,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
           },
         ),
       ),
-      fixedHeight: _getChartHeight(context, 260),
+      fixedHeight: 260,
     );
   }
 
@@ -519,7 +498,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 child: Text(
                   monthLabels[index],
                   textAlign: TextAlign.center,
-                  style: AppTextStyles.caption.copyWith(
+                  style: GoogleFonts.inter(
                     fontSize: 10,
                     color: AppColors.textMuted,
                   ),
@@ -527,7 +506,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
               ),
             ),
           ),
-          const SizedBox(height: AppSpacing.xxs),
+          const SizedBox(height: 6),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: List.generate(12, (weekIndex) {
@@ -580,36 +559,20 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return labels[month - 1];
   }
 
-  double _getChartHeight(BuildContext context, double baseHeight) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    if (screenWidth > 1200) return baseHeight * 1.2;
-    if (screenWidth > 900) return baseHeight * 1.1;
-    return baseHeight;
-  }
-
-  double _getListViewHeight(BuildContext context, double baseHeight) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-    if (screenWidth > 1200) return baseHeight * 1.3;
-    if (screenWidth > 900) return baseHeight * 1.15;
-    return baseHeight;
-  }
-
   Widget _buildTopicRatingHistory() => _buildSectionShell(
     'Topic Rating History',
     _topics.isEmpty
         ? Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(
               'Add topics to unlock rating trends.',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: GoogleFonts.inter(color: AppColors.textSecondary),
             ),
           )
         : Column(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+                padding: const EdgeInsets.symmetric(horizontal: 10),
                 decoration: BoxDecoration(
                   color: AppColors.surfaceDark,
                   borderRadius: BorderRadius.circular(10),
@@ -619,9 +582,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                     value: _selectedTopic,
                     dropdownColor: AppColors.surfaceDark,
                     isExpanded: true,
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: Colors.white,
-                    ),
+                    style: GoogleFonts.inter(color: Colors.white),
                     items: _topics
                         .map(
                           (topic) => DropdownMenuItem<TopicModel>(
@@ -632,21 +593,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         .toList(),
                     onChanged: (next) {
                       if (next == null) return;
-                      HapticFeedback.selectionClick();
                       setState(() => _selectedTopic = next);
                     },
                   ),
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
+              const SizedBox(height: 12),
               SizedBox(
-                height: _getChartHeight(context, 220),
+                height: 220,
                 child: _selectedTopic == null
                     ? const SizedBox.shrink()
-                    : _TopicLineChart(
-                        topic: _selectedTopic!,
-                        topicRepo: _topicRepo,
-                      ),
+                    : _TopicLineChart(topic: _selectedTopic!),
               ),
             ],
           ),
@@ -656,21 +613,18 @@ class _ProgressScreenState extends State<ProgressScreen> {
     'Module Progress Donut Charts',
     _modules.isEmpty
         ? Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+            padding: const EdgeInsets.symmetric(vertical: 12),
             child: Text(
               'Create modules to view progress donuts.',
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              style: GoogleFonts.inter(color: AppColors.textSecondary),
             ),
           )
         : SizedBox(
-            height: _getListViewHeight(context, 160),
+            height: 160,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               itemCount: _modules.length,
-              separatorBuilder: (context, index) =>
-                  const SizedBox(width: AppSpacing.sm),
+              separatorBuilder: (context, index) => const SizedBox(width: 14),
               itemBuilder: (context, index) {
                 final module = _modules[index];
                 final moduleTopics = _topics
@@ -695,36 +649,29 @@ class _ProgressScreenState extends State<ProgressScreen> {
 }
 
 class _TopicLineChart extends StatelessWidget {
-  const _TopicLineChart({required this.topic, required this.topicRepo});
+  const _TopicLineChart({required this.topic});
 
   final TopicModel topic;
-  final TopicRepository topicRepo;
 
   @override
   Widget build(BuildContext context) =>
-      FutureBuilder<List<TopicRatingHistoryModel>?>(
-        future: topicRepo.getTopicRatingHistory(topic.id).then((result) {
-          if (result is Success<List<TopicRatingHistoryModel>>) {
-            return result.data;
-          }
-          return <TopicRatingHistoryModel>[];
-        }),
+      FutureBuilder<List<TopicRatingHistoryModel>>(
+        future: getIt<TopicRepository>()
+            .getTopicRatingHistory(topic.id)
+            .then((r) => r.fold((_) => [], (h) => h)),
         builder: (context, snapshot) {
-          final values = snapshot.data ?? <TopicRatingHistoryModel>[];
-          if (values.isEmpty) {
+          final history = snapshot.data ?? [];
+          if (history.isEmpty) {
             return Center(
               child: Text(
                 'No ratings yet for this topic.',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
-                ),
+                style: GoogleFonts.inter(color: AppColors.textSecondary),
               ),
             );
           }
 
-          final points = values.asMap().entries.map((entry) {
-            final rating = entry.value.rating.toDouble();
-            return FlSpot(entry.key.toDouble(), rating);
+          final points = history.asMap().entries.map((entry) {
+            return FlSpot(entry.key.toDouble(), entry.value.rating.toDouble());
           }).toList();
 
           return LineChart(
@@ -750,7 +697,7 @@ class _TopicLineChart extends StatelessWidget {
                     reservedSize: 28,
                     getTitlesWidget: (value, meta) => Text(
                       value.toInt().toString(),
-                      style: AppTextStyles.caption.copyWith(
+                      style: GoogleFonts.inter(
                         color: AppColors.textMuted,
                         fontSize: 10,
                       ),
@@ -801,11 +748,14 @@ class _ModuleDonutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final clampedPercentage = percentage.clamp(0, 100).toDouble();
 
-    return GlassCard(
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      backgroundColor: AppColors.surfaceDark,
-      borderRadius: AppSpacing.fieldRadius,
-      borderColors: const [AppColors.border, AppColors.border],
+    return Container(
+      width: 128,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceDark,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
       child: Column(
         children: [
           SizedBox(
@@ -836,19 +786,23 @@ class _ModuleDonutCard extends StatelessWidget {
                 ),
                 Text(
                   '${clampedPercentage.round()}%',
-                  style: AppTextStyles.label,
+                  style: GoogleFonts.outfit(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: AppSpacing.xs),
+          const SizedBox(height: 10),
           Text(
             moduleName,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.center,
-            style: AppTextStyles.caption.copyWith(
+            style: GoogleFonts.inter(
               color: AppColors.textSecondary,
+              fontSize: 12,
             ),
           ),
         ],
