@@ -173,7 +173,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       // Load earned badges
       final userId = profile['id']?.toString() ?? '';
-      Set<String> earnedTypes = {};
+      var earnedTypes = <String>{};
       if (userId.isNotEmpty) {
         try {
           final badges =
@@ -294,7 +294,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '$course',
+                      course,
                       style: AppTextStyles.bodyMediumSecondary,
                     ),
                     if (yearLevel > 0) ...[
@@ -320,11 +320,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
                     borderRadius: BorderRadius.circular(999),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: AppColors.violetGlowSoft,
                         blurRadius: 10,
-                        offset: const Offset(0, 3),
+                        offset: Offset(0, 3),
                       ),
                     ],
                   ),
@@ -864,11 +864,11 @@ class _SocialCard extends StatelessWidget {
     decoration: BoxDecoration(
       gradient: AppColors.primaryGradient,
       borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-      boxShadow: [
+      boxShadow: const [
         BoxShadow(
           color: AppColors.violetGlowSoft,
           blurRadius: 20,
-          offset: const Offset(0, 6),
+          offset: Offset(0, 6),
         ),
       ],
     ),
@@ -957,7 +957,7 @@ class _BadgeWidget extends StatelessWidget {
   Widget build(BuildContext context) => GestureDetector(
     onTap: onTap,
     child: TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0.95, end: 1.0),
+      tween: Tween<double>(begin: 0.95, end: 1),
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeOutBack,
       builder: (context, scale, child) =>
@@ -1040,16 +1040,14 @@ class _ActionButton extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          loading
-              ? const SizedBox(
+          if (loading) const SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     color: Colors.white,
                   ),
-                )
-              : Icon(icon, color: Colors.white, size: 18),
+                ) else Icon(icon, color: Colors.white, size: 18),
           const SizedBox(width: 10),
           Text(
             label,

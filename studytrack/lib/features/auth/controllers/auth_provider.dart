@@ -134,7 +134,7 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
     _clearError();
 
-    final result = await _authRepository!.sendOtp(normalizedEmail);
+    final result = await _authRepository.sendOtp(normalizedEmail);
     return _handleVoidCommand(
       result,
       successStatusCode: 200,
@@ -153,7 +153,7 @@ class AuthProvider extends ChangeNotifier {
     _setLoading(true);
     _clearError();
 
-    final result = await _authRepository!.verifyOtp(
+    final result = await _authRepository.verifyOtp(
       email: email.trim(),
       otp: otp.trim(),
     );

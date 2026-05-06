@@ -50,6 +50,7 @@ class MainShell extends StatelessWidget {
                   title: _titles[currentIndex],
                   onProfileTap: () => context.go('/profile'),
                   onNotificationTap: () => context.push('/notifications'),
+                  onSettingsTap: () => context.push('/settings'),
                   actions: headerActions,
                 ),
               ),
@@ -90,12 +91,14 @@ class _Header extends StatelessWidget {
     required this.title,
     required this.onProfileTap,
     required this.onNotificationTap,
+    required this.onSettingsTap,
     required this.actions,
   });
 
   final String title;
   final VoidCallback onProfileTap;
   final VoidCallback onNotificationTap;
+  final VoidCallback onSettingsTap;
   final List<Widget> actions;
 
   @override
@@ -125,6 +128,13 @@ class _Header extends StatelessWidget {
           ),
         ),
         ...actions,
+        IconButton(
+          onPressed: onSettingsTap,
+          icon: const Icon(
+            Icons.settings_rounded,
+            color: Colors.white,
+          ),
+        ),
         IconButton(
           onPressed: onNotificationTap,
           icon: const Icon(

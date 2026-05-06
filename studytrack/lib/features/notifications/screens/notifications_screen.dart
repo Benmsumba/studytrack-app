@@ -294,12 +294,7 @@ class _NotificationTileData {
 
 class _NotificationTile extends StatefulWidget {
   const _NotificationTile({
-    super.key,
-    required this.title,
-    required this.body,
-    required this.timeLabel,
-    required this.icon,
-    required this.iconColor,
+    required this.title, required this.body, required this.timeLabel, required this.icon, required this.iconColor, super.key,
     this.unread = false,
     this.index = 0,
   });

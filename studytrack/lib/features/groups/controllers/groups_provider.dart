@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/repositories/study_group_repository.dart';
 import '../../../core/utils/app_exception.dart';
-import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../models/group_message_model.dart';
 import '../../../models/study_group_model.dart';

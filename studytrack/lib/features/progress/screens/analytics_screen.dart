@@ -210,11 +210,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           decoration: BoxDecoration(
             gradient: AppColors.primaryGradient,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: AppColors.violetGlowSoft,
                 blurRadius: 12,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
           ),
@@ -457,8 +457,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           const SizedBox(height: AppSpacing.sm),
           // Month labels
           Row(
-            children: List.generate(12, (w) {
-              return Expanded(
+            children: List.generate(12, (w) => Expanded(
                 child: Text(
                   monthLabels[w],
                   textAlign: TextAlign.center,
@@ -467,8 +466,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     color: AppColors.textMuted,
                   ),
                 ),
-              );
-            }),
+              )),
           ),
           const SizedBox(height: 4),
           // Heatmap grid

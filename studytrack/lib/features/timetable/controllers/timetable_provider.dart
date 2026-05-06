@@ -4,7 +4,6 @@ import '../../../core/repositories/class_timetable_repository.dart';
 import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/app_exception.dart';
-import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../models/class_slot_model.dart';
 import '../../../models/study_session_model.dart';
