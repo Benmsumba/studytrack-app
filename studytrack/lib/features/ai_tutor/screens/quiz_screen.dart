@@ -1,4 +1,6 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -102,6 +104,7 @@ class _QuizScreenState extends State<QuizScreen> {
   void _selectOption(int index) {
     if (_answered) return;
 
+    HapticFeedback.lightImpact();
     setState(() {
       _selectedIndex = index;
       _answered = true;
@@ -393,7 +396,7 @@ class _OptionCard extends StatelessWidget {
   }
 }
 
-class _ResultsView extends StatelessWidget {
+class _ResultsView extends StatefulWidget {
   const _ResultsView({
     required this.score,
     required this.total,
@@ -412,58 +415,100 @@ class _ResultsView extends StatelessWidget {
   final VoidCallback onTryAgain;
   final VoidCallback onBack;
 
+  @override
+  State<_ResultsView> createState() => _ResultsViewState();
+}
+
+class _ResultsViewState extends State<_ResultsView> {
+  late final ConfettiController _confetti;
+
+  bool get _isPerfectOrNearPerfect =>
+      widget.total > 0 && widget.score / widget.total >= 0.8;
+
   String _message() {
-    if (score == 5) return "Perfect! You've mastered this 🏆";
-    if (score == 4) return 'Excellent work! Almost there ⭐';
-    if (score == 3) return 'Good effort! A bit more practice 📚';
+    if (widget.score == widget.total) return "Perfect! You've mastered this 🏆";
+    if (widget.score >= widget.total * 0.8) return 'Excellent work! Almost there ⭐';
+    if (widget.score >= widget.total * 0.6) return 'Good effort! A bit more practice 📚';
     return "Keep studying — you'll get there 💪";
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _confetti = ConfettiController(duration: const Duration(seconds: 3));
+    if (_isPerfectOrNearPerfect) {
+      _confetti.play();
+    }
+  }
+
+  @override
+  void dispose() {
+    _confetti.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: AppColors.backgroundDark,
     appBar: AppBar(backgroundColor: AppColors.backgroundDark),
-    body: Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '$score/$total',
-            style: AppTextStyles.displayMedium.copyWith(
-              color: Colors.white,
-              fontSize: 52,
-              fontWeight: FontWeight.w800,
-            ),
+    body: Stack(
+      alignment: Alignment.topCenter,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '${widget.score}/${widget.total}',
+                style: AppTextStyles.displayMedium.copyWith(
+                  color: Colors.white,
+                  fontSize: 52,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                _message(),
+                textAlign: TextAlign.center,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'We suggest rating this ${widget.suggestedRating}/10',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 20),
+              _PrimaryButton(
+                label: widget.isSubmitting ? 'Updating...' : 'Update My Rating',
+                onTap: widget.onUpdateRating,
+              ),
+              const SizedBox(height: 10),
+              _SecondaryButton(label: 'Try Again', onTap: widget.onTryAgain),
+              const SizedBox(height: 10),
+              _SecondaryButton(label: 'Back to Topic', onTap: widget.onBack),
+            ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            _message(),
-            textAlign: TextAlign.center,
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'We suggest rating this $suggestedRating/10',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.accent,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 20),
-          _PrimaryButton(
-            label: isSubmitting ? 'Updating...' : 'Update My Rating',
-            onTap: onUpdateRating,
-          ),
-          const SizedBox(height: 10),
-          _SecondaryButton(label: 'Try Again', onTap: onTryAgain),
-          const SizedBox(height: 10),
-          _SecondaryButton(label: 'Back to Topic', onTap: onBack),
-        ],
-      ),
+        ),
+        ConfettiWidget(
+          confettiController: _confetti,
+          blastDirectionality: BlastDirectionality.explosive,
+          numberOfParticles: 30,
+          colors: const [
+            AppColors.neonViolet,
+            AppColors.neonCyan,
+            AppColors.success,
+            Colors.white,
+          ],
+          shouldLoop: false,
+        ),
+      ],
     ),
   );
 }

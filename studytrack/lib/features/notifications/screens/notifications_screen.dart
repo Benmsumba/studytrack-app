@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/class_timetable_repository.dart';
 import '../../../core/repositories/exam_repository.dart';
@@ -208,15 +207,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.screenHorizontal,
-              AppSpacing.md,
-              AppSpacing.screenHorizontal,
-              AppSpacing.sm,
-            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
             child: Row(
               children: [
-                Text('Notifications', style: AppTextStyles.headingLarge),
+                Text(
+                  'Notifications',
+                  style: AppTextStyles.headingLarge.copyWith(fontSize: 28),
+                ),
                 const Spacer(),
                 TextButton(
                   onPressed: _loadNotifications,
@@ -251,23 +248,23 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       message:
                           'You’re all caught up. New reminders will appear here.',
                     )
-                  : ListView(
+                  : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.screenHorizontal,
-                      ),
-                      children: _items
-                          .map(
-                            (item) => _NotificationTile(
-                              title: item.title,
-                              body: item.body,
-                              timeLabel: item.timeLabel,
-                              icon: item.icon,
-                              iconColor: item.iconColor,
-                              unread: item.unread,
-                            ),
-                          )
-                          .toList(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: _items.length,
+                      itemBuilder: (context, index) {
+                        final item = _items[index];
+                        return _NotificationTile(
+                          key: ValueKey('${item.title}_$index'),
+                          title: item.title,
+                          body: item.body,
+                          timeLabel: item.timeLabel,
+                          icon: item.icon,
+                          iconColor: item.iconColor,
+                          unread: item.unread,
+                          index: index,
+                        );
+                      },
                     ),
             ),
           ),
@@ -295,14 +292,16 @@ class _NotificationTileData {
   final bool unread;
 }
 
-class _NotificationTile extends StatelessWidget {
+class _NotificationTile extends StatefulWidget {
   const _NotificationTile({
+    super.key,
     required this.title,
     required this.body,
     required this.timeLabel,
     required this.icon,
     required this.iconColor,
     this.unread = false,
+    this.index = 0,
   });
 
   final String title;
@@ -311,65 +310,104 @@ class _NotificationTile extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final bool unread;
+  final int index;
 
   @override
-  Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-    padding: const EdgeInsets.all(AppSpacing.md),
-    decoration: BoxDecoration(
-      color: AppColors.cardDark,
-      borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-      border: Border.all(
-        color: unread ? AppColors.primary : AppColors.border,
-        width: unread ? 1.2 : 1,
-      ),
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: iconColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(AppSpacing.xs),
+  State<_NotificationTile> createState() => _NotificationTileState();
+}
+
+class _NotificationTileState extends State<_NotificationTile>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _fade;
+  late final Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
+    _fade = CurvedAnimation(parent: _controller, curve: Curves.easeOut);
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.15),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+
+    Future.delayed(Duration(milliseconds: 60 * widget.index), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => FadeTransition(
+    opacity: _fade,
+    child: SlideTransition(
+      position: _slide,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.cardDark,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: widget.unread ? AppColors.primary : AppColors.border,
+            width: widget.unread ? 1.2 : 1,
           ),
-          child: Icon(icon, color: iconColor, size: 22),
         ),
-        const SizedBox(width: AppSpacing.sm),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: widget.iconColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(widget.icon, color: widget.iconColor, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w600,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.title,
+                          style: AppTextStyles.headingSmall.copyWith(fontSize: 14),
+                        ),
                       ),
-                    ),
+                      if (widget.unread)
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF06B6D4),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                    ],
                   ),
-                  if (unread)
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: AppColors.neonCyan,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
+                  const SizedBox(height: 4),
+                  Text(widget.body, style: AppTextStyles.bodySmallSecondary),
+                  const SizedBox(height: 6),
+                  Text(widget.timeLabel, style: AppTextStyles.caption),
                 ],
               ),
-              const SizedBox(height: AppSpacing.xxs),
-              Text(body, style: AppTextStyles.bodySmallSecondary),
-              const SizedBox(height: AppSpacing.xs),
-              Text(timeLabel, style: AppTextStyles.caption),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
     ),
   );
 }
