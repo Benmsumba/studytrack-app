@@ -28,6 +28,7 @@ import 'features/modules/screens/topic_detail_screen.dart';
 import 'features/notifications/screens/notifications_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
 import 'features/profile/screens/profile_screen.dart';
+import 'features/progress/screens/analytics_screen.dart';
 import 'features/progress/screens/exam_countdown_screen.dart';
 import 'features/progress/screens/progress_screen.dart';
 import 'features/progress/screens/weekly_wrapped_screen.dart';
@@ -36,6 +37,7 @@ import 'features/settings/screens/settings_screen.dart';
 import 'features/timetable/screens/study_session_screen.dart';
 import 'features/timetable/screens/timetable_screen.dart';
 import 'features/update/widgets/update_overlay.dart';
+import 'features/voice_notes/screens/voice_notes_screen.dart';
 
 const _publicRoutes = {'/splash', '/login', '/signup', '/otp-login'};
 
@@ -466,6 +468,14 @@ class StudyTrackApp extends StatelessWidget {
       GoRoute(
         path: '/weekly-wrapped',
         builder: (context, state) => const WeeklyWrappedScreen(),
+      ),
+      GoRoute(
+        path: '/analytics',
+        builder: (context, state) => const AnalyticsScreen(),
+      ),
+      GoRoute(
+        path: '/voice-notes',
+        builder: (context, state) => const VoiceNotesScreen(),
       ),
       GoRoute(
         path: '/group/:groupId',
