@@ -1,6 +1,6 @@
 ## What does this PR do?
 
-<!-- One or two sentences. What changed and why. -->
+<!-- Summarize the change and the reason for it in one or two sentences. -->
 
 ## Type of change
 
@@ -16,11 +16,11 @@ Closes #
 
 ## Testing
 
-Describe how you tested this change. Include device/emulator, Flutter version, and any edge cases you checked.
+Describe how you tested this change. Include device or emulator, Flutter version, and any edge cases you checked.
 
 ## Screenshots (if UI change)
 
-<!-- Before / After or a short screen recording -->
+<!-- Add before/after screenshots or a short screen recording if helpful. -->
 
 ## Checklist
 
@@ -32,4 +32,4 @@ Describe how you tested this change. Include device/emulator, Flutter version, a
 
 ## Notes
 
-<!-- Migration steps, follow-up work, rollout considerations, or anything a reviewer should know. -->
+<!-- Add migration steps, follow-up work, rollout considerations, or anything a reviewer should know. -->

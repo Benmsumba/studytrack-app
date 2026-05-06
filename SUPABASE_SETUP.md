@@ -44,7 +44,7 @@ Copy `studytrack/.env.example` to your own local environment file and replace th
 - **Never commit real credentials** to git (use `.gitignore`)
 - Store secrets in GitHub Actions secrets or environment variables
 - The app supports reading from `--dart-define` for CI/CD pipelines
-- The release APK workflow requires `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `GEMINI_API_KEY` secrets
+- The release APK workflow builds with `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `GEMINI_API_KEY`, and optionally publishes to Supabase Storage when `SUPABASE_SERVICE_ROLE_KEY` is configured
 
 ## Emergency (exposed credentials)
 
