@@ -1,4 +1,4 @@
-name: Build & Test
+name: CI
 
 on:
   push:
@@ -18,24 +18,25 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
       
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
       
-      - name: Get dependencies
+      - name: Install dependencies
         run: |
           cd studytrack
           flutter pub get
       
-      - name: Static analysis
+      - name: Analyze project
         run: |
           cd studytrack
           flutter analyze lib/
       
-      - name: Format check
+      - name: Check formatting
         run: |
           cd studytrack
           dart format --set-exit-if-changed lib/
@@ -46,14 +47,15 @@ jobs:
     needs: analyze
     
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
       
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: stable
       
-      - name: Get dependencies
+      - name: Install dependencies
         run: |
           cd studytrack
           flutter pub get
@@ -63,25 +65,9 @@ jobs:
           cd studytrack
           flutter test --coverage
       
-      - name: Upload coverage
+      - name: Upload coverage report
         uses: codecov/codecov-action@v4
         with:
           files: ./studytrack/coverage/lcov.info
           flags: unittests
           name: codecov-umbrella
-
-  notify:
-    name: Verify Build Success
-    runs-on: ubuntu-latest
-    needs: [ analyze, test ]
-    if: always()
-    
-    steps:
-      - name: Check job status
-        run: |
-          if [ "${{ needs.analyze.result }}" = "failure" ] || [ "${{ needs.test.result }}" = "failure" ]; then
-            echo "❌ Build verification failed"
-            exit 1
-          else
-            echo "✅ Build verification successful"
-          fi

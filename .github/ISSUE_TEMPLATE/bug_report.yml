@@ -6,7 +6,7 @@ body:
     id: summary
     attributes:
       label: Summary
-      description: Describe the problem clearly and concisely.
+      description: Describe the issue clearly and concisely.
       placeholder: The app crashes when...
     validations:
       required: true
@@ -24,16 +24,19 @@ body:
     id: expected
     attributes:
       label: Expected behavior
+      description: What should happen instead?
     validations:
       required: true
   - type: textarea
     id: actual
     attributes:
       label: Actual behavior
+      description: What happened instead?
     validations:
       required: true
   - type: input
     id: environment
     attributes:
       label: Environment
-      placeholder: Flutter version, device, platform
+      description: Flutter version, device, and platform.
+      placeholder: Flutter 3.29.2, Pixel 7, Android 14

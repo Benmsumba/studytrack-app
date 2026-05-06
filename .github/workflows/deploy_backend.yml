@@ -38,11 +38,10 @@ jobs:
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ] || [ -z "$SUPABASE_PROJECT_REF" ]; then
             echo "missing=true" >> "$GITHUB_OUTPUT"
-            echo "Supabase secrets not configured. Skipping deploy."
-            echo "Add SUPABASE_ACCESS_TOKEN and SUPABASE_PROJECT_REF to GitHub Secrets."
+            echo "Supabase secrets not configured; skipping deploy."
           else
             echo "missing=false" >> "$GITHUB_OUTPUT"
-            echo "Secrets found. Proceeding with deploy."
+            echo "Supabase secrets found."
           fi
 
       - name: Link project

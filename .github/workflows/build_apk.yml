@@ -1,4 +1,4 @@
-name: Build Debug APK
+name: Manual Debug APK Build
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build-apk:
+  debug-apk:
     runs-on: ubuntu-latest
     timeout-minutes: 45
 
@@ -53,7 +53,7 @@ jobs:
         working-directory: studytrack
         run: dart format --set-exit-if-changed .
 
-      - name: Analyze
+      - name: Analyze project
         working-directory: studytrack
         run: flutter analyze --no-fatal-warnings
 
@@ -73,7 +73,7 @@ jobs:
             --dart-define=SUPABASE_ANON_KEY="${SUPABASE_ANON_KEY}" \
             --dart-define=GEMINI_API_KEY="${GEMINI_API_KEY}"
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: StudyTrack-v1-debug

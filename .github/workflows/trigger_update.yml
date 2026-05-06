@@ -1,4 +1,4 @@
-name: Trigger OTA Update Notification
+name: Publish OTA Update Metadata
 
 on:
   workflow_dispatch:
@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 5
 
     steps:
-      - name: Validate secrets
+      - name: Verify secrets
         id: secrets
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -33,9 +33,9 @@ jobs:
         run: |
           TRIMMED_KEY=$(echo "${SUPABASE_SERVICE_ROLE_KEY}" | tr -d '[:space:]')
           if [ -z "${SUPABASE_URL}" ] || [ -z "${TRIMMED_KEY}" ]; then
-            echo "::warning::SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is not set."
+            echo "::warning::Required secrets are not set."
             echo "missing=true" >> "$GITHUB_OUTPUT"
-            echo "Skipping update notification publish because secrets are not configured."
+            echo "Skipping update notification publish."
             exit 0
           fi
           echo "SUPABASE_SERVICE_ROLE_KEY=${TRIMMED_KEY}" >> "$GITHUB_ENV"
@@ -55,12 +55,11 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"public":true}'
 
-      - name: Build and upload latest.json
+      - name: Create latest.json
         if: steps.secrets.outputs.missing == 'false'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
         run: |
-          # versionCode: 10000 + run_number guarantees it exceeds any installed build
           VERSION_CODE=$((10000 + GITHUB_RUN_NUMBER))
           VERSION_NAME="${{ github.event.inputs.version_name }}"
           if [ -z "${VERSION_NAME}" ]; then
@@ -81,7 +80,7 @@ jobs:
           }
           JSONEOF
 
-          echo "Uploading latest.json with versionCode=${VERSION_CODE}:"
+          echo "Uploading latest.json (versionCode=${VERSION_CODE})"
           cat /tmp/latest.json
 
           HTTP_STATUS=$(curl --silent --show-error --output /tmp/upload_response.txt \
@@ -100,6 +99,5 @@ jobs:
             exit 1
           fi
 
-          echo ""
-          echo "Done. Open the app on your phone — the update banner will appear within seconds."
+          echo "latest.json uploaded successfully"
           echo "Public URL: ${SUPABASE_URL}/storage/v1/object/public/app-updates/latest.json"
