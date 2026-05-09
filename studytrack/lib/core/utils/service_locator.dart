@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 
 import '../repositories/auth_repository.dart';
@@ -30,6 +29,7 @@ import '../services/offline_sync_service.dart';
 import '../services/storage_service.dart';
 import '../services/supabase_service.dart';
 import '../services/voice_note_service.dart';
+import '../utils/app_logger.dart';
 
 final getIt = GetIt.instance;
 
@@ -40,8 +40,12 @@ Future<void> setupServiceLocator() async {
   final offlineDataStore = OfflineDataStore.instance;
   try {
     await offlineDataStore.initialize();
-  } on Object catch (e) {
-    debugPrint('OfflineDataStore init failed: $e');
+  } on Object catch (e, stackTrace) {
+    AppLogger.error(
+      'OfflineDataStore init failed',
+      error: e,
+      stackTrace: stackTrace,
+    );
   }
   getIt.registerSingleton<OfflineDataStore>(offlineDataStore);
 
@@ -78,8 +82,12 @@ Future<void> setupServiceLocator() async {
   final notificationService = NotificationService();
   try {
     await notificationService.initialize();
-  } on Object catch (e) {
-    debugPrint('NotificationService init failed: $e');
+  } on Object catch (e, stackTrace) {
+    AppLogger.warning(
+      'NotificationService init failed',
+      error: e,
+      stackTrace: stackTrace,
+    );
   }
   getIt.registerSingleton<NotificationService>(notificationService);
 

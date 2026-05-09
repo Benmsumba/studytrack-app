@@ -72,6 +72,13 @@ class AppConstants {
     return fromEnv.isNotEmpty ? fromEnv : sentryDsn;
   }
 
+  static const String updateCertificateSha256 = '';
+
+  static String get resolvedUpdateCertificateSha256 {
+    const fromEnv = String.fromEnvironment('UPDATE_CERTIFICATE_SHA256');
+    return fromEnv.isNotEmpty ? fromEnv : updateCertificateSha256;
+  }
+
   // Spotify
   static const String spotifyClientId = '';
   static String get resolvedSpotifyClientId {

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
@@ -7,6 +6,7 @@ import '../../core/services/supabase_service.dart';
 import '../../models/exam_model.dart';
 import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
+import '../utils/debug_print_compat.dart';
 
 class NotificationService {
   factory NotificationService() => _instance;

@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:encrypt/encrypt.dart' as encrypt_lib;
-import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../utils/app_logger.dart';
 
 /// Production-grade encryption service for offline cache security
 /// Uses AES-256 encryption with secure key management via flutter_secure_storage
@@ -49,9 +51,9 @@ class EncryptionService {
       }
 
       _initialized = true;
-      debugPrint('EncryptionService initialized with AES-256');
+      AppLogger.info('EncryptionService initialized with AES-256');
     } catch (e) {
-      debugPrint('EncryptionService initialization failed: $e');
+      AppLogger.error('EncryptionService initialization failed', error: e);
       rethrow;
     }
   }
@@ -72,7 +74,25 @@ class EncryptionService {
       final encrypted = cipher.encrypt(plaintext, iv: _iv);
       return encrypted.base64;
     } catch (e) {
-      debugPrint('Encryption failed: $e');
+      AppLogger.error('Encryption failed', error: e);
+      rethrow;
+    }
+  }
+
+  /// Encrypt binary data using AES-256.
+  Uint8List encryptBytes(Uint8List plaintextBytes) {
+    if (!_initialized) {
+      throw Exception('EncryptionService not initialized');
+    }
+
+    try {
+      final cipher = encrypt_lib.Encrypter(
+        encrypt_lib.AES(_encryptionKey, mode: encrypt_lib.AESMode.cbc),
+      );
+      final encrypted = cipher.encryptBytes(plaintextBytes, iv: _iv);
+      return Uint8List.fromList(encrypted.bytes);
+    } catch (e) {
+      AppLogger.error('Byte encryption failed', error: e);
       rethrow;
     }
   }
@@ -90,7 +110,28 @@ class EncryptionService {
       final decrypted = cipher.decrypt64(encryptedData, iv: _iv);
       return decrypted;
     } catch (e) {
-      debugPrint('Decryption failed: $e');
+      AppLogger.error('Decryption failed', error: e);
+      rethrow;
+    }
+  }
+
+  /// Decrypt binary data using AES-256.
+  Uint8List decryptBytes(Uint8List encryptedBytes) {
+    if (!_initialized) {
+      throw Exception('EncryptionService not initialized');
+    }
+
+    try {
+      final cipher = encrypt_lib.Encrypter(
+        encrypt_lib.AES(_encryptionKey, mode: encrypt_lib.AESMode.cbc),
+      );
+      final decrypted = cipher.decryptBytes(
+        encrypt_lib.Encrypted(encryptedBytes),
+        iv: _iv,
+      );
+      return Uint8List.fromList(decrypted);
+    } catch (e) {
+      AppLogger.error('Byte decryption failed', error: e);
       rethrow;
     }
   }
@@ -117,7 +158,7 @@ class EncryptionService {
 
       return result;
     } catch (e) {
-      debugPrint('Map encryption failed: $e');
+      AppLogger.error('Map encryption failed', error: e);
       rethrow;
     }
   }
@@ -149,7 +190,7 @@ class EncryptionService {
 
       return result;
     } catch (e) {
-      debugPrint('Map decryption failed: $e');
+      AppLogger.error('Map decryption failed', error: e);
       rethrow;
     }
   }
@@ -179,9 +220,9 @@ class EncryptionService {
       await _secureStorage.delete(key: _keyStorageKey);
       await _secureStorage.delete(key: _ivStorageKey);
       _initialized = false;
-      debugPrint('Encryption keys cleared');
+      AppLogger.info('Encryption keys cleared');
     } catch (e) {
-      debugPrint('Failed to clear encryption keys: $e');
+      AppLogger.error('Failed to clear encryption keys', error: e);
       rethrow;
     }
   }

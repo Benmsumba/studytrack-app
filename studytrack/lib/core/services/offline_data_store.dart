@@ -4,6 +4,10 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import '../constants/app_config.dart';
+import '../utils/app_logger.dart';
+import 'encryption_service.dart';
+
 class OfflinePendingChange {
   const OfflinePendingChange({
     required this.id,
@@ -29,12 +33,6 @@ class OfflineDataStore {
 
   Database? _database;
 
-  // Cache entries older than this are deleted on startup.
-  static const _cacheTtlDays = 30;
-  // Hard row-count caps to prevent unbounded growth.
-  static const _maxCachedRecords = 500;
-  static const _maxCachedQueries = 200;
-
   Future<void> initialize({String? databasePath}) async {
     if (_database != null) {
       return;
@@ -42,14 +40,34 @@ class OfflineDataStore {
 
     final path = databasePath ?? await _defaultDatabasePath();
     _database = sqlite3.open(path);
+    await _ensureEncryptionReady();
     _createTables();
     pruneStaleEntries();
+  }
+
+  Future<void> _ensureEncryptionReady() async {
+    try {
+      if (!EncryptionService().isInitialized) {
+        await EncryptionService().initialize();
+      }
+    } catch (error, stackTrace) {
+      AppLogger.warning(
+        'Encryption service unavailable for offline cache; storing legacy query payloads',
+        error: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   Future<String> _defaultDatabasePath() async {
     final directory = await getApplicationDocumentsDirectory();
     return p.join(directory.path, 'studytrack_offline.db');
   }
+
+  // Configuration from AppConfig for maintainability
+  int get _cacheTtlDays => AppConfig.offlineCacheTtlDays;
+  int get _maxCachedRecords => AppConfig.maxCachedRecords;
+  int get _maxCachedQueries => AppConfig.maxCachedQueries;
 
   Database get _db {
     final database = _database;
@@ -137,9 +155,13 @@ class OfflineDataStore {
     required String entity,
     required List<Map<String, dynamic>> payload,
   }) async {
+    final encodedPayload = jsonEncode(payload);
+    final storedPayload = EncryptionService().isInitialized
+        ? EncryptionService().encryptString(encodedPayload)
+        : encodedPayload;
     _db.execute(
       'INSERT OR REPLACE INTO cached_queries (query_key, entity, payload, updated_at) VALUES (?, ?, ?, ?)',
-      [queryKey, entity, jsonEncode(payload), DateTime.now().toIso8601String()],
+      [queryKey, entity, storedPayload, DateTime.now().toIso8601String()],
     );
   }
 
@@ -157,7 +179,8 @@ class OfflineDataStore {
       return const [];
     }
 
-    final decoded = jsonDecode(payload);
+    final decodedPayload = _decodeQueryPayload(payload);
+    final decoded = jsonDecode(decodedPayload);
     if (decoded is! List) {
       return const [];
     }
@@ -168,6 +191,18 @@ class OfflineDataStore {
           (value) => Map<String, dynamic>.from(value.cast<String, dynamic>()),
         )
         .toList();
+  }
+
+  String _decodeQueryPayload(String payload) {
+    if (!EncryptionService().isInitialized) {
+      return payload;
+    }
+
+    try {
+      return EncryptionService().decryptString(payload);
+    } catch (_) {
+      return payload;
+    }
   }
 
   Future<void> queueChange({
@@ -271,7 +306,7 @@ class OfflineDataStore {
   /// during [initialize] so it runs once at app startup.
   void pruneStaleEntries() {
     final cutoff = DateTime.now()
-        .subtract(const Duration(days: _cacheTtlDays))
+        .subtract(Duration(days: _cacheTtlDays))
         .toIso8601String();
 
     // TTL-based eviction

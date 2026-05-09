@@ -1,4 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide debugPrint;
+
+import '../utils/debug_print_compat.dart';
 
 typedef CrashReportCallback = void Function(Object error, StackTrace stack);
 
