@@ -173,7 +173,6 @@ class _ModulesScreenState extends State<ModulesScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
     body: _isLoading
         ? AppStateView.loadingGrid(itemCount: 4, childAspectRatio: 0.78)
         : RefreshIndicator(

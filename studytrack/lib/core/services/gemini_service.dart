@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/app_config.dart';
 import '../constants/app_constants.dart';
+import '../utils/app_logger.dart';
 import '../utils/debug_print_compat.dart';
 
 class _CacheEntry {
@@ -523,7 +524,7 @@ $message
       }
     }
 
-    debugPrint('GeminiService: all retries failed — $lastError');
+    AppLogger.warning('GeminiService: all retries failed', error: lastError);
     return '$fallback Error: $lastError';
   }
 

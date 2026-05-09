@@ -324,7 +324,6 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
     body: _loading
         ? AppStateView.loadingList(itemCount: 4, itemHeight: 110)
         : RefreshIndicator(

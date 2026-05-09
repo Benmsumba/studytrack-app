@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../../../core/utils/app_logger.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -117,7 +118,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           .limit(40);
       sharedNotes = (notes as List<dynamic>).cast<Map<String, dynamic>>();
     } catch (error) {
-      debugPrint('group shared notes load error: $error');
+      AppLogger.warning('group shared notes load error', error: error);
     }
 
     final topicNames = <String, String>{};
@@ -260,9 +261,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        backgroundColor: AppColors.backgroundDark,
         appBar: AppBar(
-          backgroundColor: AppColors.backgroundDark,
           title: Text(_groupName(), style: AppTextStyles.headingSmall),
           bottom: const TabBar(
             isScrollable: true,

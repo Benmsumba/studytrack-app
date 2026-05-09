@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 
 /// Environment configuration for the application.
 ///
@@ -72,26 +73,17 @@ class Environment {
       );
     }
 
-    debugPrint('✓ Environment configuration is valid');
+    AppLogger.debug('✓ Environment configuration is valid');
   }
 
   /// Debug log environment status
   static void logStatus() {
-    debugPrint('========== Environment Status ==========');
-    debugPrint('App Environment: $appEnv');
-    debugPrint('Is Production: $isProduction');
-    debugPrint(
-      'Supabase URL: '
-      '${supabaseUrl.contains('https') ? '✓ Configured' : '✗ Missing'}',
-    );
-    debugPrint(
-      'Supabase Anon Key: '
-      '${supabaseAnonKey.isNotEmpty ? '✓ Configured' : '✗ Missing'}',
-    );
-    debugPrint(
-      'Gemini API Key: '
-      '${geminiApiKey.isNotEmpty ? '✓ Configured' : '✗ Missing'}',
-    );
-    debugPrint('========================================');
+    AppLogger.debug('========== Environment Status ==========');
+    AppLogger.debug('App Environment: \$appEnv');
+    AppLogger.debug('Is Production: \$isProduction');
+    AppLogger.debug("Supabase URL: ${supabaseUrl.contains('https') ? '✓ Configured' : '✗ Missing'}");
+    AppLogger.debug("Supabase Anon Key: ${supabaseAnonKey.isNotEmpty ? '✓ Configured' : '✗ Missing'}");
+    AppLogger.debug("Gemini API Key: ${geminiApiKey.isNotEmpty ? '✓ Configured' : '✗ Missing'}");
+    AppLogger.debug('========================================');
   }
 }

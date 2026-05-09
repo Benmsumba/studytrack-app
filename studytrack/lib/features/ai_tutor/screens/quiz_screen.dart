@@ -161,14 +161,12 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppColors.backgroundDark,
         body: AppStateView.loadingList(itemCount: 4, itemHeight: 88),
       );
     }
 
     if (_loadError != null) {
       return Scaffold(
-        backgroundColor: AppColors.backgroundDark,
         appBar: AppBar(backgroundColor: AppColors.backgroundDark),
         body: AppStateView.error(
           title: 'Quiz unavailable',
@@ -180,7 +178,6 @@ class _QuizScreenState extends State<QuizScreen> {
 
     if (_topic == null || _questions.isEmpty) {
       return Scaffold(
-        backgroundColor: AppColors.backgroundDark,
         appBar: AppBar(backgroundColor: AppColors.backgroundDark),
         body: AppStateView.empty(
           icon: Icons.quiz_outlined,
@@ -207,9 +204,7 @@ class _QuizScreenState extends State<QuizScreen> {
     final progress = (_currentIndex + 1) / _questions.length;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDark,
         title: Text(
           'Quiz',
           style: AppTextStyles.headingSmall.copyWith(
@@ -449,7 +444,6 @@ class _ResultsViewState extends State<_ResultsView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
     appBar: AppBar(backgroundColor: AppColors.backgroundDark),
     body: Stack(
       alignment: Alignment.topCenter,

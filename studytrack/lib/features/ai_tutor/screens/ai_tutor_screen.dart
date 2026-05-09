@@ -246,9 +246,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
     final hasNotes = _topic?.notes?.trim().isNotEmpty ?? false;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDark,
         elevation: 0,
         titleSpacing: 0,
         title: Row(

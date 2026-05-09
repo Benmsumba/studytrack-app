@@ -203,7 +203,6 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.backgroundDark,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -256,9 +255,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
         '${widget.moduleName ?? 'Module'} • ${widget.groupName ?? 'Group'}';
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDark,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

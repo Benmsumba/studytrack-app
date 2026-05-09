@@ -81,11 +81,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       backgroundColor: pageBackground,
+      appBar: AppBar(
+        title: const Text('Settings'),
+        centerTitle: false,
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
             AppSpacing.screenHorizontal,
-            AppSpacing.xxxl + AppSpacing.xxl,
+            AppSpacing.lg,
             AppSpacing.screenHorizontal,
             AppSpacing.xxxl + AppSpacing.xxl + AppSpacing.lg,
           ),

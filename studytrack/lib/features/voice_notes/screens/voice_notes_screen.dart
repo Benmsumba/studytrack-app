@@ -10,9 +10,7 @@ class VoiceNotesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
     appBar: AppBar(
-      backgroundColor: AppColors.backgroundDark,
       title: Text('Voice Notes', style: AppTextStyles.headingSmall),
     ),
     body: SafeArea(

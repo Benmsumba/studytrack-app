@@ -96,7 +96,6 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
     body: SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(

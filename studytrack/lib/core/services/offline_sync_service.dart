@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../services/supabase_service.dart';
+import '../utils/app_logger.dart';
 import '../utils/debug_print_compat.dart';
 import 'crash_reporter.dart';
 import 'offline_data_store.dart';
@@ -316,9 +317,7 @@ class OfflineSyncService extends ChangeNotifier {
           return false;
       }
     } on Object catch (error) {
-      debugPrint(
-        'sync change failed (${change.entity}/${change.operation}): $error',
-      );
+      AppLogger.warning('sync change failed (${change.entity}/${change.operation})', error: error);
       return false;
     }
   }
@@ -393,7 +392,7 @@ class OfflineSyncService extends ChangeNotifier {
     try {
       await saveWidgetSnapshot(userId: user.id);
     } on Object catch (error) {
-      debugPrint('saveWidgetSnapshot error: $error');
+      AppLogger.warning('saveWidgetSnapshot error', error: error);
     }
   }
 

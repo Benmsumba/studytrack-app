@@ -62,13 +62,13 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0F0F1A),
+        appBar: AppBar(title: const Text('Exam Countdown'), centerTitle: false),
         body: AppStateView.loadingList(itemCount: 3, itemHeight: 110),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
+      appBar: AppBar(title: const Text('Exam Countdown'), centerTitle: false),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 import '../../../models/user_model.dart';
 import '../../services/supabase_service.dart';
@@ -76,7 +76,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       return Success(profile);
     } on Object catch (e, stack) {
-      debugPrint('SignUp error: $e');
+      AppLogger.warning('SignUp error', error: e);
       return Failure(
         AuthException(message: 'Sign up failed: $e', stackTrace: stack),
       );
@@ -108,7 +108,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       return Success(profile);
     } on Object catch (e, stack) {
-      debugPrint('SignIn error: $e');
+      AppLogger.warning('SignIn error', error: e);
       return Failure(
         AuthException(message: 'Sign in failed: $e', stackTrace: stack),
       );
@@ -128,7 +128,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('GoogleSignIn error: $e');
+      AppLogger.warning('GoogleSignIn error', error: e);
       return Failure(
         AuthException(message: 'Google sign-in failed: $e', stackTrace: stack),
       );
@@ -141,7 +141,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _supabaseService.signOut();
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('SignOut error: $e');
+      AppLogger.warning('SignOut error', error: e);
       return Failure(
         AuthException(message: 'Sign out failed: $e', stackTrace: stack),
       );
@@ -155,7 +155,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final profile = _userToProfileModel(user);
       return Success(profile);
     } on Object catch (e, stack) {
-      debugPrint('GetCurrentUser error: $e');
+      AppLogger.warning('GetCurrentUser error', error: e);
       return Failure(
         DataException(
           message: 'Failed to get current user: $e',
@@ -179,7 +179,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('ResetPassword error: $e');
+      AppLogger.warning('ResetPassword error', error: e);
       return Failure(
         AuthException(message: 'Password reset failed: $e', stackTrace: stack),
       );
@@ -192,7 +192,7 @@ class AuthRepositoryImpl implements AuthRepository {
       await _supabaseService.client.auth.signInWithOtp(email: email);
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('sendOtp error: $e');
+      AppLogger.warning('sendOtp error', error: e);
       return Failure(
         AuthException(message: 'Failed to send OTP: $e', stackTrace: stack),
       );
@@ -216,7 +216,7 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       return Success(profile);
     } on Object catch (e, stack) {
-      debugPrint('VerifyOtp error: $e');
+      AppLogger.warning('VerifyOtp error', error: e);
       return Failure(
         AuthException(
           message: 'OTP verification failed: $e',
@@ -274,7 +274,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
       return Success(updatedProfile);
     } on Object catch (e, stack) {
-      debugPrint('UpdateProfile error: $e');
+      AppLogger.warning('UpdateProfile error', error: e);
       return Failure(
         DataException(message: 'Profile update failed: $e', stackTrace: stack),
       );

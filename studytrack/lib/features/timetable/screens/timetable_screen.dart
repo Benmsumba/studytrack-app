@@ -140,7 +140,6 @@ class _TimetableScreenState extends State<TimetableScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
     body: _isLoading
         ? const Center(child: CircularProgressIndicator())
         : RefreshIndicator(

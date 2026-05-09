@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../../../core/utils/app_logger.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -192,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('Error loading profile: $e');
+      AppLogger.warning('Error loading profile', error: e);
       if (mounted) {
         setState(() {
           _profile = <String, dynamic>{};
@@ -239,9 +240,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AppColors.backgroundDark,
-        body: LoadingShimmerWidget.profile(),
+      return Scaffold(
+        appBar: AppBar(title: const Text('Profile'), centerTitle: false),
+        body: const LoadingShimmerWidget.profile(),
       );
     }
 
@@ -254,7 +255,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final xpProgress = (xp % 100) / 100.0;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      appBar: AppBar(title: const Text('Profile'), centerTitle: false),
       body: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: AppColors.surfaceDark,

@@ -204,7 +204,6 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
               ratedTopics.length;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddTopicSheet,
         backgroundColor: AppColors.primary,

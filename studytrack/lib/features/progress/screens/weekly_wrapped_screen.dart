@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../../../core/utils/app_logger.dart';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
@@ -85,7 +86,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
 
       reportsResult.fold(
         (error) {
-          debugPrint('Failed to load weekly reports: ${error.message}');
+          AppLogger.warning('Failed to load weekly reports', error: error.message);
           _loadError = 'We could not load your weekly wrap right now.';
           if (mounted) {
             setState(() => _loading = false);
@@ -139,7 +140,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         },
       );
     } catch (error) {
-      debugPrint('WeeklyWrapped load error: $error');
+      AppLogger.warning('WeeklyWrapped load error', error: error);
       if (mounted) {
         setState(() {
           _loadError = 'We could not load your weekly wrap right now.';
@@ -170,7 +171,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         });
       }
     } catch (error) {
-      debugPrint('WeeklyWrapped regenerate error: $error');
+      AppLogger.warning('WeeklyWrapped regenerate error', error: error);
     } finally {
       if (mounted) {
         setState(() => _generating = false);
@@ -286,12 +287,14 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   Widget build(BuildContext context) {
     if (_loading) {
       return Scaffold(
+        appBar: AppBar(title: const Text('Weekly Wrapped'), centerTitle: false),
         body: AppStateView.loadingList(itemCount: 4, itemHeight: 110),
       );
     }
 
     if (_loadError != null) {
       return Scaffold(
+        appBar: AppBar(title: const Text('Weekly Wrapped'), centerTitle: false),
         body: AppStateView.error(
           title: 'Weekly wrap unavailable',
           message: _loadError!,
@@ -301,6 +304,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     }
 
     return Scaffold(
+      appBar: AppBar(title: const Text('Weekly Wrapped'), centerTitle: false),
       body: PageView(
         controller: _pageController,
         scrollDirection: Axis.vertical,

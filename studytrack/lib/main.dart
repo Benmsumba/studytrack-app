@@ -17,6 +17,7 @@ import 'core/services/crash_reporter.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/offline_sync_service.dart';
 import 'core/services/spotify_service.dart';
+import 'core/utils/app_logger.dart';
 import 'core/utils/service_locator.dart';
 import 'features/auth/controllers/auth_provider.dart';
 import 'features/groups/controllers/groups_provider.dart';
@@ -106,10 +107,7 @@ Future<void> _bootstrapApp() async {
         'Supabase configuration is required for release builds.',
       );
     }
-    debugPrint(
-      'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY '
-      'via --dart-define or update AppConstants.',
-    );
+    AppLogger.warning('Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY via --dart-define or update AppConstants.');
   }
 
   if (AppConstants.resolvedSpotifyClientId.isNotEmpty) {
@@ -186,7 +184,7 @@ void _setupUriListener() {
       }
     },
     onError: (Object err) {
-      debugPrint('app_links error: $err');
+      AppLogger.warning('app_links error', error: err);
     },
   );
 }

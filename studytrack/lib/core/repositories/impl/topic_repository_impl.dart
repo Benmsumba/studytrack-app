@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 
 import '../../../models/topic_model.dart';
 import '../../../models/topic_rating_history_model.dart';
@@ -18,7 +18,7 @@ class TopicRepositoryImpl implements TopicRepository {
       final topics = await _supabaseService.getTopics(moduleId) ?? const [];
       return Success(topics);
     } on Object catch (e, stack) {
-      debugPrint('getTopicsByModule error: $e');
+      AppLogger.warning('getTopicsByModule error', error: e);
       return Failure(
         DataException(message: 'Failed to fetch topics: $e', stackTrace: stack),
       );
@@ -33,7 +33,7 @@ class TopicRepositoryImpl implements TopicRepository {
       final topics = await _supabaseService.getTopicsByModuleIds(moduleIds);
       return Success(topics);
     } on Object catch (e, stack) {
-      debugPrint('getTopicsByModuleIds error: $e');
+      AppLogger.warning('getTopicsByModuleIds error', error: e);
       return Failure(
         DataException(message: 'Failed to fetch topics: $e', stackTrace: stack),
       );
@@ -49,7 +49,7 @@ class TopicRepositoryImpl implements TopicRepository {
       }
       return Success(topic);
     } on Object catch (e, stack) {
-      debugPrint('getTopicById error: $e');
+      AppLogger.warning('getTopicById error', error: e);
       return Failure(
         DataException(message: 'Failed to fetch topic: $e', stackTrace: stack),
       );
@@ -70,7 +70,7 @@ class TopicRepositoryImpl implements TopicRepository {
       );
       return Success(topic);
     } on Object catch (e, stack) {
-      debugPrint('createTopic error: $e');
+      AppLogger.warning('createTopic error', error: e);
       return Failure(
         DataException(message: 'Failed to create topic: $e', stackTrace: stack),
       );
@@ -83,7 +83,7 @@ class TopicRepositoryImpl implements TopicRepository {
       final updated = await _supabaseService.updateTopic(topic);
       return Success(updated);
     } on Object catch (e, stack) {
-      debugPrint('updateTopic error: $e');
+      AppLogger.warning('updateTopic error', error: e);
       return Failure(
         DataException(message: 'Failed to update topic: $e', stackTrace: stack),
       );
@@ -96,7 +96,7 @@ class TopicRepositoryImpl implements TopicRepository {
       await _supabaseService.deleteTopic(topicId);
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('deleteTopic error: $e');
+      AppLogger.warning('deleteTopic error', error: e);
       return Failure(
         DataException(message: 'Failed to delete topic: $e', stackTrace: stack),
       );
@@ -109,7 +109,7 @@ class TopicRepositoryImpl implements TopicRepository {
       await _supabaseService.rateTopic(topicId, rating);
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('rateTopic error: $e');
+      AppLogger.warning('rateTopic error', error: e);
       return Failure(
         DataException(message: 'Failed to rate topic: $e', stackTrace: stack),
       );
@@ -125,7 +125,7 @@ class TopicRepositoryImpl implements TopicRepository {
           await _supabaseService.getTopicRatingHistory(topicId) ?? const [];
       return Success(history.map(TopicRatingHistoryModel.fromJson).toList());
     } on Object catch (e, stack) {
-      debugPrint('getTopicRatingHistory error: $e');
+      AppLogger.warning('getTopicRatingHistory error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch rating history: $e',
@@ -147,7 +147,7 @@ class TopicRepositoryImpl implements TopicRepository {
       );
       return Success(topics);
     } on Object catch (e, stack) {
-      debugPrint('getRatedTopics error: $e');
+      AppLogger.warning('getRatedTopics error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch rated topics: $e',
@@ -163,7 +163,7 @@ class TopicRepositoryImpl implements TopicRepository {
       await _supabaseService.updateTopicNotes(topicId, notes);
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('updateTopicNotes error: $e');
+      AppLogger.warning('updateTopicNotes error', error: e);
       return Failure(
         DataException(message: 'Failed to update notes: $e', stackTrace: stack),
       );
@@ -176,7 +176,7 @@ class TopicRepositoryImpl implements TopicRepository {
       final topics = await _supabaseService.getTopicsDueForReview();
       return Success(topics);
     } on Object catch (e, stack) {
-      debugPrint('getTopicsDueForReview error: $e');
+      AppLogger.warning('getTopicsDueForReview error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch topics due for review: $e',
@@ -192,7 +192,7 @@ class TopicRepositoryImpl implements TopicRepository {
       await _supabaseService.markTopicAsReviewed(topicId);
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('markTopicAsReviewed error: $e');
+      AppLogger.warning('markTopicAsReviewed error', error: e);
       return Failure(
         DataException(
           message: 'Failed to mark topic as reviewed: $e',
@@ -208,7 +208,7 @@ class TopicRepositoryImpl implements TopicRepository {
       // Sync handled by offline sync service
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('syncTopics error: $e');
+      AppLogger.warning('syncTopics error', error: e);
       return Failure(
         DataException(message: 'Failed to sync topics: $e', stackTrace: stack),
       );
