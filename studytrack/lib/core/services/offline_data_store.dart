@@ -4,6 +4,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import '../constants/app_config.dart';
+
 class OfflinePendingChange {
   const OfflinePendingChange({
     required this.id,
@@ -29,12 +31,6 @@ class OfflineDataStore {
 
   Database? _database;
 
-  // Cache entries older than this are deleted on startup.
-  static const _cacheTtlDays = 30;
-  // Hard row-count caps to prevent unbounded growth.
-  static const _maxCachedRecords = 500;
-  static const _maxCachedQueries = 200;
-
   Future<void> initialize({String? databasePath}) async {
     if (_database != null) {
       return;
@@ -50,6 +46,11 @@ class OfflineDataStore {
     final directory = await getApplicationDocumentsDirectory();
     return p.join(directory.path, 'studytrack_offline.db');
   }
+
+  // Configuration from AppConfig for maintainability
+  int get _cacheTtlDays => AppConfig.offlineCacheTtlDays;
+  int get _maxCachedRecords => AppConfig.maxCachedRecords;
+  int get _maxCachedQueries => AppConfig.maxCachedQueries;
 
   Database get _db {
     final database = _database;
@@ -271,7 +272,7 @@ class OfflineDataStore {
   /// during [initialize] so it runs once at app startup.
   void pruneStaleEntries() {
     final cutoff = DateTime.now()
-        .subtract(const Duration(days: _cacheTtlDays))
+        .subtract(Duration(days: _cacheTtlDays))
         .toIso8601String();
 
     // TTL-based eviction

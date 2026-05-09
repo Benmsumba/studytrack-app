@@ -14,6 +14,7 @@ import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
 import '../constants/app_constants.dart';
 import 'offline_sync_service.dart';
+import '../utils/helpers.dart';
 
 class SupabaseService {
   @visibleForTesting
@@ -645,8 +646,15 @@ class SupabaseService {
         final rows = (response as List<dynamic>)
             .map((item) => item as Map<String, dynamic>)
             .toList();
+        // Cache records grouped by module for efficient batch writes
+        final rowsByModule = <String, List<Map<String, dynamic>>>{};
         for (final row in rows) {
-          await _cacheRecord('topics', row['id'].toString(), row);
+          final moduleId = row['module_id']?.toString() ?? '';
+          rowsByModule.putIfAbsent(moduleId, () => []).add(row);
+        }
+        // Batch cache by module to reduce write operations
+        for (final entry in rowsByModule.entries) {
+          await _cacheList('topics', entry.key, entry.value);
         }
         return rows.map(TopicModel.fromJson).toList();
       }
@@ -1448,12 +1456,10 @@ class SupabaseService {
           }
 
           final rawUserId = member['user_id']?.toString() ?? '';
-          final shortId = rawUserId.length <= 8
-              ? rawUserId
-              : rawUserId.substring(0, 8);
+          final anonId = Helpers.anonymizeUserId(rawUserId);
           return {
             ...member,
-            'name': 'Member $shortId',
+            'name': 'Member $anonId',
             'course': 'Private',
             'year_level': null,
           };

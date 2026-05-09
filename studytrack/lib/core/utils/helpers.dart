@@ -1,7 +1,9 @@
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/topic_model.dart';
+import '../constants/app_config.dart';
 
 class Helpers {
   static String formatTitle(String value) {
@@ -76,5 +78,14 @@ class Helpers {
     if (rating <= 7) return now.add(const Duration(days: 7));
     if (rating <= 9) return now.add(const Duration(days: 14));
     return now.add(const Duration(days: 30));
+  }
+
+  /// Generates a secure, stable anonymized ID from a user ID
+  /// Uses SHA-256 hash for privacy without exposing original UUIDs
+  static String anonymizeUserId(String userId, {int? length}) {
+    length ??= AppConfig.anonymizedIdLength;
+    if (userId.isEmpty) return 'anonymous';
+    final hash = sha256.convert(userId.codeUnits).toString();
+    return 'user_${hash.substring(0, length)}';
   }
 }

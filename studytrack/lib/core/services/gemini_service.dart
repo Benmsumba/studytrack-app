@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/app_constants.dart';
+import '../constants/app_config.dart';
 
 class _CacheEntry {
   _CacheEntry(this.value) : timestamp = DateTime.now();
@@ -92,10 +93,12 @@ class GeminiService {
   static final GeminiService _instance = GeminiService._internal();
 
   final Map<int, _CacheEntry> _cache = {};
-  static const _cacheTtl = Duration(hours: 1);
-  static const _maxCacheEntries = 100;
-  static const _maxRetries = 3;
-  static const _minRequestInterval = Duration(milliseconds: 500);
+  late final Duration _cacheTtl = Duration(seconds: AppConfig.geminoCacheTtl);
+  late final int _maxCacheEntries = AppConfig.geminoCacheMaxEntries;
+  late final int _maxRetries = AppConfig.geminiRetryAttempts;
+  late final Duration _minRequestInterval = Duration(
+    milliseconds: AppConfig.geminiRateLimitMs,
+  );
 
   DateTime? _lastRequestAt;
 
