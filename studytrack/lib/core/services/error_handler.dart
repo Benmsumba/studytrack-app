@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+
+import '../constants/app_config.dart';
+import '../utils/app_logger.dart';
 import 'crash_reporter.dart';
 
 /// Error severity levels for categorization
@@ -51,13 +54,13 @@ class ErrorHandler {
   String? _currentUserId;
 
   // Configuration
-  static const int maxErrorHistorySize = 100;
+  static int get maxErrorHistorySize => AppConfig.maxErrorHistoryEntries;
 
   /// Initialize error handler
   Future<void> initialize() async {
     if (_initialized) return;
     _initialized = true;
-    debugPrint('ErrorHandler initialized');
+    AppLogger.info('ErrorHandler initialized');
   }
 
   /// Set current user ID for error tracking context
@@ -101,10 +104,11 @@ class ErrorHandler {
 
     // Log to console in debug mode
     if (kDebugMode) {
-      debugPrint('🚨 ERROR [${severity.name.toUpperCase()}]: $errorMessage');
-      if (stackTrace != null) {
-        debugPrint('Stack trace:\n$stackTrace');
-      }
+      AppLogger.debug(
+        'ERROR [${severity.name.toUpperCase()}]: $errorMessage',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
 
     // Report critical errors to crash reporter
@@ -112,7 +116,7 @@ class ErrorHandler {
       try {
         CrashReporter.report(error, stackTrace ?? StackTrace.current);
       } catch (e) {
-        debugPrint('Failed to report crash: $e');
+        AppLogger.error('Failed to report crash', error: e);
       }
     }
   }

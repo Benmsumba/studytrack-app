@@ -7,12 +7,13 @@ Student productivity app built with Flutter, Supabase, and a clean offline-first
 [![Flutter](https://img.shields.io/badge/Flutter-3.29+-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.11+-0175C2?logo=dart&logoColor=white)](https://dart.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-22c55e.svg)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/Benmsumba/studytrack-app?include_prereleases&label=release)](https://github.com/Benmsumba/studytrack-app/releases)
 [![Build & Test](https://github.com/Benmsumba/studytrack-app/actions/workflows/build.yml/badge.svg)](https://github.com/Benmsumba/studytrack-app/actions/workflows/build.yml)
 [![Backend Deploy](https://github.com/Benmsumba/studytrack-app/actions/workflows/deploy_backend.yml/badge.svg)](https://github.com/Benmsumba/studytrack-app/actions/workflows/deploy_backend.yml)
 
 </div>
 
-StudyTrack helps students manage modules, study sessions, exams, groups, notes, and AI-assisted revision from one mobile app.
+StudyTrack is an offline-first student productivity app for tracking modules, study sessions, exams, groups, notes, and AI-assisted revision from one mobile experience.
 
 ## What It Does
 
@@ -30,6 +31,16 @@ StudyTrack combines spaced-repetition topic tracking, a Pomodoro-style study tim
 | Groups | Invite-based groups, chat, and collaborative discussion |
 | Offline support | Local caching, queued sync, and reconnect handling |
 | Notifications | Study reminders, exam alerts, and daily briefings |
+
+## Recent Release Notes
+
+The current branch includes security, performance, and polish updates that are also reflected in the changelog:
+
+- encrypted query-cache payloads at rest
+- encrypted local voice-note recordings with on-demand decryption
+- shared logger usage in the core service layer
+- topic cache batching and centralized config values
+- refreshed repository-facing docs and templates
 
 ## Tech Stack
 
@@ -67,7 +78,7 @@ studytrack/lib/
 ### Install
 
 ```bash
-git clone https://github.com/Benmsumba/studytrack-app.git
+git clone https://github.com/Benmsumba/studytrack-app
 cd studytrack-app/studytrack
 flutter pub get
 ```
@@ -126,6 +137,8 @@ The Supabase schema includes tables for profiles, modules, topics, study session
 - [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md)
 - [`SECURITY.md`](SECURITY.md)
 - [`CHANGELOG.md`](CHANGELOG.md)
+
+Release notes for maintainers live in [`CHANGELOG.md`](CHANGELOG.md); release artifacts and tags are published from the repository’s GitHub Actions workflow.
 
 ## Contributing
 

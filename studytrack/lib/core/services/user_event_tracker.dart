@@ -1,5 +1,7 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide debugPrint;
+
+import '../utils/debug_print_compat.dart';
 
 /// Represents a tracked user event for analytics and monitoring
 class UserEvent {

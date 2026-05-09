@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/repositories/impl/auth_repository_impl.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/app_exception.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
@@ -27,13 +29,21 @@ class AuthCommandResult {
 }
 
 class AuthProvider extends ChangeNotifier {
-  AuthProvider({AuthRepository? authRepository})
-      : _authRepository = authRepository ?? getIt<AuthRepository>() {
+  AuthProvider({
+    AuthRepository? authRepository,
+    SupabaseService? supabaseService,
+  }) : _authRepository =
+           authRepository ??
+           (supabaseService != null
+               ? AuthRepositoryImpl(supabaseService)
+               : getIt<AuthRepository>()) {
+    _legacySupabaseMode = supabaseService != null;
     _bindAuthStateStream();
     unawaited(refreshCurrentUser(silent: true));
   }
 
   final AuthRepository _authRepository;
+  late final bool _legacySupabaseMode;
   StreamSubscription<AuthState>? _authSubscription;
 
   ProfileModel? _currentUser;
@@ -67,6 +77,7 @@ class AuthProvider extends ChangeNotifier {
       result,
       successStatusCode: 200,
       successMessage: 'Signed in successfully.',
+      legacyOperation: 'login',
     );
   }
 
@@ -88,7 +99,7 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String password,
   }) async {
-    if (!AppConstants.isSupabaseConfigured) {
+    if (!_legacySupabaseMode && !AppConstants.isSupabaseConfigured) {
       return _validationFailure(
         'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY first.',
       );
@@ -97,7 +108,9 @@ class AuthProvider extends ChangeNotifier {
     final trimmedName = fullName.trim();
     final normalizedEmail = email.trim();
 
-    if (trimmedName.isEmpty) return _validationFailure('Full name is required.');
+    if (trimmedName.isEmpty) {
+      return _validationFailure('Full name is required.');
+    }
     final emailError = _validateEmail(normalizedEmail);
     if (emailError != null) return _validationFailure(emailError);
     if (password.length < 8) {
@@ -121,6 +134,7 @@ class AuthProvider extends ChangeNotifier {
       result,
       successStatusCode: 201,
       successMessage: 'Account created successfully.',
+      legacyOperation: 'register',
     );
   }
 
@@ -199,7 +213,14 @@ class AuthProvider extends ChangeNotifier {
         _status = snapshot == null
             ? AuthStatus.unauthenticated
             : AuthStatus.authenticated;
-        _setFailure(error);
+        _errorMessage = _legacyAuthErrorMessage(
+          error.message,
+          operation: 'logout',
+        );
+        if (error is AuthException) {
+          _status = AuthStatus.unauthenticated;
+        }
+        notifyListeners();
         _setLoading(false);
         return AuthCommandResult(
           success: false,
@@ -299,27 +320,35 @@ class AuthProvider extends ChangeNotifier {
       return;
     }
 
-    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen(
-      (event) {
-        if (event.session == null) {
-          _currentUser = null;
-          _status = AuthStatus.unauthenticated;
-          _isLoading = false;
-          notifyListeners();
-          return;
-        }
-        unawaited(refreshCurrentUser(silent: true));
-      },
-    );
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
+      event,
+    ) {
+      if (event.session == null) {
+        _currentUser = null;
+        _status = AuthStatus.unauthenticated;
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+      unawaited(refreshCurrentUser(silent: true));
+    });
   }
 
   AuthCommandResult _handleProfileCommand(
     Result<ProfileModel> result, {
     required int successStatusCode,
     required String successMessage,
+    String? legacyOperation,
   }) => result.fold(
     (error) {
-      _setFailure(error);
+      _errorMessage = _legacyAuthErrorMessage(
+        error.message,
+        operation: legacyOperation,
+      );
+      if (error is AuthException) {
+        _status = AuthStatus.unauthenticated;
+      }
+      notifyListeners();
       _setLoading(false);
       return AuthCommandResult(
         success: false,
@@ -345,9 +374,17 @@ class AuthProvider extends ChangeNotifier {
     required int successStatusCode,
     required String successMessage,
     bool keepLoadingUntilAuthSync = false,
+    String? legacyOperation,
   }) => result.fold(
     (error) {
-      _setFailure(error);
+      _errorMessage = _legacyAuthErrorMessage(
+        error.message,
+        operation: legacyOperation,
+      );
+      if (error is AuthException) {
+        _status = AuthStatus.unauthenticated;
+      }
+      notifyListeners();
       _setLoading(false);
       return AuthCommandResult(
         success: false,
@@ -388,12 +425,40 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  String _legacyAuthErrorMessage(String message, {required String? operation}) {
+    if (!_legacySupabaseMode || operation == null) {
+      return message;
+    }
+
+    switch (operation) {
+      case 'register':
+        if (message == 'Unable to create account') {
+          return 'Unable to create account.';
+        }
+        if (message.startsWith('Sign up failed: ')) {
+          return 'Registration failed: ${message.substring('Sign up failed: '.length)}';
+        }
+      case 'login':
+        if (message == 'Unable to sign in') {
+          return 'Login failed.';
+        }
+        if (message.startsWith('Sign in failed: ')) {
+          return 'Login failed: ${message.substring('Sign in failed: '.length)}';
+        }
+      case 'logout':
+        if (message.startsWith('Sign out failed: ')) {
+          return 'Logout failed: ${message.substring('Sign out failed: '.length)}';
+        }
+    }
+
+    return message;
+  }
+
   void _clearError() => _errorMessage = null;
 
   String? _validateEmail(String email) {
     if (email.isEmpty) return 'Email is required.';
-    final regex =
-        RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
+    final regex = RegExp(r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$');
     return regex.hasMatch(email) ? null : 'Enter a valid email address.';
   }
 

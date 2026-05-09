@@ -4,6 +4,8 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import '../constants/app_config.dart';
+import '../utils/app_logger.dart';
 import 'encryption_service.dart';
 
 class OfflinePendingChange {
@@ -33,9 +35,9 @@ class OfflineDataStore {
   late final EncryptionService _encryption;
   bool _encryptionReady = false;
 
-  static const _cacheTtlDays = 30;
-  static const _maxCachedRecords = 500;
-  static const _maxCachedQueries = 200;
+  static const _cacheTtlDays = AppConfig.offlineCacheTtlDays;
+  static const _maxCachedRecords = AppConfig.maxCachedRecords;
+  static const _maxCachedQueries = AppConfig.maxCachedQueries;
 
   Future<void> initialize({
     String? databasePath,
@@ -45,15 +47,17 @@ class OfflineDataStore {
 
     _encryption = encryptionService ?? EncryptionService();
     try {
-      await _encryption.initialize();
+      if (!_encryption.isInitialized) {
+        await _encryption.initialize();
+      }
       _encryptionReady = true;
-    } on Object catch (e) {
-      // Non-fatal: cache will store plaintext but still function.
-      assert(() {
-        // ignore: avoid_print
-        print('[W/OfflineDataStore] Encryption init failed — storing plaintext: $e');
-        return true;
-      }());
+    } on Object catch (e, stackTrace) {
+      // Non-fatal: cache still functions, data stored without encryption.
+      AppLogger.warning(
+        'OfflineDataStore: encryption init failed — cache will be plaintext',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
 
     final path = databasePath ?? await _defaultDatabasePath();
@@ -282,7 +286,7 @@ class OfflineDataStore {
     final existingOperation = rows.first['operation'] as String? ?? operation;
 
     // An insert followed by a delete means the record never reached the server;
-    // cancel both sides so nothing is sent.
+    // cancel both so nothing is sent.
     if (existingOperation == 'insert' && operation == 'delete') {
       _db.execute('DELETE FROM pending_changes WHERE id = ?', [existingId]);
       return;

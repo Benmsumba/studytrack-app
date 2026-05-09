@@ -2,9 +2,11 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+
+import '../constants/app_constants.dart';
+import '../utils/debug_print_compat.dart';
 
 class AppUpdateInfo {
   const AppUpdateInfo({
@@ -79,6 +81,7 @@ class AppUpdateService {
       );
 
       final response = await request.close();
+      _validatePinnedCertificate(response, Uri.parse(checkUrl));
       debugPrint(
         '[AppUpdateService] HTTP response status: ${response.statusCode}',
       );
@@ -159,6 +162,7 @@ class AppUpdateService {
       final request = await client.getUrl(Uri.parse(url));
       request.headers.set(HttpHeaders.cacheControlHeader, 'no-cache');
       final response = await request.close();
+      _validatePinnedCertificate(response, Uri.parse(url));
       if (response.statusCode != 200) {
         throw HttpException(
           'APK download failed (${response.statusCode}).',
@@ -216,6 +220,25 @@ class AppUpdateService {
   Future<String> get apkSavePath async {
     final dir = await getTemporaryDirectory();
     return '${dir.path}/studytrack_update.apk';
+  }
+
+  void _validatePinnedCertificate(HttpClientResponse response, Uri uri) {
+    final expectedFingerprint = AppConstants.resolvedUpdateCertificateSha256
+        .trim()
+        .toLowerCase();
+    if (expectedFingerprint.isEmpty) {
+      return;
+    }
+
+    final certificate = response.certificate;
+    if (certificate == null) {
+      throw StateError('TLS certificate pinning failed for $uri');
+    }
+
+    final actualFingerprint = sha256.convert(certificate.der).toString();
+    if (actualFingerprint != expectedFingerprint) {
+      throw StateError('TLS certificate pinning failed for $uri');
+    }
   }
 }
 

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 
 import '../repositories/auth_repository.dart';
@@ -40,8 +39,8 @@ Future<void> setupServiceLocator() async {
   final encryptionService = EncryptionService();
   try {
     await encryptionService.initialize();
-  } on Object catch (e) {
-    AppLogger.w('ServiceLocator', 'EncryptionService init failed', e);
+  } on Object catch (e, stackTrace) {
+    AppLogger.warning('EncryptionService init failed', error: e, stackTrace: stackTrace);
   }
   getIt.registerSingleton<EncryptionService>(encryptionService);
 
@@ -52,8 +51,8 @@ Future<void> setupServiceLocator() async {
   final offlineDataStore = OfflineDataStore.instance;
   try {
     await offlineDataStore.initialize(encryptionService: encryptionService);
-  } on Object catch (e) {
-    AppLogger.e('ServiceLocator', 'OfflineDataStore init failed', e);
+  } on Object catch (e, stackTrace) {
+    AppLogger.error('OfflineDataStore init failed', error: e, stackTrace: stackTrace);
   }
   getIt.registerSingleton<OfflineDataStore>(offlineDataStore);
 
@@ -86,8 +85,8 @@ Future<void> setupServiceLocator() async {
   final notificationService = NotificationService();
   try {
     await notificationService.initialize();
-  } on Object catch (e) {
-    AppLogger.w('ServiceLocator', 'NotificationService init failed', e);
+  } on Object catch (e, stackTrace) {
+    AppLogger.warning('NotificationService init failed', error: e, stackTrace: stackTrace);
   }
   getIt.registerSingleton<NotificationService>(notificationService);
 

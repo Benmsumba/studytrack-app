@@ -10,7 +10,6 @@ import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/widgets/expandable_fab.dart';
 import '../../../core/widgets/glass_card.dart';
-import '../../../core/widgets/progress_ring.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -115,176 +114,246 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
+    backgroundColor: AppColors.backgroundDeep,
     body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
+        ? const Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: AppSpacing.md),
+                Text('Loading your study dashboard...'),
+              ],
+            ),
+          )
         : SingleChildScrollView(
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.screenHorizontal,
-                  vertical: AppSpacing.md,
+            child: Stack(
+              children: [
+                Positioned(
+                  top: -80,
+                  right: -60,
+                  child: _AmbientGlow(
+                    color: AppColors.neonViolet.withValues(alpha: 0.22),
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header with greeting
-                    Column(
+                Positioned(
+                  top: 180,
+                  left: -70,
+                  child: _AmbientGlow(
+                    size: 160,
+                    color: AppColors.neonCyan.withValues(alpha: 0.16),
+                  ),
+                ),
+                SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      AppSpacing.screenHorizontal,
+                      AppSpacing.sm,
+                      AppSpacing.screenHorizontal,
+                      AppSpacing.xl,
+                    ),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(_greeting, style: AppTextStyles.headingLarge),
-                        Text(
-                          _userName ?? 'Student',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
+                        GlassCard(
+                          animateEntrance: true,
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          borderRadius: AppSpacing.cardRadius,
+                          borderColors: const [
+                            AppColors.neonViolet,
+                            AppColors.neonCyan,
+                          ],
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _greeting.toUpperCase(),
+                                style: AppTextStyles.sectionOverline,
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                _userName ?? 'Student',
+                                style: AppTextStyles.displayMedium,
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                'Your study cockpit for today is ready. Pick up where you left off or start a fresh sprint.',
+                                style: AppTextStyles.bodyMediumSecondary,
+                              ),
+                              const SizedBox(height: AppSpacing.lg),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () =>
+                                          context.push('/study-session'),
+                                      child: const Text('Start Session'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () =>
+                                          context.push('/weekly-wrapped'),
+                                      child: const Text('Weekly Wrapped'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    // Daily Goal
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                        const SizedBox(height: AppSpacing.lg),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _MetricCard(
+                                label: 'Today',
+                                value:
+                                    '${_dailyGoalProgress.toStringAsFixed(1)}h',
+                                helper: 'of $_dailyGoalTarget h goal',
+                                accent: AppColors.neonViolet,
+                              ),
+                            ),
+                            const SizedBox(width: AppSpacing.md),
+                            Expanded(
+                              child: _MetricCard(
+                                label: 'Next exam',
+                                value: _nextEventTime ?? 'Ready',
+                                helper: _nextEventTitle ?? 'No exam queued',
+                                accent: AppColors.neonCyan,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        _MetricCard(
+                          label: 'Momentum',
+                          value: _dailyGoalProgress >= _dailyGoalTarget
+                              ? 'Goal met'
+                              : '${(_dailyGoalTarget - _dailyGoalProgress).toStringAsFixed(1)}h left',
+                          helper: _dailyGoalProgress >= _dailyGoalTarget
+                              ? 'You already hit your target for today.'
+                              : 'One focused block gets you closer to the target.',
+                          accent: AppColors.success,
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        GlassCard(
+                          animateEntrance: true,
+                          padding: const EdgeInsets.all(AppSpacing.lg),
+                          borderRadius: AppSpacing.cardRadius,
+                          borderColors: const [
+                            AppColors.borderGradientStart,
+                            AppColors.borderGradientEnd,
+                          ],
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Up Next',
+                                      style: AppTextStyles.sectionOverline,
+                                    ),
+                                    const SizedBox(height: AppSpacing.xs),
+                                    Text(
+                                      _nextEventTitle ?? 'No exam scheduled',
+                                      style: AppTextStyles.headingMedium,
+                                    ),
+                                    const SizedBox(height: AppSpacing.xs),
+                                    Text(
+                                      _nextEventTime ?? 'You are clear for now',
+                                      style: AppTextStyles.bodyMediumSecondary,
+                                    ),
+                                    if (_examCountdownDays != null &&
+                                        _examCountdownDays! < 2)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: AppSpacing.md,
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: AppSpacing.md,
+                                            vertical: AppSpacing.sm,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.danger.withValues(
+                                              alpha: 0.18,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              AppSpacing.pillRadius,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'Exam approaching. Open the countdown.',
+                                            style: AppTextStyles.caption
+                                                .copyWith(
+                                                  color: AppColors.danger,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.md),
+                              FilledButton(
+                                onPressed: () =>
+                                    context.push('/exam-countdown'),
+                                child: const Text('Open'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
                         Text(
-                          'Today\'s Goal',
+                          'Quick Start',
                           style: AppTextStyles.headingSmall.copyWith(
                             color: AppColors.textPrimary,
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.lg),
-                        Center(
-                          child: ProgressRing(
-                            progress: _dailyGoalProgress,
-                            goal: _dailyGoalTarget,
-                            unit: 'hours',
-                            size: 140,
-                            completed: _dailyGoalProgress >= _dailyGoalTarget,
-                          ),
+                        const SizedBox(height: AppSpacing.md),
+                        GridView.count(
+                          crossAxisCount: 2,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          mainAxisSpacing: AppSpacing.md,
+                          crossAxisSpacing: AppSpacing.md,
+                          childAspectRatio: 1.4,
+                          children: [
+                            _QuickActionCard(
+                              icon: Icons.calendar_month_rounded,
+                              label: 'Timetable',
+                              description: 'Plan the week',
+                              onTap: () => context.go('/home/timetable'),
+                            ),
+                            _QuickActionCard(
+                              icon: Icons.menu_book_rounded,
+                              label: 'Modules',
+                              description: 'Open your syllabus',
+                              onTap: () => context.go('/home/modules'),
+                            ),
+                            _QuickActionCard(
+                              icon: Icons.auto_graph_rounded,
+                              label: 'Progress',
+                              description: 'Track momentum',
+                              onTap: () => context.go('/home/progress'),
+                            ),
+                            _QuickActionCard(
+                              icon: Icons.groups_rounded,
+                              label: 'Groups',
+                              description: 'Study together',
+                              onTap: () => context.go('/home/groups'),
+                            ),
+                          ],
                         ),
+                        const SizedBox(height: AppSpacing.xl),
                       ],
                     ),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    // Up Next Card
-                    if (_nextEventTitle != null)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Up Next',
-                            style: AppTextStyles.headingSmall.copyWith(
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          GestureDetector(
-                            onTap: () => context.push('/exams'),
-                            child: GlassCard(
-                              padding: const EdgeInsets.all(AppSpacing.lg),
-                              borderRadius: AppSpacing.cardRadius,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _nextEventTitle!,
-                                    style: AppTextStyles.headingSmall.copyWith(
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppSpacing.sm),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.calendar_today,
-                                        size: 16,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                      const SizedBox(width: AppSpacing.sm),
-                                      Text(
-                                        _nextEventTime ?? 'N/A',
-                                        style: AppTextStyles.bodyMedium
-                                            .copyWith(
-                                              color: AppColors.textSecondary,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                  if (_examCountdownDays != null &&
-                                      _examCountdownDays! < 2)
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        top: AppSpacing.md,
-                                      ),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: AppSpacing.md,
-                                          vertical: AppSpacing.sm,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.danger.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          'Exam approaching! Start preparing now',
-                                          style: AppTextStyles.caption.copyWith(
-                                            color: AppColors.danger,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    // Quick actions section
-                    Text(
-                      'Quick Start',
-                      style: AppTextStyles.headingSmall.copyWith(
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Column(
-                      children: [
-                        _QuickActionCard(
-                          icon: Icons.calendar_month_rounded,
-                          label: 'View Timetable',
-                          onTap: () => context.go('/home/timetable'),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        _QuickActionCard(
-                          icon: Icons.menu_book_rounded,
-                          label: 'Browse Modules',
-                          onTap: () => context.go('/home/modules'),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        _QuickActionCard(
-                          icon: Icons.auto_graph_rounded,
-                          label: 'Check Progress',
-                          onTap: () => context.go('/home/progress'),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        _QuickActionCard(
-                          icon: Icons.groups_rounded,
-                          label: 'Join Study Group',
-                          onTap: () => context.go('/home/groups'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                  ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
     floatingActionButton: ExpandableFAB(
@@ -313,11 +382,13 @@ class _QuickActionCard extends StatelessWidget {
   const _QuickActionCard({
     required this.icon,
     required this.label,
+    required this.description,
     required this.onTap,
   });
 
   final IconData icon;
   final String label;
+  final String description;
   final VoidCallback onTap;
 
   @override
@@ -326,34 +397,97 @@ class _QuickActionCard extends StatelessWidget {
     child: GlassCard(
       padding: const EdgeInsets.all(AppSpacing.md),
       borderRadius: AppSpacing.cardRadius,
+      animateEntrance: true,
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: AppColors.neonViolet.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+              gradient: AppColors.primaryGradient,
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: AppColors.neonViolet, size: 24),
+            child: Icon(icon, color: Colors.white, size: 22),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
-            child: Text(
-              label,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(description, style: AppTextStyles.captionSecondary),
+              ],
             ),
           ),
+          const SizedBox(width: AppSpacing.sm),
           const Icon(
             Icons.arrow_forward_ios,
-            size: 16,
+            size: 14,
             color: AppColors.textSecondary,
           ),
         ],
       ),
+    ),
+  );
+}
+
+class _MetricCard extends StatelessWidget {
+  const _MetricCard({
+    required this.label,
+    required this.value,
+    required this.helper,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final String helper;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) => GlassCard(
+    padding: const EdgeInsets.all(AppSpacing.md),
+    borderRadius: AppSpacing.cardRadius,
+    borderColors: [accent.withValues(alpha: 0.9), AppColors.borderSoft],
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: AppTextStyles.captionSecondary),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTextStyles.headingSmall.copyWith(color: accent),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text(helper, style: AppTextStyles.caption),
+      ],
+    ),
+  );
+}
+
+class _AmbientGlow extends StatelessWidget {
+  const _AmbientGlow({required this.color, this.size = 220});
+
+  final Color color;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
     ),
   );
 }

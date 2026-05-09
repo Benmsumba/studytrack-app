@@ -19,7 +19,6 @@ import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/widgets/loading_shimmer_widget.dart';
-import '../../../models/badge_model.dart';
 import '../../../models/exam_model.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';

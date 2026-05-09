@@ -22,7 +22,7 @@ Thanks for taking the time to contribute. This document covers everything you ne
 1. **Fork** the repository and clone your fork.
 
    ```bash
-   git clone https://github.com/<your-username>/studytrack-app.git
+   git clone https://github.com/<your-username>/studytrack-app
    cd studytrack-app/studytrack
    ```
 

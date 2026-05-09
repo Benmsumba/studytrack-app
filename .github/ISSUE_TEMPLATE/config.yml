@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Repository documentation
+    url: https://github.com/Benmsumba/studytrack-app#documentation
+    about: Start here for setup, release notes, and project context.
+  - name: Security policy
+    url: https://github.com/Benmsumba/studytrack-app/blob/main/SECURITY.md
+    about: Use this for security-sensitive reports.

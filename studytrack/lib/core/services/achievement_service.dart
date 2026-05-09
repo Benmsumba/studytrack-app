@@ -1,7 +1,6 @@
-import 'package:flutter/foundation.dart';
-
 import '../../models/badge_model.dart';
 import '../../models/topic_model.dart';
+import '../utils/debug_print_compat.dart';
 import 'supabase_service.dart';
 
 class StreakUpdateResult {

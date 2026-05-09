@@ -3,8 +3,7 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide debugPrint;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -15,6 +14,8 @@ import '../../models/study_group_model.dart';
 import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
 import '../constants/app_constants.dart';
+import '../utils/debug_print_compat.dart';
+import '../utils/helpers.dart';
 import 'offline_sync_service.dart';
 
 class SupabaseService {
@@ -87,6 +88,42 @@ class SupabaseService {
   }
 
   String _newId() => _uuid.v4();
+
+  bool _isActiveRow(Map<String, dynamic> row) => row['deleted_at'] == null;
+
+  List<Map<String, dynamic>> _activeRows(List<dynamic> response) => response
+      .whereType<Map<String, dynamic>>()
+      .where(_isActiveRow)
+      .toList(growable: false);
+
+  Map<String, dynamic>? _activeRow(Map<String, dynamic>? row) =>
+      row == null || !_isActiveRow(row) ? null : row;
+
+  Future<void> _purgeCachedListItem({
+    required String entity,
+    required String scope,
+    required String recordId,
+  }) async {
+    final cached = await _cachedList(entity, scope);
+    if (cached == null || cached.isEmpty) {
+      return;
+    }
+
+    final filtered = cached
+        .where((row) => row['id']?.toString() != recordId)
+        .toList();
+    await _cacheList(entity, scope, filtered);
+  }
+
+  Future<void> _clearCachedList(String entity, String scope) async {
+    await _cacheList(entity, scope, const []);
+  }
+
+  Future<void> _purgeCachedRecord(String entity, String recordId) async {
+    await _offlineSync.deleteCachedRecord(entity: entity, recordId: recordId);
+  }
+
+  Future<String?> _currentUserId() async => getCurrentUser()?.id;
 
   // ---------------------------------------------------------------------------
   // AUTH
@@ -473,20 +510,22 @@ class SupabaseService {
             .select()
             .eq('user_id', userId)
             .order('created_at');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('modules', userId, rows);
         return rows.map(ModuleModel.fromJson).toList();
       }
 
       final cached = await _cachedList('modules', userId);
-      return cached?.map(ModuleModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(ModuleModel.fromJson).toList(growable: false);
     } on Object catch (error, stackTrace) {
       debugPrint('getModules error: $error');
       debugPrint('$stackTrace');
       final cached = await _cachedList('modules', userId);
-      return cached?.map(ModuleModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(ModuleModel.fromJson).toList(growable: false);
     }
   }
 
@@ -499,7 +538,7 @@ class SupabaseService {
             .eq('id', moduleId)
             .maybeSingle();
 
-        if (response == null) {
+        if (response == null || response['deleted_at'] != null) {
           return null;
         }
 
@@ -508,12 +547,12 @@ class SupabaseService {
       }
 
       final cached = await _cachedRecord('modules', moduleId);
-      return cached == null ? null : ModuleModel.fromJson(cached);
+      return _activeRow(cached) == null ? null : ModuleModel.fromJson(cached!);
     } on Object catch (error, stackTrace) {
       debugPrint('getModuleById error: $error');
       debugPrint('$stackTrace');
       final cached = await _cachedRecord('modules', moduleId);
-      return cached == null ? null : ModuleModel.fromJson(cached);
+      return _activeRow(cached) == null ? null : ModuleModel.fromJson(cached!);
     }
   }
 
@@ -589,16 +628,27 @@ class SupabaseService {
   Future<bool?> deleteModule(String moduleId) async {
     try {
       if (await _isOnline()) {
-        await client.from('modules').delete().eq('id', moduleId);
-        await _offlineSync.deleteCachedRecord(
-          entity: 'modules',
-          recordId: moduleId,
-        );
+        final userId = await _currentUserId();
+        await client
+            .from('modules')
+            .update({'deleted_at': DateTime.now().toIso8601String()})
+            .eq('id', moduleId);
+        if (userId != null) {
+          await _purgeCachedListItem(
+            entity: 'modules',
+            scope: userId,
+            recordId: moduleId,
+          );
+          await _clearCachedList('exams', userId);
+        }
+        await _clearCachedList('topics', moduleId);
+        await _purgeCachedRecord('modules', moduleId);
         return true;
       }
 
-      await _queueChange('modules', 'delete', {
+      await _queueChange('modules', 'update', {
         'id': moduleId,
+        'deleted_at': DateTime.now().toIso8601String(),
       }, recordId: moduleId);
       return true;
     } on Object catch (error, stackTrace) {
@@ -620,19 +670,21 @@ class SupabaseService {
             .select()
             .eq('module_id', moduleId)
             .order('created_at');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('topics', moduleId, rows);
         return rows.map(TopicModel.fromJson).toList();
       }
 
       final cached = await _cachedList('topics', moduleId);
-      return cached?.map(TopicModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(TopicModel.fromJson).toList(growable: false);
     } on Object catch (error) {
       debugPrint('getTopics error: $error');
       final cached = await _cachedList('topics', moduleId);
-      return cached?.map(TopicModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(TopicModel.fromJson).toList(growable: false);
     }
   }
 
@@ -650,12 +702,18 @@ class SupabaseService {
         final rows = (response as List<dynamic>)
             .map((item) => item as Map<String, dynamic>)
             .toList();
-        await _offlineSync.batchCacheRecords(
-          entity: 'topics',
-          records: rows,
-          idExtractor: (r) => r['id'].toString(),
-        );
-        return rows.map(TopicModel.fromJson).toList();
+        final activeRows = _activeRows(rows);
+        // Group by module then cache each bucket — keeps per-module cache keys
+        // consistent with getTopics() so offline reads find them correctly.
+        final rowsByModule = <String, List<Map<String, dynamic>>>{};
+        for (final row in activeRows) {
+          final moduleId = row['module_id']?.toString() ?? '';
+          rowsByModule.putIfAbsent(moduleId, () => []).add(row);
+        }
+        for (final entry in rowsByModule.entries) {
+          await _cacheList('topics', entry.key, entry.value);
+        }
+        return activeRows.map(TopicModel.fromJson).toList();
       }
 
       // Offline: aggregate from per-module caches.
@@ -685,7 +743,7 @@ class SupabaseService {
             .eq('id', topicId)
             .maybeSingle();
 
-        if (response == null) {
+        if (response == null || response['deleted_at'] != null) {
           return null;
         }
 
@@ -694,11 +752,11 @@ class SupabaseService {
       }
 
       final cached = await _cachedRecord('topics', topicId);
-      return cached == null ? null : TopicModel.fromJson(cached);
+      return _activeRow(cached) == null ? null : TopicModel.fromJson(cached!);
     } on Object catch (error) {
       debugPrint('getTopicById error: $error');
       final cached = await _cachedRecord('topics', topicId);
-      return cached == null ? null : TopicModel.fromJson(cached);
+      return _activeRow(cached) == null ? null : TopicModel.fromJson(cached!);
     }
   }
 
@@ -917,36 +975,58 @@ class SupabaseService {
             .eq('user_id', userId)
             .lte('next_review_at', nowIso)
             .order('next_review_at');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('topics_needing_review', queryKey, rows);
         return rows.map(TopicModel.fromJson).toList();
       }
 
       final cached = await _cachedList('topics_needing_review', queryKey);
-      return cached?.map(TopicModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(TopicModel.fromJson).toList(growable: false);
     } catch (error) {
       debugPrint('getTopicsNeedingReview error: $error');
       final queryKey = 'topics_needing_review:$userId';
       final cached = await _cachedList('topics_needing_review', queryKey);
-      return cached?.map(TopicModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(TopicModel.fromJson).toList(growable: false);
     }
   }
 
   Future<bool?> deleteTopic(String topicId) async {
     try {
       if (await _isOnline()) {
-        await client.from('topics').delete().eq('id', topicId);
-        await _offlineSync.deleteCachedRecord(
-          entity: 'topics',
-          recordId: topicId,
-        );
+        final topic = await client
+            .from('topics')
+            .select('id,module_id,user_id')
+            .eq('id', topicId)
+            .maybeSingle();
+        await client
+            .from('topics')
+            .update({'deleted_at': DateTime.now().toIso8601String()})
+            .eq('id', topicId);
+        if (topic != null) {
+          final moduleId = topic['module_id']?.toString();
+          if (moduleId != null && moduleId.isNotEmpty) {
+            await _clearCachedList('topics', moduleId);
+          }
+          final userId = topic['user_id']?.toString();
+          if (userId != null && userId.isNotEmpty) {
+            await _purgeCachedListItem(
+              entity: 'topics_needing_review',
+              scope: userId,
+              recordId: topicId,
+            );
+          }
+        }
+        await _purgeCachedRecord('topics', topicId);
         return true;
       }
 
-      await _queueChange('topics', 'delete', {
+      await _queueChange('topics', 'update', {
         'id': topicId,
+        'deleted_at': DateTime.now().toIso8601String(),
       }, recordId: topicId);
       return true;
     } catch (error) {
@@ -968,17 +1048,19 @@ class SupabaseService {
             .eq('user_id', userId)
             .order('day_of_week')
             .order('start_time');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('class_timetable', userId, rows);
         return rows;
       }
 
-      return await _cachedList('class_timetable', userId);
+      return _activeRows(
+        await _cachedList('class_timetable', userId) ?? const [],
+      );
     } catch (error) {
       debugPrint('getClassTimetable error: $error');
-      return _cachedList('class_timetable', userId);
+      return _activeRows(
+        await _cachedList('class_timetable', userId) ?? const [],
+      );
     }
   }
 
@@ -1046,15 +1128,26 @@ class SupabaseService {
   Future<bool?> deleteClassSlot(String id) async {
     try {
       if (await _isOnline()) {
-        await client.from('class_timetable').delete().eq('id', id);
-        await _offlineSync.deleteCachedRecord(
-          entity: 'class_timetable',
-          recordId: id,
-        );
+        final userId = await _currentUserId();
+        await client
+            .from('class_timetable')
+            .update({'deleted_at': DateTime.now().toIso8601String()})
+            .eq('id', id);
+        if (userId != null) {
+          await _purgeCachedListItem(
+            entity: 'class_timetable',
+            scope: userId,
+            recordId: id,
+          );
+        }
+        await _purgeCachedRecord('class_timetable', id);
         return true;
       }
 
-      await _queueChange('class_timetable', 'delete', {'id': id}, recordId: id);
+      await _queueChange('class_timetable', 'update', {
+        'id': id,
+        'deleted_at': DateTime.now().toIso8601String(),
+      }, recordId: id);
       return true;
     } catch (error) {
       debugPrint('deleteClassSlot error: $error');
@@ -1181,17 +1274,15 @@ class SupabaseService {
             .select()
             .eq('user_id', userId)
             .order('exam_date');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('exams', userId, rows);
         return rows;
       }
 
-      return _cachedList('exams', userId);
+      return _activeRows(await _cachedList('exams', userId) ?? const []);
     } catch (error) {
       debugPrint('getExams error: $error');
-      return _cachedList('exams', userId);
+      return _activeRows(await _cachedList('exams', userId) ?? const []);
     }
   }
 
@@ -1255,12 +1346,26 @@ class SupabaseService {
   Future<bool?> deleteExam(String id) async {
     try {
       if (await _isOnline()) {
-        await client.from('exams').delete().eq('id', id);
-        await _offlineSync.deleteCachedRecord(entity: 'exams', recordId: id);
+        final userId = await _currentUserId();
+        await client
+            .from('exams')
+            .update({'deleted_at': DateTime.now().toIso8601String()})
+            .eq('id', id);
+        if (userId != null) {
+          await _purgeCachedListItem(
+            entity: 'exams',
+            scope: userId,
+            recordId: id,
+          );
+        }
+        await _purgeCachedRecord('exams', id);
         return true;
       }
 
-      await _queueChange('exams', 'delete', {'id': id}, recordId: id);
+      await _queueChange('exams', 'update', {
+        'id': id,
+        'deleted_at': DateTime.now().toIso8601String(),
+      }, recordId: id);
       return true;
     } catch (error) {
       debugPrint('deleteExam error: $error');
@@ -1278,17 +1383,19 @@ class SupabaseService {
             .eq('user_id', userId)
             .gte('exam_date', DateTime.now().toIso8601String().split('T').first)
             .order('exam_date');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('upcoming_exams', scope, rows);
         return rows;
       }
 
-      return _cachedList('upcoming_exams', scope);
+      return _activeRows(
+        await _cachedList('upcoming_exams', scope) ?? const [],
+      );
     } catch (error) {
       debugPrint('getUpcomingExams error: $error');
-      return _cachedList('upcoming_exams', userId);
+      return _activeRows(
+        await _cachedList('upcoming_exams', userId) ?? const [],
+      );
     }
   }
 
@@ -1455,13 +1562,10 @@ class SupabaseService {
           }
 
           final rawUserId = member['user_id']?.toString() ?? '';
-          final shortId = sha256
-              .convert(utf8.encode(rawUserId))
-              .toString()
-              .substring(0, 8);
+          final anonId = Helpers.anonymizeUserId(rawUserId);
           return {
             ...member,
-            'name': 'Member $shortId',
+            'name': 'Member $anonId',
             'course': 'Private',
             'year_level': null,
           };
@@ -2286,17 +2390,19 @@ class SupabaseService {
             .select()
             .eq('topic_id', topicId)
             .order('created_at', ascending: false);
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('uploaded_notes', topicId, rows);
         return rows;
       }
 
-      return _cachedList('uploaded_notes', topicId);
+      return _activeRows(
+        await _cachedList('uploaded_notes', topicId) ?? const [],
+      );
     } catch (error) {
       debugPrint('getNotesByTopic error: $error');
-      return _cachedList('uploaded_notes', topicId);
+      return _activeRows(
+        await _cachedList('uploaded_notes', topicId) ?? const [],
+      );
     }
   }
 
@@ -2308,20 +2414,22 @@ class SupabaseService {
         final response = await client
             .from('uploaded_notes')
             .select()
-            .eq('is_shared', true)
+            .eq('is_shared_with_group', true)
             .order('created_at', ascending: false)
             .limit(limit);
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('shared_uploaded_notes', 'all', rows);
         return rows;
       }
 
-      return _cachedList('shared_uploaded_notes', 'all');
+      return _activeRows(
+        await _cachedList('shared_uploaded_notes', 'all') ?? const [],
+      );
     } catch (error) {
       debugPrint('getSharedUploadedNotes error: $error');
-      return _cachedList('shared_uploaded_notes', 'all');
+      return _activeRows(
+        await _cachedList('shared_uploaded_notes', 'all') ?? const [],
+      );
     }
   }
 
@@ -2389,17 +2497,28 @@ class SupabaseService {
 
   Future<bool?> deleteUploadedNote(String noteId) async {
     try {
+      final existing = await _cachedRecord('uploaded_notes', noteId);
+      final topicId = existing?['topic_id']?.toString();
       if (await _isOnline()) {
-        await client.from('uploaded_notes').delete().eq('id', noteId);
-        await _offlineSync.deleteCachedRecord(
-          entity: 'uploaded_notes',
-          recordId: noteId,
-        );
+        await client
+            .from('uploaded_notes')
+            .update({'deleted_at': DateTime.now().toIso8601String()})
+            .eq('id', noteId);
+        if (topicId != null && topicId.isNotEmpty) {
+          await _purgeCachedListItem(
+            entity: 'uploaded_notes',
+            scope: topicId,
+            recordId: noteId,
+          );
+        }
+        await _clearCachedList('shared_uploaded_notes', 'all');
+        await _purgeCachedRecord('uploaded_notes', noteId);
         return true;
       }
 
-      await _queueChange('uploaded_notes', 'delete', {
+      await _queueChange('uploaded_notes', 'update', {
         'id': noteId,
+        'deleted_at': DateTime.now().toIso8601String(),
       }, recordId: noteId);
       return true;
     } catch (error) {

@@ -1,14 +1,10 @@
-import 'package:flutter/foundation.dart';
+import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 /// Centralised logger. Use the static helpers — never call debugPrint directly.
-///
-/// Log levels:
-///   d → debug   (dev builds only)
-///   i → info    (always shown in debug; stripped in release)
-///   w → warning (always captured; forwarded to Sentry as breadcrumb)
-///   e → error   (always captured; forwarded to Sentry with stack trace)
+/// Routes to dart:developer (visible in DevTools) and optionally to Sentry.
 class AppLogger {
   AppLogger._();
 
@@ -17,35 +13,45 @@ class AppLogger {
   /// Call once during bootstrap after Sentry is initialised.
   static void enableSentry() => _sentryEnabled = true;
 
-  // ---------------------------------------------------------------------------
-  // Public API
-  // ---------------------------------------------------------------------------
-
-  static void d(String tag, String message) {
-    assert(() {
-      _print('D', tag, message);
-      return true;
-    }());
+  static void debug(String message, {Object? error, StackTrace? stackTrace}) {
+    if (kReleaseMode) return;
+    developer.log(
+      message,
+      name: 'StudyTrack',
+      error: error,
+      stackTrace: stackTrace,
+    );
   }
 
-  static void i(String tag, String message) {
-    if (kDebugMode) _print('I', tag, message);
+  static void info(String message, {Object? error, StackTrace? stackTrace}) {
+    developer.log(
+      message,
+      name: 'StudyTrack',
+      error: error,
+      stackTrace: stackTrace,
+    );
     if (_sentryEnabled) {
       unawaited(
         Sentry.addBreadcrumb(
-          Breadcrumb(message: '[$tag] $message', level: SentryLevel.info),
+          Breadcrumb(message: message, level: SentryLevel.info),
         ),
       );
     }
   }
 
-  static void w(String tag, String message, [Object? error]) {
-    _print('W', tag, error != null ? '$message — $error' : message);
+  static void warning(String message, {Object? error, StackTrace? stackTrace}) {
+    developer.log(
+      message,
+      name: 'StudyTrack',
+      level: 900,
+      error: error,
+      stackTrace: stackTrace,
+    );
     if (_sentryEnabled) {
       unawaited(
         Sentry.addBreadcrumb(
           Breadcrumb(
-            message: '[$tag] $message',
+            message: message,
             level: SentryLevel.warning,
             data: error != null ? {'error': error.toString()} : null,
           ),
@@ -54,25 +60,16 @@ class AppLogger {
     }
   }
 
-  static void e(
-    String tag,
-    String message, [
-    Object? error,
-    StackTrace? stack,
-  ]) {
-    _print('E', tag, error != null ? '$message\n$error' : message);
-    if (stack != null) _print('E', tag, stack.toString());
+  static void error(String message, {Object? error, StackTrace? stackTrace}) {
+    developer.log(
+      message,
+      name: 'StudyTrack',
+      level: 1000,
+      error: error,
+      stackTrace: stackTrace,
+    );
     if (_sentryEnabled && error != null) {
-      unawaited(Sentry.captureException(error, stackTrace: stack));
+      unawaited(Sentry.captureException(error, stackTrace: stackTrace));
     }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Internal
-  // ---------------------------------------------------------------------------
-
-  static void _print(String level, String tag, String message) {
-    // debugPrint handles long strings by splitting across log lines.
-    debugPrint('[$level/$tag] $message');
   }
 }

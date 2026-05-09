@@ -13,6 +13,12 @@ class AppConstants {
   static const String geminiApiKey = 'YOUR_GEMINI_API_KEY';
   static const String sentryDsn = '';
 
+  // Public repository links used throughout the app and docs.
+  static const String repositoryUrl =
+      'https://github.com/Benmsumba/studytrack-app';
+  static const String repositoryIssuesUrl =
+      'https://github.com/Benmsumba/studytrack-app/issues/new/choose';
+
   static String get resolvedSupabaseUrl {
     const fromEnv = String.fromEnvironment('SUPABASE_URL');
     return fromEnv.isNotEmpty ? fromEnv : _supabaseUrlFallback;
@@ -47,6 +53,13 @@ class AppConstants {
   static String get resolvedSentryDsn {
     const fromEnv = String.fromEnvironment('SENTRY_DSN');
     return fromEnv.isNotEmpty ? fromEnv : sentryDsn;
+  }
+
+  static const String updateCertificateSha256 = '';
+
+  static String get resolvedUpdateCertificateSha256 {
+    const fromEnv = String.fromEnvironment('UPDATE_CERTIFICATE_SHA256');
+    return fromEnv.isNotEmpty ? fromEnv : updateCertificateSha256;
   }
 
   // Spotify
