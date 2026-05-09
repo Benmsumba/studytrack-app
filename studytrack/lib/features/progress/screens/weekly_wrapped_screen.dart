@@ -287,12 +287,14 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   Widget build(BuildContext context) {
     if (_loading) {
       return Scaffold(
+        appBar: AppBar(title: const Text('Weekly Wrapped'), centerTitle: false),
         body: AppStateView.loadingList(itemCount: 4, itemHeight: 110),
       );
     }
 
     if (_loadError != null) {
       return Scaffold(
+        appBar: AppBar(title: const Text('Weekly Wrapped'), centerTitle: false),
         body: AppStateView.error(
           title: 'Weekly wrap unavailable',
           message: _loadError!,
@@ -302,6 +304,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     }
 
     return Scaffold(
+      appBar: AppBar(title: const Text('Weekly Wrapped'), centerTitle: false),
       body: PageView(
         controller: _pageController,
         scrollDirection: Axis.vertical,

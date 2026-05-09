@@ -475,7 +475,6 @@ class _StudySessionScreenState extends State<StudySessionScreen>
     final seconds = (_remainingSeconds % 60).toString().padLeft(2, '0');
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

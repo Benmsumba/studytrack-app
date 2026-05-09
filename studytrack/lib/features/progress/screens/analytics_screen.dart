@@ -141,7 +141,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
+    appBar: AppBar(title: const Text('Analytics'), centerTitle: false),
     body: SafeArea(
       child: _isLoading
           ? AppStateView.loadingList(itemCount: 4, itemHeight: 120)

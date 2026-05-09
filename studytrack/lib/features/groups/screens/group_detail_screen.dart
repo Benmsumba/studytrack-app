@@ -261,9 +261,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        backgroundColor: AppColors.backgroundDark,
         appBar: AppBar(
-          backgroundColor: AppColors.backgroundDark,
           title: Text(_groupName(), style: AppTextStyles.headingSmall),
           bottom: const TabBar(
             isScrollable: true,

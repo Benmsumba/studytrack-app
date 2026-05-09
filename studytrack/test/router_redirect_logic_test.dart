@@ -80,11 +80,11 @@ void main() {
           hasUser: true,
           onboardingComplete: true,
         ),
-        '/home/timetable',
+        '/home/dashboard',
       );
     });
 
-    test('redirects home shell root to timetable', () {
+    test('redirects home shell root to dashboard', () {
       expect(
         resolveAppRedirect(
           location: '/home',
@@ -92,7 +92,7 @@ void main() {
           hasUser: true,
           onboardingComplete: true,
         ),
-        '/home/timetable',
+        '/home/dashboard',
       );
     });
 

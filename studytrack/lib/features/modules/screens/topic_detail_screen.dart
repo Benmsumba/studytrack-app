@@ -256,7 +256,6 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     final topic = _topic;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       body: _isLoading
           ? AppStateView.loadingList(itemCount: 4, itemHeight: 120)
           : _loadError != null

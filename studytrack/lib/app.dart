@@ -5,10 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'core/constants/app_colors.dart';
 import 'core/constants/app_constants.dart';
-import 'core/constants/app_spacing.dart';
-import 'core/constants/app_text_styles.dart';
+import 'core/theme/app_theme.dart';
 import 'core/widgets/offline_status_banner.dart';
 import 'features/ai_tutor/screens/ai_tutor_screen.dart';
 import 'features/ai_tutor/screens/quiz_screen.dart';
@@ -21,6 +19,7 @@ import 'features/groups/screens/group_chat_screen.dart';
 import 'features/groups/screens/group_detail_screen.dart';
 import 'features/groups/screens/groups_screen.dart';
 import 'features/groups/screens/topic_chat_screen.dart';
+import 'features/home/screens/home_screen.dart';
 import 'features/home/screens/main_shell.dart';
 import 'features/modules/screens/module_detail_screen.dart';
 import 'features/modules/screens/modules_screen.dart';
@@ -60,11 +59,11 @@ String? resolveAppRedirect({
   }
 
   if (onboardingComplete && location == '/onboarding') {
-    return '/home/timetable';
+    return '/home/dashboard';
   }
 
   if (location == '/home') {
-    return '/home/timetable';
+    return '/home/dashboard';
   }
 
   return null;
@@ -75,275 +74,6 @@ class StudyTrackApp extends StatelessWidget {
 
   final AuthProvider authProvider;
 
-  static ThemeData _buildDarkTheme({ColorScheme? colorScheme}) {
-    final scheme =
-        colorScheme ??
-        const ColorScheme.dark(
-          primary: AppColors.neonViolet,
-          onPrimary: Colors.white,
-          secondary: AppColors.neonCyan,
-          onSecondary: Colors.white,
-          surface: AppColors.surfaceDark,
-          onSurface: AppColors.textPrimary,
-          error: AppColors.danger,
-          onError: Colors.white,
-          surfaceContainerHighest: AppColors.surfaceElevated,
-          outline: AppColors.border,
-          outlineVariant: AppColors.borderSoft,
-        );
-
-    final base = ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.backgroundDark,
-      canvasColor: AppColors.backgroundDark,
-      dividerColor: scheme.outlineVariant,
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
-        },
-      ),
-      appBarTheme: AppBarTheme(
-        backgroundColor: Colors.transparent,
-        foregroundColor: AppColors.textPrimary,
-        centerTitle: false,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        titleTextStyle: AppTextStyles.headingMedium,
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.surfaceDark.withValues(alpha: 0.92),
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          side: const BorderSide(color: AppColors.borderSoft),
-        ),
-        margin: EdgeInsets.zero,
-      ),
-      snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.surfaceDark,
-        contentTextStyle: AppTextStyles.bodyMedium,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          side: const BorderSide(color: AppColors.borderSoft),
-        ),
-        actionTextColor: AppColors.neonCyan,
-        elevation: 0,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.inputFill,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.borderSoft),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.borderSoft),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.neonCyan, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.danger),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
-        ),
-        labelStyle: AppTextStyles.label,
-        hintStyle: AppTextStyles.bodyMediumSecondary,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.neonViolet,
-          foregroundColor: Colors.white,
-          minimumSize: const Size.fromHeight(54),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xl,
-            vertical: AppSpacing.md,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          ),
-          textStyle: AppTextStyles.button,
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: AppColors.neonCyan,
-          textStyle: AppTextStyles.label,
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textGlow,
-          side: const BorderSide(color: AppColors.border),
-          minimumSize: const Size.fromHeight(54),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.xl,
-            vertical: AppSpacing.md,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          ),
-          textStyle: AppTextStyles.button,
-        ),
-      ),
-      chipTheme: ChipThemeData(
-        backgroundColor: AppColors.surfaceElevated,
-        selectedColor: AppColors.neonViolet.withValues(alpha: 0.22),
-        disabledColor: AppColors.surfaceElevated,
-        labelStyle: AppTextStyles.label,
-        secondaryLabelStyle: AppTextStyles.label,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
-          side: const BorderSide(color: AppColors.borderSoft),
-        ),
-      ),
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        showDragHandle: true,
-        modalBackgroundColor: Colors.transparent,
-      ),
-      dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surfaceDark,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          side: const BorderSide(color: AppColors.borderSoft),
-        ),
-      ),
-      progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.neonCyan,
-        linearTrackColor: AppColors.borderSoft,
-        circularTrackColor: AppColors.borderSoft,
-      ),
-    );
-
-    final baseTextTheme = base.textTheme;
-    final basePrimaryTextTheme = base.primaryTextTheme;
-
-    return base.copyWith(
-      textTheme: baseTextTheme.copyWith(
-        displayLarge: AppTextStyles.displayLarge,
-        displayMedium: AppTextStyles.displayMedium,
-        headlineLarge: AppTextStyles.headingLarge,
-        headlineMedium: AppTextStyles.headingMedium,
-        headlineSmall: AppTextStyles.headingSmall,
-        titleLarge: AppTextStyles.headingSmall,
-        titleMedium: AppTextStyles.label,
-        titleSmall: AppTextStyles.labelSecondary,
-        bodyLarge: AppTextStyles.bodyLarge,
-        bodyMedium: AppTextStyles.bodyMedium,
-        bodySmall: AppTextStyles.bodySmall,
-        labelLarge: AppTextStyles.button,
-        labelMedium: AppTextStyles.label,
-        labelSmall: AppTextStyles.caption,
-      ),
-      primaryTextTheme: basePrimaryTextTheme.copyWith(
-        displayLarge: AppTextStyles.displayLarge,
-        displayMedium: AppTextStyles.displayMedium,
-        headlineLarge: AppTextStyles.headingLarge,
-        headlineMedium: AppTextStyles.headingMedium,
-        headlineSmall: AppTextStyles.headingSmall,
-        titleLarge: AppTextStyles.headingSmall,
-        titleMedium: AppTextStyles.label,
-        titleSmall: AppTextStyles.labelSecondary,
-        bodyLarge: AppTextStyles.bodyLarge,
-        bodyMedium: AppTextStyles.bodyMedium,
-        bodySmall: AppTextStyles.bodySmall,
-        labelLarge: AppTextStyles.button,
-        labelMedium: AppTextStyles.label,
-        labelSmall: AppTextStyles.caption,
-      ),
-      visualDensity: VisualDensity.standard,
-      splashFactory: InkSparkle.splashFactory,
-    );
-  }
-
-  static ThemeData _buildLightTheme({ColorScheme? colorScheme}) {
-    final scheme =
-        colorScheme ??
-        ColorScheme.fromSeed(
-          seedColor: AppColors.neonViolet,
-          brightness: Brightness.light,
-          surface: const Color(0xFFF7F8FC),
-        );
-
-    final base = ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: scheme,
-      scaffoldBackgroundColor: const Color(0xFFF7F8FC),
-      canvasColor: const Color(0xFFF7F8FC),
-      dividerColor: scheme.outlineVariant,
-      appBarTheme: AppBarTheme(
-        backgroundColor: Colors.transparent,
-        foregroundColor: scheme.onSurface,
-        centerTitle: false,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-      ),
-      snackBarTheme: SnackBarThemeData(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.white,
-        contentTextStyle: TextStyle(color: scheme.onSurface),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          side: BorderSide(color: scheme.outlineVariant),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.lg,
-          vertical: AppSpacing.md,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: BorderSide(color: scheme.outlineVariant),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: BorderSide(color: scheme.outlineVariant),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: BorderSide(color: scheme.primary, width: 1.4),
-        ),
-      ),
-      cardTheme: CardThemeData(
-        color: Colors.white,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          side: BorderSide(color: scheme.outlineVariant),
-        ),
-        margin: EdgeInsets.zero,
-      ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: scheme.primary,
-        linearTrackColor: scheme.surfaceContainerHighest,
-        circularTrackColor: scheme.surfaceContainerHighest,
-      ),
-    );
-
-    return base.copyWith(visualDensity: VisualDensity.standard);
-  }
 
   // refreshListenable is intentionally omitted; redirect decisions are based
   // on AuthProvider state updates triggered by auth flows and splash refresh.
@@ -398,11 +128,19 @@ class StudyTrackApp extends StatelessWidget {
         path: '/onboarding',
         builder: (context, state) => const OnboardingFlow(),
       ),
-      GoRoute(path: '/home', redirect: (context, state) => '/home/timetable'),
+      GoRoute(path: '/home', redirect: (context, state) => '/home/dashboard'),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             MainShell(navigationShell: navigationShell),
         branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home/dashboard',
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
+          ),
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -526,8 +264,8 @@ class StudyTrackApp extends StatelessWidget {
 
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) {
-        final lightTheme = _buildLightTheme(colorScheme: lightDynamic);
-        final darkTheme = _buildDarkTheme(colorScheme: darkDynamic);
+        final lightTheme = AppTheme.light(dynamicColorScheme: lightDynamic);
+        final darkTheme = AppTheme.dark(dynamicColorScheme: darkDynamic);
 
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,

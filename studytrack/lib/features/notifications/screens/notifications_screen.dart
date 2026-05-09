@@ -201,7 +201,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
+    appBar: AppBar(title: const Text('Notifications'), centerTitle: false),
     body: SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

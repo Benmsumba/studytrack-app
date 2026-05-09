@@ -167,7 +167,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDeep,
     appBar: AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,

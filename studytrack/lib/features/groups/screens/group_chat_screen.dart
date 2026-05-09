@@ -234,7 +234,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.backgroundDark,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -286,9 +285,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final title = widget.group?['name']?.toString() ?? 'Group Chat';
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDark,
         title: Text(title),
       ),
       body: Column(

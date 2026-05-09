@@ -240,9 +240,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AppColors.backgroundDark,
-        body: LoadingShimmerWidget.profile(),
+      return Scaffold(
+        appBar: AppBar(title: const Text('Profile'), centerTitle: false),
+        body: const LoadingShimmerWidget.profile(),
       );
     }
 
@@ -255,7 +255,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final xpProgress = (xp % 100) / 100.0;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      appBar: AppBar(title: const Text('Profile'), centerTitle: false),
       body: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: AppColors.surfaceDark,

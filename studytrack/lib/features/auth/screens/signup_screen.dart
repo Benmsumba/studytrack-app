@@ -116,7 +116,6 @@ class _SignupScreenState extends State<SignupScreen> {
     final strengthLabel = auth.passwordStrengthLabel(_passwordController.text);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
