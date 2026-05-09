@@ -74,12 +74,33 @@ class OfflineSyncService extends ChangeNotifier {
       return false;
     }
 
-    try {
-      final lookup = await InternetAddress.lookup('google.com');
-      return lookup.isNotEmpty && lookup.first.rawAddress.isNotEmpty;
-    } on Object catch (_) {
-      return false;
+    // Probe the app's own backend so this works in restricted networks where
+    // google.com is blocked (e.g. China). Fall back through multiple hosts.
+    for (final host in _probeHosts) {
+      try {
+        final lookup = await InternetAddress.lookup(host).timeout(
+          const Duration(seconds: 5),
+        );
+        if (lookup.isNotEmpty && lookup.first.rawAddress.isNotEmpty) {
+          return true;
+        }
+      } on Object catch (_) {
+        continue;
+      }
     }
+    return false;
+  }
+
+  /// Ordered list of hosts to probe. The Supabase host is first so we confirm
+  /// the backend is reachable, not just that some internet exists.
+  static List<String> get _probeHosts {
+    final supabaseUrl = Supabase.instance.client.supabaseUrl;
+    final supabaseHost = Uri.tryParse(supabaseUrl)?.host ?? '';
+    return [
+      if (supabaseHost.isNotEmpty) supabaseHost,
+      'cloudflare.com',
+      '1.1.1.1',
+    ];
   }
 
   Future<bool> get onlineNow async {
@@ -96,6 +117,19 @@ class OfflineSyncService extends ChangeNotifier {
       entity: entity,
       recordId: recordId,
       payload: payload,
+    );
+  }
+
+  /// Batch-upsert a list of records in a single SQLite transaction.
+  Future<void> batchCacheRecords({
+    required String entity,
+    required List<Map<String, dynamic>> records,
+    required String Function(Map<String, dynamic>) idExtractor,
+  }) async {
+    await _store.batchUpsertRecords(
+      entity: entity,
+      records: records,
+      idExtractor: idExtractor,
     );
   }
 
@@ -303,7 +337,9 @@ class OfflineSyncService extends ChangeNotifier {
       return;
     }
 
-    final service = SupabaseService();
+    // Use the existing singleton — do NOT call SupabaseService() which would
+    // bypass the registered instance and any injected test doubles.
+    final service = SupabaseService.instance;
     final profile = await service.getProfile(userId);
     final timetable = await service.getClassTimetable(userId) ?? [];
     final exams = await service.getUpcomingExams(userId) ?? [];

@@ -32,42 +32,44 @@ class OfflineDataStore {
   static final OfflineDataStore instance = OfflineDataStore._internal();
 
   Database? _database;
+  late final EncryptionService _encryption;
+  bool _encryptionReady = false;
 
-  Future<void> initialize({String? databasePath}) async {
-    if (_database != null) {
-      return;
+  static const _cacheTtlDays = AppConfig.offlineCacheTtlDays;
+  static const _maxCachedRecords = AppConfig.maxCachedRecords;
+  static const _maxCachedQueries = AppConfig.maxCachedQueries;
+
+  Future<void> initialize({
+    String? databasePath,
+    EncryptionService? encryptionService,
+  }) async {
+    if (_database != null) return;
+
+    _encryption = encryptionService ?? EncryptionService();
+    try {
+      if (!_encryption.isInitialized) {
+        await _encryption.initialize();
+      }
+      _encryptionReady = true;
+    } on Object catch (e, stackTrace) {
+      // Non-fatal: cache still functions, data stored without encryption.
+      AppLogger.warning(
+        'OfflineDataStore: encryption init failed — cache will be plaintext',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
 
     final path = databasePath ?? await _defaultDatabasePath();
     _database = sqlite3.open(path);
-    await _ensureEncryptionReady();
     _createTables();
     pruneStaleEntries();
-  }
-
-  Future<void> _ensureEncryptionReady() async {
-    try {
-      if (!EncryptionService().isInitialized) {
-        await EncryptionService().initialize();
-      }
-    } catch (error, stackTrace) {
-      AppLogger.warning(
-        'Encryption service unavailable for offline cache; storing legacy query payloads',
-        error: error,
-        stackTrace: stackTrace,
-      );
-    }
   }
 
   Future<String> _defaultDatabasePath() async {
     final directory = await getApplicationDocumentsDirectory();
     return p.join(directory.path, 'studytrack_offline.db');
   }
-
-  // Configuration from AppConfig for maintainability
-  int get _cacheTtlDays => AppConfig.offlineCacheTtlDays;
-  int get _maxCachedRecords => AppConfig.maxCachedRecords;
-  int get _maxCachedQueries => AppConfig.maxCachedQueries;
 
   Database get _db {
     final database = _database;
@@ -109,30 +111,88 @@ class OfflineDataStore {
     ''');
   }
 
+  // ---------------------------------------------------------------------------
+  // Encryption helpers
+  // ---------------------------------------------------------------------------
+
+  String _encrypt(String plaintext) {
+    if (!_encryptionReady) return plaintext;
+    try {
+      return _encryption.encryptString(plaintext);
+    } on Object catch (_) {
+      return plaintext;
+    }
+  }
+
+  String _decrypt(String ciphertext) {
+    if (!_encryptionReady) return ciphertext;
+    try {
+      return _encryption.decryptString(ciphertext);
+    } on Object catch (_) {
+      // Fallback: data was stored unencrypted (migration scenario).
+      return ciphertext;
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Record cache
+  // ---------------------------------------------------------------------------
+
   Future<void> upsertRecord({
     required String entity,
     required String recordId,
     required Map<String, dynamic> payload,
   }) async {
+    final encoded = _encrypt(jsonEncode(payload));
     _db.execute(
-      'INSERT OR REPLACE INTO cached_records (cache_key, entity, record_id, payload, updated_at) VALUES (?, ?, ?, ?, ?)',
+      'INSERT OR REPLACE INTO cached_records '
+      '(cache_key, entity, record_id, payload, updated_at) VALUES (?, ?, ?, ?, ?)',
       [
         _recordCacheKey(entity, recordId),
         entity,
         recordId,
-        jsonEncode(payload),
+        encoded,
         DateTime.now().toIso8601String(),
       ],
     );
+  }
+
+  /// Inserts or replaces multiple records in a single transaction.
+  Future<void> batchUpsertRecords({
+    required String entity,
+    required List<Map<String, dynamic>> records,
+    required String Function(Map<String, dynamic>) idExtractor,
+  }) async {
+    if (records.isEmpty) return;
+    final now = DateTime.now().toIso8601String();
+    final stmt = _db.prepare(
+      'INSERT OR REPLACE INTO cached_records '
+      '(cache_key, entity, record_id, payload, updated_at) VALUES (?, ?, ?, ?, ?)',
+    );
+    try {
+      _db.execute('BEGIN');
+      for (final record in records) {
+        final recordId = idExtractor(record);
+        final encoded = _encrypt(jsonEncode(record));
+        stmt.execute([_recordCacheKey(entity, recordId), entity, recordId, encoded, now]);
+      }
+      _db.execute('COMMIT');
+    } on Object catch (_) {
+      _db.execute('ROLLBACK');
+      rethrow;
+    } finally {
+      stmt.dispose();
+    }
   }
 
   Future<void> deleteRecord({
     required String entity,
     required String recordId,
   }) async {
-    _db.execute('DELETE FROM cached_records WHERE cache_key = ?', [
-      _recordCacheKey(entity, recordId),
-    ]);
+    _db.execute(
+      'DELETE FROM cached_records WHERE cache_key = ?',
+      [_recordCacheKey(entity, recordId)],
+    );
   }
 
   Future<Map<String, dynamic>?> readRecord({
@@ -143,25 +203,25 @@ class OfflineDataStore {
       'SELECT payload FROM cached_records WHERE cache_key = ? LIMIT 1',
       [_recordCacheKey(entity, recordId)],
     );
-    if (rows.isEmpty) {
-      return null;
-    }
-
-    return _decodeMap(rows.first['payload'] as String?);
+    if (rows.isEmpty) return null;
+    final raw = rows.first['payload'] as String?;
+    return _decodeMap(raw == null ? null : _decrypt(raw));
   }
+
+  // ---------------------------------------------------------------------------
+  // Query cache
+  // ---------------------------------------------------------------------------
 
   Future<void> upsertQueryResults({
     required String queryKey,
     required String entity,
     required List<Map<String, dynamic>> payload,
   }) async {
-    final encodedPayload = jsonEncode(payload);
-    final storedPayload = EncryptionService().isInitialized
-        ? EncryptionService().encryptString(encodedPayload)
-        : encodedPayload;
+    final encoded = _encrypt(jsonEncode(payload));
     _db.execute(
-      'INSERT OR REPLACE INTO cached_queries (query_key, entity, payload, updated_at) VALUES (?, ?, ?, ?)',
-      [queryKey, entity, storedPayload, DateTime.now().toIso8601String()],
+      'INSERT OR REPLACE INTO cached_queries '
+      '(query_key, entity, payload, updated_at) VALUES (?, ?, ?, ?)',
+      [queryKey, entity, encoded, DateTime.now().toIso8601String()],
     );
   }
 
@@ -170,40 +230,24 @@ class OfflineDataStore {
       'SELECT payload FROM cached_queries WHERE query_key = ? LIMIT 1',
       [queryKey],
     );
-    if (rows.isEmpty) {
-      return null;
-    }
+    if (rows.isEmpty) return null;
 
-    final payload = rows.first['payload'] as String?;
-    if (payload == null || payload.isEmpty) {
-      return const [];
-    }
+    final raw = rows.first['payload'] as String?;
+    if (raw == null || raw.isEmpty) return const [];
 
-    final decodedPayload = _decodeQueryPayload(payload);
-    final decoded = jsonDecode(decodedPayload);
-    if (decoded is! List) {
-      return const [];
-    }
+    final decrypted = _decrypt(raw);
+    final decoded = jsonDecode(decrypted);
+    if (decoded is! List) return const [];
 
     return decoded
         .whereType<Map<dynamic, dynamic>>()
-        .map(
-          (value) => Map<String, dynamic>.from(value.cast<String, dynamic>()),
-        )
+        .map((v) => Map<String, dynamic>.from(v.cast<String, dynamic>()))
         .toList();
   }
 
-  String _decodeQueryPayload(String payload) {
-    if (!EncryptionService().isInitialized) {
-      return payload;
-    }
-
-    try {
-      return EncryptionService().decryptString(payload);
-    } catch (_) {
-      return payload;
-    }
-  }
+  // ---------------------------------------------------------------------------
+  // Pending changes queue
+  // ---------------------------------------------------------------------------
 
   Future<void> queueChange({
     required String entity,
@@ -216,20 +260,23 @@ class OfflineDataStore {
 
     if (normalizedRecordId == null) {
       _db.execute(
-        'INSERT INTO pending_changes (entity, operation, record_id, payload, created_at) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO pending_changes '
+        '(entity, operation, record_id, payload, created_at) VALUES (?, ?, ?, ?, ?)',
         [entity, operation, recordId, jsonEncode(payload), createdAt],
       );
       return;
     }
 
     final rows = _db.select(
-      'SELECT id, operation FROM pending_changes WHERE entity = ? AND record_id = ? ORDER BY id DESC LIMIT 1',
+      'SELECT id, operation FROM pending_changes '
+      'WHERE entity = ? AND record_id = ? ORDER BY id DESC LIMIT 1',
       [entity, normalizedRecordId],
     );
 
     if (rows.isEmpty) {
       _db.execute(
-        'INSERT INTO pending_changes (entity, operation, record_id, payload, created_at) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO pending_changes '
+        '(entity, operation, record_id, payload, created_at) VALUES (?, ?, ?, ?, ?)',
         [entity, operation, normalizedRecordId, jsonEncode(payload), createdAt],
       );
       return;
@@ -238,48 +285,40 @@ class OfflineDataStore {
     final existingId = rows.first['id'] as int;
     final existingOperation = rows.first['operation'] as String? ?? operation;
 
+    // An insert followed by a delete means the record never reached the server;
+    // cancel both so nothing is sent.
     if (existingOperation == 'insert' && operation == 'delete') {
       _db.execute('DELETE FROM pending_changes WHERE id = ?', [existingId]);
       return;
     }
 
-    final nextOperation = existingOperation == 'insert' && operation != 'delete'
-        ? 'insert'
-        : operation;
+    final nextOperation =
+        existingOperation == 'insert' && operation != 'delete' ? 'insert' : operation;
 
     _db.execute(
-      'UPDATE pending_changes SET operation = ?, record_id = ?, payload = ?, created_at = ? WHERE id = ?',
-      [
-        nextOperation,
-        normalizedRecordId,
-        jsonEncode(payload),
-        createdAt,
-        existingId,
-      ],
+      'UPDATE pending_changes '
+      'SET operation = ?, record_id = ?, payload = ?, created_at = ? WHERE id = ?',
+      [nextOperation, normalizedRecordId, jsonEncode(payload), createdAt, existingId],
     );
   }
 
   Future<List<OfflinePendingChange>> getPendingChanges() async {
     final rows = _db.select(
-      'SELECT id, entity, operation, record_id, payload, created_at FROM pending_changes ORDER BY id ASC',
+      'SELECT id, entity, operation, record_id, payload, created_at '
+      'FROM pending_changes ORDER BY id ASC',
     );
 
-    return rows
-        .map(
-          (row) => OfflinePendingChange(
-            id: row['id'] as int,
-            entity: row['entity'] as String,
-            operation: row['operation'] as String,
-            recordId: row['record_id'] as String?,
-            payload:
-                _decodeMap(row['payload'] as String?) ??
-                const <String, dynamic>{},
-            createdAt:
-                DateTime.tryParse(row['created_at'] as String? ?? '') ??
-                DateTime.now(),
-          ),
-        )
-        .toList();
+    return rows.map((row) {
+      return OfflinePendingChange(
+        id: row['id'] as int,
+        entity: row['entity'] as String,
+        operation: row['operation'] as String,
+        recordId: row['record_id'] as String?,
+        payload: _decodeMap(row['payload'] as String?) ?? const <String, dynamic>{},
+        createdAt:
+            DateTime.tryParse(row['created_at'] as String? ?? '') ?? DateTime.now(),
+      );
+    }).toList();
   }
 
   Future<void> removePendingChange(int id) async {
@@ -288,10 +327,7 @@ class OfflineDataStore {
 
   Future<int> pendingCount() async {
     final rows = _db.select('SELECT COUNT(*) AS total FROM pending_changes');
-    if (rows.isEmpty) {
-      return 0;
-    }
-
+    if (rows.isEmpty) return 0;
     return (rows.first['total'] as int?) ?? 0;
   }
 
@@ -301,19 +337,14 @@ class OfflineDataStore {
     _db.execute('DELETE FROM cached_records');
   }
 
-  /// Removes cache entries that are older than [_cacheTtlDays] days and
-  /// enforces hard row-count limits on both cache tables. Called automatically
-  /// during [initialize] so it runs once at app startup.
   void pruneStaleEntries() {
     final cutoff = DateTime.now()
-        .subtract(Duration(days: _cacheTtlDays))
+        .subtract(const Duration(days: _cacheTtlDays))
         .toIso8601String();
 
-    // TTL-based eviction
     _db.execute('DELETE FROM cached_records WHERE updated_at < ?', [cutoff]);
     _db.execute('DELETE FROM cached_queries WHERE updated_at < ?', [cutoff]);
 
-    // Row-count cap: keep the most-recently-updated rows up to the limit.
     _db.execute('''
       DELETE FROM cached_records
       WHERE cache_key NOT IN (
@@ -332,28 +363,22 @@ class OfflineDataStore {
     ''');
   }
 
-  String _recordCacheKey(String entity, String recordId) =>
-      '$entity::$recordId';
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  String _recordCacheKey(String entity, String recordId) => '$entity::$recordId';
 
   String? _normalizeRecordId(String? recordId, Map<String, dynamic> payload) {
-    final trimmedRecordId = recordId?.trim();
-    if (trimmedRecordId != null && trimmedRecordId.isNotEmpty) {
-      return trimmedRecordId;
-    }
-
-    final payloadRecordId = payload['id']?.toString().trim();
-    if (payloadRecordId != null && payloadRecordId.isNotEmpty) {
-      return payloadRecordId;
-    }
-
+    final trimmed = recordId?.trim();
+    if (trimmed != null && trimmed.isNotEmpty) return trimmed;
+    final fromPayload = payload['id']?.toString().trim();
+    if (fromPayload != null && fromPayload.isNotEmpty) return fromPayload;
     return null;
   }
 
   Map<String, dynamic>? _decodeMap(String? payload) {
-    if (payload == null || payload.isEmpty) {
-      return null;
-    }
-
+    if (payload == null || payload.isEmpty) return null;
     final decoded = jsonDecode(payload);
     if (decoded is Map) {
       return Map<String, dynamic>.from(decoded.cast<String, dynamic>());

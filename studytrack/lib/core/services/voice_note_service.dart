@@ -187,15 +187,20 @@ class VoiceNoteService {
       final bytes = await _readAudioBytes(audioFile);
       final uploadResponse = await _supabaseService.client.storage
           .from('uploaded_files')
-          .uploadBinary(storagePath, bytes);
+          .uploadBinary(
+            storagePath,
+            bytes,
+            fileOptions: const FileOptions(upsert: false),
+          );
 
       if (uploadResponse.isEmpty) {
         return null;
       }
 
-      final fileUrl = _supabaseService.client.storage
+      // Signed URL (1-hour expiry) so private voice notes are not world-readable.
+      final fileUrl = await _supabaseService.client.storage
           .from('uploaded_files')
-          .getPublicUrl(storagePath);
+          .createSignedUrl(storagePath, 3600);
 
       final noteResponse = await _supabaseService.client
           .from('uploaded_notes')

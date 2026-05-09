@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/study_group_repository.dart';
+import '../../../core/utils/helpers.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/widgets/app_state_view.dart';
@@ -95,9 +96,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           'year': profile.yearLevel,
         };
       } else {
-        final short = senderId.length > 8 ? senderId.substring(0, 8) : senderId;
+        final anonId = Helpers.anonymizeUserId(senderId);
         _senderMeta[senderId] = {
-          'name': 'Member $short',
+          'name': 'Member $anonId',
           'course': 'Private',
           'year': null,
         };

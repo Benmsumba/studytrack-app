@@ -1,6 +1,7 @@
 // ignore_for_file: avoid_catches_without_on_clauses, unawaited_futures
 
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart' hide debugPrint;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -25,6 +26,9 @@ class SupabaseService {
   SupabaseService._internal();
 
   static final SupabaseService _instance = SupabaseService._internal();
+
+  /// Named accessor for code that cannot use the factory (e.g. static helpers).
+  static SupabaseService get instance => _instance;
   RealtimeChannel? _messagesChannel;
   String? _lastAuthError;
   final OfflineSyncService _offlineSync = OfflineSyncService.instance;
@@ -699,13 +703,13 @@ class SupabaseService {
             .map((item) => item as Map<String, dynamic>)
             .toList();
         final activeRows = _activeRows(rows);
-        // Cache records grouped by module for efficient batch writes
+        // Group by module then cache each bucket — keeps per-module cache keys
+        // consistent with getTopics() so offline reads find them correctly.
         final rowsByModule = <String, List<Map<String, dynamic>>>{};
         for (final row in activeRows) {
           final moduleId = row['module_id']?.toString() ?? '';
           rowsByModule.putIfAbsent(moduleId, () => []).add(row);
         }
-        // Batch cache by module to reduce write operations
         for (final entry in rowsByModule.entries) {
           await _cacheList('topics', entry.key, entry.value);
         }
