@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -91,7 +93,10 @@ class GeminiService {
 
   static final GeminiService _instance = GeminiService._internal();
 
-  final Map<int, _CacheEntry> _cache = {};
+  // LinkedHashMap preserves insertion order so we can evict the oldest entry
+  // (true FIFO-LRU: move-to-end on access, remove-from-front on eviction).
+  final LinkedHashMap<String, _CacheEntry> _cache =
+      LinkedHashMap<String, _CacheEntry>();
   static const _cacheTtl = Duration(hours: 1);
   static const _maxCacheEntries = 100;
   static const _maxRetries = 3;
@@ -466,9 +471,15 @@ $message
       return 'AI Tutor is not configured — Supabase URL is missing.';
     }
 
-    final cacheKey = prompt.hashCode;
+    // SHA-256 is collision-resistant; Dart's hashCode is 32-bit and is not.
+    final cacheKey = sha256.convert(utf8.encode(prompt)).toString();
+
+    // Move-to-end on hit (LRU access pattern).
     final cached = _cache[cacheKey];
     if (cached != null && !cached.isExpired(_cacheTtl)) {
+      _cache
+        ..remove(cacheKey)
+        ..[cacheKey] = cached;
       return cached.value;
     }
 
@@ -495,6 +506,7 @@ $message
         final text = (data['text'] as String?)?.trim() ?? '';
         if (text.isEmpty) return fallback;
 
+        // Evict least-recently-used (oldest key in LinkedHashMap).
         if (_cache.length >= _maxCacheEntries) {
           _cache.remove(_cache.keys.first);
         }

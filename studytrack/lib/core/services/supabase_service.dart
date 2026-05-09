@@ -1,7 +1,9 @@
 // ignore_for_file: avoid_catches_without_on_clauses, unawaited_futures
 
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -23,6 +25,9 @@ class SupabaseService {
   SupabaseService._internal();
 
   static final SupabaseService _instance = SupabaseService._internal();
+
+  /// Named accessor for code that cannot use the factory (e.g. static helpers).
+  static SupabaseService get instance => _instance;
   RealtimeChannel? _messagesChannel;
   String? _lastAuthError;
   final OfflineSyncService _offlineSync = OfflineSyncService.instance;
@@ -645,9 +650,11 @@ class SupabaseService {
         final rows = (response as List<dynamic>)
             .map((item) => item as Map<String, dynamic>)
             .toList();
-        for (final row in rows) {
-          await _cacheRecord('topics', row['id'].toString(), row);
-        }
+        await _offlineSync.batchCacheRecords(
+          entity: 'topics',
+          records: rows,
+          idExtractor: (r) => r['id'].toString(),
+        );
         return rows.map(TopicModel.fromJson).toList();
       }
 
@@ -1448,9 +1455,10 @@ class SupabaseService {
           }
 
           final rawUserId = member['user_id']?.toString() ?? '';
-          final shortId = rawUserId.length <= 8
-              ? rawUserId
-              : rawUserId.substring(0, 8);
+          final shortId = sha256
+              .convert(utf8.encode(rawUserId))
+              .toString()
+              .substring(0, 8);
           return {
             ...member,
             'name': 'Member $shortId',

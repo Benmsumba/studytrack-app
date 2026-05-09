@@ -55,59 +55,41 @@ class AchievementService {
       'last_study_date': todayDate.toIso8601String().split('T').first,
     });
 
-    return StreakUpdateResult(
-      newStreak: nextStreak,
-      streakBroken: streakBroken,
-    );
+    return StreakUpdateResult(newStreak: nextStreak, streakBroken: streakBroken);
   }
 
   Future<List<BadgeModel>> checkAllBadges(String userId) async {
     final earned = await _loadEarnedBadges(userId);
-    final earnedTypes = earned.map((badge) => badge.badgeType).toSet();
+    final earnedTypes = earned.map((b) => b.badgeType).toSet();
 
     final profile = await _supabaseService.getProfile(userId);
     final streak = (profile?['streak_count'] as num?)?.toInt() ?? 0;
 
+    // Single query for all topics across all modules — avoids N+1.
     final modules = await _supabaseService.getModules(userId) ?? const [];
-    final topicBuckets = <TopicModel>[];
-    for (final module in modules) {
-      final topics = await _supabaseService.getTopics(module.id) ?? const [];
-      topicBuckets.addAll(topics);
-    }
+    final moduleIds = modules.map((m) => m.id).toList();
+    final topics = moduleIds.isEmpty
+        ? <TopicModel>[]
+        : await _supabaseService.getTopicsByModuleIds(moduleIds);
 
-    final pendingAwards = <String>[];
+    final studiedCount = topics.where((t) => t.isStudied).length;
+    final highRatingCount = topics.where((t) => (t.currentRating ?? 0) >= 8).length;
 
-    if (topicBuckets.isNotEmpty && !earnedTypes.contains('first_step')) {
-      pendingAwards.add('first_step');
-    }
-    if (streak >= 7 && !earnedTypes.contains('week_warrior')) {
-      pendingAwards.add('week_warrior');
-    }
-    if (topicBuckets.any((topic) => topic.currentRating == 10) &&
-        !earnedTypes.contains('perfectionist')) {
-      pendingAwards.add('perfectionist');
-    }
-    if (topicBuckets.where((topic) => topic.isStudied).length >= 50 &&
-        !earnedTypes.contains('bookworm')) {
-      pendingAwards.add('bookworm');
-    }
-    if (topicBuckets.where((topic) => (topic.currentRating ?? 0) >= 8).length >=
-            10 &&
-        !earnedTypes.contains('master')) {
-      pendingAwards.add('master');
-    }
-    if (streak >= 30 && !earnedTypes.contains('month_streak')) {
-      pendingAwards.add('month_streak');
-    }
-    if (topicBuckets.length >= 100 && !earnedTypes.contains('century')) {
-      pendingAwards.add('century');
-    }
+    final pendingAwards = <String>[
+      if (topics.isNotEmpty && !earnedTypes.contains('first_step')) 'first_step',
+      if (streak >= 7 && !earnedTypes.contains('week_warrior')) 'week_warrior',
+      if (topics.any((t) => t.currentRating == 10) &&
+          !earnedTypes.contains('perfectionist'))
+        'perfectionist',
+      if (studiedCount >= 50 && !earnedTypes.contains('bookworm')) 'bookworm',
+      if (highRatingCount >= 10 && !earnedTypes.contains('master')) 'master',
+      if (streak >= 30 && !earnedTypes.contains('month_streak')) 'month_streak',
+      if (topics.length >= 100 && !earnedTypes.contains('century')) 'century',
+    ];
 
     for (final badgeType in pendingAwards) {
       final awarded = await awardBadge(userId, badgeType);
-      if (awarded != null) {
-        earned.add(awarded);
-      }
+      if (awarded != null) earned.add(awarded);
     }
 
     return earned;
@@ -115,21 +97,23 @@ class AchievementService {
 
   Future<BadgeModel?> awardBadge(String userId, String badgeType) async {
     try {
+      // upsert with onConflict prevents duplicate rows if called concurrently
+      // or if the badge was already awarded before we loaded earned badges.
       final row = await _supabaseService.client
           .from('badges')
-          .insert({
-            'user_id': userId,
-            'badge_type': badgeType,
-            'earned_at': DateTime.now().toIso8601String(),
-          })
+          .upsert(
+            {
+              'user_id': userId,
+              'badge_type': badgeType,
+              'earned_at': DateTime.now().toIso8601String(),
+            },
+            onConflict: 'user_id,badge_type',
+            ignoreDuplicates: true,
+          )
           .select()
           .maybeSingle();
 
-      if (row == null) {
-        return null;
-      }
-
-      return BadgeModel.fromJson(row);
+      return row == null ? null : BadgeModel.fromJson(row);
     } on Object catch (error) {
       debugPrint('awardBadge error: $error');
       return null;
@@ -148,13 +132,11 @@ class AchievementService {
           .map((row) => BadgeModel.fromJson(row as Map<String, dynamic>))
           .toList(growable: true);
     } on Object catch (error) {
-      debugPrint('load badges error: $error');
+      debugPrint('_loadEarnedBadges error: $error');
       return <BadgeModel>[];
     }
   }
 
-  bool _sameDate(DateTime first, DateTime second) =>
-      first.year == second.year &&
-      first.month == second.month &&
-      first.day == second.day;
+  bool _sameDate(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 }

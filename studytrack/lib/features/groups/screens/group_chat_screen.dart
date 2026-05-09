@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -95,7 +97,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           'year': profile.yearLevel,
         };
       } else {
-        final short = senderId.length > 8 ? senderId.substring(0, 8) : senderId;
+        final short = sha256
+            .convert(utf8.encode(senderId))
+            .toString()
+            .substring(0, 8);
         _senderMeta[senderId] = {
           'name': 'Member $short',
           'course': 'Private',
