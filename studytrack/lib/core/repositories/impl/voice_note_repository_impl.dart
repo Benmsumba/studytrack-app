@@ -1,9 +1,8 @@
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
-
 import '../../services/voice_note_service.dart';
 import '../../utils/app_exception.dart';
+import '../../utils/app_logger.dart';
 import '../../utils/result.dart';
 import '../voice_note_repository.dart';
 
@@ -26,7 +25,7 @@ class VoiceNoteRepositoryImpl implements VoiceNoteRepository {
       }
       return const Success('Microphone permission granted');
     } catch (e) {
-      debugPrint('requestMicrophonePermissions error: $e');
+      AppLogger.error('requestMicrophonePermissions error', error: e);
       return Failure(
         DataException(
           message: 'Failed to request microphone permissions: $e',
@@ -48,7 +47,7 @@ class VoiceNoteRepositoryImpl implements VoiceNoteRepository {
       );
       return Success(path);
     } catch (e) {
-      debugPrint('createRecordingPath error: $e');
+      AppLogger.error('createRecordingPath error', error: e);
       return Failure(
         DataException(
           message: 'Failed to create recording path: $e',
@@ -72,7 +71,7 @@ class VoiceNoteRepositoryImpl implements VoiceNoteRepository {
       }
       return Success(path);
     } catch (e) {
-      debugPrint('startRecording error: $e');
+      AppLogger.error('startRecording error', error: e);
       return Failure(
         DataException(
           message: 'Failed to start recording: $e',
@@ -96,7 +95,7 @@ class VoiceNoteRepositoryImpl implements VoiceNoteRepository {
       }
       return Success(path);
     } catch (e) {
-      debugPrint('stopRecording error: $e');
+      AppLogger.error('stopRecording error', error: e);
       return Failure(
         DataException(
           message: 'Failed to stop recording: $e',
@@ -120,7 +119,7 @@ class VoiceNoteRepositoryImpl implements VoiceNoteRepository {
       }
       return Success(transcription);
     } catch (e) {
-      debugPrint('transcribeAudio error: $e');
+      AppLogger.error('transcribeAudio error', error: e);
       return Failure(
         DataException(
           message: 'Failed to transcribe audio: $e',
@@ -170,7 +169,7 @@ class VoiceNoteRepositoryImpl implements VoiceNoteRepository {
         ),
       );
     } catch (e) {
-      debugPrint('uploadVoiceNote error: $e');
+      AppLogger.error('uploadVoiceNote error', error: e);
       return Failure(
         DataException(
           message: 'Failed to upload voice note: $e',
@@ -233,7 +232,7 @@ class VoiceNoteRepositoryImpl implements VoiceNoteRepository {
         ),
       );
     } catch (e) {
-      debugPrint('transcribeAndUploadRecording error: $e');
+      AppLogger.error('transcribeAndUploadRecording error', error: e);
       return Failure(
         DataException(
           message: 'Failed to transcribe and upload recording: $e',
@@ -249,7 +248,7 @@ class VoiceNoteRepositoryImpl implements VoiceNoteRepository {
       await _voiceNoteService.play(pathOrUrl);
       return const Success(null);
     } catch (e) {
-      debugPrint('playAudio error: $e');
+      AppLogger.error('playAudio error', error: e);
       return Failure(
         DataException(
           message: 'Failed to play audio: $e',
@@ -265,7 +264,7 @@ class VoiceNoteRepositoryImpl implements VoiceNoteRepository {
       await _voiceNoteService.pause();
       return const Success(null);
     } catch (e) {
-      debugPrint('pauseAudio error: $e');
+      AppLogger.error('pauseAudio error', error: e);
       return Failure(
         DataException(
           message: 'Failed to pause audio: $e',
@@ -281,7 +280,7 @@ class VoiceNoteRepositoryImpl implements VoiceNoteRepository {
       await _voiceNoteService.stopPlayback();
       return const Success(null);
     } catch (e) {
-      debugPrint('stopAudio error: $e');
+      AppLogger.error('stopAudio error', error: e);
       return Failure(
         DataException(message: 'Failed to stop audio: $e', code: 'STOP_FAILED'),
       );

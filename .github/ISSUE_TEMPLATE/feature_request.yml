@@ -17,7 +17,21 @@ body:
     validations:
       required: true
   - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: What should be true for this request to be considered complete?
+      placeholder: |
+        - User can...
+        - Offline behavior...
+        - Error states...
+  - type: textarea
     id: notes
     attributes:
       label: Additional context
       description: Add mockups, references, constraints, or related links if relevant.
+  - type: input
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. Note other approaches you considered.

@@ -18,6 +18,9 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Added shared loading, empty, and error state components with shimmer placeholders on major screens
 - Extended the shared loading and retry states to exam countdown, weekly wrap, notifications, timetable, module/topic detail, group detail/chat, and AI tutor/quiz screens
 - **Security:** Upgraded user ID anonymization from weak truncation to SHA-256 hashing for group members
+- **Security:** Encrypted cached query payloads at rest in the offline data store
+- **Security:** Encrypted local voice-note recordings before they are stored on disk
+- **Reliability:** Added a shared logger for the core service layer and tightened error reporting paths
 - **Performance:** Optimized topic cache writes by batching per-module instead of per-item writes
 - **Config:** Extracted hardcoded configuration values (cache TTL, rate limits, error history size) to `AppConfig` class
 - **UI:** Enhanced home screen and progress screen with glass cards, ambient glows, and improved visual hierarchy
@@ -31,10 +34,7 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Expanded integration tests (auth flow, offline sync)
 - Firebase App Distribution for beta testing
 - Spotify OAuth integration (currently a stub)
-- Query cache encryption (apply EncryptionService to cached_queries table)
-- Voice note file-level encryption before disk write
 - Certificate pinning for HTTPS connections
-- Replace debugPrint with proper logging framework (package:logging)
 - Implement soft-delete pattern for historical data preservation
 
 ---
