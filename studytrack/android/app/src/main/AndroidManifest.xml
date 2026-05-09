@@ -16,6 +16,11 @@
     <!-- Self-update: required on Android 12+ to use foreground download reliably -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
 
+    <!-- Self-update: download APK files -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Self-update: required on Android 12+ to use foreground download reliably -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+
     <application
         android:label="StudyTrack"
         android:name="${applicationName}"

@@ -7,6 +7,22 @@ class AppConstants {
   // Bump this whenever you publish a new APK.
   static const int currentVersionCode = 1;
 
+  // Self-update — must match the +build_number in pubspec.yaml.
+  // Bump this whenever you publish a new APK.
+  static const int currentVersionCode = 1;
+
+  // URL that returns the version manifest JSON.
+  // Replace with your actual hosted JSON URL before building.
+  //
+  // Expected format:
+  // {
+  //   "versionCode": 2,
+  //   "versionName": "1.1.0",
+  //   "downloadUrl": "https://your-host.com/studytrack.apk",
+  //   "releaseNotes": "Bug fixes and new features"
+  // }
+  static const String updateCheckUrl = 'YOUR_UPDATE_CHECK_URL';
+
   // Environment placeholders. Provide real values via --dart-define.
   // Fallback to actual Supabase URL so OTA works even if --dart-define is missing.
   static const String supabaseUrl = 'https://xidpslwjxnyiptebwdff.supabase.co';
