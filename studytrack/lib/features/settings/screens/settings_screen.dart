@@ -314,9 +314,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: 'Report a bug or ask for help',
                 trailing: const Icon(Icons.support_agent_rounded),
                 onTap: () async {
-                  final uri = Uri.parse(
-                    'https://github.com/Benmsumba/studytrack-app/issues/new/choose',
-                  );
+                  final uri = Uri.parse(AppConstants.repositoryIssuesUrl);
                   final launched = await launchUrl(
                     uri,
                     mode: LaunchMode.externalApplication,
@@ -333,9 +331,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: 'Open the project repository',
                 trailing: const Icon(Icons.open_in_new),
                 onTap: () async {
-                  final uri = Uri.parse(
-                    'https://github.com/Benmsumba/studytrack-app',
-                  );
+                  final uri = Uri.parse(AppConstants.repositoryUrl);
                   final launched = await launchUrl(
                     uri,
                     mode: LaunchMode.externalApplication,
