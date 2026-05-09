@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../constants/app_constants.dart';
+import '../utils/app_logger.dart';
 import '../utils/debug_print_compat.dart';
 
 class AppUpdateInfo {
@@ -60,9 +61,7 @@ class AppUpdateService {
     required int currentVersionCode,
   }) async {
     if (checkUrl.isEmpty || checkUrl == 'YOUR_UPDATE_CHECK_URL') {
-      debugPrint(
-        '[AppUpdateService] Update check skipped: empty or placeholder URL',
-      );
+      AppLogger.debug('[AppUpdateService] Update check skipped: empty or placeholder URL');
       return null;
     }
 
@@ -70,8 +69,8 @@ class AppUpdateService {
     client.connectionTimeout = const Duration(seconds: 10);
 
     try {
-      debugPrint('[AppUpdateService] Fetching update manifest...');
-      debugPrint('[AppUpdateService] URL: $checkUrl');
+      AppLogger.debug('[AppUpdateService] Fetching update manifest...');
+      AppLogger.debug('[AppUpdateService] URL: $checkUrl');
 
       final request = await client.getUrl(Uri.parse(checkUrl));
       request.headers.set(HttpHeaders.cacheControlHeader, 'no-cache');
@@ -82,9 +81,7 @@ class AppUpdateService {
 
       final response = await request.close();
       _validatePinnedCertificate(response, Uri.parse(checkUrl));
-      debugPrint(
-        '[AppUpdateService] HTTP response status: ${response.statusCode}',
-      );
+      AppLogger.debug('[AppUpdateService] HTTP response status: ${response.statusCode}');
 
       if (response.statusCode != 200) {
         throw HttpException(
@@ -94,9 +91,7 @@ class AppUpdateService {
       }
 
       final body = await response.transform(utf8.decoder).join();
-      debugPrint(
-        '[AppUpdateService] Response body length: ${body.length} bytes',
-      );
+      AppLogger.debug('[AppUpdateService] Response body length: ${body.length} bytes');
 
       if (body.isEmpty) {
         throw const FormatException('Update manifest is empty');
@@ -108,21 +103,15 @@ class AppUpdateService {
       }
 
       final info = AppUpdateInfo.fromJson(Map<String, dynamic>.from(json));
-      debugPrint('[AppUpdateService] Parsed manifest:');
-      debugPrint('[AppUpdateService]   - versionCode: ${info.versionCode}');
-      debugPrint('[AppUpdateService]   - versionName: ${info.versionName}');
-      debugPrint(
-        '[AppUpdateService]   - downloadUrl: ${info.downloadUrl.isNotEmpty}',
-      );
-      debugPrint(
-        '[AppUpdateService]   - apkSha256: ${info.apkSha256.isNotEmpty}',
-      );
+      AppLogger.debug('[AppUpdateService] Parsed manifest:');
+      AppLogger.debug('[AppUpdateService]   - versionCode: ${info.versionCode}');
+      AppLogger.debug('[AppUpdateService]   - versionName: ${info.versionName}');
+      AppLogger.debug('[AppUpdateService]   - downloadUrl: ${info.downloadUrl.isNotEmpty}');
+      AppLogger.debug('[AppUpdateService]   - apkSha256: ${info.apkSha256.isNotEmpty}');
 
       if (info.versionCode <= currentVersionCode) {
-        debugPrint('[AppUpdateService] No update needed:');
-        debugPrint(
-          '[AppUpdateService]   Remote versionCode (${info.versionCode}) ≤ Current ($currentVersionCode)',
-        );
+        AppLogger.debug('[AppUpdateService] No update needed:');
+        AppLogger.debug('[AppUpdateService]   Remote versionCode (${info.versionCode}) ≤ Current ($currentVersionCode)');
         return null;
       }
 
@@ -130,24 +119,22 @@ class AppUpdateService {
         throw const FormatException('Update manifest is missing downloadUrl');
       }
 
-      debugPrint('[AppUpdateService] ✓ UPDATE AVAILABLE!');
-      debugPrint(
-        '[AppUpdateService]   Upgrade: $currentVersionCode → ${info.versionCode}',
-      );
+      AppLogger.debug('[AppUpdateService] ✓ UPDATE AVAILABLE!');
+      AppLogger.debug('[AppUpdateService]   Upgrade: $currentVersionCode → ${info.versionCode}');
       return info;
     } on SocketException catch (e) {
-      debugPrint('[AppUpdateService] ✗ SOCKET ERROR: ${e.message}');
-      debugPrint('[AppUpdateService]   (Network connectivity issue)');
+      AppLogger.warning('[AppUpdateService] ✗ SOCKET ERROR: ${e.message}');
+      AppLogger.debug('[AppUpdateService]   (Network connectivity issue)');
       rethrow;
     } on HttpException catch (e) {
-      debugPrint('[AppUpdateService] ✗ HTTP ERROR: $e');
+      AppLogger.warning('[AppUpdateService] ✗ HTTP ERROR', error: e);
       rethrow;
     } on FormatException catch (e) {
-      debugPrint('[AppUpdateService] ✗ FORMAT ERROR: $e');
+      AppLogger.warning('[AppUpdateService] ✗ FORMAT ERROR', error: e);
       rethrow;
     } on Exception catch (e) {
-      debugPrint('[AppUpdateService] ✗ EXCEPTION: ${e.runtimeType}');
-      debugPrint('[AppUpdateService]   Error: $e');
+      AppLogger.warning('[AppUpdateService] ✗ EXCEPTION: ${e.runtimeType}');
+      AppLogger.warning('[AppUpdateService]   Error', error: e);
       rethrow;
     } finally {
       client.close();
@@ -183,7 +170,7 @@ class AppUpdateService {
       await sink.flush();
       await sink.close();
     } on Exception catch (e) {
-      debugPrint('APK download failed: $e');
+      AppLogger.warning('APK download failed', error: e);
       rethrow;
     } finally {
       client.close();

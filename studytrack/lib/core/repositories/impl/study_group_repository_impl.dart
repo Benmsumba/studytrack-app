@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 
 import '../../../models/group_member_model.dart';
 import '../../../models/group_message_model.dart';
@@ -19,7 +19,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       final groups = await _supabaseService.getStudyGroups() ?? const [];
       return Success(groups);
     } on Object catch (e, stack) {
-      debugPrint('getAllGroups error: $e');
+      AppLogger.warning('getAllGroups error', error: e);
       return Failure(
         DataException(message: 'Failed to fetch groups: $e', stackTrace: stack),
       );
@@ -35,7 +35,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       }
       return Success(group);
     } on Object catch (e, stack) {
-      debugPrint('getGroupById error: $e');
+      AppLogger.warning('getGroupById error', error: e);
       return Failure(
         DataException(message: 'Failed to fetch group: $e', stackTrace: stack),
       );
@@ -59,7 +59,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       }
       return Success(group);
     } on Object catch (e, stack) {
-      debugPrint('createGroup error: $e');
+      AppLogger.warning('createGroup error', error: e);
       return Failure(
         DataException(message: 'Failed to create group: $e', stackTrace: stack),
       );
@@ -75,7 +75,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       }
       return Success(updated);
     } on Object catch (e, stack) {
-      debugPrint('updateGroup error: $e');
+      AppLogger.warning('updateGroup error', error: e);
       return Failure(
         DataException(message: 'Failed to update group: $e', stackTrace: stack),
       );
@@ -88,7 +88,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       await _supabaseService.deleteStudyGroup(groupId);
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('deleteGroup error: $e');
+      AppLogger.warning('deleteGroup error', error: e);
       return Failure(
         DataException(message: 'Failed to delete group: $e', stackTrace: stack),
       );
@@ -101,7 +101,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       await _supabaseService.joinGroupByCode(inviteCode);
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('joinGroupByCode error: $e');
+      AppLogger.warning('joinGroupByCode error', error: e);
       return Failure(
         DataException(message: 'Failed to join group: $e', stackTrace: stack),
       );
@@ -114,7 +114,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       await _supabaseService.leaveStudyGroup(groupId);
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('leaveGroup error: $e');
+      AppLogger.warning('leaveGroup error', error: e);
       return Failure(
         DataException(message: 'Failed to leave group: $e', stackTrace: stack),
       );
@@ -128,7 +128,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
           await _supabaseService.getGroupMembersTyped(groupId) ?? const [];
       return Success(members);
     } on Object catch (e, stack) {
-      debugPrint('getGroupMembers error: $e');
+      AppLogger.warning('getGroupMembers error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch group members: $e',
@@ -140,14 +140,20 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
 
   @override
   Future<Result<List<GroupMessageModel>>> getGroupMessages(
-    String groupId,
-  ) async {
+    String groupId, {
+    int limit = 50,
+    int offset = 0,
+  }) async {
     try {
-      final messages =
-          await _supabaseService.getGroupMessagesTyped(groupId) ?? const [];
+      final messages = await _supabaseService.getGroupMessagesTyped(
+            groupId,
+            limit: limit,
+            offset: offset,
+          ) ??
+          const [];
       return Success(messages);
     } on Object catch (e, stack) {
-      debugPrint('getGroupMessages error: $e');
+      AppLogger.warning('getGroupMessages error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch group messages: $e',
@@ -174,7 +180,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       }
       return Success(message);
     } on Object catch (e, stack) {
-      debugPrint('sendGroupMessage error: $e');
+      AppLogger.warning('sendGroupMessage error', error: e);
       return Failure(
         DataException(message: 'Failed to send message: $e', stackTrace: stack),
       );
@@ -197,7 +203,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       );
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('inviteUserToGroup error: $e');
+      AppLogger.warning('inviteUserToGroup error', error: e);
       return Failure(
         DataException(message: 'Failed to invite user: $e', stackTrace: stack),
       );
@@ -216,7 +222,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       );
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('removeMemberFromGroup error: $e');
+      AppLogger.warning('removeMemberFromGroup error', error: e);
       return Failure(
         DataException(
           message: 'Failed to remove member: $e',
@@ -232,7 +238,7 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
       // Sync handled by offline sync service
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('syncGroups error: $e');
+      AppLogger.warning('syncGroups error', error: e);
       return Failure(
         DataException(message: 'Failed to sync groups: $e', stackTrace: stack),
       );

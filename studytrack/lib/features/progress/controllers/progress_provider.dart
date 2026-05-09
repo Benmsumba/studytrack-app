@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/utils/app_logger.dart';
 
 import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
@@ -136,7 +137,7 @@ class ProgressProvider extends ChangeNotifier {
       latestResult.fold(
         (error) {
           // Error fetching latest, silently ignore
-          debugPrint('Failed to load latest report: ${error.message}');
+          AppLogger.warning('Failed to load latest report', error: error.message);
         },
         (report) {
           if (report != null) {

@@ -6,6 +6,7 @@ import '../../core/services/supabase_service.dart';
 import '../../models/exam_model.dart';
 import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
+import '../utils/app_logger.dart';
 import '../utils/debug_print_compat.dart';
 
 class NotificationService {
@@ -103,7 +104,7 @@ class NotificationService {
         await scheduleExamCountdown(exam: exam);
       }
     } on Object catch (error) {
-      debugPrint('Notification bootstrap failed: $error');
+      AppLogger.warning('Notification bootstrap failed', error: error);
     }
   }
 
@@ -155,7 +156,7 @@ class NotificationService {
         matchDateTimeComponents: DateTimeComponents.time,
       );
     } on Object catch (e) {
-      debugPrint('Error scheduling daily briefing: $e');
+      AppLogger.warning('Error scheduling daily briefing', error: e);
     }
   }
 
@@ -184,7 +185,7 @@ class NotificationService {
         matchDateTimeComponents: DateTimeComponents.dayOfWeekAndTime,
       );
     } on Object catch (e) {
-      debugPrint('Error scheduling weekly report: $e');
+      AppLogger.warning('Error scheduling weekly report', error: e);
     }
   }
 
@@ -231,7 +232,7 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
     } on Object catch (e) {
-      debugPrint('Error scheduling study session: $e');
+      AppLogger.warning('Error scheduling study session', error: e);
     }
   }
 
@@ -265,7 +266,7 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
     } on Object catch (e) {
-      debugPrint('Error scheduling spaced repetition reminder: $e');
+      AppLogger.warning('Error scheduling spaced repetition reminder', error: e);
     }
   }
 
@@ -316,7 +317,7 @@ class NotificationService {
         );
       }
     } on Object catch (e) {
-      debugPrint('Error scheduling exam countdown: $e');
+      AppLogger.warning('Error scheduling exam countdown', error: e);
     }
   }
 
@@ -406,7 +407,7 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
     } on Object catch (e) {
-      debugPrint('Error scheduling exam notification: $e');
+      AppLogger.warning('Error scheduling exam notification', error: e);
     }
   }
 
@@ -420,7 +421,7 @@ class NotificationService {
 
   void _onSelectNotification(NotificationResponse? response) {
     if (response != null && response.payload != null) {
-      debugPrint('Notification tapped: ${response.payload}');
+      AppLogger.debug('Notification tapped: ${response.payload}');
     }
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/utils/app_logger.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -90,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Error loading dashboard: $e');
+      AppLogger.warning('Error loading dashboard', error: e);
       if (mounted) {
         setState(() {
           _isLoading = false;

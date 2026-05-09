@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 
 import '../../../models/module_model.dart';
 import '../../services/supabase_service.dart';
@@ -24,7 +24,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
       final modules = await _supabaseService.getModules(uid);
       return Success(modules ?? <ModuleModel>[]);
     } on Object catch (e, stack) {
-      debugPrint('getAllModules error: $e');
+      AppLogger.warning('getAllModules error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch modules: $e',
@@ -40,7 +40,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
       final module = await _supabaseService.getModuleById(moduleId);
       return Success(module);
     } on Object catch (e, stack) {
-      debugPrint('getModuleById error: $e');
+      AppLogger.warning('getModuleById error', error: e);
       return Failure(
         DataException(message: 'Failed to fetch module: $e', stackTrace: stack),
       );
@@ -67,7 +67,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
       }
       return Success(ModuleModel.fromJson(raw));
     } on Object catch (e, stack) {
-      debugPrint('createModule error: $e');
+      AppLogger.warning('createModule error', error: e);
       return Failure(
         DataException(
           message: 'Failed to create module: $e',
@@ -89,7 +89,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
       }
       return Success(ModuleModel.fromJson(raw));
     } on Object catch (e, stack) {
-      debugPrint('updateModule error: $e');
+      AppLogger.warning('updateModule error', error: e);
       return Failure(
         DataException(
           message: 'Failed to update module: $e',
@@ -108,7 +108,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
       }
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('deleteModule error: $e');
+      AppLogger.warning('deleteModule error', error: e);
       return Failure(
         DataException(
           message: 'Failed to delete module: $e',
@@ -124,7 +124,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
       await _supabaseService.updateModule(moduleId, {'is_active': false});
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('archiveModule error: $e');
+      AppLogger.warning('archiveModule error', error: e);
       return Failure(
         DataException(
           message: 'Failed to archive module: $e',
@@ -167,7 +167,7 @@ class ModuleRepositoryImpl implements ModuleRepository {
     try {
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('syncModules error: $e');
+      AppLogger.warning('syncModules error', error: e);
       return Failure(
         DataException(message: 'Failed to sync modules: $e', stackTrace: stack),
       );

@@ -1,4 +1,5 @@
 import 'dart:io';
+import '../../../core/utils/app_logger.dart';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -90,7 +91,7 @@ class ShareController extends ChangeNotifier {
 
       return byteData?.buffer.asUint8List();
     } catch (e) {
-      debugPrint('Error capturing widget: $e');
+      AppLogger.warning('Error capturing widget', error: e);
       _lastError = 'Error capturing widget: $e';
       return null;
     }

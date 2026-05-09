@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 
 import '../../../models/class_slot_model.dart';
 import '../../services/supabase_service.dart';
@@ -21,7 +21,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
       final classSlots = rows.map(ClassSlotModel.fromJson).toList();
       return Success(classSlots);
     } on Object catch (e, stack) {
-      debugPrint('getClassTimetable error: $e');
+      AppLogger.warning('getClassTimetable error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch class timetable: $e',
@@ -43,7 +43,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
       final classSlot = ClassSlotModel.fromJson(created);
       return Success(classSlot);
     } on Object catch (e, stack) {
-      debugPrint('addClassSlot error: $e');
+      AppLogger.warning('addClassSlot error', error: e);
       return Failure(
         DataException(
           message: 'Failed to add class slot: $e',
@@ -69,7 +69,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
       final classSlot = ClassSlotModel.fromJson(updated);
       return Success(classSlot);
     } on Object catch (e, stack) {
-      debugPrint('updateClassSlot error: $e');
+      AppLogger.warning('updateClassSlot error', error: e);
       return Failure(
         DataException(
           message: 'Failed to update class slot: $e',
@@ -88,7 +88,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
       }
       return Failure(DataException(message: 'Failed to delete class slot.'));
     } on Object catch (e, stack) {
-      debugPrint('deleteClassSlot error: $e');
+      AppLogger.warning('deleteClassSlot error', error: e);
       return Failure(
         DataException(
           message: 'Failed to delete class slot: $e',
@@ -114,7 +114,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
           .toList();
       return Success(classSlots);
     } on Object catch (e, stack) {
-      debugPrint('getClassSlotsByDay error: $e');
+      AppLogger.warning('getClassSlotsByDay error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch class slots for day: $e',
@@ -138,7 +138,7 @@ class ClassTimetableRepositoryImpl implements ClassTimetableRepository {
       final classSlots = rows.map(ClassSlotModel.fromJson).toList();
       return Success(classSlots);
     } on Object catch (e, stack) {
-      debugPrint('getClassSlotsByDateRange error: $e');
+      AppLogger.warning('getClassSlotsByDateRange error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch class slots for date range: $e',

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 
 import '../../../models/weekly_report_model.dart';
 import '../../services/supabase_service.dart';
@@ -51,7 +51,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
 
       return Success(WeeklyReportModel.fromJson(result));
     } on Object catch (e, stack) {
-      debugPrint('saveWeeklyReport error: $e');
+      AppLogger.warning('saveWeeklyReport error', error: e);
       return Failure(
         DataException(
           message: 'Failed to save weekly report: $e',
@@ -73,7 +73,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
       final models = (reports ?? []).map(WeeklyReportModel.fromJson).toList();
       return Success(models);
     } on Object catch (e, stack) {
-      debugPrint('getWeeklyReports error: $e');
+      AppLogger.warning('getWeeklyReports error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch weekly reports: $e',
@@ -98,7 +98,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
 
       return Success(WeeklyReportModel.fromJson(report));
     } on Object catch (e, stack) {
-      debugPrint('getLastWeeklyReport error: $e');
+      AppLogger.warning('getLastWeeklyReport error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch week report: $e',
@@ -130,7 +130,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
 
       return Success(filtered);
     } on Object catch (e, stack) {
-      debugPrint('getWeeklyReportsByDateRange error: $e');
+      AppLogger.warning('getWeeklyReportsByDateRange error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch weekly reports for date range: $e',
@@ -148,7 +148,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
       // For now, return success (this can be implemented later if needed)
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('deleteWeeklyReport error: $e');
+      AppLogger.warning('deleteWeeklyReport error', error: e);
       return Failure(
         DataException(
           message: 'Failed to delete weekly report: $e',
@@ -170,7 +170,7 @@ class WeeklyReportRepositoryImpl implements WeeklyReportRepository {
       await _supabaseService.getWeeklyReports(uid, 52);
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('syncWeeklyReports error: $e');
+      AppLogger.warning('syncWeeklyReports error', error: e);
       return Failure(
         DataException(
           message: 'Failed to sync weekly reports: $e',

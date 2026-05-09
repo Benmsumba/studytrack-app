@@ -33,8 +33,12 @@ abstract class StudyGroupRepository {
   /// Get group members
   Future<Result<List<GroupMemberModel>>> getGroupMembers(String groupId);
 
-  /// Get group messages
-  Future<Result<List<GroupMessageModel>>> getGroupMessages(String groupId);
+  /// Get group messages — paginated (newest-first, then reversed for display)
+  Future<Result<List<GroupMessageModel>>> getGroupMessages(
+    String groupId, {
+    int limit,
+    int offset,
+  });
 
   /// Send message to group
   Future<Result<GroupMessageModel>> sendGroupMessage({

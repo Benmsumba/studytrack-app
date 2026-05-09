@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../../../core/utils/app_logger.dart';
 import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
@@ -192,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint('Error loading profile: $e');
+      AppLogger.warning('Error loading profile', error: e);
       if (mounted) {
         setState(() {
           _profile = <String, dynamic>{};

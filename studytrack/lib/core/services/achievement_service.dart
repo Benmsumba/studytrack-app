@@ -1,5 +1,6 @@
 import '../../models/badge_model.dart';
 import '../../models/topic_model.dart';
+import '../utils/app_logger.dart';
 import '../utils/debug_print_compat.dart';
 import 'supabase_service.dart';
 
@@ -114,10 +115,13 @@ class AchievementService {
 
       return row == null ? null : BadgeModel.fromJson(row);
     } on Object catch (error) {
-      debugPrint('awardBadge error: $error');
+      AppLogger.warning('awardBadge error', error: error);
       return null;
     }
   }
+
+  Future<List<BadgeModel>> getEarnedBadges(String userId) =>
+      _loadEarnedBadges(userId);
 
   Future<List<BadgeModel>> _loadEarnedBadges(String userId) async {
     try {
@@ -131,7 +135,7 @@ class AchievementService {
           .map((row) => BadgeModel.fromJson(row as Map<String, dynamic>))
           .toList(growable: true);
     } on Object catch (error) {
-      debugPrint('_loadEarnedBadges error: $error');
+      AppLogger.warning('_loadEarnedBadges error', error: error);
       return <BadgeModel>[];
     }
   }

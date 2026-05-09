@@ -34,6 +34,10 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   bool _loading = true;
   bool _sending = false;
+  bool _loadingMore = false;
+  bool _hasMore = true;
+  int _offset = 0;
+  static const int _pageSize = 50;
   String? _loadError;
   List<GroupMessageModel> _messages = [];
   final Map<String, Map<String, dynamic>> _senderMeta = {};
@@ -44,7 +48,16 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     super.initState();
     _groupRepository = getIt<StudyGroupRepository>();
     _authRepository = getIt<AuthRepository>();
+    _scrollController.addListener(_onScroll);
     _init();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels <= 80 &&
+        !_loadingMore &&
+        _hasMore) {
+      _loadMoreMessages();
+    }
   }
 
   Future<void> _init() async {
@@ -62,7 +75,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Future<void> _loadMessages() async {
-    final result = await _groupRepository.getGroupMessages(widget.groupId);
+    _offset = 0;
+    _hasMore = true;
+    final result = await _groupRepository.getGroupMessages(
+      widget.groupId,
+      limit: _pageSize,
+      offset: 0,
+    );
     var messages = const <GroupMessageModel>[];
     final failed = result is Failure<List<GroupMessageModel>>;
     result.fold((error) {}, (value) => messages = value);
@@ -70,12 +89,53 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (!mounted) return;
     setState(() {
       _messages = messages;
+      _offset = messages.length;
+      _hasMore = messages.length >= _pageSize;
       _loadError = failed
           ? 'We could not load messages right now. Pull to retry.'
           : null;
       _loading = false;
     });
     _scrollToBottom();
+  }
+
+  Future<void> _loadMoreMessages() async {
+    if (_loadingMore || !_hasMore) return;
+    setState(() => _loadingMore = true);
+    final result = await _groupRepository.getGroupMessages(
+      widget.groupId,
+      limit: _pageSize,
+      offset: _offset,
+    );
+    if (!mounted) return;
+    result.fold(
+      (error) => setState(() => _loadingMore = false),
+      (older) {
+        if (older.isEmpty) {
+          setState(() {
+            _hasMore = false;
+            _loadingMore = false;
+          });
+          return;
+        }
+        final prevExtent = _scrollController.hasClients
+            ? _scrollController.position.maxScrollExtent
+            : 0.0;
+        setState(() {
+          _messages = [...older, ..._messages];
+          _offset += older.length;
+          _hasMore = older.length >= _pageSize;
+          _loadingMore = false;
+        });
+        // Restore scroll position so older messages appear above without
+        // jumping the viewport.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_scrollController.hasClients) return;
+          final newExtent = _scrollController.position.maxScrollExtent;
+          _scrollController.jumpTo(newExtent - prevExtent);
+        });
+      },
+    );
   }
 
   Future<void> _hydrateSenderMeta(List<GroupMessageModel> messages) async {
@@ -245,9 +305,22 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(12),
-                    itemCount: _messages.length,
+                    itemCount: _messages.length + (_loadingMore ? 1 : 0),
                     itemBuilder: (context, index) {
-                      final message = _messages[index];
+                      if (_loadingMore && index == 0) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        );
+                      }
+                      final index0 = _loadingMore ? index - 1 : index;
+                      final message = _messages[index0];
                       final sender = message.senderId;
                       final content = message.content;
                       final mine =
@@ -259,7 +332,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       final subtitle =
                           '$course${year == null ? '' : ' • Year $year'}';
                       final timestamp = _formatTime(message.createdAt);
-                      final showSeparator = _showDateSeparator(index);
+                      final showSeparator = _showDateSeparator(index0);
                       final separatorLabel = showSeparator
                           ? _dateSeparatorLabel(message.createdAt)
                           : null;

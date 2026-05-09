@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../../core/utils/app_logger.dart';
 
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
@@ -58,7 +59,7 @@ class TopicModuleProvider extends ChangeNotifier {
         (topics) => _topics = topics,
       );
     } catch (e) {
-      debugPrint('loadModulesAndTopics error: $e');
+      AppLogger.warning('loadModulesAndTopics error', error: e);
       _errorMessage = 'Failed to load topics and modules: $e';
     } finally {
       _setLoading(false);
