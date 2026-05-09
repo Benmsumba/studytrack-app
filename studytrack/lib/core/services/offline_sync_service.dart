@@ -2,14 +2,15 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide debugPrint;
 import 'package:home_widget/home_widget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
-import '../services/supabase_service.dart';
 import 'crash_reporter.dart';
 import 'offline_data_store.dart';
+import '../services/supabase_service.dart';
+import '../utils/debug_print_compat.dart';
 
 class OfflineSyncService extends ChangeNotifier {
   OfflineSyncService._internal();
@@ -211,6 +212,20 @@ class OfflineSyncService extends ChangeNotifier {
           if (recordId == null || recordId.isEmpty) {
             return false;
           }
+          if (const {
+            'modules',
+            'topics',
+            'class_timetable',
+            'exams',
+            'uploaded_notes',
+          }.contains(change.entity)) {
+            await client
+                .from(change.entity)
+                .update({'deleted_at': DateTime.now().toIso8601String()})
+                .eq('id', recordId);
+            return true;
+          }
+
           await client.from(change.entity).delete().eq('id', recordId);
           return true;
         case 'upsert':

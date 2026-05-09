@@ -7,9 +7,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
-import 'encryption_service.dart';
 import '../utils/app_logger.dart';
 import 'supabase_service.dart';
+import 'encryption_service.dart';
 
 class VoiceNoteResult {
   const VoiceNoteResult({

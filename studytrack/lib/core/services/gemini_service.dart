@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/app_constants.dart';
 import '../constants/app_config.dart';
+import '../utils/debug_print_compat.dart';
 
 class _CacheEntry {
   _CacheEntry(this.value) : timestamp = DateTime.now();
