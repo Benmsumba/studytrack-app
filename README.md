@@ -67,7 +67,7 @@ studytrack/lib/
 ### Install
 
 ```bash
-git clone https://github.com/Benmsumba/studytrack-app.git
+git clone https://github.com/Benmsumba/studytrack-app
 cd studytrack-app/studytrack
 flutter pub get
 ```

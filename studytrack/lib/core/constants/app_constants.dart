@@ -14,6 +14,12 @@ class AppConstants {
   static const String geminiApiKey = 'YOUR_GEMINI_API_KEY';
   static const String sentryDsn = '';
 
+  // Public repository links used throughout the app and docs.
+  static const String repositoryUrl =
+      'https://github.com/Benmsumba/studytrack-app';
+  static const String repositoryIssuesUrl =
+      'https://github.com/Benmsumba/studytrack-app/issues/new/choose';
+
   static String get resolvedSupabaseUrl {
     const fromEnv = String.fromEnvironment('SUPABASE_URL');
     return fromEnv.isNotEmpty ? fromEnv : supabaseUrl;
