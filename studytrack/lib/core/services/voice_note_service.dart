@@ -8,8 +8,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 
 import '../utils/app_logger.dart';
-import 'supabase_service.dart';
 import 'encryption_service.dart';
+import 'supabase_service.dart';
 
 class VoiceNoteResult {
   const VoiceNoteResult({

@@ -4,12 +4,12 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide AuthException;
 
 import '../../../core/constants/app_constants.dart';
-import '../../../core/repositories/impl/auth_repository_impl.dart';
 import '../../../core/repositories/auth_repository.dart';
+import '../../../core/repositories/impl/auth_repository_impl.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/app_exception.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../models/user_model.dart';
 
 enum AuthStatus { unknown, loading, authenticated, unauthenticated }
@@ -108,8 +108,9 @@ class AuthProvider extends ChangeNotifier {
     final trimmedName = fullName.trim();
     final normalizedEmail = email.trim();
 
-    if (trimmedName.isEmpty)
+    if (trimmedName.isEmpty) {
       return _validationFailure('Full name is required.');
+    }
     final emailError = _validateEmail(normalizedEmail);
     if (emailError != null) return _validationFailure(emailError);
     if (password.length < 8) {

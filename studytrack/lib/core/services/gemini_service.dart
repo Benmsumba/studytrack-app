@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../constants/app_constants.dart';
 import '../constants/app_config.dart';
+import '../constants/app_constants.dart';
 import '../utils/debug_print_compat.dart';
 
 class _CacheEntry {
@@ -93,10 +93,10 @@ class GeminiService {
   static final GeminiService _instance = GeminiService._internal();
 
   final Map<int, _CacheEntry> _cache = {};
-  late final Duration _cacheTtl = Duration(seconds: AppConfig.geminoCacheTtl);
-  late final int _maxCacheEntries = AppConfig.geminoCacheMaxEntries;
-  late final int _maxRetries = AppConfig.geminiRetryAttempts;
-  late final Duration _minRequestInterval = Duration(
+  static const Duration _cacheTtl = Duration(seconds: AppConfig.geminoCacheTtl);
+  final int _maxCacheEntries = AppConfig.geminoCacheMaxEntries;
+  final int _maxRetries = AppConfig.geminiRetryAttempts;
+  static const Duration _minRequestInterval = Duration(
     milliseconds: AppConfig.geminiRateLimitMs,
   );
 

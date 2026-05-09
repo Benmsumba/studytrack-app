@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart' hide debugPrint;
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 

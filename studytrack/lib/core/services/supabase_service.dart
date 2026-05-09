@@ -6,13 +6,13 @@ import 'package:flutter/foundation.dart' hide debugPrint;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
-import '../constants/app_constants.dart';
 import '../../models/group_member_model.dart';
 import '../../models/group_message_model.dart';
 import '../../models/module_model.dart';
 import '../../models/study_group_model.dart';
 import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
+import '../constants/app_constants.dart';
 import '../utils/debug_print_compat.dart';
 import '../utils/helpers.dart';
 import 'offline_sync_service.dart';
