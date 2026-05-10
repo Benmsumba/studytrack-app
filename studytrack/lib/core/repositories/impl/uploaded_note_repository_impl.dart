@@ -65,7 +65,11 @@ class UploadedNoteRepositoryImpl implements UploadedNoteRepository {
       }
       return Success(UploadedNoteModel.fromJson(response));
     } on Object catch (e, st) {
-      AppLogger.warning('updateNoteSharing repo error', error: e, stackTrace: st);
+      AppLogger.warning(
+        'updateNoteSharing repo error',
+        error: e,
+        stackTrace: st,
+      );
       return Failure(
         DataException(message: 'Failed to update sharing: $e', stackTrace: st),
       );
@@ -78,7 +82,11 @@ class UploadedNoteRepositoryImpl implements UploadedNoteRepository {
       final deleted = await _supabaseService.deleteUploadedNote(noteId);
       return Success(deleted == true);
     } on Object catch (e, st) {
-      AppLogger.warning('deleteUploadedNote repo error', error: e, stackTrace: st);
+      AppLogger.warning(
+        'deleteUploadedNote repo error',
+        error: e,
+        stackTrace: st,
+      );
       return Failure(
         DataException(message: 'Failed to delete note: $e', stackTrace: st),
       );

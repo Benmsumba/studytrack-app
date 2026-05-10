@@ -105,10 +105,7 @@ class _NavTile extends StatelessWidget {
                         colors: [palette.textMuted, palette.textMuted],
                       ).createShader(rect),
                 blendMode: BlendMode.srcIn,
-                child: Icon(
-                  selected ? item.activeIcon : item.icon,
-                  size: 22,
-                ),
+                child: Icon(selected ? item.activeIcon : item.icon, size: 22),
               ),
             ),
             const SizedBox(height: 4),

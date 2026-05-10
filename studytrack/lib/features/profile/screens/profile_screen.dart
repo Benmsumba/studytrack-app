@@ -120,8 +120,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       getIt<WeeklyReportRepository>();
   final ExamRepository _examRepository = getIt<ExamRepository>();
   final ExportService _exportService = ExportService();
-  late final AchievementService _achievementService =
-      AchievementService(supabaseService: getIt<SupabaseService>());
+  late final AchievementService _achievementService = AchievementService(
+    supabaseService: getIt<SupabaseService>(),
+  );
 
   bool _isLoading = true;
   bool _isExporting = false;
@@ -167,8 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       for (final module in modules) {
         final topics = await _loadTopics(module.id);
         total += topics.length;
-        mastered +=
-            topics.where((t) => (t.currentRating ?? 0) >= 7).length;
+        mastered += topics.where((t) => (t.currentRating ?? 0) >= 7).length;
       }
 
       // Load earned badges
@@ -176,8 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       var earnedTypes = <String>{};
       if (userId.isNotEmpty) {
         try {
-          final badges =
-              await _achievementService.checkAllBadges(userId);
+          final badges = await _achievementService.checkAllBadges(userId);
           earnedTypes = badges.map((b) => b.badgeType).toSet();
         } catch (_) {}
       }
@@ -326,15 +325,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   DropdownButtonFormField<String>(
                     value: courseOptions.contains(courseCtrl.text)
                         ? courseCtrl.text
-                        : (courseOptions.isNotEmpty ? courseOptions.last : null),
+                        : (courseOptions.isNotEmpty
+                              ? courseOptions.last
+                              : null),
                     decoration: const InputDecoration(
                       labelText: 'Course / Programme',
                       prefixIcon: Icon(Icons.school_outlined),
                     ),
                     items: courseOptions
-                        .map(
-                          (c) => DropdownMenuItem(value: c, child: Text(c)),
-                        )
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                         .toList(),
                     onChanged: (v) {
                       if (v != null) courseCtrl.text = v;
@@ -375,7 +374,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 12),
 
                   // Study Preference
-                  const Text('Study preference', style: TextStyle(fontSize: 14)),
+                  const Text(
+                    'Study preference',
+                    style: TextStyle(fontSize: 14),
+                  ),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -515,15 +517,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      course,
-                      style: AppTextStyles.bodyMediumSecondary,
-                    ),
+                    Text(course, style: AppTextStyles.bodyMediumSecondary),
                     if (yearLevel > 0) ...[
-                      Text(
-                        ' • ',
-                        style: AppTextStyles.bodyMediumSecondary,
-                      ),
+                      Text(' • ', style: AppTextStyles.bodyMediumSecondary),
                       Text(
                         'Year $yearLevel',
                         style: AppTextStyles.bodyMediumSecondary,
@@ -553,10 +549,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('✦ ', style: TextStyle(color: Colors.white, fontSize: 12)),
+                      const Text(
+                        '✦ ',
+                        style: TextStyle(color: Colors.white, fontSize: 12),
+                      ),
                       Text(
                         'Level $level · ${_levelTitle(level)}',
-                        style: AppTextStyles.label.copyWith(color: Colors.white),
+                        style: AppTextStyles.label.copyWith(
+                          color: Colors.white,
+                        ),
                       ),
                     ],
                   ),
@@ -673,8 +674,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 4,
                     childAspectRatio: 0.85,
                     mainAxisSpacing: 12,
@@ -711,8 +711,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 12),
                 _ActionButton(
                   icon: Icons.backup_rounded,
-                  label:
-                      _isBackingUp ? 'Preparing Backup…' : 'Backup to Google Drive',
+                  label: _isBackingUp
+                      ? 'Preparing Backup…'
+                      : 'Backup to Google Drive',
                   gradient: const LinearGradient(
                     colors: [AppColors.surfaceDark, AppColors.cardDark],
                   ),
@@ -727,11 +728,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showBadgeTooltip(
-    BuildContext context,
-    _BadgeMeta meta,
-    bool earned,
-  ) {
+  void _showBadgeTooltip(BuildContext context, _BadgeMeta meta, bool earned) {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -909,10 +906,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _AvatarWithRing extends StatelessWidget {
-  const _AvatarWithRing({
-    required this.name,
-    required this.masteryProgress,
-  });
+  const _AvatarWithRing({required this.name, required this.masteryProgress});
 
   final String name;
   final double masteryProgress;
@@ -1015,8 +1009,7 @@ class _RingPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _RingPainter old) =>
-      old.progress != progress;
+  bool shouldRepaint(covariant _RingPainter old) => old.progress != progress;
 }
 
 class _StatCard extends StatelessWidget {
@@ -1099,7 +1092,10 @@ class _SocialCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Text('✦ ', style: TextStyle(color: Colors.white, fontSize: 13)),
+            const Text(
+              '✦ ',
+              style: TextStyle(color: Colors.white, fontSize: 13),
+            ),
             Text(
               'Share Your Progress',
               style: AppTextStyles.label.copyWith(color: Colors.white),
@@ -1262,14 +1258,17 @@ class _ActionButton extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          if (loading) const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                ) else Icon(icon, color: Colors.white, size: 18),
+          if (loading)
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
+              ),
+            )
+          else
+            Icon(icon, color: Colors.white, size: 18),
           const SizedBox(width: 10),
           Text(
             label,

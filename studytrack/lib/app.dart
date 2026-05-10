@@ -77,7 +77,6 @@ class StudyTrackApp extends StatelessWidget {
 
   final AuthProvider authProvider;
 
-
   // refreshListenable is intentionally omitted; redirect decisions are based
   // on AuthProvider state updates triggered by auth flows and splash refresh.
   GoRouter _buildRouter() => GoRouter(
@@ -281,39 +280,41 @@ class StudyTrackApp extends StatelessWidget {
 
         return AppErrorBoundary(
           child: MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          routerConfig: _buildRouter(),
-          title: 'StudyTrack',
-          themeMode: themeMode,
-          theme: lightTheme,
-          darkTheme: darkTheme,
-          builder: (context, child) {
-            final isDark = Theme.of(context).brightness == Brightness.dark;
-            return AnnotatedRegion<SystemUiOverlayStyle>(
-              value: SystemUiOverlayStyle(
-                statusBarColor: Colors.transparent,
-                statusBarIconBrightness: isDark
-                    ? Brightness.light
-                    : Brightness.dark,
-                statusBarBrightness: isDark
-                    ? Brightness.dark
-                    : Brightness.light,
-                systemNavigationBarColor: Colors.transparent,
-                systemNavigationBarIconBrightness: isDark
-                    ? Brightness.light
-                    : Brightness.dark,
-                systemNavigationBarDividerColor: Colors.transparent,
-              ),
-              child: Stack(
-                children: [
-                  OfflineStatusBanner(child: child ?? const SizedBox.shrink()),
-                  const UpdateOverlay(),
-                ],
-              ),
-            );
-          },
-        ),  // MaterialApp.router
-        );  // AppErrorBoundary
+            debugShowCheckedModeBanner: false,
+            routerConfig: _buildRouter(),
+            title: 'StudyTrack',
+            themeMode: themeMode,
+            theme: lightTheme,
+            darkTheme: darkTheme,
+            builder: (context, child) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
+              return AnnotatedRegion<SystemUiOverlayStyle>(
+                value: SystemUiOverlayStyle(
+                  statusBarColor: Colors.transparent,
+                  statusBarIconBrightness: isDark
+                      ? Brightness.light
+                      : Brightness.dark,
+                  statusBarBrightness: isDark
+                      ? Brightness.dark
+                      : Brightness.light,
+                  systemNavigationBarColor: Colors.transparent,
+                  systemNavigationBarIconBrightness: isDark
+                      ? Brightness.light
+                      : Brightness.dark,
+                  systemNavigationBarDividerColor: Colors.transparent,
+                ),
+                child: Stack(
+                  children: [
+                    OfflineStatusBanner(
+                      child: child ?? const SizedBox.shrink(),
+                    ),
+                    const UpdateOverlay(),
+                  ],
+                ),
+              );
+            },
+          ), // MaterialApp.router
+        ); // AppErrorBoundary
       },
     );
   }

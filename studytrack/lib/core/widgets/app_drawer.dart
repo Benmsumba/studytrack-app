@@ -166,9 +166,9 @@ class AppDrawer extends StatelessWidget {
                     icon: Icon(Icons.logout_rounded, color: palette.danger),
                     label: Text(
                       'Sign out',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: palette.danger,
-                          ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.labelLarge?.copyWith(color: palette.danger),
                     ),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
@@ -207,21 +207,23 @@ class _DrawerHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final theme = Theme.of(context);
-    final initial =
-        name.isNotEmpty ? name.characters.first.toUpperCase() : 'S';
+    final initial = name.isNotEmpty ? name.characters.first.toUpperCase() : 'S';
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            palette.brandPrimary.withValues(alpha: palette.isDark ? 0.18 : 0.08),
-            palette.brandSecondary.withValues(alpha: palette.isDark ? 0.12 : 0.04),
+            palette.brandPrimary.withValues(
+              alpha: palette.isDark ? 0.18 : 0.08,
+            ),
+            palette.brandSecondary.withValues(
+              alpha: palette.isDark ? 0.12 : 0.04,
+            ),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius:
-            const BorderRadius.only(bottomRight: Radius.circular(28)),
+        borderRadius: const BorderRadius.only(bottomRight: Radius.circular(28)),
       ),
       child: Row(
         children: [
@@ -282,10 +284,10 @@ class _SectionLabel extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              letterSpacing: 1.4,
-              fontWeight: FontWeight.w700,
-              color: palette.brandSecondary,
-            ),
+          letterSpacing: 1.4,
+          fontWeight: FontWeight.w700,
+          color: palette.brandSecondary,
+        ),
       ),
     );
   }
@@ -314,8 +316,9 @@ class _DrawerTile extends StatelessWidget {
                 height: 38,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: palette.brandPrimary
-                      .withValues(alpha: palette.isDark ? 0.16 : 0.1),
+                  color: palette.brandPrimary.withValues(
+                    alpha: palette.isDark ? 0.16 : 0.1,
+                  ),
                 ),
                 child: Icon(entry.icon, size: 19, color: palette.brandPrimary),
               ),
@@ -327,8 +330,8 @@ class _DrawerTile extends StatelessWidget {
                     Text(
                       entry.label,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                     Text(
                       entry.description,

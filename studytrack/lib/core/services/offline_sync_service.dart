@@ -80,9 +80,9 @@ class OfflineSyncService extends ChangeNotifier {
     // google.com is blocked (e.g. China). Fall back through multiple hosts.
     for (final host in _probeHosts) {
       try {
-        final lookup = await InternetAddress.lookup(host).timeout(
-          const Duration(seconds: 5),
-        );
+        final lookup = await InternetAddress.lookup(
+          host,
+        ).timeout(const Duration(seconds: 5));
         if (lookup.isNotEmpty && lookup.first.rawAddress.isNotEmpty) {
           return true;
         }
@@ -318,7 +318,10 @@ class OfflineSyncService extends ChangeNotifier {
           return false;
       }
     } on Object catch (error) {
-      AppLogger.warning('sync change failed (${change.entity}/${change.operation})', error: error);
+      AppLogger.warning(
+        'sync change failed (${change.entity}/${change.operation})',
+        error: error,
+      );
       return false;
     }
   }

@@ -174,7 +174,13 @@ class OfflineDataStore {
       for (final record in records) {
         final recordId = idExtractor(record);
         final encoded = _encrypt(jsonEncode(record));
-        stmt.execute([_recordCacheKey(entity, recordId), entity, recordId, encoded, now]);
+        stmt.execute([
+          _recordCacheKey(entity, recordId),
+          entity,
+          recordId,
+          encoded,
+          now,
+        ]);
       }
       _db.execute('COMMIT');
     } on Object catch (_) {
@@ -189,10 +195,9 @@ class OfflineDataStore {
     required String entity,
     required String recordId,
   }) async {
-    _db.execute(
-      'DELETE FROM cached_records WHERE cache_key = ?',
-      [_recordCacheKey(entity, recordId)],
-    );
+    _db.execute('DELETE FROM cached_records WHERE cache_key = ?', [
+      _recordCacheKey(entity, recordId),
+    ]);
   }
 
   Future<Map<String, dynamic>?> readRecord({
@@ -292,13 +297,20 @@ class OfflineDataStore {
       return;
     }
 
-    final nextOperation =
-        existingOperation == 'insert' && operation != 'delete' ? 'insert' : operation;
+    final nextOperation = existingOperation == 'insert' && operation != 'delete'
+        ? 'insert'
+        : operation;
 
     _db.execute(
       'UPDATE pending_changes '
       'SET operation = ?, record_id = ?, payload = ?, created_at = ? WHERE id = ?',
-      [nextOperation, normalizedRecordId, jsonEncode(payload), createdAt, existingId],
+      [
+        nextOperation,
+        normalizedRecordId,
+        jsonEncode(payload),
+        createdAt,
+        existingId,
+      ],
     );
   }
 
@@ -314,9 +326,11 @@ class OfflineDataStore {
         entity: row['entity'] as String,
         operation: row['operation'] as String,
         recordId: row['record_id'] as String?,
-        payload: _decodeMap(row['payload'] as String?) ?? const <String, dynamic>{},
+        payload:
+            _decodeMap(row['payload'] as String?) ?? const <String, dynamic>{},
         createdAt:
-            DateTime.tryParse(row['created_at'] as String? ?? '') ?? DateTime.now(),
+            DateTime.tryParse(row['created_at'] as String? ?? '') ??
+            DateTime.now(),
       );
     }).toList();
   }
@@ -367,7 +381,8 @@ class OfflineDataStore {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  String _recordCacheKey(String entity, String recordId) => '$entity::$recordId';
+  String _recordCacheKey(String entity, String recordId) =>
+      '$entity::$recordId';
 
   String? _normalizeRecordId(String? recordId, Map<String, dynamic> payload) {
     final trimmed = recordId?.trim();

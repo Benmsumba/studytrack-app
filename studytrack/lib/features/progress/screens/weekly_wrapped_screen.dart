@@ -74,7 +74,10 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
       final profileResult = await _profileRepository.getCurrentProfile();
       profileResult.fold(
         (error) {
-          AppLogger.warning('WeeklyWrapped profile load error', error: error.message);
+          AppLogger.warning(
+            'WeeklyWrapped profile load error',
+            error: error.message,
+          );
           studentName = 'Student';
           streak = 0;
         },
@@ -91,10 +94,14 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
 
       reportsResult.fold(
         (error) {
-          AppLogger.warning('Failed to load weekly reports', error: error.message);
+          AppLogger.warning(
+            'Failed to load weekly reports',
+            error: error.message,
+          );
           if (mounted) {
             setState(() {
-              _loadError = 'We could not load your weekly wrap right now. Pull to retry.';
+              _loadError =
+                  'We could not load your weekly wrap right now. Pull to retry.';
               _loading = false;
             });
           }
@@ -150,7 +157,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
       AppLogger.warning('WeeklyWrapped load error', error: error);
       if (mounted) {
         setState(() {
-          _loadError = 'We could not load your weekly wrap right now. Pull to retry.';
+          _loadError =
+              'We could not load your weekly wrap right now. Pull to retry.';
           _loading = false;
         });
       }

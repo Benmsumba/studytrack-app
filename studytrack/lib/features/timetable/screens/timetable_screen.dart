@@ -709,7 +709,10 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     final screenHeight = MediaQuery.of(context).size.height;
     // Reserve space for: drag handle(17) + gap(12) + TabBar(48) + gap(12) + save(50) + gaps(24)
-    final tabViewHeight = (screenHeight * 0.55 - bottomInset).clamp(240.0, 400.0);
+    final tabViewHeight = (screenHeight * 0.55 - bottomInset).clamp(
+      240.0,
+      400.0,
+    );
 
     return Column(
       mainAxisSize: MainAxisSize.min,

@@ -422,8 +422,10 @@ class _ResultsViewState extends State<_ResultsView> {
 
   String _message() {
     if (widget.score == widget.total) return "Perfect! You've mastered this 🏆";
-    if (widget.score >= widget.total * 0.8) return 'Excellent work! Almost there ⭐';
-    if (widget.score >= widget.total * 0.6) return 'Good effort! A bit more practice 📚';
+    if (widget.score >= widget.total * 0.8)
+      return 'Excellent work! Almost there ⭐';
+    if (widget.score >= widget.total * 0.6)
+      return 'Good effort! A bit more practice 📚';
     return "Keep studying — you'll get there 💪";
   }
 

@@ -21,27 +21,28 @@ class AppTheme {
   static ThemeData _build(AppPalette palette, ColorScheme? dynamic) {
     final isDark = palette.isDark;
 
-    final scheme = (dynamic ??
-            ColorScheme.fromSeed(
-              seedColor: palette.brandPrimary,
-              brightness: palette.brightness,
-            ))
-        .copyWith(
-      primary: palette.brandPrimary,
-      onPrimary: Colors.white,
-      secondary: palette.brandSecondary,
-      onSecondary: Colors.white,
-      tertiary: palette.brandTertiary,
-      surface: palette.surface,
-      onSurface: palette.textPrimary,
-      surfaceContainer: palette.surfaceElevated,
-      surfaceContainerHigh: palette.card,
-      surfaceContainerHighest: palette.surfaceElevated,
-      outline: palette.border,
-      outlineVariant: palette.borderSoft,
-      error: palette.danger,
-      onError: Colors.white,
-    );
+    final scheme =
+        (dynamic ??
+                ColorScheme.fromSeed(
+                  seedColor: palette.brandPrimary,
+                  brightness: palette.brightness,
+                ))
+            .copyWith(
+              primary: palette.brandPrimary,
+              onPrimary: Colors.white,
+              secondary: palette.brandSecondary,
+              onSecondary: Colors.white,
+              tertiary: palette.brandTertiary,
+              surface: palette.surface,
+              onSurface: palette.textPrimary,
+              surfaceContainer: palette.surfaceElevated,
+              surfaceContainerHigh: palette.card,
+              surfaceContainerHighest: palette.surfaceElevated,
+              outline: palette.border,
+              outlineVariant: palette.borderSoft,
+              error: palette.danger,
+              onError: Colors.white,
+            );
 
     final textTheme = _textTheme(palette);
 
@@ -118,8 +119,10 @@ class AppTheme {
           vertical: AppSpacing.md,
         ),
         border: _outlineBorder(palette.borderSoft, AppSpacing.fieldRadius),
-        enabledBorder:
-            _outlineBorder(palette.borderSoft, AppSpacing.fieldRadius),
+        enabledBorder: _outlineBorder(
+          palette.borderSoft,
+          AppSpacing.fieldRadius,
+        ),
         focusedBorder: _outlineBorder(
           palette.brandSecondary,
           AppSpacing.fieldRadius,
@@ -193,8 +196,9 @@ class AppTheme {
         selectedColor: palette.brandPrimary.withValues(alpha: 0.18),
         disabledColor: palette.surfaceElevated,
         labelStyle: textTheme.labelMedium?.copyWith(color: palette.textPrimary),
-        secondaryLabelStyle:
-            textTheme.labelMedium?.copyWith(color: palette.textPrimary),
+        secondaryLabelStyle: textTheme.labelMedium?.copyWith(
+          color: palette.textPrimary,
+        ),
         side: BorderSide(color: palette.borderSoft),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
@@ -304,11 +308,10 @@ class AppTheme {
     Color color,
     double radius, {
     double width = 1,
-  }) =>
-      OutlineInputBorder(
-        borderRadius: BorderRadius.circular(radius),
-        borderSide: BorderSide(color: color, width: width),
-      );
+  }) => OutlineInputBorder(
+    borderRadius: BorderRadius.circular(radius),
+    borderSide: BorderSide(color: color, width: width),
+  );
 
   static TextTheme _textTheme(AppPalette palette) {
     // Display: Space Grotesk — geometric humanist, calm at large sizes.
@@ -420,23 +423,23 @@ class AppTheme {
 class SystemUiOverlayStyleDark {
   const SystemUiOverlayStyleDark();
   SystemUiOverlayStyle get _value => const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarIconBrightness: Brightness.light,
-        systemNavigationBarDividerColor: Colors.transparent,
-      );
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.light,
+    systemNavigationBarDividerColor: Colors.transparent,
+  );
 }
 
 class SystemUiOverlayStyleLight {
   const SystemUiOverlayStyleLight();
   SystemUiOverlayStyle get _value => const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-        systemNavigationBarColor: Colors.transparent,
-        systemNavigationBarIconBrightness: Brightness.dark,
-        systemNavigationBarDividerColor: Colors.transparent,
-      );
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
+    systemNavigationBarColor: Colors.transparent,
+    systemNavigationBarIconBrightness: Brightness.dark,
+    systemNavigationBarDividerColor: Colors.transparent,
+  );
 }

@@ -294,7 +294,12 @@ class _NotificationTileData {
 
 class _NotificationTile extends StatefulWidget {
   const _NotificationTile({
-    required this.title, required this.body, required this.timeLabel, required this.icon, required this.iconColor, super.key,
+    required this.title,
+    required this.body,
+    required this.timeLabel,
+    required this.icon,
+    required this.iconColor,
+    super.key,
     this.unread = false,
     this.index = 0,
   });
@@ -379,7 +384,9 @@ class _NotificationTileState extends State<_NotificationTile>
                       Expanded(
                         child: Text(
                           widget.title,
-                          style: AppTextStyles.headingSmall.copyWith(fontSize: 14),
+                          style: AppTextStyles.headingSmall.copyWith(
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                       if (widget.unread)

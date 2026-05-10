@@ -55,7 +55,10 @@ class AchievementService {
       'last_study_date': todayDate.toIso8601String().split('T').first,
     });
 
-    return StreakUpdateResult(newStreak: nextStreak, streakBroken: streakBroken);
+    return StreakUpdateResult(
+      newStreak: nextStreak,
+      streakBroken: streakBroken,
+    );
   }
 
   Future<List<BadgeModel>> checkAllBadges(String userId) async {
@@ -73,10 +76,13 @@ class AchievementService {
         : await _supabaseService.getTopicsByModuleIds(moduleIds);
 
     final studiedCount = topics.where((t) => t.isStudied).length;
-    final highRatingCount = topics.where((t) => (t.currentRating ?? 0) >= 8).length;
+    final highRatingCount = topics
+        .where((t) => (t.currentRating ?? 0) >= 8)
+        .length;
 
     final pendingAwards = <String>[
-      if (topics.isNotEmpty && !earnedTypes.contains('first_step')) 'first_step',
+      if (topics.isNotEmpty && !earnedTypes.contains('first_step'))
+        'first_step',
       if (streak >= 7 && !earnedTypes.contains('week_warrior')) 'week_warrior',
       if (topics.any((t) => t.currentRating == 10) &&
           !earnedTypes.contains('perfectionist'))

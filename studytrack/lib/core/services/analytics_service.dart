@@ -25,8 +25,7 @@ abstract final class Analytics {
   static bool debugForceEnabled = false;
 
   static bool get _enabled =>
-      debugForceEnabled ||
-      (!kDebugMode && AppConstants.isSentryConfigured);
+      debugForceEnabled || (!kDebugMode && AppConstants.isSentryConfigured);
 
   // ── Core API ──────────────────────────────────────────────────────────────
 
@@ -35,26 +34,21 @@ abstract final class Analytics {
   /// [name] should be snake_case, e.g. `'viewed_timetable'`.
   static void track(String name, {Map<String, dynamic>? data}) {
     if (!_enabled) return;
-    _addBreadcrumb(
-      type: 'user',
-      category: 'action',
-      message: name,
-      data: data,
-    );
+    _addBreadcrumb(type: 'user', category: 'action', message: name, data: data);
   }
 
   /// Record a screen view.
   static void screen(String screenName) {
     if (!_enabled) return;
-    _addBreadcrumb(
-      type: 'navigation',
-      category: 'screen',
-      message: screenName,
-    );
+    _addBreadcrumb(type: 'navigation', category: 'screen', message: screenName);
   }
 
   /// Record a non-fatal error with additional context.
-  static void error(String description, {Object? exception, Map<String, dynamic>? data}) {
+  static void error(
+    String description, {
+    Object? exception,
+    Map<String, dynamic>? data,
+  }) {
     if (!_enabled) return;
     _addBreadcrumb(
       type: 'error',
@@ -69,9 +63,8 @@ abstract final class Analytics {
   static void setUser({required String userId, String? email, String? name}) {
     if (!_enabled) return;
     Sentry.configureScope(
-      (scope) => scope.setUser(
-        SentryUser(id: userId, email: email, name: name),
-      ),
+      (scope) =>
+          scope.setUser(SentryUser(id: userId, email: email, name: name)),
     );
   }
 
@@ -84,25 +77,29 @@ abstract final class Analytics {
   // ── Pre-defined event helpers (prevents typo-prone string literals) ───────
 
   /// Call when the user completes onboarding.
-  static void onboardingCompleted() =>
-      track('onboarding_completed');
+  static void onboardingCompleted() => track('onboarding_completed');
 
   /// Call when the user views a screen by name.
   static void viewedScreen(String name) => screen(name);
 
   /// Call when a study session is started.
-  static void sessionStarted({String? moduleId, String? topicId}) =>
-      track('session_started', data: {
-        if (moduleId != null) 'module_id': moduleId,
-        if (topicId != null) 'topic_id': topicId,
-      });
+  static void sessionStarted({String? moduleId, String? topicId}) => track(
+    'session_started',
+    data: {
+      if (moduleId != null) 'module_id': moduleId,
+      if (topicId != null) 'topic_id': topicId,
+    },
+  );
 
   /// Call when a session ends and is saved.
   static void sessionCompleted({required int durationMinutes, int? rating}) =>
-      track('session_completed', data: {
-        'duration_minutes': durationMinutes,
-        if (rating != null) 'rating': rating,
-      });
+      track(
+        'session_completed',
+        data: {
+          'duration_minutes': durationMinutes,
+          if (rating != null) 'rating': rating,
+        },
+      );
 
   /// Call when the user joins or creates a study group.
   static void joinedGroup({required String groupId}) =>
@@ -120,10 +117,10 @@ abstract final class Analytics {
   static void examAdded() => track('exam_added');
 
   /// Call when the AI tutor is opened.
-  static void aiTutorOpened({String? topicId}) =>
-      track('ai_tutor_opened', data: {
-        if (topicId != null) 'topic_id': topicId,
-      });
+  static void aiTutorOpened({String? topicId}) => track(
+    'ai_tutor_opened',
+    data: {if (topicId != null) 'topic_id': topicId},
+  );
 
   /// Call when a voice note is recorded.
   static void voiceNoteRecorded() => track('voice_note_recorded');

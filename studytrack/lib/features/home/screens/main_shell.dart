@@ -65,7 +65,8 @@ class MainShell extends StatelessWidget {
     final palette = context.palette;
     final currentIndex = navigationShell.currentIndex;
     final tab = _tabs[currentIndex];
-    final showStudyFab = currentIndex == 0 || currentIndex == 1 || currentIndex == 2;
+    final showStudyFab =
+        currentIndex == 0 || currentIndex == 1 || currentIndex == 2;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final navBottom = bottomInset + AppSpacing.sm;
     final shellBottomPadding = navBottom + 96 + (showStudyFab ? 12 : 0);
@@ -142,7 +143,9 @@ class MainShell extends StatelessWidget {
               Positioned(
                 top: -32,
                 right: 0,
-                child: _StudyNowFab(onTap: () => context.push('/study-session')),
+                child: _StudyNowFab(
+                  onTap: () => context.push('/study-session'),
+                ),
               ),
           ],
         ),
@@ -193,10 +196,10 @@ class _StudyNowFab extends StatelessWidget {
               Text(
                 'Study Now',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
-                    ),
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.4,
+                ),
               ),
             ],
           ),

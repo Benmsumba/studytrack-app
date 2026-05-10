@@ -180,7 +180,9 @@ class SpotifyService {
       );
 
       if (resp.statusCode != 200) {
-        AppLogger.warning('Spotify token exchange failed: ${resp.statusCode} ${resp.body}');
+        AppLogger.warning(
+          'Spotify token exchange failed: ${resp.statusCode} ${resp.body}',
+        );
         return false;
       }
 
@@ -293,7 +295,9 @@ class SpotifyService {
       );
 
       if (resp.statusCode != 200) {
-        AppLogger.warning('Spotify refresh failed: ${resp.statusCode} ${resp.body}');
+        AppLogger.warning(
+          'Spotify refresh failed: ${resp.statusCode} ${resp.body}',
+        );
         return false;
       }
 

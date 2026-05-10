@@ -108,7 +108,9 @@ Future<void> _bootstrapApp() async {
         'Supabase configuration is required for release builds.',
       );
     }
-    AppLogger.warning('Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY via --dart-define or update AppConstants.');
+    AppLogger.warning(
+      'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY via --dart-define or update AppConstants.',
+    );
   }
 
   if (AppConstants.resolvedSpotifyClientId.isNotEmpty) {

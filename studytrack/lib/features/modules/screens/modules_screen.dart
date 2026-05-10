@@ -64,7 +64,8 @@ class _ModulesScreenState extends State<ModulesScreen> {
       if (retryResult is Failure<List<ModuleModel>>) {
         setState(() {
           _isLoading = false;
-          _loadError = 'We could not load your modules right now. Pull to retry.';
+          _loadError =
+              'We could not load your modules right now. Pull to retry.';
         });
         return;
       }

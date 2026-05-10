@@ -76,7 +76,10 @@ class UserEventTracker {
     }
 
     if (kDebugMode) {
-      AppLogger.debug('EVENT: \$eventName \${properties ?? ''}');
+      AppLogger.debug(
+        'EVENT: \$eventName \${properties ?? '
+        '}',
+      );
     }
   }
 
