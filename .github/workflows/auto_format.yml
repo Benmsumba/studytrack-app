@@ -1,0 +1,55 @@
+name: Auto Format
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'studytrack/**/*.dart'
+
+concurrency:
+  group: auto-format-${{ github.head_ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  fmt:
+    name: Dart format fix
+    runs-on: ubuntu-latest
+    # Only run on branches we can push to (not forks).
+    if: github.event.pull_request.head.repo.full_name == github.repository
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        working-directory: studytrack
+        run: flutter pub get
+
+      - name: Run dart format
+        working-directory: studytrack
+        run: dart format lib/ test/
+
+      - name: Commit fixes if any
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet; then
+            echo "No formatting changes needed."
+          else
+            git add -A
+            git commit -m "style: auto dart format"
+            git push
+            echo "Formatting fixes committed."
+          fi
