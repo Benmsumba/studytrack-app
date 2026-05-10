@@ -97,34 +97,18 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          # Best-effort psql connectivity check. Direct port 5432 is often
-          # blocked by cloud firewalls; the pooler region also varies by project.
-          # Failures here are warnings only — supabase db push is the real gate.
           sudo apt-get install -y --no-install-recommends postgresql-client >/dev/null 2>&1
-          connected=false
+          echo "--- Direct connection test ---"
           DB_HOST="db.${SUPABASE_PROJECT_REF}.supabase.co"
-          if psql -h "$DB_HOST" -U postgres -d postgres -p 5432 \
-               -c "select 1" >/dev/null 2>&1; then
-            connected=true
-          fi
+          psql -h "$DB_HOST" -U postgres -d postgres -p 5432 -c "select 1" 2>&1 || true
 
-          if [ "$connected" = "false" ]; then
-            for region in us-east-1 us-west-1 eu-central-1 ap-southeast-1; do
-              DB_HOST="aws-0-${region}.pooler.supabase.com"
-              if psql -h "$DB_HOST" -U "postgres.${SUPABASE_PROJECT_REF}" \
-                   -d postgres -p 6543 -c "select 1" >/dev/null 2>&1; then
-                connected=true
-                break
-              fi
-            done
-          fi
-
-          if [ "$connected" = "true" ]; then
-            echo "Database connection verified via $DB_HOST."
-          else
-            echo "::warning::psql pre-check could not reach the database (port/firewall/region)."
-            echo "::warning::Continuing — supabase db push will confirm connectivity."
-          fi
+          echo "--- Pooler connection tests ---"
+          for region in us-east-1 us-west-1 eu-central-1 ap-southeast-1; do
+            POOL_HOST="aws-0-${region}.pooler.supabase.com"
+            echo -n "  $region: "
+            psql -h "$POOL_HOST" -U "postgres.${SUPABASE_PROJECT_REF}" \
+                 -d postgres -p 6543 -c "select 1" 2>&1 || true
+          done
 
       - name: Push database schema
         if: steps.secret_check.outputs.missing == 'false'
@@ -133,9 +117,8 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          # Supabase CLI internally calls `git` to locate the project root.
-          # GitHub Actions sandboxes git by default; allow it for this workspace.
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          # Allow supabase CLI to call git from any directory.
+          git config --global --add safe.directory '*'
 
           # URL-encode the password so special characters don't break the DSN.
           ENCODED_PASS=$(python3 -c \
@@ -144,7 +127,7 @@ jobs:
 
           DB_URL="postgresql://postgres:${ENCODED_PASS}@db.${SUPABASE_PROJECT_REF}.supabase.co:5432/postgres"
           echo "Pushing database schema..."
-          supabase db push --db-url "$DB_URL"
+          supabase db push --db-url "$DB_URL" 2>&1
           echo "Database schema deployed."
 
       - name: Deploy Edge Functions
