@@ -498,7 +498,6 @@ class SupabaseService {
             .from('modules')
             .select()
             .eq('user_id', userId)
-            .isFilter('deleted_at', null)
             .order('created_at');
         final rows = _activeRows(response as List<dynamic>);
         await _cacheList('modules', userId, rows);
@@ -654,7 +653,6 @@ class SupabaseService {
             .from('topics')
             .select()
             .eq('module_id', moduleId)
-            .isFilter('deleted_at', null)
             .order('created_at');
         final rows = _activeRows(response as List<dynamic>);
         await _cacheList('topics', moduleId, rows);
@@ -1154,7 +1152,6 @@ class SupabaseService {
             .select()
             .eq('user_id', userId)
             .eq('scheduled_date', day)
-            .isFilter('deleted_at', null)
             .order('start_time');
         final rows = _activeRows(response as List<dynamic>);
         await _cacheList('study_sessions', scope, rows);

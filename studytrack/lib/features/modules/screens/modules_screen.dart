@@ -46,46 +46,50 @@ class _ModulesScreenState extends State<ModulesScreen> {
   }
 
   Future<void> _loadModules() async {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final user = auth.currentUser;
-    if (user == null) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-        _loadError = null;
-      });
-      return;
-    }
-
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
 
     final modulesResult = await _moduleRepo.getAllModules();
+
+    if (modulesResult is Failure<List<ModuleModel>>) {
+      // Auth failure: session may have expired. Let the router redirect if needed.
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      await auth.refreshCurrentUser(silent: true);
+
+      if (!mounted) return;
+      // After refresh, retry once.
+      final retryResult = await _moduleRepo.getAllModules();
+      if (retryResult is Failure<List<ModuleModel>>) {
+        setState(() {
+          _isLoading = false;
+          _loadError = 'We could not load your modules right now. Pull to retry.';
+        });
+        return;
+      }
+    }
+
     final modules = switch (modulesResult) {
       Success<List<ModuleModel>>(data: final data) => data,
       Failure<List<ModuleModel>>() => <ModuleModel>[],
     };
-    final modulesFailed = modulesResult is Failure<List<ModuleModel>>;
 
+    // Load topics for each module; topic failures don't block module display.
     final topicsByModule = <String, List<TopicModel>>{};
-    var topicsFailed = false;
     for (final module in modules) {
       final topicsResult = await _topicRepo.getTopicsByModule(module.id);
       topicsByModule[module.id] = switch (topicsResult) {
         Success<List<TopicModel>>(data: final data) => data,
         Failure<List<TopicModel>>() => <TopicModel>[],
       };
-      topicsFailed = topicsFailed || topicsResult is Failure<List<TopicModel>>;
     }
 
     if (!mounted) return;
     setState(() {
       _modules = modules;
       _topicsByModule = topicsByModule;
-      _loadError = modulesFailed || topicsFailed
-          ? 'We could not load your modules right now. Pull to retry.'
-          : null;
+      _loadError = null;
       _isLoading = false;
     });
   }

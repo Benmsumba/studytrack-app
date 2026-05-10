@@ -699,41 +699,51 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   @override
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final screenHeight = MediaQuery.of(context).size.height;
+    // Reserve space for: drag handle(17) + gap(12) + TabBar(48) + gap(12) + save(50) + gaps(24)
+    final tabViewHeight = (screenHeight * 0.55 - bottomInset).clamp(240.0, 400.0);
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, bottomInset + 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 42,
-            height: 5,
-            decoration: BoxDecoration(
-              color: AppColors.border,
-              borderRadius: BorderRadius.circular(99),
-            ),
-          ),
-          const SizedBox(height: 12),
-          TabBar(
-            controller: _tabController,
-            indicatorColor: AppColors.accent,
-            labelColor: AppColors.textPrimary,
-            unselectedLabelColor: AppColors.textSecondary,
-            tabs: const [
-              Tab(text: 'Add Class'),
-              Tab(text: 'Add Study Session'),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 42,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TabBar(
+                controller: _tabController,
+                indicatorColor: AppColors.accent,
+                labelColor: AppColors.textPrimary,
+                unselectedLabelColor: AppColors.textSecondary,
+                tabs: const [
+                  Tab(text: 'Add Class'),
+                  Tab(text: 'Add Study Session'),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                height: tabViewHeight,
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [_buildAddClassTab(), _buildAddStudyTab()],
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            height: 380,
-            child: TabBarView(
-              controller: _tabController,
-              children: [_buildAddClassTab(), _buildAddStudyTab()],
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
+        ),
+        Padding(
+          padding: EdgeInsets.fromLTRB(16, 8, 16, bottomInset + 16),
+          child: SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _isSaving
@@ -761,8 +771,8 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
                     ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

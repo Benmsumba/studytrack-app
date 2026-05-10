@@ -63,15 +63,20 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   }
 
   Future<void> _loadWeeklyWrapped() async {
-    _loadError = null;
+    if (mounted) {
+      setState(() {
+        _loading = true;
+        _loadError = null;
+      });
+    }
     try {
-      // Fetch profile from repository
+      // Profile failure is non-fatal — fall back to default values.
       final profileResult = await _profileRepository.getCurrentProfile();
       profileResult.fold(
         (error) {
+          AppLogger.warning('WeeklyWrapped profile load error', error: error.message);
           studentName = 'Student';
           streak = 0;
-          _loadError = 'We could not load your weekly wrap right now.';
         },
         (profile) {
           studentName = (profile?['name'] as String?)?.trim().isNotEmpty == true
@@ -81,15 +86,17 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         },
       );
 
-      // Fetch weekly reports from repository
+      // Weekly reports are the primary data source.
       final reportsResult = await _weeklyReportRepository.getWeeklyReports(2);
 
       reportsResult.fold(
         (error) {
           AppLogger.warning('Failed to load weekly reports', error: error.message);
-          _loadError = 'We could not load your weekly wrap right now.';
           if (mounted) {
-            setState(() => _loading = false);
+            setState(() {
+              _loadError = 'We could not load your weekly wrap right now. Pull to retry.';
+              _loading = false;
+            });
           }
         },
         (reports) {
@@ -111,8 +118,8 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           topicsStudied = current.topicsStudied;
           _lastWeekTopics = previous?.topicsStudied ?? 0;
           averageRating = (current.averageRating ?? 0).clamp(0, 10);
-          bestSubject = 'No data yet'; // Not available in WeeklyReportModel
-          weakestSubject = 'No data yet'; // Not available in WeeklyReportModel
+          bestSubject = 'No data yet';
+          weakestSubject = 'No data yet';
           sessionsCompleted = current.sessionsCompleted;
           sessionsPlanned = current.sessionsPlanned;
 
@@ -143,7 +150,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
       AppLogger.warning('WeeklyWrapped load error', error: error);
       if (mounted) {
         setState(() {
-          _loadError = 'We could not load your weekly wrap right now.';
+          _loadError = 'We could not load your weekly wrap right now. Pull to retry.';
           _loading = false;
         });
       }
