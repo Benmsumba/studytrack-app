@@ -182,14 +182,14 @@ jobs:
           echo "Release APK: $APK_FILE ($(du -h "$APK_FILE" | cut -f1))"
 
       - name: Upload release APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: StudyTrack-release-arm64-${{ steps.ver.outputs.version }}
           path: studytrack/build/app/outputs/flutter-apk/*release*.apk
           retention-days: 30
 
       - name: Upload debug symbols artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: StudyTrack-symbols-${{ steps.ver.outputs.version }}
           path: studytrack/build/app/outputs/symbols/
