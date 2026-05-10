@@ -6,6 +6,7 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show FileOptions;
 
 import '../utils/app_logger.dart';
 import 'encryption_service.dart';

@@ -11,10 +11,7 @@ void main() {
 
   test('supabase defaults keep anon key unconfigured', () {
     expect(AppConstants.isSupabaseConfigured, isFalse);
-    expect(
-      AppConstants.resolvedSupabaseUrl,
-      'https://xidpslwjxnyiptebwdff.supabase.co',
-    );
+    expect(AppConstants.resolvedSupabaseUrl, '');
     expect(AppConstants.resolvedSupabaseAnonKey, 'YOUR_SUPABASE_ANON_KEY');
   });
 
