@@ -96,24 +96,41 @@ jobs:
           fi
           echo "Token valid. Project '${SUPABASE_PROJECT_REF}' confirmed."
 
+      - name: Resolve pooler URL
+        id: pooler
+        if: steps.secret_check.outputs.missing == 'false'
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          # Direct DB host (db.PROJECT_REF.supabase.co) is now IPv6-only and
+          # GitHub Actions runners have no IPv6 connectivity, so connections
+          # fail with "network is unreachable". The Supavisor pooler is IPv4
+          # and is the documented workaround. Region must match the project.
+          REGION=$(jq -r --arg r "$SUPABASE_PROJECT_REF" \
+            '.[] | select(.id == $r) | .region' /tmp/projects.json)
+          if [ -z "$REGION" ] || [ "$REGION" = "null" ]; then
+            echo "::error::Could not determine project region from Management API."
+            exit 1
+          fi
+          # Supabase regions in the API are like "us-east-1", "eu-west-2" — the
+          # pooler hostname uses the same identifier with an "aws-0-" prefix.
+          POOLER_HOST="aws-0-${REGION}.pooler.supabase.com"
+          echo "Project region: $REGION"
+          echo "Pooler host: $POOLER_HOST"
+          echo "host=$POOLER_HOST" >> "$GITHUB_OUTPUT"
+
       - name: Verify database password
         if: steps.secret_check.outputs.missing == 'false'
         env:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          POOLER_HOST: ${{ steps.pooler.outputs.host }}
         run: |
           sudo apt-get install -y --no-install-recommends postgresql-client >/dev/null 2>&1
-          echo "--- Direct connection test ---"
-          DB_HOST="db.${SUPABASE_PROJECT_REF}.supabase.co"
-          psql -h "$DB_HOST" -U postgres -d postgres -p 5432 -c "select 1" 2>&1 || true
-
-          echo "--- Pooler connection tests ---"
-          for region in us-east-1 us-west-1 eu-central-1 ap-southeast-1; do
-            POOL_HOST="aws-0-${region}.pooler.supabase.com"
-            echo -n "  $region: "
-            psql -h "$POOL_HOST" -U "postgres.${SUPABASE_PROJECT_REF}" \
-                 -d postgres -p 6543 -c "select 1" 2>&1 || true
-          done
+          # Session mode (port 5432) — drop-in replacement for direct DB.
+          psql -h "$POOLER_HOST" -U "postgres.${SUPABASE_PROJECT_REF}" \
+               -d postgres -p 5432 -c "select 1"
 
       - name: Push database schema
         if: steps.secret_check.outputs.missing == 'false'
@@ -121,25 +138,24 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          POOLER_HOST: ${{ steps.pooler.outputs.host }}
         run: |
           # URL-encode the password so special characters don't break the DSN.
           ENCODED_PASS=$(python3 -c \
             "import urllib.parse, sys; print(urllib.parse.quote(sys.stdin.read().strip(), safe=''))" \
             <<< "$SUPABASE_DB_PASSWORD")
 
-          DB_URL="postgresql://postgres:${ENCODED_PASS}@db.${SUPABASE_PROJECT_REF}.supabase.co:5432/postgres"
-          echo "Pushing database schema..."
+          # Use Supavisor pooler in session mode (port 5432). The username
+          # must include the project ref as a tenant suffix.
+          DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENCODED_PASS}@${POOLER_HOST}:5432/postgres"
+          echo "Pushing database schema via $POOLER_HOST..."
 
-          # Capture both stdout and stderr so we can surface the error in
-          # an annotation visible via the GitHub API (the raw log endpoint
-          # returns 403 from S3 when used outside the runner).
           set +e
           OUTPUT=$(supabase db push --db-url "$DB_URL" 2>&1)
           STATUS=$?
           set -e
           echo "$OUTPUT"
           if [ "$STATUS" -ne 0 ]; then
-            # Strip the password from the output before annotating.
             SAFE=$(echo "$OUTPUT" | sed "s/${ENCODED_PASS}/REDACTED/g" \
                                   | sed "s/${SUPABASE_DB_PASSWORD}/REDACTED/g" \
                                   | tr '\n' '|' | head -c 800)
