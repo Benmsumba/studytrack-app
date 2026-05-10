@@ -82,22 +82,8 @@ class _CustomButtonState extends State<CustomButton> {
         height: widget.height,
         decoration: BoxDecoration(
           borderRadius: radius,
-          boxShadow: [
-            BoxShadow(
-              color: (widget.glowColor ?? AppColors.violetGlow).withValues(
-                alpha: _isPressed ? 0.72 : 0.5,
-              ),
-              blurRadius: _isPressed ? 28 : 22,
-              spreadRadius: _isPressed ? 1.5 : 0.5,
-              offset: const Offset(0, 8),
-            ),
-            const BoxShadow(
-              color: AppColors.cyanGlowSoft,
-              blurRadius: 12,
-              spreadRadius: 0,
-              offset: Offset(0, 4),
-            ),
-          ],
+          // Architectural minimalism: no glow shadows. The button reads
+          // through its color contrast against the surface, not a halo.
         ),
         child: Material(
           color: Colors.transparent,

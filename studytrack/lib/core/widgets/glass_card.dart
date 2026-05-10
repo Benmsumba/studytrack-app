@@ -1,16 +1,20 @@
-import 'dart:math' as math;
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../constants/app_spacing.dart';
 import '../theme/app_palette.dart';
 
-/// Frosted-glass surface with an optional brand-gradient hairline border
-/// and soft glow. Resolves all colors from [AppPalette] so it looks crisp
-/// in light mode (paper-white with subtle brand tint) and luminous in
-/// dark mode (deep glass with neon edge).
+/// Flat tonal card — Architectural Minimalism.
+///
+/// The class name and constructor are preserved from the previous
+/// glassmorphism implementation so existing call sites continue to compile,
+/// but rendering is now:
+///   • a single solid surface color from the palette
+///   • a single hairline divider when needed (no gradient borders)
+///   • no BackdropFilter blur, no glow shadows
+///
+/// Elevation is communicated through the tonal step between the page
+/// background and the card surface, not through borders or shadows.
 class GlassCard extends StatelessWidget {
   const GlassCard({
     required this.child,
@@ -21,17 +25,18 @@ class GlassCard extends StatelessWidget {
     this.borderColors,
     this.borderWidth = 1,
     this.blurSigma,
-    this.enableGlow = true,
+    this.enableGlow = false,
     this.glowColor,
     this.backgroundColor,
     this.animateEntrance = false,
-    this.gradientBorder = true,
+    this.gradientBorder = false,
   });
 
   final Widget child;
   final EdgeInsetsGeometry? margin;
   final EdgeInsetsGeometry padding;
   final double borderRadius;
+  // Retained for API compatibility — no longer used for rendering.
   final List<Color>? borderColors;
   final double borderWidth;
   final double? blurSigma;
@@ -44,85 +49,25 @@ class GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final isDark = palette.isDark;
     final radius = BorderRadius.circular(borderRadius);
-    final innerRadius = math.max(0, borderRadius - borderWidth).toDouble();
-    final innerBorderRadius = BorderRadius.circular(innerRadius);
 
-    final defaultBorderColors = [palette.brandPrimary, palette.brandSecondary];
-    final colors = borderColors ?? defaultBorderColors;
-
-    final fill = backgroundColor ??
-        (isDark ? palette.glassFill : palette.surface.withValues(alpha: 0.94));
-    final solidBorder = palette.glassBorder.withValues(alpha: isDark ? 0.7 : 1);
-    final blur = blurSigma ?? (isDark ? 18 : 24);
+    // Choose a tonal step that reads as raised against the page background.
+    // Light mode: pure white card on near-white background — needs the soft
+    // border to remain visible. Dark mode: card is two tonal steps above
+    // background — the step itself signals elevation, no border required.
+    final fill = backgroundColor ?? palette.card;
 
     Widget card = Container(
       margin: margin,
       decoration: BoxDecoration(
+        color: fill,
         borderRadius: radius,
-        boxShadow: enableGlow
-            ? [
-                BoxShadow(
-                  color: (glowColor ?? palette.glowPrimary).withValues(
-                    alpha:
-                        (glowColor ?? palette.glowPrimary).a * (isDark ? 0.55 : 0.18),
-                  ),
-                  blurRadius: isDark ? 32 : 28,
-                  spreadRadius: isDark ? 1 : 0,
-                  offset: const Offset(0, 12),
-                ),
-                if (isDark)
-                  BoxShadow(
-                    color: palette.glowSecondary.withValues(alpha: 0.25),
-                    blurRadius: 22,
-                    offset: const Offset(0, 6),
-                  )
-                else
-                  BoxShadow(
-                    color: palette.shadow,
-                    blurRadius: 18,
-                    offset: const Offset(0, 8),
-                  ),
-              ]
-            : null,
+        border: palette.isDark
+            ? null
+            : Border.all(color: palette.borderSoft, width: 1),
       ),
-      child: gradientBorder
-          ? DecoratedBox(
-              decoration: BoxDecoration(
-                borderRadius: radius,
-                gradient: LinearGradient(
-                  colors: colors
-                      .map((c) => c.withValues(alpha: isDark ? 1 : 0.55))
-                      .toList(),
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(borderWidth),
-                child: _innerSurface(
-                  innerBorderRadius,
-                  fill,
-                  solidBorder,
-                  blur,
-                  isDark,
-                ),
-              ),
-            )
-          : Container(
-              decoration: BoxDecoration(
-                borderRadius: radius,
-                border: Border.all(color: solidBorder),
-              ),
-              child: _innerSurface(
-                radius,
-                fill,
-                solidBorder,
-                blur,
-                isDark,
-              ),
-            ),
+      padding: padding,
+      child: child,
     );
 
     if (animateEntrance) {
@@ -134,27 +79,4 @@ class GlassCard extends StatelessWidget {
 
     return card;
   }
-
-  Widget _innerSurface(
-    BorderRadius innerRadius,
-    Color fill,
-    Color borderColor,
-    double blur,
-    bool isDark,
-  ) =>
-      ClipRRect(
-        borderRadius: innerRadius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: blur, sigmaY: blur),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: innerRadius,
-              color: fill,
-              border: Border.all(color: borderColor.withValues(alpha: 0.6)),
-            ),
-            padding: padding,
-            child: child,
-          ),
-        ),
-      );
 }

@@ -34,13 +34,15 @@ class AppColors {
   static const Color cyan = amberWarm;
   static const Color deepViolet = steelTeal;
 
-  // ============ Glow Colors (subdued — architectural minimalism) ============
-  static const Color violetGlow = Color(0x554A9EBD);
-  static const Color cyanGlow = Color(0x44E8B96A);
-  static const Color violetGlowSoft = Color(0x224A9EBD);
-  static const Color cyanGlowSoft = Color(0x1AE8B96A);
-  static const Color borderGlow = Color(0x444A9EBD);
-  static const Color borderGlowSoft = Color(0x22E8B96A);
+  // ============ Glow Colors (zeroed — architectural minimalism) ============
+  // Retained as identifiers so legacy widgets keep compiling, but each
+  // resolves to a fully-transparent color so no halo actually renders.
+  static const Color violetGlow = Color(0x00000000);
+  static const Color cyanGlow = Color(0x00000000);
+  static const Color violetGlowSoft = Color(0x00000000);
+  static const Color cyanGlowSoft = Color(0x00000000);
+  static const Color borderGlow = Color(0x00000000);
+  static const Color borderGlowSoft = Color(0x00000000);
 
   // ============ UI Elements ============
   static const Color border = Color(0xFF2A323D);

@@ -63,18 +63,7 @@ class _SplashScreenState extends State<SplashScreen> {
                 height: 144,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  gradient: palette.brandGradient,
-                  boxShadow: [
-                    BoxShadow(
-                      color: palette.glowPrimary.withValues(alpha: 0.55),
-                      blurRadius: 40,
-                      spreadRadius: 6,
-                    ),
-                    BoxShadow(
-                      color: palette.glowSecondary.withValues(alpha: 0.4),
-                      blurRadius: 28,
-                    ),
-                  ],
+                  color: palette.brandPrimary,
                 ),
                 padding: const EdgeInsets.all(20),
                 child: ClipOval(
