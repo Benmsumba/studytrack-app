@@ -138,18 +138,40 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+          PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
           POOLER_HOST: ${{ steps.pooler.outputs.host }}
         run: |
-          # URL-encode the password so special characters don't break the DSN.
           ENCODED_PASS=$(python3 -c \
             "import urllib.parse, sys; print(urllib.parse.quote(sys.stdin.read().strip(), safe=''))" \
             <<< "$SUPABASE_DB_PASSWORD")
 
-          # Use Supavisor pooler in session mode (port 5432). The username
-          # must include the project ref as a tenant suffix.
           DB_URL="postgresql://postgres.${SUPABASE_PROJECT_REF}:${ENCODED_PASS}@${POOLER_HOST}:5432/postgres"
-          echo "Pushing database schema via $POOLER_HOST..."
 
+          # Baseline detection: if supabase_migrations.schema_migrations is
+          # empty (or missing), the project's schema was created out-of-band
+          # (SQL editor, dashboard) before being put under migration control.
+          # Trying to re-apply migrations would fail with "already exists".
+          # Mark every local migration as already applied so only future
+          # migrations actually run.
+          APPLIED_COUNT=$(psql -h "$POOLER_HOST" -U "postgres.${SUPABASE_PROJECT_REF}" \
+            -d postgres -p 5432 -tA -c \
+            "SELECT count(*) FROM supabase_migrations.schema_migrations" 2>/dev/null \
+            | tr -d '[:space:]' || true)
+          APPLIED_COUNT=${APPLIED_COUNT:-0}
+          echo "Migrations already tracked on remote: $APPLIED_COUNT"
+
+          if [ "$APPLIED_COUNT" = "0" ]; then
+            echo "Baselining: marking all local migrations as applied (schema pre-exists)..."
+            for f in supabase/migrations/*.sql; do
+              ts=$(basename "$f" | grep -oE '^[0-9]{14}')
+              if [ -n "$ts" ]; then
+                echo "  - repair $ts"
+                supabase migration repair --status applied "$ts" --db-url "$DB_URL" 2>&1 | tail -3
+              fi
+            done
+          fi
+
+          echo "Pushing database schema via $POOLER_HOST..."
           set +e
           OUTPUT=$(supabase db push --db-url "$DB_URL" 2>&1)
           STATUS=$?
