@@ -93,7 +93,7 @@ class _CustomButtonState extends State<CustomButton> {
             onTapUp: (_) => _setPressed(false),
             onTapCancel: () => _setPressed(false),
             borderRadius: radius,
-            splashColor: AppColors.neonCyan.withValues(alpha: 0.22),
+            splashColor: AppColors.amberWarm.withValues(alpha: 0.22),
             highlightColor: Colors.transparent,
             child: Ink(
               decoration: BoxDecoration(
@@ -157,7 +157,7 @@ class GlowingButton extends CustomButton {
       vertical: AppSpacing.md,
     ),
     super.textStyle,
-    super.glowColor = AppColors.neonViolet,
+    super.glowColor = AppColors.steelTeal,
     super.enableHaptics,
     super.icon,
     super.trailingIcon,

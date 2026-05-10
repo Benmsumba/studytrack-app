@@ -497,8 +497,8 @@ class _ResultsViewState extends State<_ResultsView> {
           blastDirectionality: BlastDirectionality.explosive,
           numberOfParticles: 30,
           colors: const [
-            AppColors.neonViolet,
-            AppColors.neonCyan,
+            AppColors.steelTeal,
+            AppColors.amberWarm,
             AppColors.success,
             Colors.white,
           ],

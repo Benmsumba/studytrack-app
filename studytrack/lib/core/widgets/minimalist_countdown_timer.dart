@@ -126,7 +126,7 @@ class _MinimalistCountdownTimerState extends State<MinimalistCountdownTimer>
                   CustomPaint(
                     painter: _CountdownArcPainter(
                       progress: percentage,
-                      color: AppColors.neonViolet,
+                      color: AppColors.steelTeal,
                       strokeWidth: 4,
                     ),
                     size: Size(widget.size, widget.size),
@@ -152,13 +152,13 @@ class _MinimalistCountdownTimerState extends State<MinimalistCountdownTimer>
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.neonViolet.withValues(alpha: 0.2),
+                            color: AppColors.steelTeal.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             'Focus Mode Active',
                             style: AppTextStyles.caption.copyWith(
-                              color: AppColors.neonViolet,
+                              color: AppColors.steelTeal,
                               fontWeight: FontWeight.w600,
                             ),
                           ),

@@ -538,13 +538,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   decoration: BoxDecoration(
                     gradient: AppColors.primaryGradient,
                     borderRadius: BorderRadius.circular(999),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AppColors.violetGlowSoft,
-                        blurRadius: 10,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -592,7 +585,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         value: xpProgress,
                         backgroundColor: AppColors.border,
                         valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppColors.neonViolet,
+                          AppColors.steelTeal,
                         ),
                         minHeight: 6,
                       ),
@@ -999,7 +992,7 @@ class _RingPainter extends CustomPainter {
         false,
         Paint()
           ..shader = const LinearGradient(
-            colors: [AppColors.neonViolet, AppColors.neonCyan],
+            colors: [AppColors.steelTeal, AppColors.amberWarm],
           ).createShader(Rect.fromCircle(center: center, radius: radius))
           ..style = PaintingStyle.stroke
           ..strokeWidth = 4
@@ -1079,13 +1072,6 @@ class _SocialCard extends StatelessWidget {
     decoration: BoxDecoration(
       gradient: AppColors.primaryGradient,
       borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-      boxShadow: const [
-        BoxShadow(
-          color: AppColors.violetGlowSoft,
-          blurRadius: 20,
-          offset: Offset(0, 6),
-        ),
-      ],
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,

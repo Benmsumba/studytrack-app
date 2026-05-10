@@ -30,8 +30,8 @@ class MemberAvatarStack extends StatelessWidget {
 
   Color _getColorForIndex(int index) {
     final colors = [
-      AppColors.neonViolet,
-      AppColors.neonCyan,
+      AppColors.steelTeal,
+      AppColors.amberWarm,
       AppColors.accent,
       AppColors.info,
       AppColors.success,

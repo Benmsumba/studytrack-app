@@ -208,13 +208,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           decoration: BoxDecoration(
             gradient: AppColors.primaryGradient,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.violetGlowSoft,
-                blurRadius: 12,
-                offset: Offset(0, 4),
-              ),
-            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -352,7 +345,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           moduleTopics.length /
                           10.0;
                     }).toList(),
-                    accentColor: AppColors.neonViolet,
+                    accentColor: AppColors.steelTeal,
                     gridColor: AppColors.border,
                     labelColor: AppColors.textMuted,
                   ),
@@ -522,8 +515,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     color: i == 0
                         ? Colors.grey.withValues(alpha: 0.25)
                         : Color.lerp(
-                            AppColors.neonViolet.withValues(alpha: 0.35),
-                            AppColors.neonViolet,
+                            AppColors.steelTeal.withValues(alpha: 0.35),
+                            AppColors.steelTeal,
                             intensity,
                           ),
                     borderRadius: BorderRadius.circular(2),
@@ -647,9 +640,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   Color _heatmapColor(int count) {
     if (count <= 0) return Colors.grey.withValues(alpha: 0.25);
-    if (count == 1) return AppColors.neonViolet.withValues(alpha: 0.45);
-    if (count == 2) return AppColors.neonViolet.withValues(alpha: 0.65);
-    return AppColors.neonViolet;
+    if (count == 1) return AppColors.steelTeal.withValues(alpha: 0.45);
+    if (count == 2) return AppColors.steelTeal.withValues(alpha: 0.65);
+    return AppColors.steelTeal;
   }
 
   String _monthShort(int month) {
