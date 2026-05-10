@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/repositories/profile_repository.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/theme/app_palette.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/utils/snackbar_helper.dart';
@@ -135,6 +136,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       });
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('onboarding_complete', true);
+      Analytics.onboardingCompleted();
       _confettiController.play();
       if (mounted) context.go('/home');
     } catch (_) {

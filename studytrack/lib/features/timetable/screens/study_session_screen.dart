@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/services/achievement_service.dart';
@@ -384,6 +385,11 @@ class _StudySessionScreenState extends State<StudySessionScreen>
       }
     }
 
+    Analytics.sessionCompleted(
+      durationMinutes: elapsedMinutes,
+      rating: rating,
+    );
+
     _confettiController.play();
     if (!mounted) return;
     setState(() {
@@ -400,6 +406,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
           .toList();
       for (final badge in newBadges) {
         if (!mounted) break;
+        Analytics.badgeEarned(badgeType: badge.badgeType);
         await _showBadgeCelebration(badge.badgeType);
       }
     }
