@@ -38,7 +38,7 @@ Thanks for taking the time to contribute. This document covers everything you ne
    cp .env.example .env
    ```
 
-4. **Apply the database schema** to your own Supabase project using `supabase/schema.sql`.
+4. **Apply the database schema** by running the SQL files in `supabase/migrations/` in filename order against your own Supabase project (Supabase SQL editor or `supabase db push`).
 
 5. **Run the app** to verify everything works.
 
