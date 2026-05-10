@@ -128,11 +128,14 @@ class AppPalette extends ThemeExtension<AppPalette> {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
-    glowPrimary: Color(0x554A9EBD),
-    glowSecondary: Color(0x44E8B96A),
-    ambientGlowPrimary: Color(0x224A9EBD),
-    ambientGlowSecondary: Color(0x1AE8B96A),
-    shadow: Color(0x80000000),
+    // Architectural minimalism: no glow halos. These remain non-zero in the
+    // type so existing widgets that pass them as BoxShadow colors continue
+    // to compile, but the alpha is 0 so nothing actually renders.
+    glowPrimary: Color(0x00000000),
+    glowSecondary: Color(0x00000000),
+    ambientGlowPrimary: Color(0x00000000),
+    ambientGlowSecondary: Color(0x00000000),
+    shadow: Color(0x40000000),
   );
 
   /// Light — Paper white with deeper steel + amber accents tuned for contrast.
@@ -171,11 +174,12 @@ class AppPalette extends ThemeExtension<AppPalette> {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
-    glowPrimary: Color(0x331C6E8C),
-    glowSecondary: Color(0x33B8893E),
-    ambientGlowPrimary: Color(0x141C6E8C),
-    ambientGlowSecondary: Color(0x14B8893E),
-    shadow: Color(0x14101A33),
+    // See dark palette comment — glows zeroed for architectural minimalism.
+    glowPrimary: Color(0x00000000),
+    glowSecondary: Color(0x00000000),
+    ambientGlowPrimary: Color(0x00000000),
+    ambientGlowSecondary: Color(0x00000000),
+    shadow: Color(0x10101A33),
   );
 
   @override

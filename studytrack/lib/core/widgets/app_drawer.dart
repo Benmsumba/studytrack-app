@@ -230,14 +230,7 @@ class _DrawerHeader extends StatelessWidget {
             height: 56,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: palette.brandGradient,
-              boxShadow: [
-                BoxShadow(
-                  color: palette.glowPrimary.withValues(alpha: 0.4),
-                  blurRadius: 18,
-                  offset: const Offset(0, 6),
-                ),
-              ],
+              color: palette.brandPrimary,
             ),
             child: Center(
               child: Text(
