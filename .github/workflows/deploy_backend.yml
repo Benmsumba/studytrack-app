@@ -97,22 +97,34 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           PGPASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          # Test the DB connection directly so a wrong password fails here
-          # with a clear message instead of inside `supabase db push`.
-          sudo apt-get install -y --no-install-recommends postgresql-client >/dev/null
+          # Best-effort psql connectivity check. Direct port 5432 is often
+          # blocked by cloud firewalls; the pooler region also varies by project.
+          # Failures here are warnings only — supabase db push is the real gate.
+          sudo apt-get install -y --no-install-recommends postgresql-client >/dev/null 2>&1
+          connected=false
           DB_HOST="db.${SUPABASE_PROJECT_REF}.supabase.co"
-          if ! psql -h "$DB_HOST" -U postgres -d postgres -p 5432 -c "select 1" >/dev/null 2>&1; then
-            # Pooler endpoint as fallback (Supabase free tier sometimes routes here).
-            DB_HOST="aws-0-us-east-1.pooler.supabase.com"
-            if ! psql -h "$DB_HOST" -U "postgres.${SUPABASE_PROJECT_REF}" -d postgres -p 6543 -c "select 1" >/dev/null 2>&1; then
-              echo "::error::Cannot connect to the Supabase database."
-              echo "::error::SUPABASE_DB_PASSWORD does not match the project, or the project is paused."
-              echo "::error::Reset/fetch the password at:"
-              echo "::error::  Supabase dashboard → project Settings → Database → Database password"
-              exit 1
-            fi
+          if psql -h "$DB_HOST" -U postgres -d postgres -p 5432 \
+               -c "select 1" >/dev/null 2>&1; then
+            connected=true
           fi
-          echo "Database connection verified ($DB_HOST)."
+
+          if [ "$connected" = "false" ]; then
+            for region in us-east-1 us-west-1 eu-central-1 ap-southeast-1; do
+              DB_HOST="aws-0-${region}.pooler.supabase.com"
+              if psql -h "$DB_HOST" -U "postgres.${SUPABASE_PROJECT_REF}" \
+                   -d postgres -p 6543 -c "select 1" >/dev/null 2>&1; then
+                connected=true
+                break
+              fi
+            done
+          fi
+
+          if [ "$connected" = "true" ]; then
+            echo "Database connection verified via $DB_HOST."
+          else
+            echo "::warning::psql pre-check could not reach the database (port/firewall/region)."
+            echo "::warning::Continuing — supabase db push will confirm connectivity."
+          fi
 
       - name: Push database schema
         if: steps.secret_check.outputs.missing == 'false'
