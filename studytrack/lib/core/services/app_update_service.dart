@@ -205,7 +205,16 @@ class AppUpdateService {
   }
 
   Future<String> get apkSavePath async {
-    final dir = await getTemporaryDirectory();
+    // Prefer the app-specific external files directory on Android.
+    // The system package installer reliably holds a FileProvider URI that
+    // points here, whereas getCacheDir() (getTemporaryDirectory) is blocked
+    // by some OEM package installers running in isolated processes.
+    final Directory dir;
+    if (Platform.isAndroid) {
+      dir = await getExternalStorageDirectory() ?? await getTemporaryDirectory();
+    } else {
+      dir = await getTemporaryDirectory();
+    }
     return '${dir.path}/studytrack_update.apk';
   }
 
