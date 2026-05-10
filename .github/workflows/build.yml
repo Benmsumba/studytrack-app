@@ -75,7 +75,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v6
         with:
           files: ./studytrack/coverage/lcov.info
           flags: unittests
