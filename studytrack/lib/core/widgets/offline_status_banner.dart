@@ -47,7 +47,7 @@ class OfflineStatusBanner extends StatelessWidget {
         icon: Icons.sync_rounded,
         message: 'Syncing your changes…',
         gradient: const LinearGradient(
-          colors: [Color(0xFF4C1D95), Color(0xFF7C3AED)],
+          colors: [Color(0xFF1C4E5C), Color(0xFF4A9EBD)],
         ),
         spinning: true,
       );

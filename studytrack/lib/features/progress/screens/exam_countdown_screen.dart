@@ -190,7 +190,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
         ? const Color(0xFFF43F5E)
         : daysLeft <= 14
         ? const Color(0xFFF59E0B)
-        : const Color(0xFF06B6D4);
+        : AppColors.steelTeal;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -333,7 +333,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
             child: OutlinedButton(
               onPressed: () => context.push('/study-session'),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF7C3AED)),
+                side: const BorderSide(color: AppColors.steelTeal),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -341,7 +341,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
               child: Text(
                 'Start Prep',
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: const Color(0xFF7C3AED),
+                  color: AppColors.steelTeal,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),

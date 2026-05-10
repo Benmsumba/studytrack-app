@@ -49,14 +49,14 @@ class SpotifyService {
       description: 'Soft beats for deep reading sessions.',
       searchQuery: 'lofi study beats',
       emoji: '🎧',
-      accentColor: Color(0xFF7C3AED),
+      accentColor: Color(0xFF4A9EBD),
     ),
     SpotifyStudyPlaylist(
       title: 'Deep Work Flow',
       description: 'Instrumental focus for long modules.',
       searchQuery: 'deep focus study music',
       emoji: '🧠',
-      accentColor: Color(0xFF06B6D4),
+      accentColor: Color(0xFFE8B96A),
     ),
     SpotifyStudyPlaylist(
       title: 'Brain Food',

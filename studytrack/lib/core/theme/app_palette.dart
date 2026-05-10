@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_colors.dart';
 
-/// Theme-aware color palette. Resolved from `Theme.of(context).extension<AppPalette>()`
-/// or the `context.palette` extension. Every screen surface, gradient, and
-/// glow color should come through here so light and dark modes render
-/// flawlessly without per-screen branching.
+/// Theme-aware color palette resolved through `Theme.of(context).extension<AppPalette>()`
+/// or the `context.palette` extension. The values implement an
+/// "Architectural Minimalism" system: neutral obsidian / slate surfaces with
+/// industrial accent colors. Every screen surface, gradient, and accent
+/// resolves through this palette so light and dark modes render correctly
+/// without per-screen branching.
 @immutable
 class AppPalette extends ThemeExtension<AppPalette> {
   const AppPalette({
@@ -79,7 +81,7 @@ class AppPalette extends ThemeExtension<AppPalette> {
   final LinearGradient brandGradient;
   final LinearGradient cardGradient;
 
-  // Glows / ambient
+  // Glows / ambient (kept for legacy widgets; values are now subdued)
   final Color glowPrimary;
   final Color glowSecondary;
   final Color ambientGlowPrimary;
@@ -88,91 +90,91 @@ class AppPalette extends ThemeExtension<AppPalette> {
 
   bool get isDark => brightness == Brightness.dark;
 
-  /// Dark palette — premium neon on near-black.
+  /// Dark — Deep Obsidian + Slate with Industrial Steel accents.
+  /// Tonal stepping (background → backgroundDeep → surface → surfaceElevated
+  /// → card) communicates elevation without shadows or borders.
   static const AppPalette dark = AppPalette(
     brightness: Brightness.dark,
-    background: Color(0xFF0A0A0F),
-    backgroundDeep: Color(0xFF050509),
-    surface: Color(0xFF12121A),
-    surfaceElevated: Color(0xFF171722),
-    card: Color(0xFF1A1A25),
-    cardAlt: Color(0xFF101018),
-    glassFill: Color(0xCC0F0F16),
-    glassBorder: Color(0xB31F1F2B),
-    border: Color(0xFF262637),
-    borderSoft: Color(0xFF1F1F2B),
-    divider: Color(0xFF1F1F2B),
-    inputFill: Color(0xFF14141D),
-    textPrimary: Color(0xFFFFFFFF),
-    textSecondary: Color(0xFFB0B0B8),
-    textMuted: Color(0xFF636370),
-    textGlow: Color(0xFFEDE9FF),
-    brandPrimary: AppColors.neonViolet,
-    brandSecondary: AppColors.neonCyan,
-    brandTertiary: Color(0xFFEC4899),
-    success: Color(0xFF00E676),
-    warning: Color(0xFFFFB74D),
-    danger: Color(0xFFFF5252),
-    info: Color(0xFF2196F3),
+    background: Color(0xFF0B0E11),
+    backgroundDeep: Color(0xFF07090B),
+    surface: Color(0xFF11151A),
+    surfaceElevated: Color(0xFF161B21),
+    card: Color(0xFF1A1F26),
+    cardAlt: Color(0xFF0F1318),
+    glassFill: Color(0xEB11151A),
+    glassBorder: Color(0xFF232A33),
+    border: Color(0xFF2A323D),
+    borderSoft: Color(0xFF1E242C),
+    divider: Color(0xFF1E242C),
+    inputFill: Color(0xFF141921),
+    textPrimary: Color(0xFFF2F4F7),
+    textSecondary: Color(0xFFA8B0BC),
+    textMuted: Color(0xFF6B7480),
+    textGlow: Color(0xFFDCE3EC),
+    brandPrimary: AppColors.steelTeal,
+    brandSecondary: AppColors.amberWarm,
+    brandTertiary: AppColors.terracotta,
+    success: Color(0xFF5FB682),
+    warning: Color(0xFFE8B96A),
+    danger: Color(0xFFD26E6E),
+    info: AppColors.steelTeal,
     brandGradient: LinearGradient(
-      colors: [AppColors.neonViolet, AppColors.neonCyan],
+      colors: [AppColors.steelTeal, AppColors.amberWarm],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
     cardGradient: LinearGradient(
-      colors: [Color(0xFF1A1A25), Color(0xFF101018)],
+      colors: [Color(0xFF1A1F26), Color(0xFF0F1318)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
-    glowPrimary: Color(0xAA7C3AED),
-    glowSecondary: Color(0xAA06B6D4),
-    ambientGlowPrimary: Color(0x447C3AED),
-    ambientGlowSecondary: Color(0x3306B6D4),
-    shadow: Color(0x66000000),
+    glowPrimary: Color(0x554A9EBD),
+    glowSecondary: Color(0x44E8B96A),
+    ambientGlowPrimary: Color(0x224A9EBD),
+    ambientGlowSecondary: Color(0x1AE8B96A),
+    shadow: Color(0x80000000),
   );
 
-  /// Light palette — calm paper-white with vibrant brand accents.
-  /// Designed to feel just as engaging as the dark mode but easier on
-  /// the eyes for daytime / library use.
+  /// Light — Paper white with deeper steel + amber accents tuned for contrast.
   static const AppPalette light = AppPalette(
     brightness: Brightness.light,
-    background: Color(0xFFF6F7FB),
-    backgroundDeep: Color(0xFFEEF0F7),
+    background: Color(0xFFF7F8FA),
+    backgroundDeep: Color(0xFFEEF0F3),
     surface: Color(0xFFFFFFFF),
-    surfaceElevated: Color(0xFFF9FAFD),
+    surfaceElevated: Color(0xFFFAFBFC),
     card: Color(0xFFFFFFFF),
-    cardAlt: Color(0xFFF4F5FB),
-    glassFill: Color(0xF2FFFFFF),
-    glassBorder: Color(0xFFE2E5EF),
-    border: Color(0xFFDFE3EE),
-    borderSoft: Color(0xFFE9ECF4),
-    divider: Color(0xFFE9ECF4),
-    inputFill: Color(0xFFF1F3F9),
-    textPrimary: Color(0xFF0D1226),
-    textSecondary: Color(0xFF4B5168),
-    textMuted: Color(0xFF7E8499),
-    textGlow: Color(0xFF2C2750),
-    brandPrimary: Color(0xFF7C3AED),
-    brandSecondary: Color(0xFF0891B2),
-    brandTertiary: Color(0xFFDB2777),
-    success: Color(0xFF059669),
-    warning: Color(0xFFD97706),
-    danger: Color(0xFFDC2626),
-    info: Color(0xFF2563EB),
+    cardAlt: Color(0xFFF1F3F6),
+    glassFill: Color(0xF5FFFFFF),
+    glassBorder: Color(0xFFE0E4EA),
+    border: Color(0xFFDCE0E6),
+    borderSoft: Color(0xFFE8EAEF),
+    divider: Color(0xFFE8EAEF),
+    inputFill: Color(0xFFF1F3F6),
+    textPrimary: Color(0xFF0E1218),
+    textSecondary: Color(0xFF4A5260),
+    textMuted: Color(0xFF7A8290),
+    textGlow: Color(0xFF1A2030),
+    brandPrimary: Color(0xFF1C6E8C),
+    brandSecondary: Color(0xFFB8893E),
+    brandTertiary: Color(0xFFB85A3F),
+    success: Color(0xFF2F8F5A),
+    warning: Color(0xFFB8893E),
+    danger: Color(0xFFB84747),
+    info: Color(0xFF1C6E8C),
     brandGradient: LinearGradient(
-      colors: [Color(0xFF7C3AED), Color(0xFF0891B2)],
+      colors: [Color(0xFF1C6E8C), Color(0xFFB8893E)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
     cardGradient: LinearGradient(
-      colors: [Color(0xFFFFFFFF), Color(0xFFF4F5FB)],
+      colors: [Color(0xFFFFFFFF), Color(0xFFF1F3F6)],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
     ),
-    glowPrimary: Color(0x447C3AED),
-    glowSecondary: Color(0x440891B2),
-    ambientGlowPrimary: Color(0x227C3AED),
-    ambientGlowSecondary: Color(0x220891B2),
+    glowPrimary: Color(0x331C6E8C),
+    glowSecondary: Color(0x33B8893E),
+    ambientGlowPrimary: Color(0x141C6E8C),
+    ambientGlowSecondary: Color(0x14B8893E),
     shadow: Color(0x14101A33),
   );
 
@@ -287,8 +289,8 @@ class AppPalette extends ThemeExtension<AppPalette> {
 }
 
 extension AppPaletteContext on BuildContext {
-  /// Theme-aware palette. Falls back to the dark palette so legacy code
-  /// that runs before the theme is fully wired never crashes.
+  /// Theme-aware palette. Falls back to dark so any code that runs before the
+  /// theme is fully wired never crashes.
   AppPalette get palette =>
       Theme.of(this).extension<AppPalette>() ?? AppPalette.dark;
 

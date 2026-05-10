@@ -1,6 +1,8 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 
+import '../constants/app_colors.dart';
+
 class BadgeCelebrationOverlay extends StatefulWidget {
   const BadgeCelebrationOverlay({
     required this.badgeTitle,
@@ -60,9 +62,9 @@ class _BadgeCelebrationOverlayState extends State<BadgeCelebrationOverlay> {
             margin: const EdgeInsets.symmetric(horizontal: 28),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: const Color(0xFF16213E),
+              color: AppColors.cardDark,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF7C3AED)),
+              border: Border.all(color: AppColors.steelTeal),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -83,7 +85,7 @@ class _BadgeCelebrationOverlayState extends State<BadgeCelebrationOverlay> {
                   widget.badgeTitle,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    color: Color(0xFF06B6D4),
+                    color: AppColors.steelTeal,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),

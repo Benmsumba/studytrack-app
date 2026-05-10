@@ -24,7 +24,7 @@ class MainShell extends StatelessWidget {
       eyebrow: 'Dashboard',
       subtitle: 'Your day, in one glance.',
       icon: Icons.home_outlined,
-      activeIcon: Icons.home_rounded,
+      activeIcon: Icons.home,
     ),
     _TabConfig(
       label: 'Today',
@@ -32,7 +32,7 @@ class MainShell extends StatelessWidget {
       eyebrow: 'Today',
       subtitle: 'Classes, sessions and reminders.',
       icon: Icons.calendar_today_outlined,
-      activeIcon: Icons.calendar_month_rounded,
+      activeIcon: Icons.calendar_today,
     ),
     _TabConfig(
       label: 'Learn',
@@ -40,15 +40,15 @@ class MainShell extends StatelessWidget {
       eyebrow: 'Learn',
       subtitle: 'Topics, ratings and AI tutor.',
       icon: Icons.menu_book_outlined,
-      activeIcon: Icons.menu_book_rounded,
+      activeIcon: Icons.menu_book,
     ),
     _TabConfig(
       label: 'Insights',
       title: 'Progress',
       eyebrow: 'Insights',
       subtitle: 'Streaks, charts and your wrapped.',
-      icon: Icons.auto_graph_outlined,
-      activeIcon: Icons.auto_graph_rounded,
+      icon: Icons.insights_outlined,
+      activeIcon: Icons.insights,
     ),
     _TabConfig(
       label: 'Connect',
@@ -56,7 +56,7 @@ class MainShell extends StatelessWidget {
       eyebrow: 'Connect',
       subtitle: 'Study together — chat & share.',
       icon: Icons.groups_outlined,
-      activeIcon: Icons.groups_rounded,
+      activeIcon: Icons.groups,
     ),
   ];
 

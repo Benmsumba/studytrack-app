@@ -355,7 +355,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFF7C3AED), Color(0xFF0F0F1A)],
+        colors: [Color(0xFF1C6E8C), Color(0xFF07090B)],
       ),
     ),
     child: SafeArea(
@@ -445,7 +445,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   );
 
   Widget _topicsPage() => _solidPage(
-    color: const Color(0xFF06B6D4),
+    color: const Color(0xFF1C6E8C),
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -487,7 +487,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   );
 
   Widget _bestSubjectPage() => _gradientPage(
-    colors: const [Color(0xFF7C3AED), Color(0xFF1F1B4D)],
+    colors: const [Color(0xFF1C6E8C), Color(0xFF0B1C22)],
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -744,7 +744,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF7C3AED), Color(0xFF06B6D4)],
+                        colors: [Color(0xFF1C6E8C), Color(0xFFB8893E)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),

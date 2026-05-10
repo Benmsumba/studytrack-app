@@ -81,22 +81,20 @@ class AppTheme {
         color: palette.card,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
+        // No border — elevation is communicated through the tonal step
+        // between background and card. Architectural minimalism.
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          side: BorderSide(color: palette.borderSoft),
         ),
         margin: EdgeInsets.zero,
       ),
-      iconTheme: IconThemeData(color: palette.textSecondary),
+      iconTheme: IconThemeData(color: palette.textSecondary, size: 22),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
           foregroundColor: palette.textPrimary,
-          backgroundColor: palette.surfaceElevated.withValues(alpha: 0.85),
+          backgroundColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-            side: BorderSide(
-              color: palette.borderSoft.withValues(alpha: isDark ? 1 : 0.6),
-            ),
           ),
           padding: const EdgeInsets.all(10),
         ),
@@ -252,7 +250,12 @@ class AppTheme {
         trackColor: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
               ? palette.brandPrimary
-              : palette.borderSoft,
+              : palette.surfaceElevated,
+        ),
+        trackOutlineColor: WidgetStateProperty.resolveWith(
+          (states) => states.contains(WidgetState.selected)
+              ? Colors.transparent
+              : palette.border,
         ),
       ),
       sliderTheme: SliderThemeData(
@@ -308,93 +311,102 @@ class AppTheme {
       );
 
   static TextTheme _textTheme(AppPalette palette) {
-    final outfit = GoogleFonts.outfitTextTheme();
-    final inter = GoogleFonts.interTextTheme();
+    // Display: Space Grotesk — geometric humanist, calm at large sizes.
+    // Body: Inter — the gold standard humanist sans for screens.
+    final display = GoogleFonts.spaceGroteskTextTheme();
+    final body = GoogleFonts.interTextTheme();
     return TextTheme(
-      displayLarge: outfit.displayLarge?.copyWith(
-        fontSize: 40,
-        fontWeight: FontWeight.w800,
+      displayLarge: display.displayLarge?.copyWith(
+        fontSize: 48,
+        fontWeight: FontWeight.w600,
         height: 1.1,
-        letterSpacing: -0.8,
-        color: palette.textGlow,
+        letterSpacing: -1.2,
+        color: palette.textPrimary,
       ),
-      displayMedium: outfit.displayMedium?.copyWith(
-        fontSize: 32,
-        fontWeight: FontWeight.w800,
+      displayMedium: display.displayMedium?.copyWith(
+        fontSize: 36,
+        fontWeight: FontWeight.w600,
         height: 1.15,
-        letterSpacing: -0.5,
-        color: palette.textGlow,
+        letterSpacing: -0.6,
+        color: palette.textPrimary,
       ),
-      displaySmall: outfit.displaySmall?.copyWith(
-        fontSize: 26,
-        fontWeight: FontWeight.w700,
+      displaySmall: display.displaySmall?.copyWith(
+        fontSize: 28,
+        fontWeight: FontWeight.w600,
         height: 1.2,
         letterSpacing: -0.3,
         color: palette.textPrimary,
       ),
-      headlineLarge: outfit.headlineLarge?.copyWith(
-        fontSize: 28,
-        fontWeight: FontWeight.w700,
-        height: 1.2,
-        letterSpacing: -0.35,
-        color: palette.textPrimary,
-      ),
-      headlineMedium: outfit.headlineMedium?.copyWith(
-        fontSize: 24,
+      headlineLarge: display.headlineLarge?.copyWith(
+        fontSize: 26,
         fontWeight: FontWeight.w600,
         height: 1.2,
+        letterSpacing: -0.3,
+        color: palette.textPrimary,
+      ),
+      headlineMedium: display.headlineMedium?.copyWith(
+        fontSize: 22,
+        fontWeight: FontWeight.w600,
+        height: 1.25,
         letterSpacing: -0.2,
         color: palette.textPrimary,
       ),
-      headlineSmall: outfit.headlineSmall?.copyWith(
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
-        height: 1.25,
-        color: palette.textPrimary,
-      ),
-      titleLarge: outfit.titleLarge?.copyWith(
+      headlineSmall: display.headlineSmall?.copyWith(
         fontSize: 18,
         fontWeight: FontWeight.w600,
+        height: 1.3,
+        letterSpacing: -0.1,
         color: palette.textPrimary,
       ),
-      titleMedium: inter.titleMedium?.copyWith(
-        fontSize: 14,
+      titleLarge: display.titleLarge?.copyWith(
+        fontSize: 17,
         fontWeight: FontWeight.w600,
+        letterSpacing: -0.1,
         color: palette.textPrimary,
       ),
-      titleSmall: inter.titleSmall?.copyWith(
-        fontSize: 12,
+      titleMedium: body.titleMedium?.copyWith(
+        fontSize: 15,
         fontWeight: FontWeight.w600,
+        letterSpacing: 0,
+        color: palette.textPrimary,
+      ),
+      titleSmall: body.titleSmall?.copyWith(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        letterSpacing: 0.1,
         color: palette.textSecondary,
       ),
-      bodyLarge: inter.bodyLarge?.copyWith(
+      bodyLarge: body.bodyLarge?.copyWith(
         fontSize: 16,
         height: 1.55,
+        letterSpacing: 0.1,
         color: palette.textPrimary,
       ),
-      bodyMedium: inter.bodyMedium?.copyWith(
+      bodyMedium: body.bodyMedium?.copyWith(
         fontSize: 14,
         height: 1.5,
+        letterSpacing: 0.15,
         color: palette.textPrimary,
       ),
-      bodySmall: inter.bodySmall?.copyWith(
+      bodySmall: body.bodySmall?.copyWith(
         fontSize: 12,
         height: 1.45,
+        letterSpacing: 0.2,
         color: palette.textSecondary,
       ),
-      labelLarge: inter.labelLarge?.copyWith(
+      labelLarge: body.labelLarge?.copyWith(
         fontSize: 14,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.4,
-        color: palette.textPrimary,
-      ),
-      labelMedium: inter.labelMedium?.copyWith(
-        fontSize: 12,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.2,
         color: palette.textPrimary,
       ),
-      labelSmall: inter.labelSmall?.copyWith(
+      labelMedium: body.labelMedium?.copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.3,
+        color: palette.textPrimary,
+      ),
+      labelSmall: body.labelSmall?.copyWith(
         fontSize: 11,
         fontWeight: FontWeight.w500,
         letterSpacing: 0.4,
