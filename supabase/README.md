@@ -10,13 +10,14 @@ supabase/
 │   ├── 20240301000000_storage_setup.sql          — Creates studytrack-notes storage bucket
 │   ├── 20240401000000_schema_grants.sql          — Grants privileges to anon/authenticated roles
 │   ├── 20240501000000_rls_service_role_bypass.sql — RLS bypass policies for service_role
-│   └── 20260429000000_performance_indexes.sql    — Composite indexes for hot query paths
+│   ├── 20260429000000_performance_indexes.sql    — Composite indexes for hot query paths
+│   └── 20260509000001_soft_delete_and_cleanup.sql — Soft-delete columns + orphan cleanup triggers
 │
 ├── dev/                 # Development helpers — NEVER run in production
 │   ├── quick_unblock.sql          — Opens all permissions (local testing only)
 │   └── rls_disable_for_backend.sql — Disables RLS entirely (local testing only)
 │
-├── schema.sql           — Canonical reference copy of the full schema
+├── config.toml          — Supabase CLI project configuration
 └── README.md            — This file
 ```
 
@@ -38,7 +39,6 @@ safe to re-run.
 
 ## Notes
 
-- `schema.sql` is kept as a human-readable reference. The source of truth for deployments
-  is the numbered files in `migrations/`.
+- The numbered files in `migrations/` are the single source of truth for the schema.
 - Files in `dev/` are for local development only and must not be applied to staging or
   production databases.

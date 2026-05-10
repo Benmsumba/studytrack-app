@@ -203,7 +203,7 @@ flutter pub get
 
 ### 4. Apply the database schema
 
-Run [`supabase/schema.sql`](supabase/schema.sql) against your project from the Supabase SQL editor, or follow [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md) for the full setup including Edge Functions.
+Apply the migrations in [`supabase/migrations/`](supabase/migrations/) in filename order via the Supabase SQL editor or `supabase db push`. See [`SUPABASE_SETUP.md`](SUPABASE_SETUP.md) for the full setup including Edge Functions.
 
 ### 5. Run the app
 
