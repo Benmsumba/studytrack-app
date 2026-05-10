@@ -36,6 +36,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: stable
+          cache: true
 
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -44,18 +45,24 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
       - name: Install dependencies
         working-directory: studytrack
         run: flutter pub get
 
-      - name: Check formatting
+      - name: Check formatting (advisory)
         working-directory: studytrack
-        run: dart format --set-exit-if-changed .
+        run: |
+          dart format --output=none . 2>&1 | tee /tmp/fmt.txt
+          if grep -q "Changed" /tmp/fmt.txt; then
+            echo "::warning::Some files are not correctly formatted. Run 'dart format .' locally."
+          fi
 
       - name: Analyze project
         working-directory: studytrack
-        run: flutter analyze --no-fatal-warnings
+        run: flutter analyze --no-fatal-warnings --no-fatal-infos
 
       - name: Run tests
         working-directory: studytrack

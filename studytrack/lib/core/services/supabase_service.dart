@@ -13,11 +13,11 @@ import '../../models/module_model.dart';
 import '../../models/study_group_model.dart';
 import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
+import '../constants/app_config.dart';
 import '../constants/app_constants.dart';
 import '../utils/app_logger.dart';
 import '../utils/debug_print_compat.dart';
 import '../utils/helpers.dart';
-import 'domain/domain_services.dart';
 import 'offline_sync_service.dart';
 
 class SupabaseService {
@@ -38,28 +38,6 @@ class SupabaseService {
 
   SupabaseClient get client => Supabase.instance.client;
   String? get lastAuthError => _lastAuthError;
-
-  // ── Domain services (individually testable) ────────────────────────────────
-  late final ProfileService profileSvc =
-      ProfileService(client, _offlineSync);
-  late final ModuleService moduleSvc =
-      ModuleService(client, _offlineSync);
-  late final TopicService topicSvc =
-      TopicService(client, _offlineSync);
-  late final TimetableService timetableSvc =
-      TimetableService(client, _offlineSync);
-  late final ExamService examSvc =
-      ExamService(client, _offlineSync);
-  late final StudyGroupService studyGroupSvc =
-      StudyGroupService(client, _offlineSync);
-  late final MessageService messageSvc =
-      MessageService(client, _offlineSync);
-  late final StudySessionService studySessionSvc =
-      StudySessionService(client, _offlineSync);
-  late final WeeklyReportService weeklyReportSvc =
-      WeeklyReportService(client, _offlineSync);
-  late final UploadedNoteService uploadedNoteSvc =
-      UploadedNoteService(client, _offlineSync);
 
   Future<bool> _isOnline() async => _offlineSync.onlineNow;
 

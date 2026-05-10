@@ -7,6 +7,7 @@ import 'package:home_widget/home_widget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../constants/app_constants.dart';
 import '../services/supabase_service.dart';
 import '../utils/app_logger.dart';
 import '../utils/debug_print_compat.dart';
@@ -95,7 +96,7 @@ class OfflineSyncService extends ChangeNotifier {
   /// Ordered list of hosts to probe. The Supabase host is first so we confirm
   /// the backend is reachable, not just that some internet exists.
   static List<String> get _probeHosts {
-    final supabaseUrl = Supabase.instance.client.supabaseUrl;
+    final supabaseUrl = AppConstants.resolvedSupabaseUrl;
     final supabaseHost = Uri.tryParse(supabaseUrl)?.host ?? '';
     return [
       if (supabaseHost.isNotEmpty) supabaseHost,

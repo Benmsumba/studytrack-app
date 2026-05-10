@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/controllers/auth_provider.dart';
 import '../constants/app_spacing.dart';
@@ -105,9 +106,10 @@ class AppDrawer extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final auth = context.watch<AuthProvider>();
-    final user = auth.currentUser;
-    final name = user?.userMetadata?['name']?.toString() ?? 'Student';
-    final email = user?.email ?? 'Welcome to StudyTrack';
+    final profile = auth.currentUser;
+    final authUser = Supabase.instance.client.auth.currentUser;
+    final name = profile?.name ?? 'Student';
+    final email = authUser?.email ?? 'Welcome to StudyTrack';
 
     return Drawer(
       child: SafeArea(
@@ -158,7 +160,7 @@ class AppDrawer extends StatelessWidget {
                     onPressed: () async {
                       HapticFeedback.lightImpact();
                       Navigator.of(context).pop();
-                      await context.read<AuthProvider>().signOut();
+                      await context.read<AuthProvider>().logout();
                       if (context.mounted) context.go('/login');
                     },
                     icon: Icon(Icons.logout_rounded, color: palette.danger),
