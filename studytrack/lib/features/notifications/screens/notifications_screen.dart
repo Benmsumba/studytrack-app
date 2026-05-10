@@ -387,7 +387,7 @@ class _NotificationTileState extends State<_NotificationTile>
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: Color(0xFF06B6D4),
+                            color: AppColors.steelTeal,
                             shape: BoxShape.circle,
                           ),
                         ),

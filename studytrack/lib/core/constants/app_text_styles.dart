@@ -4,43 +4,43 @@ import 'app_colors.dart';
 
 class AppTextStyles {
   // ============ Display Styles ============
-  static final TextStyle displayLarge = GoogleFonts.outfit(
-    fontSize: 40,
-    fontWeight: FontWeight.w800,
+  static final TextStyle displayLarge = GoogleFonts.spaceGrotesk(
+    fontSize: 48,
+    fontWeight: FontWeight.w600,
     height: 1.1,
-    color: AppColors.textGlow,
-    letterSpacing: -0.8,
+    color: AppColors.textPrimary,
+    letterSpacing: -1.2,
   );
 
-  static final TextStyle displayMedium = GoogleFonts.outfit(
-    fontSize: 32,
-    fontWeight: FontWeight.w800,
+  static final TextStyle displayMedium = GoogleFonts.spaceGrotesk(
+    fontSize: 36,
+    fontWeight: FontWeight.w600,
     height: 1.15,
-    color: AppColors.textGlow,
-    letterSpacing: -0.5,
+    color: AppColors.textPrimary,
+    letterSpacing: -0.6,
   );
 
   // ============ Heading Styles ============
-  static final TextStyle headingLarge = GoogleFonts.outfit(
-    fontSize: 28,
-    fontWeight: FontWeight.w700,
-    height: 1.2,
-    color: AppColors.textPrimary,
-    letterSpacing: -0.35,
-  );
-
-  static final TextStyle headingMedium = GoogleFonts.outfit(
-    fontSize: 24,
+  static final TextStyle headingLarge = GoogleFonts.spaceGrotesk(
+    fontSize: 26,
     fontWeight: FontWeight.w600,
     height: 1.2,
+    color: AppColors.textPrimary,
+    letterSpacing: -0.3,
+  );
+
+  static final TextStyle headingMedium = GoogleFonts.spaceGrotesk(
+    fontSize: 22,
+    fontWeight: FontWeight.w600,
+    height: 1.25,
     color: AppColors.textPrimary,
     letterSpacing: -0.2,
   );
 
-  static final TextStyle headingSmall = GoogleFonts.outfit(
-    fontSize: 20,
+  static final TextStyle headingSmall = GoogleFonts.spaceGrotesk(
+    fontSize: 18,
     fontWeight: FontWeight.w600,
-    height: 1.25,
+    height: 1.3,
     color: AppColors.textPrimary,
   );
 
@@ -137,27 +137,27 @@ class AppTextStyles {
   );
 
   // ============ Accent/Highlight Styles ============
-  static final TextStyle accentLarge = GoogleFonts.outfit(
+  static final TextStyle accentLarge = GoogleFonts.spaceGrotesk(
     fontSize: 20,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w600,
     height: 1.2,
-    color: AppColors.neonCyan,
-    letterSpacing: 0.25,
+    color: AppColors.amberWarm,
+    letterSpacing: 0.1,
   );
 
-  static final TextStyle accentMedium = GoogleFonts.outfit(
+  static final TextStyle accentMedium = GoogleFonts.spaceGrotesk(
     fontSize: 16,
     fontWeight: FontWeight.w600,
     height: 1.3,
-    color: AppColors.neonViolet,
+    color: AppColors.steelTeal,
   );
 
-  static final TextStyle statValue = GoogleFonts.outfit(
-    fontSize: 26,
-    fontWeight: FontWeight.w800,
+  static final TextStyle statValue = GoogleFonts.spaceGrotesk(
+    fontSize: 36,
+    fontWeight: FontWeight.w600,
     height: 1.05,
-    color: AppColors.textGlow,
-    letterSpacing: -0.4,
+    color: AppColors.textPrimary,
+    letterSpacing: -0.8,
   );
 
   static final TextStyle sectionOverline = GoogleFonts.inter(

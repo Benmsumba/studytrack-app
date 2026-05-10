@@ -31,7 +31,7 @@ class SnackbarHelper {
       case AppSnackbarType.warning:
         return (const Color(0xFFF59E0B), Icons.warning_amber_rounded);
       case AppSnackbarType.info:
-        return (const Color(0xFF06B6D4), Icons.info_outline_rounded);
+        return (const Color(0xFF4A9EBD), Icons.info_outline_rounded);
     }
   }
 }
