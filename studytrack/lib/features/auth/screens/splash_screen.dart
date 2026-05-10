@@ -86,15 +86,10 @@ class _SplashScreenState extends State<SplashScreen> {
                     curve: Curves.easeInOut,
                   ),
               const SizedBox(height: 28),
-              ShaderMask(
-                shaderCallback: (rect) =>
-                    palette.brandGradient.createShader(rect),
-                blendMode: BlendMode.srcIn,
-                child: Text(
-                  'StudyTrack',
-                  style: theme.textTheme.displayMedium?.copyWith(
-                    color: Colors.white,
-                  ),
+              Text(
+                'StudyTrack',
+                style: theme.textTheme.displayMedium?.copyWith(
+                  color: palette.textPrimary,
                 ),
               )
                   .animate()
