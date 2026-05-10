@@ -642,13 +642,16 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     };
 
     final editId = widget.editClassData?['id']?.toString();
-    if (editId != null) {
-      await widget.service.updateClassSlot(editId, payload);
-    } else {
-      await widget.service.addClassSlot(payload);
-    }
+    final saved = editId != null
+        ? await widget.service.updateClassSlot(editId, payload)
+        : await widget.service.addClassSlot(payload);
 
     if (!mounted) return;
+    if (saved == null) {
+      setState(() => _isSaving = false);
+      _showSnack('Could not save class. Please try again.');
+      return;
+    }
     Navigator.of(context).pop(true);
   }
 
@@ -674,7 +677,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     final endMinutes = _sessionEnd!.hour * 60 + _sessionEnd!.minute;
     final duration = (endMinutes - startMinutes).clamp(0, 600);
 
-    await widget.service.addStudySession({
+    final saved = await widget.service.addStudySession({
       'user_id': user.id,
       'topic_id': _selectedTopicId,
       'module_id': _selectedModuleId,
@@ -687,6 +690,11 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     });
 
     if (!mounted) return;
+    if (saved == null) {
+      setState(() => _isSaving = false);
+      _showSnack('Could not save session. Please try again.');
+      return;
+    }
     Navigator.of(context).pop(true);
   }
 

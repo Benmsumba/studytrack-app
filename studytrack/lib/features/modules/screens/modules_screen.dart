@@ -480,21 +480,33 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
       _isSaving = true;
     });
 
-    if (widget.module == null) {
-      await widget.moduleRepo.createModule(
-        name: name,
-        code: name.toLowerCase().replaceAll(' ', '-'),
-        description: '',
-      );
-    } else {
-      final updated = widget.module!.copyWith(
-        name: name,
-        color: _hexColor(_selectedColor),
-      );
-      await widget.moduleRepo.updateModule(updated);
-    }
+    final colorHex = _hexColor(_selectedColor);
+    final result = widget.module == null
+        ? await widget.moduleRepo.createModule(
+            name: name,
+            code: name.toLowerCase().replaceAll(' ', '-'),
+            description: '',
+            color: colorHex,
+          )
+        : await widget.moduleRepo.updateModule(
+            widget.module!.copyWith(name: name, color: colorHex),
+          );
 
     if (!mounted) return;
+
+    final saved = result is Success;
+    if (!saved) {
+      setState(() {
+        _isSaving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Could not save module. Please try again.'),
+        ),
+      );
+      return;
+    }
+
     Navigator.of(context).pop(true);
   }
 
