@@ -859,4 +859,3 @@ class _ModuleDonutCard extends StatelessWidget {
     );
   }
 }
-
