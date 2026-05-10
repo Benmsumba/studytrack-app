@@ -28,7 +28,7 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 1.200.3
 
       - name: Validate required secrets
         id: secret_check

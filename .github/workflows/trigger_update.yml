@@ -20,31 +20,38 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  push-version-json:
+  check-secrets:
+    name: Check required secrets
     runs-on: ubuntu-latest
-    timeout-minutes: 5
-
+    outputs:
+      secrets_ok: ${{ steps.check.outputs.secrets_ok }}
     steps:
-      - name: Verify secrets
-        id: secrets
+      - name: Verify
+        id: check
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           TRIMMED_KEY=$(echo "${SUPABASE_SERVICE_ROLE_KEY}" | tr -d '[:space:]')
           if [ -z "${SUPABASE_URL}" ] || [ -z "${TRIMMED_KEY}" ]; then
-            echo "::warning::Required secrets are not set."
-            echo "missing=true" >> "$GITHUB_OUTPUT"
-            echo "Skipping update notification publish."
-            exit 0
+            echo "::warning::Required secrets are not set. Skipping update publish."
+            echo "secrets_ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "secrets_ok=true" >> "$GITHUB_OUTPUT"
           fi
-          echo "SUPABASE_SERVICE_ROLE_KEY=${TRIMMED_KEY}" >> "$GITHUB_ENV"
-          echo "missing=false" >> "$GITHUB_OUTPUT"
 
+  push-version-json:
+    name: Publish latest.json
+    runs-on: ubuntu-latest
+    needs: check-secrets
+    if: needs.check-secrets.outputs.secrets_ok == 'true'
+    timeout-minutes: 5
+
+    steps:
       - name: Ensure app-updates bucket is public
-        if: steps.secrets.outputs.missing == 'false'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           curl --silent -X POST "${SUPABASE_URL}/storage/v1/bucket" \
             -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
@@ -55,10 +62,10 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"public":true}'
 
-      - name: Create latest.json
-        if: steps.secrets.outputs.missing == 'false'
+      - name: Create and upload latest.json
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           VERSION_CODE=$((10000 + GITHUB_RUN_NUMBER))
           VERSION_NAME="${{ github.event.inputs.version_name }}"
