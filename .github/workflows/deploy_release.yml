@@ -115,13 +115,18 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+          DEBUG_KEYSTORE_PASSWORD: ${{ secrets.DEBUG_KEYSTORE_PASSWORD }}
         run: |
           mkdir -p ~/.android
-          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+
+          # --- 1. Production keystore (preferred for Play Store / sideload) ---
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && \
+             [ -n "$KEY_ALIAS" ]        && [ -n "$KEY_PASSWORD" ]; then
             KEYSTORE_FILE="$HOME/.android/production.jks"
             echo "$KEYSTORE_BASE64" | base64 -d > "$KEYSTORE_FILE"
             if ! test -s "$KEYSTORE_FILE"; then
-              echo "::error::Failed to decode keystore from base64"
+              echo "::error::Failed to decode production keystore from base64"
               exit 1
             fi
             echo "Using production signing keystore."
@@ -134,26 +139,55 @@ jobs:
             exit 0
           fi
 
-          echo "Using Android debug keystore for CI builds."
-          DEBUG_KEYSTORE="$HOME/.android/debug.keystore"
-          if [ ! -f "$DEBUG_KEYSTORE" ]; then
-            keytool -genkeypair \
-              -alias androiddebugkey \
-              -keyalg RSA \
-              -keysize 2048 \
-              -validity 10000 \
-              -keystore "$DEBUG_KEYSTORE" \
-              -storepass android \
-              -keypass android \
-              -noprompt \
-              -dname "CN=Android Debug, O=Android, C=US" || true
+          # --- 2. Stable debug keystore (MUST be the same key on every run) ---
+          # Generate this once locally and store as GitHub secret DEBUG_KEYSTORE_BASE64:
+          #   keytool -genkeypair -alias studytrack-debug -keyalg RSA -keysize 2048 \
+          #     -validity 36500 -keystore debug.jks \
+          #     -storepass studytrack-debug -keypass studytrack-debug -noprompt \
+          #     -dname "CN=StudyTrack Debug, O=StudyTrack, C=US"
+          #   base64 -i debug.jks | tr -d '\n'   # paste the output as the secret
+          if [ -n "$DEBUG_KEYSTORE_BASE64" ]; then
+            DEBUG_KEYSTORE_FILE="$HOME/.android/debug-ci.jks"
+            echo "$DEBUG_KEYSTORE_BASE64" | base64 -d > "$DEBUG_KEYSTORE_FILE"
+            if ! test -s "$DEBUG_KEYSTORE_FILE"; then
+              echo "::error::Failed to decode debug keystore from base64"
+              exit 1
+            fi
+            PASS="${DEBUG_KEYSTORE_PASSWORD:-studytrack-debug}"
+            echo "Using stable debug signing keystore."
+            {
+              echo "KEYSTORE_PATH=$DEBUG_KEYSTORE_FILE"
+              echo "KEYSTORE_PASSWORD=$PASS"
+              echo "KEY_ALIAS=studytrack-debug"
+              echo "KEY_PASSWORD=$PASS"
+            } >> "$GITHUB_ENV"
+            exit 0
           fi
-          {
-            echo "KEYSTORE_PATH=$DEBUG_KEYSTORE"
-            echo "KEYSTORE_PASSWORD=android"
-            echo "KEY_ALIAS=androiddebugkey"
-            echo "KEY_PASSWORD=android"
-          } >> "$GITHUB_ENV"
+
+          # --- 3. No keystore configured — fail clearly ---
+          # A randomly generated keystore would produce a different certificate
+          # on every run, causing "App not installed" for OTA updates.
+          echo "::error::No signing keystore configured. OTA updates will fail if you skip this."
+          echo "::error::Add one of these GitHub secrets:"
+          echo "::error::  KEYSTORE_BASE64 + KEYSTORE_PASSWORD + KEY_ALIAS + KEY_PASSWORD  (production)"
+          echo "::error::  DEBUG_KEYSTORE_BASE64  (debug — generate once, reuse forever)"
+          echo "::error::To generate a debug keystore run:"
+          echo "::error::  keytool -genkeypair -alias studytrack-debug -keyalg RSA -keysize 2048 \\"
+          echo "::error::    -validity 36500 -keystore debug.jks \\"
+          echo "::error::    -storepass studytrack-debug -keypass studytrack-debug -noprompt \\"
+          echo "::error::    -dname 'CN=StudyTrack Debug, O=StudyTrack, C=US'"
+          echo "::error::  base64 -i debug.jks | tr -d '\\n'   # add output as DEBUG_KEYSTORE_BASE64 secret"
+          exit 1
+
+      - name: Patch version constants
+        run: |
+          # Keep AppConstants.currentVersionCode in sync with the build number
+          # so the fallback path in UpdateProvider is never stale.
+          sed -i "s/static const int currentVersionCode = [0-9]*/static const int currentVersionCode = ${{ steps.ver.outputs.build }}/" \
+            studytrack/lib/core/constants/app_constants.dart
+          sed -i "s/static const String appVersion = '[^']*'/static const String appVersion = '${{ steps.ver.outputs.version }}'/" \
+            studytrack/lib/core/constants/app_constants.dart
+          echo "Patched: currentVersionCode=${{ steps.ver.outputs.build }}, appVersion=${{ steps.ver.outputs.version }}"
 
       - name: Build release APK
         working-directory: studytrack
@@ -162,7 +196,7 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          flutter build apk --release --target-platform=android-arm64 \
+          flutter build apk --release \
             --build-name="${{ steps.ver.outputs.version }}" \
             --build-number="${{ steps.ver.outputs.build }}" \
             --obfuscate \

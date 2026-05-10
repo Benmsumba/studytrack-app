@@ -3,8 +3,11 @@ class AppConstants {
   static const String appName = 'StudyTrack';
   static const String appVersion = '1.1.0';
 
-  // Must match the +build_number in pubspec.yaml. Bump on every APK release.
-  static const int currentVersionCode = 1;
+  // Fallback used only when PackageInfo.fromPlatform() fails at runtime.
+  // The CI patches this value automatically before every build so it always
+  // equals the actual versionCode baked into the APK (10000 + run_number).
+  // Do not edit manually — the deploy_release.yml workflow owns this value.
+  static const int currentVersionCode = 2;
 
   // Environment placeholders — supply real values via --dart-define at build time.
   // Never hard-code real keys here; leave these as empty or placeholder strings.
