@@ -3,11 +3,13 @@ import 'package:flutter/services.dart';
 
 import '../constants/app_spacing.dart';
 import '../theme/app_palette.dart';
-import 'glass_card.dart';
 
-/// Unified glass header used across the main shell and standalone screens.
-/// Contains: optional menu button (drawer), brand mark, page title,
-/// optional subtitle, and trailing action chips.
+/// App-wide screen header.
+///
+/// Architectural Minimalism: lives directly on the page surface, no card
+/// wrapper, no glass effect. The title is the visual anchor; the small
+/// muted eyebrow above it provides context without the previous loud
+/// brand-tag treatment.
 class AppHeader extends StatelessWidget {
   const AppHeader({
     required this.title,
@@ -34,86 +36,82 @@ class AppHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final theme = Theme.of(context);
+    final hasLeading = onBack != null || onMenuTap != null || leadingIcon != null;
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         AppSpacing.screenHorizontal,
-        AppSpacing.sm,
+        compact ? AppSpacing.sm : AppSpacing.md,
         AppSpacing.screenHorizontal,
-        AppSpacing.md,
+        compact ? AppSpacing.sm : AppSpacing.lg,
       ),
-      child: GlassCard(
-        padding: EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: compact ? AppSpacing.sm : AppSpacing.md,
-        ),
-        borderRadius: AppSpacing.cardRadius,
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            if (onBack != null)
-              _CircleIconButton(
-                icon: Icons.arrow_back_rounded,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onBack!();
-                },
-              )
-            else if (onMenuTap != null)
-              _CircleIconButton(
-                icon: Icons.menu_rounded,
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onMenuTap!();
-                },
-              )
-            else if (leadingIcon != null)
-              _CircleIconButton(icon: leadingIcon!, onTap: () {}),
-            if (onBack != null || onMenuTap != null || leadingIcon != null)
-              const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    eyebrow.toUpperCase(),
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: palette.brandSecondary,
-                      letterSpacing: 1.3,
-                      fontWeight: FontWeight.w700,
-                    ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (onBack != null)
+            _IconAffordance(
+              icon: Icons.arrow_back_rounded,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onBack!();
+              },
+            )
+          else if (onMenuTap != null)
+            _IconAffordance(
+              icon: Icons.menu_rounded,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                onMenuTap!();
+              },
+            )
+          else if (leadingIcon != null)
+            _IconAffordance(icon: leadingIcon!, onTap: () {}),
+          if (hasLeading) const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  eyebrow.toUpperCase(),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: palette.textMuted,
+                    letterSpacing: 1.4,
+                    fontWeight: FontWeight.w500,
                   ),
-                  const SizedBox(height: 2),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: compact
+                      ? theme.textTheme.headlineSmall
+                      : theme.textTheme.headlineMedium,
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 4),
                   Text(
-                    title,
+                    subtitle!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: compact
-                        ? theme.textTheme.titleLarge
-                        : theme.textTheme.headlineMedium,
+                    style: theme.textTheme.bodySmall,
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
                 ],
-              ),
+              ],
             ),
-            ...trailing,
-          ],
-        ),
+          ),
+          ...trailing,
+        ],
       ),
     );
   }
 }
 
-class _CircleIconButton extends StatelessWidget {
-  const _CircleIconButton({required this.icon, required this.onTap});
+/// Square icon button used for back / menu in the header.
+/// No background fill — the icon sits directly on the page surface.
+class _IconAffordance extends StatelessWidget {
+  const _IconAffordance({required this.icon, required this.onTap});
 
   final IconData icon;
   final VoidCallback onTap;
@@ -122,25 +120,21 @@ class _CircleIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     return Material(
-      color: palette.surfaceElevated,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: palette.borderSoft),
-      ),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: SizedBox(
           width: 40,
           height: 40,
-          child: Icon(icon, size: 20, color: palette.textPrimary),
+          child: Icon(icon, size: 22, color: palette.textPrimary),
         ),
       ),
     );
   }
 }
 
-/// Pill-shaped action button to drop into [AppHeader.trailing].
+/// Trailing action button for the header. Flat, square, no halos.
 class HeaderActionButton extends StatelessWidget {
   const HeaderActionButton({
     required this.icon,
@@ -161,17 +155,13 @@ class HeaderActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final btn = Material(
-      color: palette.surfaceElevated,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
-        side: BorderSide(color: palette.borderSoft),
-      ),
+      color: Colors.transparent,
       child: InkWell(
         onTap: () {
           HapticFeedback.selectionClick();
           onTap();
         },
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Stack(
           children: [
             SizedBox(
@@ -179,26 +169,20 @@ class HeaderActionButton extends StatelessWidget {
               height: 40,
               child: Icon(
                 icon,
-                size: 19,
+                size: 22,
                 color: color ?? palette.textPrimary,
               ),
             ),
             if (badge != null && badge! > 0)
               Positioned(
-                top: 6,
-                right: 6,
+                top: 9,
+                right: 9,
                 child: Container(
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
                     color: palette.danger,
                     shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: palette.danger.withValues(alpha: 0.7),
-                        blurRadius: 6,
-                      ),
-                    ],
                   ),
                 ),
               ),
@@ -208,10 +192,10 @@ class HeaderActionButton extends StatelessWidget {
     );
     if (tooltip != null) {
       return Padding(
-        padding: const EdgeInsets.only(left: 6),
+        padding: const EdgeInsets.only(left: 4),
         child: Tooltip(message: tooltip!, child: btn),
       );
     }
-    return Padding(padding: const EdgeInsets.only(left: 6), child: btn);
+    return Padding(padding: const EdgeInsets.only(left: 4), child: btn);
   }
 }

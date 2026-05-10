@@ -437,17 +437,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           ),
           const SizedBox(height: 28),
           Center(
-            child: ShaderMask(
-              shaderCallback: (rect) =>
-                  palette.brandGradient.createShader(rect),
-              blendMode: BlendMode.srcIn,
-              child: Text(
-                '$hours',
-                style: Theme.of(context)
-                    .textTheme
-                    .displayLarge
-                    ?.copyWith(fontSize: 96, color: Colors.white),
-              ),
+            child: Text(
+              '$hours',
+              style: Theme.of(context)
+                  .textTheme
+                  .displayLarge
+                  ?.copyWith(fontSize: 96, color: palette.brandPrimary),
             ),
           ),
           Center(

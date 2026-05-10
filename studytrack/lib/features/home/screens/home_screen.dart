@@ -191,27 +191,23 @@ class _GreetingHero extends StatelessWidget {
               Text(
                 greeting.toUpperCase(),
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: palette.brandSecondary,
+                  color: palette.textMuted,
                   letterSpacing: 1.4,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               const SizedBox(width: 6),
               Text(emoji, style: const TextStyle(fontSize: 14)),
             ],
           ),
-          const SizedBox(height: 4),
-          ShaderMask(
-            shaderCallback: (rect) => palette.brandGradient.createShader(rect),
-            blendMode: BlendMode.srcIn,
-            child: Text(
-              name,
-              style: theme.textTheme.displayMedium?.copyWith(
-                color: Colors.white,
-              ),
+          const SizedBox(height: 6),
+          Text(
+            name,
+            style: theme.textTheme.displayMedium?.copyWith(
+              color: palette.textPrimary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             'Your study cockpit is ready. Pick up where you left off or start a fresh sprint.',
             style: theme.textTheme.bodyMedium?.copyWith(
