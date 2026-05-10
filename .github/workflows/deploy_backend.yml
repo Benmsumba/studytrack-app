@@ -129,7 +129,23 @@ jobs:
 
           DB_URL="postgresql://postgres:${ENCODED_PASS}@db.${SUPABASE_PROJECT_REF}.supabase.co:5432/postgres"
           echo "Pushing database schema..."
-          supabase db push --db-url "$DB_URL" 2>&1
+
+          # Capture both stdout and stderr so we can surface the error in
+          # an annotation visible via the GitHub API (the raw log endpoint
+          # returns 403 from S3 when used outside the runner).
+          set +e
+          OUTPUT=$(supabase db push --db-url "$DB_URL" 2>&1)
+          STATUS=$?
+          set -e
+          echo "$OUTPUT"
+          if [ "$STATUS" -ne 0 ]; then
+            # Strip the password from the output before annotating.
+            SAFE=$(echo "$OUTPUT" | sed "s/${ENCODED_PASS}/REDACTED/g" \
+                                  | sed "s/${SUPABASE_DB_PASSWORD}/REDACTED/g" \
+                                  | tr '\n' '|' | head -c 800)
+            echo "::error title=supabase db push failed (exit $STATUS)::${SAFE}"
+            exit "$STATUS"
+          fi
           echo "Database schema deployed."
 
       - name: Deploy Edge Functions
