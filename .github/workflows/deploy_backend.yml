@@ -20,6 +20,11 @@ jobs:
   deploy-supabase:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      # Allow supabase CLI's internal git calls to work in any directory.
+      GIT_CONFIG_COUNT: '1'
+      GIT_CONFIG_KEY_0: 'safe.directory'
+      GIT_CONFIG_VALUE_0: '*'
 
     steps:
       - name: Checkout
@@ -117,9 +122,6 @@ jobs:
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          # Allow supabase CLI to call git from any directory.
-          git config --global --add safe.directory '*'
-
           # URL-encode the password so special characters don't break the DSN.
           ENCODED_PASS=$(python3 -c \
             "import urllib.parse, sys; print(urllib.parse.quote(sys.stdin.read().strip(), safe=''))" \
@@ -136,7 +138,6 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           # --project-ref bypasses the link requirement for function deploys.
           echo "Deploying gemini-proxy..."
           supabase functions deploy gemini-proxy --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
