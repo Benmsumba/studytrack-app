@@ -10,12 +10,16 @@ class SettingsProvider extends ChangeNotifier {
   static const _keyWeeklyReport = 'settings_weekly_report';
   static const _keyThemeMode = 'settings_theme_mode';
   static const _keyDarkMode = 'settings_dark_mode';
+  static const _keyDailyGoalHours = 'settings_daily_goal_hours';
+  static const _keyPomodoroMinutes = 'settings_pomodoro_minutes';
 
   bool dailyBriefing = true;
   bool studyReminders = true;
   bool examAlerts = true;
   bool weeklyReport = true;
   AppThemeMode themeMode = AppThemeMode.system;
+  int dailyGoalHours = 5;
+  int pomodoroMinutes = 25;
 
   ThemeMode get materialThemeMode => switch (themeMode) {
     AppThemeMode.system => ThemeMode.system,
@@ -31,6 +35,8 @@ class SettingsProvider extends ChangeNotifier {
     studyReminders = prefs.getBool(_keyStudyReminders) ?? true;
     examAlerts = prefs.getBool(_keyExamAlerts) ?? true;
     weeklyReport = prefs.getBool(_keyWeeklyReport) ?? true;
+    dailyGoalHours = prefs.getInt(_keyDailyGoalHours) ?? 5;
+    pomodoroMinutes = prefs.getInt(_keyPomodoroMinutes) ?? 25;
     final savedThemeMode = prefs.getString(_keyThemeMode);
     if (savedThemeMode != null && savedThemeMode.isNotEmpty) {
       themeMode = AppThemeMode.values.firstWhere(
@@ -74,6 +80,20 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyWeeklyReport, value);
+  }
+
+  Future<void> setDailyGoalHours(int value) async {
+    dailyGoalHours = value.clamp(1, 16);
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyDailyGoalHours, dailyGoalHours);
+  }
+
+  Future<void> setPomodoroMinutes(int value) async {
+    pomodoroMinutes = value.clamp(5, 90);
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyPomodoroMinutes, pomodoroMinutes);
   }
 
   Future<void> setDarkMode(bool value) async {

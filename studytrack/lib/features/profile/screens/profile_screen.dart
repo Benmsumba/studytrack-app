@@ -237,6 +237,218 @@ class _ProfileScreenState extends State<ProfileScreen> {
     };
   }
 
+  // ── Edit Profile Sheet ────────────────────────────────────────────────────
+
+  Future<void> _showEditSheet(BuildContext context) async {
+    final name = (_profile?['name'] as String?) ?? '';
+    final course = (_profile?['course'] as String?) ?? '';
+    final yearLevel = (_profile?['year_level'] as num?)?.toInt() ?? 1;
+    final studyPreference =
+        (_profile?['study_preference'] as String?) ?? 'alone';
+
+    final nameCtrl = TextEditingController(text: name);
+    final courseCtrl = TextEditingController(text: course);
+    var year = yearLevel;
+    var preference = studyPreference;
+    var isSaving = false;
+    final formKey = GlobalKey<FormState>();
+
+    const courseOptions = [
+      'Pharmacy',
+      'MBBS',
+      'Physiotherapy',
+      'Nursing',
+      'Dentistry',
+      'Other',
+    ];
+    const prefOptions = [
+      ('alone', 'Study alone'),
+      ('groups', 'Study in groups'),
+      ('mixed', 'Mixed'),
+    ];
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.viewInsetsOf(ctx).bottom + 32,
+          ),
+          child: Form(
+            key: formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Edit Profile',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Name
+                  TextFormField(
+                    controller: nameCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Full name',
+                      prefixIcon: Icon(Icons.person_outline),
+                    ),
+                    textCapitalization: TextCapitalization.words,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Name cannot be empty'
+                        : null,
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Course
+                  DropdownButtonFormField<String>(
+                    value: courseOptions.contains(courseCtrl.text)
+                        ? courseCtrl.text
+                        : (courseOptions.isNotEmpty ? courseOptions.last : null),
+                    decoration: const InputDecoration(
+                      labelText: 'Course / Programme',
+                      prefixIcon: Icon(Icons.school_outlined),
+                    ),
+                    items: courseOptions
+                        .map(
+                          (c) => DropdownMenuItem(value: c, child: Text(c)),
+                        )
+                        .toList(),
+                    onChanged: (v) {
+                      if (v != null) courseCtrl.text = v;
+                    },
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Year Level
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Year level',
+                          style: TextStyle(fontSize: 14),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.remove_circle_outline),
+                        onPressed: year > 1
+                            ? () => setLocal(() => year--)
+                            : null,
+                      ),
+                      Text(
+                        '$year',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add_circle_outline),
+                        onPressed: year < 10
+                            ? () => setLocal(() => year++)
+                            : null,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Study Preference
+                  const Text('Study preference', style: TextStyle(fontSize: 14)),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: prefOptions.map(((String, String) opt) {
+                      final (value, label) = opt;
+                      return ChoiceChip(
+                        label: Text(label),
+                        selected: preference == value,
+                        onSelected: (_) => setLocal(() => preference = value),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Save button
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              if (!formKey.currentState!.validate()) return;
+                              setLocal(() => isSaving = true);
+                              try {
+                                await _profileRepository.updateProfile({
+                                  'name': nameCtrl.text.trim(),
+                                  'course': courseCtrl.text.trim(),
+                                  'year_level': year,
+                                  'study_preference': preference,
+                                });
+                                if (ctx.mounted) Navigator.pop(ctx);
+                                await _load();
+                                if (context.mounted) {
+                                  SnackbarHelper.show(
+                                    context,
+                                    'Profile updated successfully.',
+                                    type: AppSnackbarType.success,
+                                  );
+                                }
+                              } catch (_) {
+                                setLocal(() => isSaving = false);
+                                if (ctx.mounted) {
+                                  SnackbarHelper.show(
+                                    ctx,
+                                    'Failed to update profile. Please try again.',
+                                    type: AppSnackbarType.error,
+                                  );
+                                }
+                              }
+                            },
+                      child: isSaving
+                          ? const SizedBox(
+                              height: 18,
+                              width: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Save Changes'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    nameCtrl.dispose();
+    courseCtrl.dispose();
+  }
+
+  // ── Build ─────────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -255,7 +467,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final xpProgress = (xp % 100) / 100.0;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile'), centerTitle: false),
+      appBar: AppBar(
+        title: const Text('Profile'),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit profile',
+            onPressed: () => _showEditSheet(context),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         color: AppColors.accent,
         backgroundColor: AppColors.surfaceDark,

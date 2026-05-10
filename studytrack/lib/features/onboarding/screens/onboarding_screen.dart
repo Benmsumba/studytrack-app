@@ -122,15 +122,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     if (_isSaving) return;
     setState(() => _isSaving = true);
     try {
-      final profileResult = await _profileRepository.getCurrentProfile();
-      final currentProfile =
-          profileResult.fold((_) => null, (p) => p);
-      if (currentProfile == null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('onboarding_complete', true);
-        if (mounted) context.go('/home');
-        return;
-      }
+      // Always attempt to persist — updateProfile upserts the row, so it
+      // works for both brand-new users (no profile row yet) and returning
+      // users updating their preferences.
       await _profileRepository.updateProfile({
         'name': _nameController.text.trim(),
         'course': _courseController.text.trim(),
@@ -144,6 +138,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       _confettiController.play();
       if (mounted) context.go('/home');
     } catch (_) {
+      // Save flag locally so the guard doesn't re-show onboarding; data
+      // will sync to the cloud on next successful connection.
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('onboarding_complete', true);
       if (mounted) {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -330,9 +331,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: () {
-                if (_exams.isEmpty) return;
-              },
+              onPressed: () => context.push('/study-session'),
               style: OutlinedButton.styleFrom(
                 side: const BorderSide(color: Color(0xFF7C3AED)),
                 shape: RoundedRectangleBorder(
