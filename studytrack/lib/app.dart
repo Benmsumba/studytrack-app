@@ -6,7 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'core/constants/app_constants.dart';
+import 'core/services/analytics_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/app_error_boundary.dart';
 import 'core/widgets/offline_status_banner.dart';
 import 'features/ai_tutor/screens/ai_tutor_screen.dart';
 import 'features/ai_tutor/screens/quiz_screen.dart';
@@ -24,6 +26,7 @@ import 'features/home/screens/main_shell.dart';
 import 'features/modules/screens/module_detail_screen.dart';
 import 'features/modules/screens/modules_screen.dart';
 import 'features/modules/screens/topic_detail_screen.dart';
+import 'features/legal/screens/privacy_policy_screen.dart';
 import 'features/notifications/screens/notifications_screen.dart';
 import 'features/onboarding/screens/onboarding_screen.dart';
 import 'features/profile/screens/profile_screen.dart';
@@ -80,6 +83,7 @@ class StudyTrackApp extends StatelessWidget {
   GoRouter _buildRouter() => GoRouter(
     initialLocation: '/splash',
     refreshListenable: authProvider,
+    observers: [_AnalyticsObserver()],
     redirect: (context, state) async {
       final location = state.matchedLocation;
 
@@ -253,6 +257,14 @@ class StudyTrackApp extends StatelessWidget {
         path: '/notifications',
         builder: (context, state) => const NotificationsScreen(),
       ),
+      GoRoute(
+        path: '/privacy-policy',
+        builder: (context, state) => const PrivacyPolicyScreen(),
+      ),
+      GoRoute(
+        path: '/terms-of-service',
+        builder: (context, state) => const TermsOfServiceScreen(),
+      ),
     ],
   );
 
@@ -267,7 +279,8 @@ class StudyTrackApp extends StatelessWidget {
         final lightTheme = AppTheme.light(dynamicColorScheme: lightDynamic);
         final darkTheme = AppTheme.dark(dynamicColorScheme: darkDynamic);
 
-        return MaterialApp.router(
+        return AppErrorBoundary(
+          child: MaterialApp.router(
           debugShowCheckedModeBanner: false,
           routerConfig: _buildRouter(),
           title: 'StudyTrack',
@@ -299,8 +312,30 @@ class StudyTrackApp extends StatelessWidget {
               ),
             );
           },
-        );
+        ),  // MaterialApp.router
+        );  // AppErrorBoundary
       },
     );
+  }
+}
+
+// ── Analytics screen-view observer ───────────────────────────────────────────
+
+class _AnalyticsObserver extends NavigatorObserver {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    _record(route);
+  }
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
+    if (newRoute != null) _record(newRoute);
+  }
+
+  void _record(Route<dynamic> route) {
+    final name = route.settings.name;
+    if (name != null && name.isNotEmpty) {
+      Analytics.screen(name);
+    }
   }
 }

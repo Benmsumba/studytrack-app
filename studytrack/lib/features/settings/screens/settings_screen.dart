@@ -641,6 +641,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 32),
 
+              // ── Legal ──────────────────────────────────────────────────────
+              const _SectionHeader(title: 'Legal'),
+              const SizedBox(height: AppSpacing.md),
+              _SettingsCard(
+                title: 'Privacy Policy',
+                subtitle: 'How we handle your data',
+                trailing: const Icon(Icons.arrow_forward),
+                onTap: () => context.push('/privacy-policy'),
+              ),
+              const SizedBox(height: 12),
+              _SettingsCard(
+                title: 'Terms of Service',
+                subtitle: 'Rules and responsibilities',
+                trailing: const Icon(Icons.arrow_forward),
+                onTap: () => context.push('/terms-of-service'),
+              ),
+              const SizedBox(height: 32),
+
               // ── Support ────────────────────────────────────────────────────
               const _SectionHeader(title: 'Support'),
               const SizedBox(height: AppSpacing.md),

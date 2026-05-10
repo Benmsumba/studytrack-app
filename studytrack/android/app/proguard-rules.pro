@@ -50,3 +50,35 @@
 -keep class com.google.android.play.core.** { *; }
 -keep interface com.google.android.play.core.** { *; }
 -dontwarn com.google.android.play.core.**
+
+# Sentry — crash reporting SDK.
+# Keep event processors, breadcrumb serializers, and the hub.
+-keep class io.sentry.** { *; }
+-keep interface io.sentry.** { *; }
+-keepnames class io.sentry.** { *; }
+-dontwarn io.sentry.**
+# Sentry Android — keep native crash integration.
+-keep class io.sentry.android.** { *; }
+-dontwarn io.sentry.android.**
+# Sentry requires source file names in stack traces to be readable.
+-keepattributes SourceFile,LineNumberTable
+# Rename obfuscated source references so Sentry can de-obfuscate them.
+-renamesourcefileattribute SourceFile
+
+# Spotify SDK (if used) — keep OAuth handler.
+-keep class com.spotify.** { *; }
+-dontwarn com.spotify.**
+
+# share_plus / SharePlus — keep FileProvider authority class.
+-keep class androidx.core.content.FileProvider { *; }
+
+# path_provider — keep activity reference classes.
+-keep class io.flutter.plugin.common.PluginRegistry { *; }
+
+# flutter_local_notifications — keep notification receiver.
+-keep class com.dexterous.** { *; }
+-dontwarn com.dexterous.**
+
+# record / audio plugin — keep JNI classes.
+-keep class com.llfbandit.record.** { *; }
+-dontwarn com.llfbandit.record.**
