@@ -184,7 +184,11 @@ class SupabaseService {
           } on Object catch (error, stackTrace) {
             // Account creation already succeeded in Auth. A profile can be
             // created/updated later during onboarding or on next login.
-            AppLogger.warning('signUpWithEmail profile upsert error', error: error, stackTrace: stackTrace);
+            AppLogger.warning(
+              'signUpWithEmail profile upsert error',
+              error: error,
+              stackTrace: stackTrace,
+            );
           }
         }
 
@@ -196,7 +200,11 @@ class SupabaseService {
           continue;
         }
         _lastAuthError = _mapAuthErrorText(errorMessage);
-        AppLogger.warning('signUpWithEmail auth error', error: errorMessage, stackTrace: stackTrace);
+        AppLogger.warning(
+          'signUpWithEmail auth error',
+          error: errorMessage,
+          stackTrace: stackTrace,
+        );
         return null;
       }
     }
@@ -226,7 +234,11 @@ class SupabaseService {
           continue;
         }
         _lastAuthError = _mapAuthErrorText(errorMessage);
-        AppLogger.warning('signInWithEmail auth error', error: errorMessage, stackTrace: stackTrace);
+        AppLogger.warning(
+          'signInWithEmail auth error',
+          error: errorMessage,
+          stackTrace: stackTrace,
+        );
         return null;
       }
     }
@@ -250,7 +262,11 @@ class SupabaseService {
       await client.auth.resetPasswordForEmail(email.trim());
       return true;
     } on Object catch (error, stackTrace) {
-      AppLogger.warning('resetPasswordForEmail error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'resetPasswordForEmail error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -268,7 +284,11 @@ class SupabaseService {
       return launched;
     } on Object catch (error, stackTrace) {
       _lastAuthError = _mapAuthErrorText(error.toString());
-      AppLogger.warning('signInWithGoogle error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'signInWithGoogle error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -277,7 +297,11 @@ class SupabaseService {
     try {
       return client.auth.currentUser;
     } on Object catch (error, stackTrace) {
-      AppLogger.warning('getCurrentUser error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'getCurrentUser error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -286,7 +310,11 @@ class SupabaseService {
     try {
       return client.auth.currentUser != null;
     } on Object catch (error, stackTrace) {
-      AppLogger.warning('isLoggedIn error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'isLoggedIn error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -311,7 +339,11 @@ class SupabaseService {
 
       return await _cachedRecord('profiles', userId);
     } on Object catch (error, stackTrace) {
-      AppLogger.warning('getProfile error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'getProfile error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return _cachedRecord('profiles', userId);
     }
   }
@@ -340,7 +372,11 @@ class SupabaseService {
       await _cacheRecord('profiles', userId, optimistic);
       return optimistic;
     } on Object catch (error, stackTrace) {
-      AppLogger.warning('updateProfile error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'updateProfile error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       try {
         await _queueChange('profiles', 'upsert', payload, recordId: userId);
         final existing =
@@ -349,7 +385,11 @@ class SupabaseService {
         await _cacheRecord('profiles', userId, optimistic);
         return optimistic;
       } on Object catch (queueError, queueStack) {
-        AppLogger.warning('updateProfile queue fallback error', error: queueError, stackTrace: queueStack);
+        AppLogger.warning(
+          'updateProfile queue fallback error',
+          error: queueError,
+          stackTrace: queueStack,
+        );
         return null;
       }
     }
@@ -380,7 +420,11 @@ class SupabaseService {
       );
     } on Object catch (error, stackTrace) {
       // Non-fatal: user can still proceed and retry profile updates later.
-      AppLogger.warning('ensureProfileExists error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'ensureProfileExists error',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -482,7 +526,11 @@ class SupabaseService {
         'last_study_date': todayDate.toIso8601String().split('T').first,
       });
     } on Object catch (error, stackTrace) {
-      AppLogger.warning('updateStreak error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'updateStreak error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -509,7 +557,11 @@ class SupabaseService {
         cached ?? const [],
       ).map(ModuleModel.fromJson).toList(growable: false);
     } on Object catch (error, stackTrace) {
-      AppLogger.warning('getModules error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'getModules error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       final cached = await _cachedList('modules', userId);
       return _activeRows(
         cached ?? const [],
@@ -537,7 +589,11 @@ class SupabaseService {
       final cached = await _cachedRecord('modules', moduleId);
       return _activeRow(cached) == null ? null : ModuleModel.fromJson(cached!);
     } on Object catch (error, stackTrace) {
-      AppLogger.warning('getModuleById error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'getModuleById error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       final cached = await _cachedRecord('modules', moduleId);
       return _activeRow(cached) == null ? null : ModuleModel.fromJson(cached!);
     }
@@ -577,7 +633,11 @@ class SupabaseService {
       await _cacheRecord('modules', moduleId, payload);
       return payload;
     } on Object catch (error, stackTrace) {
-      AppLogger.warning('addModule error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'addModule error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -608,7 +668,11 @@ class SupabaseService {
       await _cacheRecord('modules', moduleId, optimistic);
       return optimistic;
     } on Object catch (error, stackTrace) {
-      AppLogger.warning('updateModule error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'updateModule error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -640,7 +704,11 @@ class SupabaseService {
       }, recordId: moduleId);
       return true;
     } on Object catch (error, stackTrace) {
-      AppLogger.warning('deleteModule error', error: error, stackTrace: stackTrace);
+      AppLogger.warning(
+        'deleteModule error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -1898,7 +1966,11 @@ class SupabaseService {
     int offset = 0,
   }) async {
     try {
-      final rows = await getGroupMessages(groupId, limit: limit, offset: offset);
+      final rows = await getGroupMessages(
+        groupId,
+        limit: limit,
+        offset: offset,
+      );
       if (rows == null) return null;
       return rows.map(GroupMessageModel.fromJson).toList();
     } catch (e) {

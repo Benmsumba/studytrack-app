@@ -351,9 +351,9 @@ class _StudySessionScreenState extends State<StudySessionScreen>
     // Snapshot pre-session badges so we can detect newly earned ones.
     final preSessionBadgeTypes = userId == null
         ? <String>{}
-        : (await achievementService.getEarnedBadges(userId))
-              .map((b) => b.badgeType)
-              .toSet();
+        : (await achievementService.getEarnedBadges(
+            userId,
+          )).map((b) => b.badgeType).toSet();
 
     final sessionId = widget.sessionId;
     if (sessionId != null && sessionId.isNotEmpty) {
@@ -385,10 +385,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
       }
     }
 
-    Analytics.sessionCompleted(
-      durationMinutes: elapsedMinutes,
-      rating: rating,
-    );
+    Analytics.sessionCompleted(durationMinutes: elapsedMinutes, rating: rating);
 
     _confettiController.play();
     if (!mounted) return;

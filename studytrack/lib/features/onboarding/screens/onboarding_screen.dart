@@ -54,8 +54,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   void initState() {
     super.initState();
     _profileRepository = getIt<ProfileRepository>();
-    _confettiController =
-        ConfettiController(duration: const Duration(seconds: 2));
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 2),
+    );
   }
 
   @override
@@ -166,7 +167,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final hPad = size.width >= 600 ? AppSpacing.xl : AppSpacing.screenHorizontal;
+    final hPad = size.width >= 600
+        ? AppSpacing.xl
+        : AppSpacing.screenHorizontal;
     final maxWidth = size.width >= 720 ? 640.0 : double.infinity;
     final isLast = _currentStep == _steps - 1;
 
@@ -181,7 +184,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxWidth),
                 child: Padding(
-                  padding: EdgeInsets.fromLTRB(hPad, AppSpacing.md, hPad, AppSpacing.lg),
+                  padding: EdgeInsets.fromLTRB(
+                    hPad,
+                    AppSpacing.md,
+                    hPad,
+                    AppSpacing.lg,
+                  ),
                   child: Column(
                     children: [
                       _StepRail(current: _currentStep, total: _steps),
@@ -250,9 +258,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           const SizedBox(height: 10),
           Text(
             "Let's set up your personal study companion",
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: palette.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: palette.textSecondary),
           ),
           const SizedBox(height: 28),
           Center(
@@ -260,29 +268,29 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               builder: (context, c) {
                 final size = c.maxWidth < 360 ? 144.0 : 168.0;
                 return Container(
-                  width: size,
-                  height: size,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: palette.brandGradient,
-                    boxShadow: [
-                      BoxShadow(
-                        color: palette.glowPrimary.withValues(alpha: 0.55),
-                        blurRadius: 40,
-                        spreadRadius: 4,
+                      width: size,
+                      height: size,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: palette.brandGradient,
+                        boxShadow: [
+                          BoxShadow(
+                            color: palette.glowPrimary.withValues(alpha: 0.55),
+                            blurRadius: 40,
+                            spreadRadius: 4,
+                          ),
+                          BoxShadow(
+                            color: palette.glowSecondary.withValues(alpha: 0.4),
+                            blurRadius: 28,
+                            spreadRadius: 0,
+                          ),
+                        ],
                       ),
-                      BoxShadow(
-                        color: palette.glowSecondary.withValues(alpha: 0.4),
-                        blurRadius: 28,
-                        spreadRadius: 0,
+                      padding: const EdgeInsets.all(22),
+                      child: ClipOval(
+                        child: Image.asset(_brandAsset, fit: BoxFit.cover),
                       ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(22),
-                  child: ClipOval(
-                    child: Image.asset(_brandAsset, fit: BoxFit.cover),
-                  ),
-                )
+                    )
                     .animate(onPlay: (c) => c.repeat(reverse: true))
                     .scale(
                       begin: const Offset(0.96, 0.96),
@@ -308,83 +316,83 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   // ── Step 2: Course ───────────────────────────────────────────────────────
   Widget _stepCourse() => _StepShell(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _StepTitle(title: 'What are you studying?', emoji: '📚'),
-            const SizedBox(height: 16),
-            _Field(
-              controller: _courseController,
-              label: 'Course name',
-              icon: Icons.school_outlined,
-              textCapitalization: TextCapitalization.words,
-            ),
-            const SizedBox(height: 18),
-            Text(
-              'Popular courses',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: context.palette.textSecondary,
-                    letterSpacing: 0.4,
-                  ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: _courseExamples.map((example) {
-                final selected = _courseController.text == example;
-                return _ChoiceChip(
-                  label: example,
-                  selected: selected,
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    setState(() => _courseController.text = example);
-                  },
-                );
-              }).toList(),
-            ),
-          ],
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _StepTitle(title: 'What are you studying?', emoji: '📚'),
+        const SizedBox(height: 16),
+        _Field(
+          controller: _courseController,
+          label: 'Course name',
+          icon: Icons.school_outlined,
+          textCapitalization: TextCapitalization.words,
         ),
-      );
+        const SizedBox(height: 18),
+        Text(
+          'Popular courses',
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+            color: context.palette.textSecondary,
+            letterSpacing: 0.4,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _courseExamples.map((example) {
+            final selected = _courseController.text == example;
+            return _ChoiceChip(
+              label: example,
+              selected: selected,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _courseController.text = example);
+              },
+            );
+          }).toList(),
+        ),
+      ],
+    ),
+  );
 
   // ── Step 3: Year level ───────────────────────────────────────────────────
   Widget _stepYearLevel() => _StepShell(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _StepTitle(title: 'What year are you in?', emoji: '🎓'),
-            const SizedBox(height: 24),
-            LayoutBuilder(
-              builder: (c, constraints) {
-                final cross = constraints.maxWidth < 360 ? 3 : 4;
-                return GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: cross,
-                    crossAxisSpacing: AppSpacing.sm,
-                    mainAxisSpacing: AppSpacing.sm,
-                    childAspectRatio: 1.05,
-                  ),
-                  itemCount: 7,
-                  itemBuilder: (c, i) {
-                    final year = i + 1;
-                    final selected = year == _yearLevel;
-                    return _NumberTile(
-                      number: year,
-                      selected: selected,
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        setState(() => _yearLevel = year);
-                      },
-                    );
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _StepTitle(title: 'What year are you in?', emoji: '🎓'),
+        const SizedBox(height: 24),
+        LayoutBuilder(
+          builder: (c, constraints) {
+            final cross = constraints.maxWidth < 360 ? 3 : 4;
+            return GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: cross,
+                crossAxisSpacing: AppSpacing.sm,
+                mainAxisSpacing: AppSpacing.sm,
+                childAspectRatio: 1.05,
+              ),
+              itemCount: 7,
+              itemBuilder: (c, i) {
+                final year = i + 1;
+                final selected = year == _yearLevel;
+                return _NumberTile(
+                  number: year,
+                  selected: selected,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _yearLevel = year);
                   },
                 );
               },
-            ),
-          ],
+            );
+          },
         ),
-      );
+      ],
+    ),
+  );
 
   // ── Step 4: Prime study time ─────────────────────────────────────────────
   Widget _stepPrimeTime() {
@@ -431,26 +439,23 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _StepTitle(
-            title: 'How many hours can you study daily?',
-            emoji: '⚡',
-          ),
+          _StepTitle(title: 'How many hours can you study daily?', emoji: '⚡'),
           const SizedBox(height: 28),
           Center(
             child: Text(
               '$hours',
-              style: Theme.of(context)
-                  .textTheme
-                  .displayLarge
-                  ?.copyWith(fontSize: 96, color: palette.brandPrimary),
+              style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                fontSize: 96,
+                color: palette.brandPrimary,
+              ),
             ),
           ),
           Center(
             child: Text(
               'hours/day',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: palette.textSecondary,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: palette.textSecondary),
             ),
           ),
           const SizedBox(height: 24),
@@ -464,8 +469,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           const SizedBox(height: 4),
           Center(
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(999),
                 color: palette.brandSecondary.withValues(alpha: 0.14),
@@ -473,9 +477,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               child: Text(
                 "That's $weekly hours per week",
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: palette.brandSecondary,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: palette.brandSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
           ),
@@ -486,54 +490,53 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
 
   // ── Step 6: Study style + summary ────────────────────────────────────────
   Widget _stepStudyStyle() => _StepShell(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _StepTitle(title: 'How do you prefer to study?', emoji: '✨'),
-            const SizedBox(height: 14),
-            _OptionCard(
-              emoji: '🎧',
-              title: 'Alone',
-              subtitle: 'I focus best by myself',
-              selected: _studyPreference == 'alone',
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() => _studyPreference = 'alone');
-              },
-            ),
-            const SizedBox(height: 10),
-            _OptionCard(
-              emoji: '👥',
-              title: 'With others',
-              subtitle: 'I learn better with friends',
-              selected: _studyPreference == 'group',
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() => _studyPreference = 'group');
-              },
-            ),
-            const SizedBox(height: 18),
-            Text(
-              "Almost ready! Here's what we set up for you:",
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: context.palette.textSecondary,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            _SummaryCard(
-              rows: [
-                ('Name', _nameController.text.trim()),
-                ('Course', _courseController.text.trim()),
-                ('Year', '$_yearLevel'),
-                ('Best time', _primeStudyTime),
-                ('Hours/day', _dailyStudyHours.round().toString()),
-                ('Style',
-                    _studyPreference == 'alone' ? 'Alone' : 'With others'),
-              ],
-            ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _StepTitle(title: 'How do you prefer to study?', emoji: '✨'),
+        const SizedBox(height: 14),
+        _OptionCard(
+          emoji: '🎧',
+          title: 'Alone',
+          subtitle: 'I focus best by myself',
+          selected: _studyPreference == 'alone',
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _studyPreference = 'alone');
+          },
+        ),
+        const SizedBox(height: 10),
+        _OptionCard(
+          emoji: '👥',
+          title: 'With others',
+          subtitle: 'I learn better with friends',
+          selected: _studyPreference == 'group',
+          onTap: () {
+            HapticFeedback.selectionClick();
+            setState(() => _studyPreference = 'group');
+          },
+        ),
+        const SizedBox(height: 18),
+        Text(
+          "Almost ready! Here's what we set up for you:",
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: context.palette.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _SummaryCard(
+          rows: [
+            ('Name', _nameController.text.trim()),
+            ('Course', _courseController.text.trim()),
+            ('Year', '$_yearLevel'),
+            ('Best time', _primeStudyTime),
+            ('Hours/day', _dailyStudyHours.round().toString()),
+            ('Style', _studyPreference == 'alone' ? 'Alone' : 'With others'),
           ],
         ),
-      );
+      ],
+    ),
+  );
 }
 
 // ── Sub-widgets ─────────────────────────────────────────────────────────────
@@ -585,14 +588,14 @@ class _StepShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: GlassCard(
-          animateEntrance: true,
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          borderRadius: AppSpacing.cardRadius,
-          child: child,
-        ),
-      );
+    physics: const BouncingScrollPhysics(),
+    child: GlassCard(
+      animateEntrance: true,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      borderRadius: AppSpacing.cardRadius,
+      child: child,
+    ),
+  );
 }
 
 class _StepTitle extends StatelessWidget {
@@ -603,18 +606,15 @@ class _StepTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 28)),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              title,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ),
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(emoji, style: const TextStyle(fontSize: 28)),
+      const SizedBox(width: 10),
+      Expanded(
+        child: Text(title, style: Theme.of(context).textTheme.headlineMedium),
+      ),
+    ],
+  );
 }
 
 class _Field extends StatelessWidget {
@@ -634,15 +634,15 @@ class _Field extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => TextField(
-        controller: controller,
-        autofocus: autofocus,
-        textCapitalization: textCapitalization,
-        style: Theme.of(context).textTheme.bodyLarge,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: icon != null ? Icon(icon, size: 20) : null,
-        ),
-      );
+    controller: controller,
+    autofocus: autofocus,
+    textCapitalization: textCapitalization,
+    style: Theme.of(context).textTheme.bodyLarge,
+    decoration: InputDecoration(
+      labelText: label,
+      prefixIcon: icon != null ? Icon(icon, size: 20) : null,
+    ),
+  );
 }
 
 class _ChoiceChip extends StatelessWidget {
@@ -666,8 +666,7 @@ class _ChoiceChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 220),
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
             gradient: selected
@@ -687,9 +686,9 @@ class _ChoiceChip extends StatelessWidget {
           child: Text(
             label,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: selected ? palette.textPrimary : palette.textSecondary,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                ),
+              color: selected ? palette.textPrimary : palette.textSecondary,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            ),
           ),
         ),
       ),
@@ -739,9 +738,9 @@ class _NumberTile extends StatelessWidget {
             child: Text(
               '$number',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: selected ? Colors.white : palette.textPrimary,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: selected ? Colors.white : palette.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ),
@@ -791,8 +790,7 @@ class _OptionCard extends StatelessWidget {
                 : null,
             color: selected ? null : palette.surfaceElevated,
             border: Border.all(
-              color:
-                  selected ? palette.brandSecondary : palette.borderSoft,
+              color: selected ? palette.brandSecondary : palette.borderSoft,
               width: selected ? 1.5 : 1,
             ),
             boxShadow: selected
@@ -816,8 +814,8 @@ class _OptionCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: palette.textSecondary,
-                          ),
+                        color: palette.textSecondary,
+                      ),
                     ),
                   ],
                 ),
@@ -866,16 +864,16 @@ class _SummaryCard extends StatelessWidget {
                     child: Text(
                       '${row.$1}:',
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: palette.textSecondary,
-                          ),
+                        color: palette.textSecondary,
+                      ),
                     ),
                   ),
                   Expanded(
                     child: Text(
                       row.$2.isEmpty ? '-' : row.$2,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],
@@ -926,8 +924,9 @@ class _BottomActions extends StatelessWidget {
                     height: 56,
                     decoration: BoxDecoration(
                       gradient: palette.brandGradient,
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.buttonRadius),
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.buttonRadius,
+                      ),
                       boxShadow: [
                         BoxShadow(
                           color: palette.glowPrimary.withValues(alpha: 0.5),
@@ -943,8 +942,9 @@ class _BottomActions extends StatelessWidget {
                               height: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2.4,
-                                valueColor:
-                                    AlwaysStoppedAnimation<Color>(Colors.white),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
                               ),
                             )
                           : Row(
@@ -952,9 +952,7 @@ class _BottomActions extends StatelessWidget {
                               children: [
                                 Text(
                                   isLast ? "Let's Go!" : 'Next',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelLarge
+                                  style: Theme.of(context).textTheme.labelLarge
                                       ?.copyWith(
                                         color: Colors.white,
                                         fontWeight: FontWeight.w800,
@@ -985,9 +983,9 @@ class _BottomActions extends StatelessWidget {
               onPressed: onSkip,
               child: Text(
                 'Skip',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: palette.textSecondary,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelMedium?.copyWith(color: palette.textSecondary),
               ),
             ),
           ),

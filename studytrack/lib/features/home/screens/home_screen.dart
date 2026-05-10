@@ -63,13 +63,12 @@ class _HomeScreenState extends State<HomeScreen> {
         if (exams.isNotEmpty) {
           final next = exams.first;
           _nextEventTitle = next.title;
-          _examCountdownDays =
-              next.examDate.difference(DateTime.now()).inDays;
+          _examCountdownDays = next.examDate.difference(DateTime.now()).inDays;
           _nextEventCountdown = _examCountdownDays == 0
               ? 'Today'
               : _examCountdownDays == 1
-                  ? 'Tomorrow'
-                  : 'In $_examCountdownDays days';
+              ? 'Tomorrow'
+              : 'In $_examCountdownDays days';
         }
       });
 
@@ -132,11 +131,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ).animate().fadeIn(duration: 320.ms).moveY(begin: 12, end: 0),
           const SizedBox(height: AppSpacing.lg),
           _MomentumRow(
-            studiedHours: _dailyGoalProgress,
-            goalHours: _dailyGoalTarget,
-            countdown: _nextEventCountdown,
-            examTitle: _nextEventTitle,
-          ).animate(delay: 80.ms).fadeIn(duration: 320.ms).moveY(begin: 12, end: 0),
+                studiedHours: _dailyGoalProgress,
+                goalHours: _dailyGoalTarget,
+                countdown: _nextEventCountdown,
+                examTitle: _nextEventTitle,
+              )
+              .animate(delay: 80.ms)
+              .fadeIn(duration: 320.ms)
+              .moveY(begin: 12, end: 0),
           const SizedBox(height: AppSpacing.lg),
           _SectionTitle(title: 'Quick Actions'),
           const SizedBox(height: AppSpacing.sm),
@@ -153,8 +155,9 @@ class _HomeScreenState extends State<HomeScreen> {
               .moveY(begin: 12, end: 0),
           const SizedBox(height: AppSpacing.xl),
           _ProgressCallout(
-              progress: _dailyGoalProgress,
-              target: _dailyGoalTarget)
+                progress: _dailyGoalProgress,
+                target: _dailyGoalTarget,
+              )
               .animate(delay: 320.ms)
               .fadeIn(duration: 320.ms)
               .moveY(begin: 12, end: 0),
@@ -281,10 +284,10 @@ class _PrimaryCta extends StatelessWidget {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.4,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                  ),
                 ),
               ],
             ),
@@ -361,8 +364,9 @@ class _MomentumRow extends StatelessWidget {
                   value: progress,
                   minHeight: 6,
                   backgroundColor: palette.borderSoft,
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(palette.brandPrimary),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    palette.brandPrimary,
+                  ),
                 ),
               ),
             ),
@@ -378,10 +382,7 @@ class _MomentumRow extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: palette.brandSecondary.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(999),
@@ -398,9 +399,9 @@ class _MomentumRow extends StatelessWidget {
                     Text(
                       'Tap to plan',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: palette.brandSecondary,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        color: palette.brandSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
@@ -762,10 +763,7 @@ class _SectionTitle extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
+          Text(title, style: Theme.of(context).textTheme.titleLarge),
         ],
       ),
     );
@@ -832,9 +830,9 @@ class _LoadingState extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Loading your dashboard…',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: palette.textSecondary,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: palette.textSecondary),
           ),
         ],
       ),

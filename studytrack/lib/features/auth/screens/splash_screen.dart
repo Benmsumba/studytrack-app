@@ -59,17 +59,17 @@ class _SplashScreenState extends State<SplashScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 144,
-                height: 144,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: palette.brandPrimary,
-                ),
-                padding: const EdgeInsets.all(20),
-                child: ClipOval(
-                  child: Image.asset(_logoAsset, fit: BoxFit.cover),
-                ),
-              )
+                    width: 144,
+                    height: 144,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: palette.brandPrimary,
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: ClipOval(
+                      child: Image.asset(_logoAsset, fit: BoxFit.cover),
+                    ),
+                  )
                   .animate(onPlay: (c) => c.repeat(reverse: true))
                   .fadeIn(duration: 700.ms)
                   .scale(
@@ -87,22 +87,22 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
               const SizedBox(height: 28),
               Text(
-                'StudyTrack',
-                style: theme.textTheme.displayMedium?.copyWith(
-                  color: palette.textPrimary,
-                ),
-              )
+                    'StudyTrack',
+                    style: theme.textTheme.displayMedium?.copyWith(
+                      color: palette.textPrimary,
+                    ),
+                  )
                   .animate()
                   .fadeIn(duration: 700.ms, delay: 200.ms)
                   .slideY(begin: 0.12, end: 0, duration: 700.ms),
               const SizedBox(height: 8),
               Text(
-                'Study smarter. Know where you stand.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: palette.textSecondary,
-                ),
-              )
+                    'Study smarter. Know where you stand.',
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: palette.textSecondary,
+                    ),
+                  )
                   .animate()
                   .fadeIn(duration: 700.ms, delay: 350.ms)
                   .slideY(begin: 0.12, end: 0, duration: 700.ms),

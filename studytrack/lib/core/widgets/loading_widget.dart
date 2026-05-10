@@ -60,7 +60,7 @@ class _LoadingWidgetState extends State<LoadingWidget>
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.neonViolet.withValues(alpha: 0.3),
+                  color: AppColors.steelTeal.withValues(alpha: 0.3),
                   width: 3,
                 ),
                 borderRadius: BorderRadius.circular(widget.size / 2),
@@ -69,7 +69,7 @@ class _LoadingWidgetState extends State<LoadingWidget>
                 children: [
                   CircularProgressIndicator(
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.neonCyan.withValues(alpha: 0.8),
+                      AppColors.amberWarm.withValues(alpha: 0.8),
                     ),
                     strokeWidth: 3,
                   ),
@@ -81,7 +81,7 @@ class _LoadingWidgetState extends State<LoadingWidget>
                       height: 8,
                       decoration: const BoxDecoration(
                         shape: BoxShape.circle,
-                        color: AppColors.neonViolet,
+                        color: AppColors.steelTeal,
                       ),
                     ),
                   ),

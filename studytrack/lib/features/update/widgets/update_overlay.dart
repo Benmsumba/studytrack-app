@@ -180,13 +180,17 @@ class _UpdateTitle extends StatelessWidget {
       children: [
         Text(
           title,
-          style: theme.textTheme.titleLarge?.copyWith(color: palette.textPrimary),
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: palette.textPrimary,
+          ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 6),
         Text(
           subtitle,
-          style: theme.textTheme.bodySmall?.copyWith(color: palette.textSecondary),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: palette.textSecondary,
+          ),
           textAlign: TextAlign.center,
         ),
       ],

@@ -40,7 +40,9 @@ class AppScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
-    final background = useDeepBackground ? palette.backgroundDeep : palette.background;
+    final background = useDeepBackground
+        ? palette.backgroundDeep
+        : palette.background;
     return Scaffold(
       backgroundColor: background,
       appBar: appBar,
@@ -114,13 +116,11 @@ class _GlowBlob extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color, color.withValues(alpha: 0)],
-          ),
-        ),
-      );
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
+    ),
+  );
 }

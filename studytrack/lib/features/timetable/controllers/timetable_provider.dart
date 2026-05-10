@@ -114,9 +114,11 @@ class TimetableProvider extends ChangeNotifier {
       },
       (created) {
         _classSlots = [..._classSlots, created]
-          ..sort((a, b) => a.dayOfWeek == b.dayOfWeek
-              ? a.startTime.compareTo(b.startTime)
-              : a.dayOfWeek.compareTo(b.dayOfWeek));
+          ..sort(
+            (a, b) => a.dayOfWeek == b.dayOfWeek
+                ? a.startTime.compareTo(b.startTime)
+                : a.dayOfWeek.compareTo(b.dayOfWeek),
+          );
         notifyListeners();
         return const TimetableActionResult(
           success: true,
@@ -151,12 +153,15 @@ class TimetableProvider extends ChangeNotifier {
         );
       },
       (updatedModel) {
-        _classSlots = _classSlots
-            .map((slot) => slot.id == classSlotId ? updatedModel : slot)
-            .toList(growable: false)
-          ..sort((a, b) => a.dayOfWeek == b.dayOfWeek
-              ? a.startTime.compareTo(b.startTime)
-              : a.dayOfWeek.compareTo(b.dayOfWeek));
+        _classSlots =
+            _classSlots
+                .map((slot) => slot.id == classSlotId ? updatedModel : slot)
+                .toList(growable: false)
+              ..sort(
+                (a, b) => a.dayOfWeek == b.dayOfWeek
+                    ? a.startTime.compareTo(b.startTime)
+                    : a.dayOfWeek.compareTo(b.dayOfWeek),
+              );
         notifyListeners();
         return const TimetableActionResult(
           success: true,
@@ -251,8 +256,9 @@ class TimetableProvider extends ChangeNotifier {
     String sessionId, {
     int? actualDuration,
   }) async {
-    final index =
-        _studySessions.indexWhere((session) => session.id == sessionId);
+    final index = _studySessions.indexWhere(
+      (session) => session.id == sessionId,
+    );
     if (index == -1) {
       return const TimetableActionResult(
         success: false,
@@ -297,8 +303,9 @@ class TimetableProvider extends ChangeNotifier {
 
   /// Optimistic UI: marks missed immediately, rolls back on failure.
   Future<TimetableActionResult> missSession(String sessionId) async {
-    final index =
-        _studySessions.indexWhere((session) => session.id == sessionId);
+    final index = _studySessions.indexWhere(
+      (session) => session.id == sessionId,
+    );
     if (index == -1) {
       return const TimetableActionResult(
         success: false,

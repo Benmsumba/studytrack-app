@@ -164,7 +164,7 @@ class AppTextStyles {
     fontSize: 11,
     fontWeight: FontWeight.w700,
     height: 1.2,
-    color: AppColors.neonCyan,
+    color: AppColors.amberWarm,
     letterSpacing: 1.2,
   );
 

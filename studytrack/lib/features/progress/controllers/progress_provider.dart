@@ -137,7 +137,10 @@ class ProgressProvider extends ChangeNotifier {
       latestResult.fold(
         (error) {
           // Error fetching latest, silently ignore
-          AppLogger.warning('Failed to load latest report', error: error.message);
+          AppLogger.warning(
+            'Failed to load latest report',
+            error: error.message,
+          );
         },
         (report) {
           if (report != null) {

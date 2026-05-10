@@ -266,7 +266,10 @@ class NotificationService {
         androidScheduleMode: AndroidScheduleMode.alarmClock,
       );
     } on Object catch (e) {
-      AppLogger.warning('Error scheduling spaced repetition reminder', error: e);
+      AppLogger.warning(
+        'Error scheduling spaced repetition reminder',
+        error: e,
+      );
     }
   }
 

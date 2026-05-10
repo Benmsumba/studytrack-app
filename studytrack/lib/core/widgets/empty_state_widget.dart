@@ -37,14 +37,14 @@ class EmptyStateWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppColors.neonViolet.withValues(alpha: 0.3),
+                  color: AppColors.steelTeal.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
               child: Icon(
                 icon,
                 size: 40,
-                color: AppColors.neonCyan.withValues(alpha: 0.6),
+                color: AppColors.amberWarm.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 20),
@@ -67,7 +67,7 @@ class EmptyStateWidget extends StatelessWidget {
             ElevatedButton(
               onPressed: onRetry,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.neonViolet,
+                backgroundColor: AppColors.steelTeal,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,

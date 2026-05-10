@@ -96,9 +96,10 @@ class _AnimatedBannerState extends State<_AnimatedBanner>
       vsync: this,
       duration: const Duration(milliseconds: 380),
     );
-    _slideY = Tween<double>(begin: -1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic),
-    );
+    _slideY = Tween<double>(
+      begin: -1.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeOutCubic));
     _opacity = CurvedAnimation(parent: _ctrl, curve: Curves.easeOut);
 
     if (widget.show) {

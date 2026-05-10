@@ -40,7 +40,11 @@ Future<void> setupServiceLocator() async {
   try {
     await encryptionService.initialize();
   } on Object catch (e, stackTrace) {
-    AppLogger.warning('EncryptionService init failed', error: e, stackTrace: stackTrace);
+    AppLogger.warning(
+      'EncryptionService init failed',
+      error: e,
+      stackTrace: stackTrace,
+    );
   }
   getIt.registerSingleton<EncryptionService>(encryptionService);
 
@@ -52,7 +56,11 @@ Future<void> setupServiceLocator() async {
   try {
     await offlineDataStore.initialize(encryptionService: encryptionService);
   } on Object catch (e, stackTrace) {
-    AppLogger.error('OfflineDataStore init failed', error: e, stackTrace: stackTrace);
+    AppLogger.error(
+      'OfflineDataStore init failed',
+      error: e,
+      stackTrace: stackTrace,
+    );
   }
   getIt.registerSingleton<OfflineDataStore>(offlineDataStore);
 
@@ -61,12 +69,18 @@ Future<void> setupServiceLocator() async {
 
   // ── Repositories ───────────────────────────────────────────────────────────
   getIt.registerSingleton<AuthRepository>(AuthRepositoryImpl(supabaseService));
-  getIt.registerSingleton<ProfileRepository>(ProfileRepositoryImpl(supabaseService));
+  getIt.registerSingleton<ProfileRepository>(
+    ProfileRepositoryImpl(supabaseService),
+  );
   getIt.registerSingleton<ClassTimetableRepository>(
     ClassTimetableRepositoryImpl(supabaseService),
   );
-  getIt.registerSingleton<ModuleRepository>(ModuleRepositoryImpl(supabaseService));
-  getIt.registerSingleton<TopicRepository>(TopicRepositoryImpl(supabaseService));
+  getIt.registerSingleton<ModuleRepository>(
+    ModuleRepositoryImpl(supabaseService),
+  );
+  getIt.registerSingleton<TopicRepository>(
+    TopicRepositoryImpl(supabaseService),
+  );
   getIt.registerSingleton<StudyGroupRepository>(
     StudyGroupRepositoryImpl(supabaseService),
   );
@@ -86,7 +100,11 @@ Future<void> setupServiceLocator() async {
   try {
     await notificationService.initialize();
   } on Object catch (e, stackTrace) {
-    AppLogger.warning('NotificationService init failed', error: e, stackTrace: stackTrace);
+    AppLogger.warning(
+      'NotificationService init failed',
+      error: e,
+      stackTrace: stackTrace,
+    );
   }
   getIt.registerSingleton<NotificationService>(notificationService);
 

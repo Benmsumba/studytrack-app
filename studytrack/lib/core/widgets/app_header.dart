@@ -36,7 +36,8 @@ class AppHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final palette = context.palette;
     final theme = Theme.of(context);
-    final hasLeading = onBack != null || onMenuTap != null || leadingIcon != null;
+    final hasLeading =
+        onBack != null || onMenuTap != null || leadingIcon != null;
 
     return Padding(
       padding: EdgeInsets.fromLTRB(
@@ -167,11 +168,7 @@ class HeaderActionButton extends StatelessWidget {
             SizedBox(
               width: 40,
               height: 40,
-              child: Icon(
-                icon,
-                size: 22,
-                color: color ?? palette.textPrimary,
-              ),
+              child: Icon(icon, size: 22, color: color ?? palette.textPrimary),
             ),
             if (badge != null && badge! > 0)
               Positioned(

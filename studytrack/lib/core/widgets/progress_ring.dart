@@ -46,7 +46,7 @@ class ProgressRing extends StatelessWidget {
               CustomPaint(
                 painter: _ProgressRingPainter(
                   progress: percentage,
-                  color: completed ? AppColors.success : AppColors.neonViolet,
+                  color: completed ? AppColors.success : AppColors.steelTeal,
                   strokeWidth: 3,
                 ),
                 size: Size(size, size),

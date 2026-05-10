@@ -49,7 +49,9 @@ class UpdateProvider extends ChangeNotifier {
 
   Future<void> checkForUpdate() async {
     if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) {
-      AppLogger.debug('[Update] Update check skipped: Web or non-Android platform');
+      AppLogger.debug(
+        '[Update] Update check skipped: Web or non-Android platform',
+      );
       return;
     }
 
@@ -59,12 +61,16 @@ class UpdateProvider extends ChangeNotifier {
       // Parse buildNumber carefully - should be numeric
       int currentVersionCode;
       if (packageInfo.buildNumber.isEmpty) {
-        AppLogger.debug('[Update] WARNING: PackageInfo.buildNumber is empty, using fallback ${AppConstants.currentVersionCode}');
+        AppLogger.debug(
+          '[Update] WARNING: PackageInfo.buildNumber is empty, using fallback ${AppConstants.currentVersionCode}',
+        );
         currentVersionCode = AppConstants.currentVersionCode;
       } else {
         final parsed = int.tryParse(packageInfo.buildNumber);
         if (parsed == null) {
-          AppLogger.debug('[Update] WARNING: PackageInfo.buildNumber "${packageInfo.buildNumber}" is not a valid integer');
+          AppLogger.debug(
+            '[Update] WARNING: PackageInfo.buildNumber "${packageInfo.buildNumber}" is not a valid integer',
+          );
           currentVersionCode = AppConstants.currentVersionCode;
         } else {
           currentVersionCode = parsed;

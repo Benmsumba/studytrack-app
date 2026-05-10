@@ -53,9 +53,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels <= 80 &&
-        !_loadingMore &&
-        _hasMore) {
+    if (_scrollController.position.pixels <= 80 && !_loadingMore && _hasMore) {
       _loadMoreMessages();
     }
   }
@@ -108,34 +106,31 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       offset: _offset,
     );
     if (!mounted) return;
-    result.fold(
-      (error) => setState(() => _loadingMore = false),
-      (older) {
-        if (older.isEmpty) {
-          setState(() {
-            _hasMore = false;
-            _loadingMore = false;
-          });
-          return;
-        }
-        final prevExtent = _scrollController.hasClients
-            ? _scrollController.position.maxScrollExtent
-            : 0.0;
+    result.fold((error) => setState(() => _loadingMore = false), (older) {
+      if (older.isEmpty) {
         setState(() {
-          _messages = [...older, ..._messages];
-          _offset += older.length;
-          _hasMore = older.length >= _pageSize;
+          _hasMore = false;
           _loadingMore = false;
         });
-        // Restore scroll position so older messages appear above without
-        // jumping the viewport.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (!_scrollController.hasClients) return;
-          final newExtent = _scrollController.position.maxScrollExtent;
-          _scrollController.jumpTo(newExtent - prevExtent);
-        });
-      },
-    );
+        return;
+      }
+      final prevExtent = _scrollController.hasClients
+          ? _scrollController.position.maxScrollExtent
+          : 0.0;
+      setState(() {
+        _messages = [...older, ..._messages];
+        _offset += older.length;
+        _hasMore = older.length >= _pageSize;
+        _loadingMore = false;
+      });
+      // Restore scroll position so older messages appear above without
+      // jumping the viewport.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_scrollController.hasClients) return;
+        final newExtent = _scrollController.position.maxScrollExtent;
+        _scrollController.jumpTo(newExtent - prevExtent);
+      });
+    });
   }
 
   Future<void> _hydrateSenderMeta(List<GroupMessageModel> messages) async {
@@ -285,9 +280,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final title = widget.group?['name']?.toString() ?? 'Group Chat';
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
+      appBar: AppBar(title: Text(title)),
       body: Column(
         children: [
           Expanded(
@@ -341,9 +334,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               child: Row(
                                 children: [
-                                  const Expanded(child: Divider(color: AppColors.border)),
+                                  const Expanded(
+                                    child: Divider(color: AppColors.border),
+                                  ),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
                                     child: Text(
                                       separatorLabel,
                                       style: AppTextStyles.caption.copyWith(
@@ -352,7 +349,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                       ),
                                     ),
                                   ),
-                                  const Expanded(child: Divider(color: AppColors.border)),
+                                  const Expanded(
+                                    child: Divider(color: AppColors.border),
+                                  ),
                                 ],
                               ),
                             ),
@@ -365,7 +364,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               constraints: const BoxConstraints(maxWidth: 320),
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                gradient: mine ? AppColors.primaryGradient : null,
+                                gradient: mine
+                                    ? AppColors.primaryGradient
+                                    : null,
                                 color: mine ? null : AppColors.cardDark,
                                 borderRadius: BorderRadius.circular(12),
                                 border: mine
@@ -384,7 +385,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                         radius: 12,
                                         backgroundColor: _avatarColor(sender),
                                         child: Text(
-                                          displayName.substring(0, 1).toUpperCase(),
+                                          displayName
+                                              .substring(0, 1)
+                                              .toUpperCase(),
                                           style: AppTextStyles.caption.copyWith(
                                             color: Colors.white,
                                             fontSize: 10,
@@ -400,20 +403,22 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                         children: [
                                           Text(
                                             displayName,
-                                            style: AppTextStyles.caption.copyWith(
-                                              color: mine
-                                                  ? Colors.white70
-                                                  : AppColors.accent,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                            ),
+                                            style: AppTextStyles.caption
+                                                .copyWith(
+                                                  color: mine
+                                                      ? Colors.white70
+                                                      : AppColors.accent,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                           ),
                                           Text(
                                             subtitle,
-                                            style: AppTextStyles.caption.copyWith(
-                                              color: Colors.white60,
-                                              fontSize: 10,
-                                            ),
+                                            style: AppTextStyles.caption
+                                                .copyWith(
+                                                  color: Colors.white60,
+                                                  fontSize: 10,
+                                                ),
                                           ),
                                         ],
                                       ),

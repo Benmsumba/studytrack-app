@@ -46,13 +46,13 @@ class ProgressStepper extends StatelessWidget {
                         color: isCompleted
                             ? AppColors.success
                             : isActive
-                            ? AppColors.neonViolet
+                            ? AppColors.steelTeal
                             : AppColors.surfaceElevated,
                         border: Border.all(
                           color: isCompleted
                               ? AppColors.success
                               : isActive
-                              ? AppColors.neonViolet
+                              ? AppColors.steelTeal
                               : AppColors.border,
                           width: 2,
                         ),
@@ -83,7 +83,7 @@ class ProgressStepper extends StatelessWidget {
                           stepLabels![index],
                           style: AppTextStyles.caption.copyWith(
                             color: isActive
-                                ? AppColors.neonViolet
+                                ? AppColors.steelTeal
                                 : isCompleted
                                 ? AppColors.success
                                 : AppColors.textSecondary,

@@ -156,7 +156,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                 child: Text(
                   'Sign in with password instead',
                   style: AppTextStyles.bodyMediumSecondary.copyWith(
-                    color: AppColors.neonCyan,
+                    color: AppColors.amberWarm,
                   ),
                 ),
               ),
@@ -177,13 +177,6 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
             decoration: BoxDecoration(
               gradient: AppColors.primaryGradient,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.violetGlowSoft,
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
             ),
             child: const Icon(
               Icons.mark_email_unread_rounded,
@@ -364,7 +357,7 @@ InputDecoration _inputDecoration({
 }) => InputDecoration(
   labelText: label,
   hintText: label,
-  prefixIcon: Icon(icon, color: AppColors.neonCyan, size: 20),
+  prefixIcon: Icon(icon, color: AppColors.amberWarm, size: 20),
   filled: true,
   fillColor: AppColors.cardDark,
   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
@@ -378,7 +371,7 @@ InputDecoration _inputDecoration({
   ),
   focusedBorder: OutlineInputBorder(
     borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.neonCyan),
+    borderSide: const BorderSide(color: AppColors.amberWarm),
   ),
   errorBorder: OutlineInputBorder(
     borderRadius: BorderRadius.circular(12),

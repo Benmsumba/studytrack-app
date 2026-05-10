@@ -26,9 +26,9 @@ class _AppErrorBoundaryState extends State<AppErrorBoundary> {
   StackTrace? _stack;
 
   void _reset() => setState(() {
-        _error = null;
-        _stack = null;
-      });
+    _error = null;
+    _stack = null;
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +42,10 @@ class _AppErrorBoundaryState extends State<AppErrorBoundary> {
       builder: (context) {
         ErrorWidget.builder = (FlutterErrorDetails details) {
           // Report to Sentry / crash service.
-          CrashReporter.report(details.exception, details.stack ?? StackTrace.empty);
+          CrashReporter.report(
+            details.exception,
+            details.stack ?? StackTrace.empty,
+          );
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               setState(() {
@@ -63,10 +66,7 @@ class _AppErrorBoundaryState extends State<AppErrorBoundary> {
 // ── Fallback screen ─────────────────────────────────────────────────────────
 
 class _ErrorFallbackScreen extends StatelessWidget {
-  const _ErrorFallbackScreen({
-    required this.error,
-    required this.onRetry,
-  });
+  const _ErrorFallbackScreen({required this.error, required this.onRetry});
 
   final Object error;
   final VoidCallback onRetry;
@@ -160,8 +160,11 @@ class _ErrorFallbackScreen extends StatelessWidget {
                     ),
                   );
                 },
-                icon: Icon(Icons.copy_rounded,
-                    size: 16, color: palette.textSecondary),
+                icon: Icon(
+                  Icons.copy_rounded,
+                  size: 16,
+                  color: palette.textSecondary,
+                ),
                 label: Text(
                   'Copy error details',
                   style: TextStyle(fontSize: 13, color: palette.textSecondary),

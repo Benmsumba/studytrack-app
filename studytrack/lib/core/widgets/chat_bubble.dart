@@ -54,13 +54,13 @@ class ChatBubble extends StatelessWidget {
                 ? null
                 : LinearGradient(
                     colors: [
-                      AppColors.neonViolet.withValues(alpha: 0.3),
-                      AppColors.neonCyan.withValues(alpha: 0.3),
+                      AppColors.steelTeal.withValues(alpha: 0.3),
+                      AppColors.amberWarm.withValues(alpha: 0.3),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-            color: isUserMessage ? AppColors.neonViolet : null,
+            color: isUserMessage ? AppColors.steelTeal : null,
             borderRadius: BorderRadius.only(
               topLeft: const Radius.circular(16),
               topRight: const Radius.circular(16),

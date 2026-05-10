@@ -97,7 +97,7 @@ class _ExpandableFABState extends State<ExpandableFAB>
         ),
       FloatingActionButton(
         heroTag: widget.heroTag,
-        backgroundColor: AppColors.neonViolet,
+        backgroundColor: AppColors.steelTeal,
         onPressed: _toggle,
         child: RotationTransition(
           turns: Tween<double>(begin: 0, end: 0.125).animate(
@@ -146,7 +146,7 @@ class _FABAction extends StatelessWidget {
         const SizedBox(width: AppSpacing.md),
         FloatingActionButton(
           mini: true,
-          backgroundColor: AppColors.neonCyan,
+          backgroundColor: AppColors.amberWarm,
           onPressed: onTap,
           child: Icon(action.icon, color: Colors.white, size: 18),
         ),

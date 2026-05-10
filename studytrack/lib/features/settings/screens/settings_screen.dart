@@ -229,8 +229,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           setLocal(() => obscureCurrent = !obscureCurrent),
                     ),
                   ),
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'Enter current password' : null,
+                  validator: (v) => (v == null || v.isEmpty)
+                      ? 'Enter current password'
+                      : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -244,8 +245,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
                       ),
-                      onPressed: () =>
-                          setLocal(() => obscureNew = !obscureNew),
+                      onPressed: () => setLocal(() => obscureNew = !obscureNew),
                     ),
                   ),
                   validator: (v) {
@@ -286,19 +286,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             try {
                               // Re-authenticate first, then update password.
                               final email = Supabase
-                                  .instance.client.auth.currentUser?.email;
-                              if (email == null) throw Exception('Not signed in');
+                                  .instance
+                                  .client
+                                  .auth
+                                  .currentUser
+                                  ?.email;
+                              if (email == null)
+                                throw Exception('Not signed in');
 
                               // Sign in with current password to verify it.
                               await Supabase.instance.client.auth
                                   .signInWithPassword(
-                                email: email,
-                                password: currentPwCtrl.text,
-                              );
+                                    email: email,
+                                    password: currentPwCtrl.text,
+                                  );
 
                               // Now update to new password.
-                              await Supabase.instance.client.auth
-                                  .updateUser(
+                              await Supabase.instance.client.auth.updateUser(
                                 UserAttributes(password: newPwCtrl.text),
                               );
 
@@ -351,7 +355,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isExporting = true);
     try {
       final profileResult = await _profileRepository.getCurrentProfile();
-      final profile = profileResult.fold((_) => <String, dynamic>{}, (p) => p ?? <String, dynamic>{});
+      final profile = profileResult.fold(
+        (_) => <String, dynamic>{},
+        (p) => p ?? <String, dynamic>{},
+      );
       final userId = (profile['id'] as String?) ?? 'unknown';
 
       final modulesResult = await _moduleRepository.getAllModules();
@@ -402,10 +409,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     return Scaffold(
       backgroundColor: pageBackground,
-      appBar: AppBar(
-        title: const Text('Settings'),
-        centerTitle: false,
-      ),
+      appBar: AppBar(title: const Text('Settings'), centerTitle: false),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
@@ -422,7 +426,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: AppSpacing.md),
               _SettingsCard(
                 title: 'Daily Study Goal',
-                subtitle: '${settings.dailyGoalHours} ${settings.dailyGoalHours == 1 ? 'hour' : 'hours'} per day',
+                subtitle:
+                    '${settings.dailyGoalHours} ${settings.dailyGoalHours == 1 ? 'hour' : 'hours'} per day',
                 trailing: const Icon(Icons.arrow_forward),
                 onTap: () => _showDailyGoalDialog(context),
               ),

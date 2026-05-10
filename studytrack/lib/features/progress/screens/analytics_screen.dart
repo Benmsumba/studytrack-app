@@ -84,8 +84,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
         .where((t) => t.currentRating != null)
         .map((t) => t.currentRating!.toDouble())
         .toList();
-    final mastered =
-        allTopics.where((t) => (t.currentRating ?? 0) >= 7).length;
+    final mastered = allTopics.where((t) => (t.currentRating ?? 0) >= 7).length;
     final avgRating = ratings.isEmpty
         ? 0.0
         : ratings.reduce((a, b) => a + b) / ratings.length;
@@ -95,8 +94,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final today = DateTime(now.year, now.month, now.day);
     final heatmapStart = today.subtract(const Duration(days: 83));
     final heatmapEnd = today.add(const Duration(days: 1));
-    final weekStart =
-        today.subtract(Duration(days: today.weekday - 1));
+    final weekStart = today.subtract(Duration(days: today.weekday - 1));
 
     final sessionsResult = await _sessionRepo.getSessionsByDateRange(
       startDate: heatmapStart,
@@ -210,13 +208,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           decoration: BoxDecoration(
             gradient: AppColors.primaryGradient,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.violetGlowSoft,
-                blurRadius: 12,
-                offset: Offset(0, 4),
-              ),
-            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -228,7 +219,10 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const Text('✦', style: TextStyle(color: Colors.white, fontSize: 12)),
+              const Text(
+                '✦',
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
             ],
           ),
         ),
@@ -338,9 +332,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     subjects: _modules.take(6).map((m) => m.name).toList(),
                     values: _modules.take(6).map((module) {
                       final moduleTopics = _topics
-                          .where((t) =>
-                              t.moduleId == module.id &&
-                              t.currentRating != null)
+                          .where(
+                            (t) =>
+                                t.moduleId == module.id &&
+                                t.currentRating != null,
+                          )
                           .toList();
                       if (moduleTopics.isEmpty) return 0.0;
                       return moduleTopics
@@ -349,7 +345,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                           moduleTopics.length /
                           10.0;
                     }).toList(),
-                    accentColor: AppColors.neonViolet,
+                    accentColor: AppColors.steelTeal,
                     gridColor: AppColors.border,
                     labelColor: AppColors.textMuted,
                   ),
@@ -363,18 +359,16 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             runSpacing: 6,
             children: _modules.take(6).map((m) {
               final moduleTopics = _topics
-                  .where((t) =>
-                      t.moduleId == m.id && t.currentRating != null)
+                  .where((t) => t.moduleId == m.id && t.currentRating != null)
                   .toList();
               final avg = moduleTopics.isEmpty
                   ? 0.0
                   : moduleTopics
-                          .map((t) => t.currentRating!.toDouble())
-                          .reduce((a, b) => a + b) /
-                      moduleTopics.length;
+                            .map((t) => t.currentRating!.toDouble())
+                            .reduce((a, b) => a + b) /
+                        moduleTopics.length;
               return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: m.subjectColor.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(999),
@@ -457,7 +451,9 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           const SizedBox(height: AppSpacing.sm),
           // Month labels
           Row(
-            children: List.generate(12, (w) => Expanded(
+            children: List.generate(
+              12,
+              (w) => Expanded(
                 child: Text(
                   monthLabels[w],
                   textAlign: TextAlign.center,
@@ -466,7 +462,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     color: AppColors.textMuted,
                   ),
                 ),
-              )),
+              ),
+            ),
           ),
           const SizedBox(height: 4),
           // Heatmap grid
@@ -518,8 +515,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                     color: i == 0
                         ? Colors.grey.withValues(alpha: 0.25)
                         : Color.lerp(
-                            AppColors.neonViolet.withValues(alpha: 0.35),
-                            AppColors.neonViolet,
+                            AppColors.steelTeal.withValues(alpha: 0.35),
+                            AppColors.steelTeal,
                             intensity,
                           ),
                     borderRadius: BorderRadius.circular(2),
@@ -545,44 +542,48 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     final topModule = _modules.isEmpty
         ? null
         : _modules.reduce((a, b) {
-            final aTopics = _topics
-                .where((t) => t.moduleId == a.id && t.currentRating != null);
-            final bTopics = _topics
-                .where((t) => t.moduleId == b.id && t.currentRating != null);
+            final aTopics = _topics.where(
+              (t) => t.moduleId == a.id && t.currentRating != null,
+            );
+            final bTopics = _topics.where(
+              (t) => t.moduleId == b.id && t.currentRating != null,
+            );
             final aAvg = aTopics.isEmpty
                 ? 0.0
-                : aTopics.map((t) => t.currentRating!.toDouble()).reduce(
-                      (x, y) => x + y,
-                    ) /
-                    aTopics.length;
+                : aTopics
+                          .map((t) => t.currentRating!.toDouble())
+                          .reduce((x, y) => x + y) /
+                      aTopics.length;
             final bAvg = bTopics.isEmpty
                 ? 0.0
-                : bTopics.map((t) => t.currentRating!.toDouble()).reduce(
-                      (x, y) => x + y,
-                    ) /
-                    bTopics.length;
+                : bTopics
+                          .map((t) => t.currentRating!.toDouble())
+                          .reduce((x, y) => x + y) /
+                      bTopics.length;
             return aAvg >= bAvg ? a : b;
           });
 
     final weakModule = _modules.isEmpty
         ? null
         : _modules.reduce((a, b) {
-            final aTopics = _topics
-                .where((t) => t.moduleId == a.id && t.currentRating != null);
-            final bTopics = _topics
-                .where((t) => t.moduleId == b.id && t.currentRating != null);
+            final aTopics = _topics.where(
+              (t) => t.moduleId == a.id && t.currentRating != null,
+            );
+            final bTopics = _topics.where(
+              (t) => t.moduleId == b.id && t.currentRating != null,
+            );
             final aAvg = aTopics.isEmpty
                 ? 11.0
-                : aTopics.map((t) => t.currentRating!.toDouble()).reduce(
-                      (x, y) => x + y,
-                    ) /
-                    aTopics.length;
+                : aTopics
+                          .map((t) => t.currentRating!.toDouble())
+                          .reduce((x, y) => x + y) /
+                      aTopics.length;
             final bAvg = bTopics.isEmpty
                 ? 11.0
-                : bTopics.map((t) => t.currentRating!.toDouble()).reduce(
-                      (x, y) => x + y,
-                    ) /
-                    bTopics.length;
+                : bTopics
+                          .map((t) => t.currentRating!.toDouble())
+                          .reduce((x, y) => x + y) /
+                      bTopics.length;
             return aAvg <= bAvg ? a : b;
           });
 
@@ -639,15 +640,25 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   Color _heatmapColor(int count) {
     if (count <= 0) return Colors.grey.withValues(alpha: 0.25);
-    if (count == 1) return AppColors.neonViolet.withValues(alpha: 0.45);
-    if (count == 2) return AppColors.neonViolet.withValues(alpha: 0.65);
-    return AppColors.neonViolet;
+    if (count == 1) return AppColors.steelTeal.withValues(alpha: 0.45);
+    if (count == 2) return AppColors.steelTeal.withValues(alpha: 0.65);
+    return AppColors.steelTeal;
   }
 
   String _monthShort(int month) {
     const labels = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return labels[month - 1];
   }
@@ -766,8 +777,10 @@ class _RadarChartPainter extends CustomPainter {
       final angle = _angle(i, n);
       canvas.drawLine(
         center,
-        Offset(center.dx + radius * math.cos(angle),
-            center.dy + radius * math.sin(angle)),
+        Offset(
+          center.dx + radius * math.cos(angle),
+          center.dy + radius * math.sin(angle),
+        ),
         gridPaint,
       );
     }
@@ -802,14 +815,19 @@ class _RadarChartPainter extends CustomPainter {
       final angle = _angle(i, n);
       final r = radius * clampedValues[i];
       canvas.drawCircle(
-        Offset(center.dx + r * math.cos(angle), center.dy + r * math.sin(angle)),
+        Offset(
+          center.dx + r * math.cos(angle),
+          center.dy + r * math.sin(angle),
+        ),
         4,
         dotPaint,
       );
 
       // Truncate long module names
       final rawLabel = subjects[i];
-      final label = rawLabel.length > 10 ? '${rawLabel.substring(0, 9)}…' : rawLabel;
+      final label = rawLabel.length > 10
+          ? '${rawLabel.substring(0, 9)}…'
+          : rawLabel;
       final labelR = radius + 22;
       final lx = center.dx + labelR * math.cos(angle);
       final ly = center.dy + labelR * math.sin(angle);
@@ -824,8 +842,7 @@ class _RadarChartPainter extends CustomPainter {
     }
   }
 
-  double _angle(int i, int n) =>
-      (i * 2 * math.pi / n) - math.pi / 2;
+  double _angle(int i, int n) => (i * 2 * math.pi / n) - math.pi / 2;
 
   @override
   bool shouldRepaint(covariant _RadarChartPainter old) =>

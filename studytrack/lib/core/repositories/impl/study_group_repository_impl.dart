@@ -145,7 +145,8 @@ class StudyGroupRepositoryImpl implements StudyGroupRepository {
     int offset = 0,
   }) async {
     try {
-      final messages = await _supabaseService.getGroupMessagesTyped(
+      final messages =
+          await _supabaseService.getGroupMessagesTyped(
             groupId,
             limit: limit,
             offset: offset,

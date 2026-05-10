@@ -180,60 +180,40 @@ class _ProgressScreenState extends State<ProgressScreen> {
           icon: const Icon(
             Icons.auto_awesome,
             size: 16,
-            color: AppColors.neonCyan,
+            color: AppColors.amberWarm,
           ),
           label: const Text(
             'Wrapped',
-            style: TextStyle(color: AppColors.neonCyan),
+            style: TextStyle(color: AppColors.amberWarm),
           ),
         ),
       ],
     ),
     body: _isLoading
         ? const Center(child: CircularProgressIndicator())
-        : Stack(
-            children: [
-              Positioned(
-                top: -100,
-                right: -80,
-                child: _AmbientGlow(
-                  color: AppColors.neonViolet.withValues(alpha: 0.18),
-                  size: 240,
-                ),
+        : RefreshIndicator(
+            onRefresh: _loadProgress,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenHorizontal,
+                12,
+                AppSpacing.screenHorizontal,
+                32,
               ),
-              Positioned(
-                top: 300,
-                left: -60,
-                child: _AmbientGlow(
-                  color: AppColors.neonCyan.withValues(alpha: 0.14),
-                  size: 200,
-                ),
-              ),
-              RefreshIndicator(
-                onRefresh: _loadProgress,
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.screenHorizontal,
-                    12,
-                    AppSpacing.screenHorizontal,
-                    32,
-                  ),
-                  children: [
-                    _buildQuickStats(),
-                    const SizedBox(height: 16),
-                    _buildWeeklyBarChart(),
-                    const SizedBox(height: 16),
-                    _buildRadarChart(),
-                    const SizedBox(height: 16),
-                    _buildHeatmap(),
-                    const SizedBox(height: 16),
-                    _buildTopicRatingHistory(),
-                    const SizedBox(height: 16),
-                    _buildModuleDonuts(),
-                  ],
-                ),
-              ),
-            ],
+              children: [
+                _buildQuickStats(),
+                const SizedBox(height: 16),
+                _buildWeeklyBarChart(),
+                const SizedBox(height: 16),
+                _buildRadarChart(),
+                const SizedBox(height: 16),
+                _buildHeatmap(),
+                const SizedBox(height: 16),
+                _buildTopicRatingHistory(),
+                const SizedBox(height: 16),
+                _buildModuleDonuts(),
+              ],
+            ),
           ),
   );
 
@@ -249,13 +229,13 @@ class _ProgressScreenState extends State<ProgressScreen> {
         'Topics Mastered',
         '$_topicsMastered',
         Icons.school_rounded,
-        AppColors.neonViolet,
+        AppColors.steelTeal,
       ),
       _statCard(
         'Current Streak',
         '$_currentStreak',
         Icons.local_fire_department,
-        AppColors.neonCyan,
+        AppColors.amberWarm,
       ),
       _statCard(
         "This Week's Sessions",
@@ -880,19 +860,3 @@ class _ModuleDonutCard extends StatelessWidget {
   }
 }
 
-class _AmbientGlow extends StatelessWidget {
-  const _AmbientGlow({required this.color, this.size = 220});
-
-  final Color color;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
-    ),
-  );
-}

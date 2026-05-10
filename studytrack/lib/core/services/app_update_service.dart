@@ -61,7 +61,9 @@ class AppUpdateService {
     required int currentVersionCode,
   }) async {
     if (checkUrl.isEmpty || checkUrl == 'YOUR_UPDATE_CHECK_URL') {
-      AppLogger.debug('[AppUpdateService] Update check skipped: empty or placeholder URL');
+      AppLogger.debug(
+        '[AppUpdateService] Update check skipped: empty or placeholder URL',
+      );
       return null;
     }
 
@@ -81,7 +83,9 @@ class AppUpdateService {
 
       final response = await request.close();
       _validatePinnedCertificate(response, Uri.parse(checkUrl));
-      AppLogger.debug('[AppUpdateService] HTTP response status: ${response.statusCode}');
+      AppLogger.debug(
+        '[AppUpdateService] HTTP response status: ${response.statusCode}',
+      );
 
       if (response.statusCode != 200) {
         throw HttpException(
@@ -91,7 +95,9 @@ class AppUpdateService {
       }
 
       final body = await response.transform(utf8.decoder).join();
-      AppLogger.debug('[AppUpdateService] Response body length: ${body.length} bytes');
+      AppLogger.debug(
+        '[AppUpdateService] Response body length: ${body.length} bytes',
+      );
 
       if (body.isEmpty) {
         throw const FormatException('Update manifest is empty');
@@ -104,14 +110,24 @@ class AppUpdateService {
 
       final info = AppUpdateInfo.fromJson(Map<String, dynamic>.from(json));
       AppLogger.debug('[AppUpdateService] Parsed manifest:');
-      AppLogger.debug('[AppUpdateService]   - versionCode: ${info.versionCode}');
-      AppLogger.debug('[AppUpdateService]   - versionName: ${info.versionName}');
-      AppLogger.debug('[AppUpdateService]   - downloadUrl: ${info.downloadUrl.isNotEmpty}');
-      AppLogger.debug('[AppUpdateService]   - apkSha256: ${info.apkSha256.isNotEmpty}');
+      AppLogger.debug(
+        '[AppUpdateService]   - versionCode: ${info.versionCode}',
+      );
+      AppLogger.debug(
+        '[AppUpdateService]   - versionName: ${info.versionName}',
+      );
+      AppLogger.debug(
+        '[AppUpdateService]   - downloadUrl: ${info.downloadUrl.isNotEmpty}',
+      );
+      AppLogger.debug(
+        '[AppUpdateService]   - apkSha256: ${info.apkSha256.isNotEmpty}',
+      );
 
       if (info.versionCode <= currentVersionCode) {
         AppLogger.debug('[AppUpdateService] No update needed:');
-        AppLogger.debug('[AppUpdateService]   Remote versionCode (${info.versionCode}) ≤ Current ($currentVersionCode)');
+        AppLogger.debug(
+          '[AppUpdateService]   Remote versionCode (${info.versionCode}) ≤ Current ($currentVersionCode)',
+        );
         return null;
       }
 
@@ -120,7 +136,9 @@ class AppUpdateService {
       }
 
       AppLogger.debug('[AppUpdateService] ✓ UPDATE AVAILABLE!');
-      AppLogger.debug('[AppUpdateService]   Upgrade: $currentVersionCode → ${info.versionCode}');
+      AppLogger.debug(
+        '[AppUpdateService]   Upgrade: $currentVersionCode → ${info.versionCode}',
+      );
       return info;
     } on SocketException catch (e) {
       AppLogger.warning('[AppUpdateService] ✗ SOCKET ERROR: ${e.message}');
@@ -211,7 +229,8 @@ class AppUpdateService {
     // by some OEM package installers running in isolated processes.
     final Directory dir;
     if (Platform.isAndroid) {
-      dir = await getExternalStorageDirectory() ?? await getTemporaryDirectory();
+      dir =
+          await getExternalStorageDirectory() ?? await getTemporaryDirectory();
     } else {
       dir = await getTemporaryDirectory();
     }
