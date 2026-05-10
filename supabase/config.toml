@@ -3,6 +3,10 @@
 # Only local-dev ports and settings; the remote project is controlled
 # via the dashboard. Keep this file in sync with your Supabase project.
 
+# Local project identifier (label only — the deploy workflow targets the
+# remote project via --project-ref).
+project_id = "studytrack"
+
 [api]
 enabled = true
 port = 54321
@@ -19,7 +23,6 @@ major_version = 15
 enabled = true
 port = 54323
 api_url = "http://127.0.0.1"
-openapi_docs_path = "/"
 
 [inbucket]
 enabled = true
