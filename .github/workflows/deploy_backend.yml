@@ -192,14 +192,27 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
         run: |
-          # --project-ref bypasses the link requirement for function deploys.
-          echo "Deploying gemini-proxy..."
-          supabase functions deploy gemini-proxy --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
-          echo "URL: https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/gemini-proxy"
+          deploy_fn() {
+            local fn=$1
+            echo "Deploying $fn..."
+            set +e
+            local out
+            out=$(supabase functions deploy "$fn" \
+                    --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt 2>&1)
+            local rc=$?
+            set -e
+            echo "$out"
+            if [ "$rc" -ne 0 ]; then
+              local safe
+              safe=$(echo "$out" | tr '\n' '|' | head -c 800)
+              echo "::error title=functions deploy $fn failed (exit $rc)::${safe}"
+              return "$rc"
+            fi
+            echo "URL: https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/$fn"
+          }
 
-          echo "Deploying delete-account..."
-          supabase functions deploy delete-account --project-ref "$SUPABASE_PROJECT_REF" --no-verify-jwt
-          echo "URL: https://${SUPABASE_PROJECT_REF}.supabase.co/functions/v1/delete-account"
+          deploy_fn gemini-proxy
+          deploy_fn delete-account
 
       - name: List deployed functions
         if: steps.secret_check.outputs.missing == 'false'
