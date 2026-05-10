@@ -498,7 +498,6 @@ class SupabaseService {
             .from('modules')
             .select()
             .eq('user_id', userId)
-            .isFilter('deleted_at', null)
             .order('created_at');
         final rows = _activeRows(response as List<dynamic>);
         await _cacheList('modules', userId, rows);
@@ -551,11 +550,14 @@ class SupabaseService {
   ) async {
     try {
       final moduleId = _newId();
+      // The DB CHECK constraint rejects empty/non-hex colors. Pass null
+      // instead of an empty string so the row is accepted.
+      final normalizedColor = color.trim().isEmpty ? null : color;
       final payload = {
         'id': moduleId,
         'user_id': userId,
         'name': name,
-        'color': color,
+        'color': normalizedColor,
         'created_at': DateTime.now().toIso8601String(),
       };
 
@@ -654,7 +656,6 @@ class SupabaseService {
             .from('topics')
             .select()
             .eq('module_id', moduleId)
-            .isFilter('deleted_at', null)
             .order('created_at');
         final rows = _activeRows(response as List<dynamic>);
         await _cacheList('topics', moduleId, rows);
@@ -1154,7 +1155,6 @@ class SupabaseService {
             .select()
             .eq('user_id', userId)
             .eq('scheduled_date', day)
-            .isFilter('deleted_at', null)
             .order('start_time');
         final rows = _activeRows(response as List<dynamic>);
         await _cacheList('study_sessions', scope, rows);
@@ -2188,17 +2188,22 @@ class SupabaseService {
     if (currentUser == null) {
       throw StateError('No authenticated user available');
     }
+    // The topics table has no `description` column; map it onto `notes`
+    // (the closest existing column) so the insert is accepted.
+    final payload = <String, dynamic>{
+      'module_id': moduleId,
+      'user_id': currentUser.id,
+      'name': name,
+      'is_studied': false,
+      'study_count': 0,
+      'created_at': DateTime.now().toIso8601String(),
+    };
+    if (description.trim().isNotEmpty) {
+      payload['notes'] = description;
+    }
     final response = await client
         .from('topics')
-        .insert({
-          'module_id': moduleId,
-          'user_id': currentUser.id,
-          'name': name,
-          'description': description,
-          'is_studied': false,
-          'study_count': 0,
-          'created_at': DateTime.now().toIso8601String(),
-        })
+        .insert(payload)
         .select()
         .maybeSingle();
     if (response == null) {
