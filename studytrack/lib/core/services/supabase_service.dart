@@ -1523,27 +1523,15 @@ class SupabaseService {
   ) async {
     try {
       if (await _isOnline()) {
-        final group = await client
-            .from('study_groups')
-            .select()
-            .eq('invite_code', inviteCode.toUpperCase())
-            .maybeSingle();
-
-        if (group == null) {
-          return null;
-        }
-
-        final response = await client
-            .from('group_members')
-            .upsert({
-              'group_id': group['id'],
-              'user_id': userId,
-              'role': 'member',
-              'joined_at': DateTime.now().toIso8601String(),
-            })
-            .select()
-            .maybeSingle();
-        return response;
+        // A direct SELECT on study_groups is blocked by RLS for non-members,
+        // so we call a security-definer RPC that looks up the group and inserts
+        // the membership row atomically, bypassing the RLS check safely.
+        final result = await client.rpc(
+          'join_group_by_invite_code',
+          params: {'p_invite_code': inviteCode.toUpperCase()},
+        );
+        if (result == null) return null;
+        return Map<String, dynamic>.from(result as Map);
       }
 
       await _queueChange('group_members', 'joinGroup', {
