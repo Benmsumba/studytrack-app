@@ -1,7 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -15,6 +14,7 @@ import '../../../core/repositories/weekly_report_repository.dart';
 import '../../../core/services/achievement_service.dart';
 import '../../../core/services/export_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/utils/snackbar_helper.dart';
@@ -239,10 +239,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: AppColors.backgroundDark,
-        body: LoadingShimmerWidget.profile(),
+      return Scaffold(
+        backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
+        body: const LoadingShimmerWidget.profile(),
       );
     }
 
@@ -255,9 +257,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final xpProgress = (xp % 100) / 100.0;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
       body: RefreshIndicator(
-        color: AppColors.accent,
+        color: AppColors.signal,
         backgroundColor: AppColors.surfaceDark,
         onRefresh: _load,
         child: SingleChildScrollView(
@@ -285,7 +287,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   name,
                   style: AppTextStyles.displayMedium.copyWith(
-                    color: Colors.white,
+                    color: isLight ? AppColors.inkPrimary : AppColors.parchment,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -318,23 +320,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
+                    color: AppColors.signalMuted,
                     borderRadius: BorderRadius.circular(999),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AppColors.violetGlowSoft,
-                        blurRadius: 10,
-                        offset: Offset(0, 3),
-                      ),
-                    ],
+                    border: Border.all(color: AppColors.signal, width: 0.5),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text('✦ ', style: TextStyle(color: Colors.white, fontSize: 12)),
+                      const Text(
+                        '✦ ',
+                        style: TextStyle(color: AppColors.signal, fontSize: 12),
+                      ),
                       Text(
                         'Level $level · ${_levelTitle(level)}',
-                        style: AppTextStyles.label.copyWith(color: Colors.white),
+                        style: AppTextStyles.label.copyWith(
+                          color: AppColors.signal,
+                        ),
                       ),
                     ],
                   ),
@@ -369,7 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         value: xpProgress,
                         backgroundColor: AppColors.border,
                         valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppColors.neonViolet,
+                          AppColors.signal,
                         ),
                         minHeight: 6,
                       ),
@@ -435,7 +436,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text(
                       'Achievements',
                       style: AppTextStyles.headingSmall.copyWith(
-                        color: Colors.white,
+                        color: isLight ? AppColors.inkPrimary : AppColors.parchment,
                       ),
                     ),
                     const Spacer(),
@@ -468,7 +469,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       description: meta.description,
                       earned: earned,
                       onTap: () {
-                        HapticFeedback.selectionClick();
+                        Haptics.selection();
                         _showBadgeTooltip(context, meta, earned);
                       },
                     );
@@ -482,7 +483,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: _isExporting
                       ? 'Preparing PDF…'
                       : 'Export Weekly Report (PDF)',
-                  gradient: AppColors.primaryGradient,
+                  isPrimary: true,
                   loading: _isExporting,
                   onTap: _isExporting ? null : _exportWeeklyReport,
                 ),
@@ -491,9 +492,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.backup_rounded,
                   label:
                       _isBackingUp ? 'Preparing Backup…' : 'Backup to Google Drive',
-                  gradient: const LinearGradient(
-                    colors: [AppColors.surfaceDark, AppColors.cardDark],
-                  ),
                   loading: _isBackingUp,
                   onTap: _isBackingUp ? null : _backupToGoogleDrive,
                 ),
@@ -517,8 +515,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
           side: BorderSide(
-            color: earned ? AppColors.primary : AppColors.border,
-            width: earned ? 1.5 : 1,
+            color: earned ? AppColors.signal : AppColors.borderDark,
+            width: 0.5,
           ),
         ),
         content: Column(
@@ -528,13 +526,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               meta.emoji,
               style: TextStyle(
                 fontSize: 48,
-                color: earned ? Colors.white : Colors.white38,
+                color: earned
+                    ? AppColors.parchment
+                    : AppColors.parchment.withValues(alpha: 0.38),
               ),
             ),
             const SizedBox(height: 12),
             Text(
               meta.label,
-              style: AppTextStyles.headingSmall.copyWith(color: Colors.white),
+              style: AppTextStyles.headingSmall.copyWith(
+                color: AppColors.parchment,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -712,14 +714,14 @@ class _AvatarWithRing extends StatelessWidget {
           width: 80,
           height: 80,
           decoration: const BoxDecoration(
-            gradient: AppColors.primaryGradient,
+            color: AppColors.signal,
             shape: BoxShape.circle,
           ),
           child: Center(
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '?',
               style: AppTextStyles.displayMedium.copyWith(
-                color: Colors.white,
+                color: AppColors.parchment,
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
               ),
@@ -736,13 +738,13 @@ class _AvatarWithRing extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.success,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.backgroundDark, width: 2),
+              border: Border.all(color: AppColors.obsidian, width: 2),
             ),
             child: Center(
               child: Text(
                 '${(masteryProgress * 100).round()}%',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.parchment,
                   fontSize: 7,
                   fontWeight: FontWeight.w800,
                 ),
@@ -782,9 +784,7 @@ class _RingPainter extends CustomPainter {
         2 * math.pi * progress.clamp(0.0, 1.0),
         false,
         Paint()
-          ..shader = const LinearGradient(
-            colors: [AppColors.neonViolet, AppColors.neonCyan],
-          ).createShader(Rect.fromCircle(center: center, radius: radius))
+          ..color = AppColors.signal
           ..style = PaintingStyle.stroke
           ..strokeWidth = 4
           ..strokeCap = StrokeCap.round,
@@ -862,25 +862,22 @@ class _SocialCard extends StatelessWidget {
     width: double.infinity,
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      gradient: AppColors.primaryGradient,
+      color: AppColors.surfaceDark,
       borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-      boxShadow: const [
-        BoxShadow(
-          color: AppColors.violetGlowSoft,
-          blurRadius: 20,
-          offset: Offset(0, 6),
-        ),
-      ],
+      border: Border.all(color: AppColors.signal, width: 0.5),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            const Text('✦ ', style: TextStyle(color: Colors.white, fontSize: 13)),
+            const Text(
+              '✦ ',
+              style: TextStyle(color: AppColors.signal, fontSize: 13),
+            ),
             Text(
               'Share Your Progress',
-              style: AppTextStyles.label.copyWith(color: Colors.white),
+              style: AppTextStyles.label.copyWith(color: AppColors.signal),
             ),
           ],
         ),
@@ -888,7 +885,7 @@ class _SocialCard extends StatelessWidget {
         Text(
           name,
           style: AppTextStyles.headingSmall.copyWith(
-            color: Colors.white,
+            color: AppColors.parchment,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -896,36 +893,36 @@ class _SocialCard extends StatelessWidget {
         Text(
           'Level $level · $levelTitle  •  $masteredTopics/$totalTopics mastered  •  $streak day streak 🔥',
           style: AppTextStyles.bodySmall.copyWith(
-            color: Colors.white70,
+            color: AppColors.parchmentMuted,
             fontSize: 12,
           ),
         ),
         const SizedBox(height: 14),
         GestureDetector(
           onTap: () {
-            HapticFeedback.lightImpact();
+            Haptics.light();
             onShare();
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: AppColors.signalMuted,
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.white38),
+              border: Border.all(color: AppColors.signal, width: 0.5),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
                   Icons.ios_share_rounded,
-                  color: Colors.white,
+                  color: AppColors.signal,
                   size: 16,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   'Share Card',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: Colors.white,
+                    color: AppColors.signal,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -982,7 +979,9 @@ class _BadgeWidget extends StatelessWidget {
               emoji,
               style: TextStyle(
                 fontSize: 26,
-                color: earned ? Colors.white : Colors.white38,
+                color: earned
+                    ? AppColors.parchment
+                    : AppColors.parchment.withValues(alpha: 0.38),
               ),
             ),
             const SizedBox(height: 4),
@@ -994,7 +993,7 @@ class _BadgeWidget extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.captionMuted.copyWith(
-                  color: earned ? Colors.white : AppColors.textMuted,
+                  color: earned ? AppColors.parchment : AppColors.parchmentMuted,
                   fontSize: 9,
                   fontWeight: earned ? FontWeight.w700 : FontWeight.w400,
                 ),
@@ -1011,50 +1010,64 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.label,
-    required this.gradient,
+    this.isPrimary = false,
     this.loading = false,
     this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final Gradient gradient;
+  final bool isPrimary;
   final bool loading;
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: () {
-      HapticFeedback.lightImpact();
-      onTap?.call();
-    },
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        gradient: onTap == null ? null : gradient,
-        color: onTap == null ? AppColors.cardDark : null,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+  Widget build(BuildContext context) {
+    final disabled = onTap == null;
+    final bg = disabled
+        ? AppColors.cardDark
+        : isPrimary
+            ? AppColors.signal
+            : AppColors.surfaceDark;
+    final fg = isPrimary ? AppColors.parchment : AppColors.parchment;
+    final border =
+        isPrimary ? AppColors.signal : AppColors.borderDark;
+
+    return GestureDetector(
+      onTap: () {
+        Haptics.light();
+        onTap?.call();
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: border, width: 0.5),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (loading)
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: fg,
+                ),
+              )
+            else
+              Icon(icon, color: fg, size: 18),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: AppTextStyles.button.copyWith(color: fg),
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (loading) const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                ) else Icon(icon, color: Colors.white, size: 18),
-          const SizedBox(width: 10),
-          Text(
-            label,
-            style: AppTextStyles.button.copyWith(color: Colors.white),
-          ),
-        ],
-      ),
-    ),
-  );
+    );
+  }
 }
