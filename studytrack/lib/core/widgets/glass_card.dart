@@ -15,9 +15,9 @@ class GlassCard extends StatelessWidget {
     this.margin,
     this.borderRadius = AppSpacing.cardRadius,
     this.borderColors,
-    this.borderWidth = 1,
-    this.blurSigma = 18,
-    this.enableGlow = true,
+    this.borderWidth = 0.5,
+    this.blurSigma = 30,
+    this.enableGlow = false,
     this.glowColor,
     this.backgroundColor,
     this.animateEntrance = false,
@@ -40,32 +40,16 @@ class GlassCard extends StatelessWidget {
     final radius = BorderRadius.circular(borderRadius);
     final innerRadius = math.max(0, borderRadius - borderWidth).toDouble();
     final innerBorderRadius = BorderRadius.circular(innerRadius);
-    final colors =
-        borderColors ?? const [AppColors.neonViolet, AppColors.neonCyan];
+    // Single tonal hairline border — materiality comes from the subtle contrast
+    // between the card surface and its border, not from glow or shadow.
+    final colors = borderColors ??
+        const [AppColors.borderDark, AppColors.borderDarkSoft];
 
     Widget card = Container(
       margin: margin,
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        boxShadow: enableGlow
-            ? [
-                BoxShadow(
-                  color: (glowColor ?? AppColors.violetGlowSoft).withValues(
-                    alpha: 0.7,
-                  ),
-                  blurRadius: 32,
-                  spreadRadius: 1,
-                  offset: const Offset(0, 10),
-                ),
-                const BoxShadow(
-                  color: AppColors.cyanGlowSoft,
-                  blurRadius: 22,
-                  spreadRadius: 0,
-                  offset: Offset(0, 6),
-                ),
-              ]
-            : null,
-      ),
+      // enableGlow kept as a parameter for backwards compatibility but ignored:
+      // shadows are replaced by 0.5px hairline borders per Quiet Luxury spec.
+      decoration: BoxDecoration(borderRadius: radius),
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: radius,
@@ -85,7 +69,7 @@ class GlassCard extends StatelessWidget {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: innerBorderRadius,
-                    color: backgroundColor ?? AppColors.glassOverlay,
+                    color: backgroundColor ?? AppColors.glassDark,
                     border: Border.all(
                       color: AppColors.borderSoft.withValues(alpha: 0.72),
                     ),

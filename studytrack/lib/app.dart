@@ -70,70 +70,131 @@ String? resolveAppRedirect({
   return null;
 }
 
+/// 300 ms Fade Through transition — incoming page fades in while the outgoing
+/// page fades out simultaneously, with a brief overlap that feels intentional
+/// rather than mechanical. Replaces FadeUpwards/slide for a quieter feel.
+class _FadeThroughTransitionsBuilder extends PageTransitionsBuilder {
+  const _FadeThroughTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return FadeTransition(
+      // Incoming: ease in over the full 300 ms.
+      opacity: CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeInOutCubic,
+      ),
+      child: FadeTransition(
+        // Outgoing: fade out quickly in the first third, leaving a brief
+        // clean canvas before the next screen appears.
+        opacity: Tween<double>(begin: 1.0, end: 0.0).animate(
+          CurvedAnimation(
+            parent: secondaryAnimation,
+            curve: const Interval(0.0, 0.4, curve: Curves.easeIn),
+          ),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
 class StudyTrackApp extends StatelessWidget {
   const StudyTrackApp({required this.authProvider, super.key});
 
   final AuthProvider authProvider;
 
-  static ThemeData _buildDarkTheme({ColorScheme? colorScheme}) {
-    final scheme =
-        colorScheme ??
-        const ColorScheme.dark(
-          primary: AppColors.neonViolet,
-          onPrimary: Colors.white,
-          secondary: AppColors.neonCyan,
-          onSecondary: Colors.white,
-          surface: AppColors.surfaceDark,
-          onSurface: AppColors.textPrimary,
-          error: AppColors.danger,
-          onError: Colors.white,
-          surfaceContainerHighest: AppColors.surfaceElevated,
-          outline: AppColors.border,
-          outlineVariant: AppColors.borderSoft,
-        );
+  // Quiet Luxury: always use the curated palette.
+  // DynamicColorBuilder is kept as the structural wrapper but its generated
+  // schemes are ignored — Material You would overwrite the chosen ochre signal.
+  static ThemeData _buildDarkTheme() {
+    const scheme = ColorScheme.dark(
+      primary: AppColors.signal,
+      onPrimary: AppColors.parchment,
+      secondary: AppColors.signal,
+      onSecondary: AppColors.parchment,
+      tertiary: AppColors.signalLight,
+      onTertiary: AppColors.parchment,
+      surface: AppColors.surfaceDark,
+      onSurface: AppColors.parchment,
+      surfaceContainerHighest: AppColors.surfaceElevated,
+      onSurfaceVariant: AppColors.parchmentSecondary,
+      error: AppColors.danger,
+      onError: AppColors.parchment,
+      outline: AppColors.borderDark,
+      outlineVariant: AppColors.borderDarkSoft,
+      scrim: AppColors.obsidian,
+    );
 
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
       colorScheme: scheme,
-      scaffoldBackgroundColor: AppColors.backgroundDark,
-      canvasColor: AppColors.backgroundDark,
-      dividerColor: scheme.outlineVariant,
+      scaffoldBackgroundColor: AppColors.obsidian,
+      canvasColor: AppColors.obsidian,
+      dividerColor: AppColors.borderDarkSoft,
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.macOS: FadeUpwardsPageTransitionsBuilder(),
-          TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+          TargetPlatform.android: _FadeThroughTransitionsBuilder(),
+          TargetPlatform.iOS: _FadeThroughTransitionsBuilder(),
+          TargetPlatform.linux: _FadeThroughTransitionsBuilder(),
+          TargetPlatform.macOS: _FadeThroughTransitionsBuilder(),
+          TargetPlatform.windows: _FadeThroughTransitionsBuilder(),
         },
       ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
-        foregroundColor: AppColors.textPrimary,
+        foregroundColor: AppColors.parchment,
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
         titleTextStyle: AppTextStyles.headingMedium,
       ),
       cardTheme: CardThemeData(
-        color: AppColors.surfaceDark.withValues(alpha: 0.92),
+        color: AppColors.surfaceDark,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          side: const BorderSide(color: AppColors.borderSoft),
+          // 0.5 px hairline border — materiality without shadow
+          side: const BorderSide(color: AppColors.borderDark, width: 0.5),
         ),
         margin: EdgeInsets.zero,
       ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.surfaceDark,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        elevation: 0,
+        indicatorColor: AppColors.signalMuted,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: AppColors.signal, size: 22);
+          }
+          return const IconThemeData(color: AppColors.parchmentMuted, size: 22);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppTextStyles.overlineSignal;
+          }
+          return AppTextStyles.caption;
+        }),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.surfaceDark,
+        backgroundColor: AppColors.surfaceElevated,
         contentTextStyle: AppTextStyles.bodyMedium,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          side: const BorderSide(color: AppColors.borderSoft),
+          side: const BorderSide(color: AppColors.borderDark, width: 0.5),
         ),
-        actionTextColor: AppColors.neonCyan,
+        actionTextColor: AppColors.signal,
         elevation: 0,
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -145,19 +206,19 @@ class StudyTrackApp extends StatelessWidget {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.borderSoft),
+          borderSide: const BorderSide(color: AppColors.borderDark, width: 0.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.borderSoft),
+          borderSide: const BorderSide(color: AppColors.borderDark, width: 0.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.neonCyan, width: 1.5),
+          borderSide: const BorderSide(color: AppColors.signal, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.danger),
+          borderSide: const BorderSide(color: AppColors.danger, width: 0.5),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
@@ -168,13 +229,30 @@ class StudyTrackApp extends StatelessWidget {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.neonViolet,
-          foregroundColor: Colors.white,
+          backgroundColor: AppColors.signal,
+          foregroundColor: AppColors.parchment,
           minimumSize: const Size.fromHeight(54),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
             vertical: AppSpacing.md,
           ),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+          ),
+          textStyle: AppTextStyles.button,
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.signal,
+          foregroundColor: AppColors.parchment,
+          minimumSize: const Size.fromHeight(54),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.md,
+          ),
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           ),
@@ -183,19 +261,20 @@ class StudyTrackApp extends StatelessWidget {
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AppColors.neonCyan,
+          foregroundColor: AppColors.signal,
           textStyle: AppTextStyles.label,
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textGlow,
-          side: const BorderSide(color: AppColors.border),
+          foregroundColor: AppColors.parchment,
+          side: const BorderSide(color: AppColors.borderDark, width: 0.5),
           minimumSize: const Size.fromHeight(54),
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.xl,
             vertical: AppSpacing.md,
           ),
+          elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           ),
@@ -204,13 +283,13 @@ class StudyTrackApp extends StatelessWidget {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surfaceElevated,
-        selectedColor: AppColors.neonViolet.withValues(alpha: 0.22),
+        selectedColor: AppColors.signalMuted,
         disabledColor: AppColors.surfaceElevated,
         labelStyle: AppTextStyles.label,
         secondaryLabelStyle: AppTextStyles.label,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
-          side: const BorderSide(color: AppColors.borderSoft),
+          side: const BorderSide(color: AppColors.borderDark, width: 0.5),
         ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
@@ -220,16 +299,17 @@ class StudyTrackApp extends StatelessWidget {
         modalBackgroundColor: Colors.transparent,
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: AppColors.surfaceDark,
+        backgroundColor: AppColors.surfaceElevated,
+        elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          side: const BorderSide(color: AppColors.borderSoft),
+          side: const BorderSide(color: AppColors.borderDark, width: 0.5),
         ),
       ),
       progressIndicatorTheme: const ProgressIndicatorThemeData(
-        color: AppColors.neonCyan,
-        linearTrackColor: AppColors.borderSoft,
-        circularTrackColor: AppColors.borderSoft,
+        color: AppColors.signal,
+        linearTrackColor: AppColors.borderDarkSoft,
+        circularTrackColor: AppColors.borderDarkSoft,
       ),
     );
 
@@ -270,79 +350,234 @@ class StudyTrackApp extends StatelessWidget {
         labelSmall: AppTextStyles.caption,
       ),
       visualDensity: VisualDensity.standard,
-      splashFactory: InkSparkle.splashFactory,
+      splashFactory: InkRipple.splashFactory,
     );
   }
 
-  static ThemeData _buildLightTheme({ColorScheme? colorScheme}) {
-    final scheme =
-        colorScheme ??
-        ColorScheme.fromSeed(
-          seedColor: AppColors.neonViolet,
-          brightness: Brightness.light,
-          surface: const Color(0xFFF7F8FC),
-        );
+  static ThemeData _buildLightTheme() {
+    const scheme = ColorScheme.light(
+      primary: AppColors.signal,
+      onPrimary: Colors.white,
+      secondary: AppColors.signal,
+      onSecondary: Colors.white,
+      tertiary: AppColors.signalLight,
+      onTertiary: Colors.white,
+      surface: AppColors.surfaceLight,
+      onSurface: AppColors.inkPrimary,
+      surfaceContainerHighest: AppColors.surfaceElevatedLight,
+      onSurfaceVariant: AppColors.inkSecondary,
+      error: AppColors.danger,
+      onError: Colors.white,
+      outline: AppColors.borderLight,
+      outlineVariant: AppColors.borderLightSoft,
+      scrim: AppColors.inkPrimary,
+    );
 
     final base = ThemeData(
       useMaterial3: true,
       brightness: Brightness.light,
       colorScheme: scheme,
-      scaffoldBackgroundColor: const Color(0xFFF7F8FC),
-      canvasColor: const Color(0xFFF7F8FC),
-      dividerColor: scheme.outlineVariant,
+      scaffoldBackgroundColor: AppColors.paperWhite,
+      canvasColor: AppColors.paperWhite,
+      dividerColor: AppColors.borderLightSoft,
+      pageTransitionsTheme: const PageTransitionsTheme(
+        builders: {
+          TargetPlatform.android: _FadeThroughTransitionsBuilder(),
+          TargetPlatform.iOS: _FadeThroughTransitionsBuilder(),
+          TargetPlatform.linux: _FadeThroughTransitionsBuilder(),
+          TargetPlatform.macOS: _FadeThroughTransitionsBuilder(),
+          TargetPlatform.windows: _FadeThroughTransitionsBuilder(),
+        },
+      ),
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
-        foregroundColor: scheme.onSurface,
+        foregroundColor: AppColors.inkPrimary,
         centerTitle: false,
         elevation: 0,
         scrolledUnderElevation: 0,
+        titleTextStyle: AppTextStyles.headingMediumLight,
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.surfaceLight,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          side: const BorderSide(color: AppColors.borderLight, width: 0.5),
+        ),
+        margin: EdgeInsets.zero,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: AppColors.surfaceLight,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.transparent,
+        elevation: 0,
+        indicatorColor: AppColors.signalSubtle,
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: AppColors.signal, size: 22);
+          }
+          return IconThemeData(color: AppColors.inkMuted, size: 22);
+        }),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return AppTextStyles.overlineSignal;
+          }
+          return AppTextStyles.caption.copyWith(color: AppColors.inkMuted);
+        }),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: Colors.white,
-        contentTextStyle: TextStyle(color: scheme.onSurface),
+        backgroundColor: AppColors.surfaceElevatedLight,
+        contentTextStyle:
+            AppTextStyles.bodyMedium.copyWith(color: AppColors.inkPrimary),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-          side: BorderSide(color: scheme.outlineVariant),
+          side: const BorderSide(color: AppColors.borderLight, width: 0.5),
         ),
+        actionTextColor: AppColors.signal,
+        elevation: 0,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.inputFillLight,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: BorderSide(color: scheme.outlineVariant),
+          borderSide: const BorderSide(color: AppColors.borderLight, width: 0.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: BorderSide(color: scheme.outlineVariant),
+          borderSide: const BorderSide(color: AppColors.borderLight, width: 0.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: BorderSide(color: scheme.primary, width: 1.4),
+          borderSide: const BorderSide(color: AppColors.signal, width: 1.5),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          borderSide: const BorderSide(color: AppColors.danger, width: 0.5),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
+        ),
+        labelStyle: AppTextStyles.label.copyWith(color: AppColors.inkSecondary),
+        hintStyle:
+            AppTextStyles.bodyMediumSecondary.copyWith(color: AppColors.inkMuted),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.signal,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(54),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.md,
+          ),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+          ),
+          textStyle: AppTextStyles.button,
         ),
       ),
-      cardTheme: CardThemeData(
-        color: Colors.white,
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.signal,
+          foregroundColor: Colors.white,
+          minimumSize: const Size.fromHeight(54),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.md,
+          ),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+          ),
+          textStyle: AppTextStyles.button,
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.signal,
+          textStyle: AppTextStyles.label,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.inkPrimary,
+          side: const BorderSide(color: AppColors.borderLight, width: 0.5),
+          minimumSize: const Size.fromHeight(54),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.xl,
+            vertical: AppSpacing.md,
+          ),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
+          ),
+          textStyle: AppTextStyles.button.copyWith(color: AppColors.inkPrimary),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.surfaceElevatedLight,
+        selectedColor: AppColors.signalSubtle,
+        disabledColor: AppColors.surfaceElevatedLight,
+        labelStyle: AppTextStyles.label.copyWith(color: AppColors.inkPrimary),
+        secondaryLabelStyle:
+            AppTextStyles.label.copyWith(color: AppColors.inkPrimary),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
+          side: const BorderSide(color: AppColors.borderLight, width: 0.5),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        showDragHandle: true,
+        modalBackgroundColor: Colors.transparent,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: AppColors.surfaceElevatedLight,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          side: BorderSide(color: scheme.outlineVariant),
+          side: const BorderSide(color: AppColors.borderLight, width: 0.5),
         ),
-        margin: EdgeInsets.zero,
       ),
-      progressIndicatorTheme: ProgressIndicatorThemeData(
-        color: scheme.primary,
-        linearTrackColor: scheme.surfaceContainerHighest,
-        circularTrackColor: scheme.surfaceContainerHighest,
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+        color: AppColors.signal,
+        linearTrackColor: AppColors.borderLightSoft,
+        circularTrackColor: AppColors.borderLightSoft,
       ),
     );
 
-    return base.copyWith(visualDensity: VisualDensity.standard);
+    final baseTextTheme = base.textTheme;
+
+    return base.copyWith(
+      textTheme: baseTextTheme.copyWith(
+        displayLarge: AppTextStyles.displayLarge.copyWith(color: AppColors.inkPrimary),
+        displayMedium: AppTextStyles.displayMedium.copyWith(color: AppColors.inkPrimary),
+        headlineLarge: AppTextStyles.headingLargeLight,
+        headlineMedium: AppTextStyles.headingMediumLight,
+        headlineSmall: AppTextStyles.headingSmallLight,
+        titleLarge: AppTextStyles.headingSmallLight,
+        titleMedium: AppTextStyles.label.copyWith(color: AppColors.inkPrimary),
+        titleSmall: AppTextStyles.labelSecondary.copyWith(color: AppColors.inkSecondary),
+        bodyLarge: AppTextStyles.bodyLarge.copyWith(color: AppColors.inkPrimary),
+        bodyMedium: AppTextStyles.bodyMedium.copyWith(color: AppColors.inkPrimary),
+        bodySmall: AppTextStyles.bodySmall.copyWith(color: AppColors.inkPrimary),
+        labelLarge: AppTextStyles.button.copyWith(color: AppColors.inkPrimary),
+        labelMedium: AppTextStyles.label.copyWith(color: AppColors.inkPrimary),
+        labelSmall: AppTextStyles.caption.copyWith(color: AppColors.inkMuted),
+      ),
+      visualDensity: VisualDensity.standard,
+      splashFactory: InkRipple.splashFactory,
+    );
   }
 
   // refreshListenable is intentionally omitted; redirect decisions are based
@@ -525,9 +760,11 @@ class StudyTrackApp extends StatelessWidget {
     );
 
     return DynamicColorBuilder(
-      builder: (lightDynamic, darkDynamic) {
-        final lightTheme = _buildLightTheme(colorScheme: lightDynamic);
-        final darkTheme = _buildDarkTheme(colorScheme: darkDynamic);
+      // Quiet Luxury: ignore Material You dynamic schemes entirely.
+      // Passing them would overwrite the curated Deep Ochre signal palette.
+      builder: (_, __) {
+        final lightTheme = _buildLightTheme();
+        final darkTheme = _buildDarkTheme();
 
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
