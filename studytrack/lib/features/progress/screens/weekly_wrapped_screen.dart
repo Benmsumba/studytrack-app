@@ -229,7 +229,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
     final diff = topicsStudied - _lastWeekTopics;
     if (diff > 0) return AppColors.success;
     if (diff < 0) return AppColors.danger;
-    return Colors.white70;
+    return AppColors.parchmentMuted;
   }
 
   String _resolveWeekRange(dynamic report) {
@@ -344,7 +344,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFF7C3AED), Color(0xFF0F0F1A)],
+        colors: [AppColors.signal, AppColors.obsidian],
       ),
     ),
     child: SafeArea(
@@ -364,7 +364,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                       'Generate',
                       style: AppTextStyles.bodyMedium.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: AppColors.parchment,
                       ),
                     ),
                   ),
@@ -375,7 +375,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
               children: [
                 Icon(
                       Icons.star_rounded,
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: AppColors.parchment.withValues(alpha: 0.9),
                       size: 70,
                     )
                     .animate(onPlay: (controller) => controller.repeat())
@@ -397,7 +397,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                   style: AppTextStyles.displayMedium.copyWith(
                     fontSize: 38,
                     fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    color: AppColors.parchment,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -406,7 +406,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                   weekDateRange,
                   style: AppTextStyles.bodyMedium.copyWith(
                     fontSize: 14,
-                    color: Colors.white70,
+                    color: AppColors.parchmentMuted,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -414,7 +414,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                   studentName,
                   style: AppTextStyles.bodyMedium.copyWith(
                     fontSize: 18,
-                    color: Colors.white70,
+                    color: AppColors.parchmentMuted,
                   ),
                 ),
                 const SizedBox(height: 40),
@@ -422,7 +422,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                   'Swipe up to see ↑',
                   style: AppTextStyles.bodyMedium.copyWith(
                     fontSize: 13,
-                    color: Colors.white60,
+                    color: AppColors.parchment.withValues(alpha: 0.6),
                   ),
                 ),
               ],
@@ -443,7 +443,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
               style: AppTextStyles.displayLarge.copyWith(
                 fontSize: 110,
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: AppColors.parchment,
               ),
             )
             .animate()
@@ -453,14 +453,14 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           'topics covered',
           style: AppTextStyles.headingSmall.copyWith(
             fontSize: 24,
-            color: Colors.white,
+            color: AppColors.parchment,
           ),
         ),
         Text(
           'this week',
           style: AppTextStyles.bodyMedium.copyWith(
             fontSize: 14,
-            color: Colors.white70,
+            color: AppColors.parchmentMuted,
           ),
         ),
         const SizedBox(height: 8),
@@ -476,7 +476,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
   );
 
   Widget _bestSubjectPage() => _gradientPage(
-    colors: const [Color(0xFF7C3AED), Color(0xFF1F1B4D)],
+    colors: const [AppColors.signal, AppColors.surfaceDark],
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -485,7 +485,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         Text(
           'Your strongest subject',
           style: AppTextStyles.bodyMedium.copyWith(
-            color: Colors.white70,
+            color: AppColors.parchmentMuted,
             fontSize: 16,
           ),
         ),
@@ -493,7 +493,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         Text(
           bestSubject,
           style: AppTextStyles.headingLarge.copyWith(
-            color: Colors.white,
+            color: AppColors.parchment,
             fontWeight: FontWeight.w700,
             fontSize: 40,
           ),
@@ -503,7 +503,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         Text(
           'Avg rating ${averageRating.toStringAsFixed(1)} / 10',
           style: AppTextStyles.bodyMedium.copyWith(
-            color: Colors.white,
+            color: AppColors.parchment,
             fontSize: 17,
           ),
         ),
@@ -515,7 +515,9 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
             final active = averageRating >= threshold;
             return Icon(
               active ? Icons.star_rounded : Icons.star_outline_rounded,
-              color: active ? Colors.amber : Colors.white54,
+              color: active
+                  ? AppColors.signal
+                  : AppColors.parchment.withValues(alpha: 0.54),
               size: 20,
             );
           }),
@@ -532,7 +534,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
             builder: (context, value, child) => LinearProgressIndicator(
               value: value,
               minHeight: 10,
-              backgroundColor: Colors.white24,
+              backgroundColor: AppColors.parchment.withValues(alpha: 0.24),
               color: AppColors.accent,
             ),
           ),
@@ -551,7 +553,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         Text(
           'Needs more love',
           style: AppTextStyles.bodyMedium.copyWith(
-            color: Colors.white70,
+            color: AppColors.parchmentMuted,
             fontSize: 17,
           ),
         ),
@@ -559,7 +561,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         Text(
           weakestSubject,
           style: AppTextStyles.headingLarge.copyWith(
-            color: Colors.white,
+            color: AppColors.parchment,
             fontWeight: FontWeight.w700,
             fontSize: 38,
           ),
@@ -569,7 +571,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         Text(
           'You’ve got this 💪',
           style: AppTextStyles.bodyMedium.copyWith(
-            color: Colors.white,
+            color: AppColors.parchment,
             fontSize: 18,
           ),
         ),
@@ -587,7 +589,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         Text(
           '$streak',
           style: AppTextStyles.displayLarge.copyWith(
-            color: Colors.white,
+            color: AppColors.parchment,
             fontSize: 92,
             fontWeight: FontWeight.w700,
           ),
@@ -595,7 +597,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         Text(
           'day streak',
           style: AppTextStyles.bodyMedium.copyWith(
-            color: Colors.white70,
+            color: AppColors.parchmentMuted,
             fontSize: 18,
           ),
         ),
@@ -603,7 +605,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
         Text(
           _streakMessage(),
           style: AppTextStyles.bodyMedium.copyWith(
-            color: Colors.white,
+            color: AppColors.parchment,
             fontSize: 16,
           ),
         ),
@@ -624,7 +626,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           Text(
             '$completed of $planned sessions completed',
             style: AppTextStyles.headingLarge.copyWith(
-              color: Colors.white,
+              color: AppColors.parchment,
               fontSize: 30,
               fontWeight: FontWeight.w700,
             ),
@@ -640,13 +642,13 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                 CircularProgressIndicator(
                   value: percent,
                   strokeWidth: 12,
-                  backgroundColor: Colors.white24,
-                  color: Colors.white,
+                  backgroundColor: AppColors.parchment.withValues(alpha: 0.24),
+                  color: AppColors.parchment,
                 ),
                 Text(
                   '${(percent * 100).round()}%',
                   style: AppTextStyles.headingLarge.copyWith(
-                    color: Colors.white,
+                    color: AppColors.parchment,
                     fontSize: 36,
                     fontWeight: FontWeight.w700,
                   ),
@@ -658,7 +660,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           Text(
             'Missed: ${(planned - completed).clamp(0, 999)}',
             style: AppTextStyles.bodyMedium.copyWith(
-              color: Colors.white70,
+              color: AppColors.parchmentMuted,
               fontSize: 15,
             ),
           ),
@@ -677,13 +679,13 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           const Icon(
             Icons.psychology_alt_rounded,
             size: 64,
-            color: Colors.white,
+            color: AppColors.parchment,
           ),
           const SizedBox(height: 18),
           Text(
             '“',
             style: AppTextStyles.displayMedium.copyWith(
-              color: Colors.white,
+              color: AppColors.parchment,
               fontSize: 46,
               height: 1,
             ),
@@ -702,7 +704,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
               return Text(
                 partial,
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: Colors.white,
+                  color: AppColors.parchment,
                   fontSize: 17,
                   height: 1.55,
                 ),
@@ -733,7 +735,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFF7C3AED), Color(0xFF06B6D4)],
+                        colors: [AppColors.signal, AppColors.surfaceDark],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
@@ -745,7 +747,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                         Text(
                           'StudyTrack Weekly Wrapped',
                           style: AppTextStyles.headingSmall.copyWith(
-                            color: Colors.white,
+                            color: AppColors.parchment,
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                           ),
@@ -754,7 +756,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                         Text(
                           studentName,
                           style: AppTextStyles.bodyMedium.copyWith(
-                            color: Colors.white,
+                            color: AppColors.parchment,
                             fontSize: 15,
                           ),
                         ),
@@ -762,7 +764,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                         Text(
                           weekDateRange,
                           style: AppTextStyles.caption.copyWith(
-                            color: Colors.white70,
+                            color: AppColors.parchmentMuted,
                             fontSize: 12,
                           ),
                         ),
@@ -786,7 +788,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
                           child: Text(
                             'studytrack',
                             style: AppTextStyles.caption.copyWith(
-                              color: Colors.white70,
+                              color: AppColors.parchmentMuted,
                               fontSize: 12,
                             ),
                           ),
@@ -840,7 +842,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
       width: statWidth,
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
+        color: AppColors.parchment.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -849,7 +851,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           Text(
             label,
             style: AppTextStyles.caption.copyWith(
-              color: Colors.white70,
+              color: AppColors.parchmentMuted,
               fontSize: 12,
             ),
           ),
@@ -857,7 +859,7 @@ class _WeeklyWrappedScreenState extends State<WeeklyWrappedScreen> {
           Text(
             value,
             style: AppTextStyles.headingSmall.copyWith(
-              color: Colors.white,
+              color: AppColors.parchment,
               fontWeight: FontWeight.w700,
               fontSize: 16,
             ),
