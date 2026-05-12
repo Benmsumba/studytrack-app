@@ -1,6 +1,5 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,9 +9,9 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/repositories/profile_repository.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/utils/snackbar_helper.dart';
-import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/glass_card.dart';
 
 class OnboardingFlow extends StatefulWidget {
@@ -70,7 +69,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     final canContinue = _validateStep(_currentStep);
     if (!canContinue) return;
 
-    await HapticFeedback.lightImpact();
+    await Haptics.light();
 
     if (_currentStep == _steps - 1) {
       await _completeOnboarding();
@@ -89,7 +88,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
   Future<void> _skipStep() async {
     if (_currentStep >= _steps - 1) return;
 
-    await HapticFeedback.selectionClick();
+    await Haptics.selection();
 
     final next = _currentStep + 1;
     setState(() => _currentStep = next);
@@ -184,22 +183,23 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         : AppSpacing.screenHorizontal;
     final maxContentWidth = size.width >= 720 ? 640.0 : double.infinity;
 
+    final isLight = Theme.of(context).brightness == Brightness.light;
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
       body: Stack(
         children: [
-          const Positioned.fill(
+          Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: RadialGradient(
                   center: Alignment.topCenter,
                   radius: 1.3,
                   colors: [
-                    Color(0x332D1B69),
-                    AppColors.backgroundDark,
-                    AppColors.backgroundDeep,
+                    AppColors.signalSubtle,
+                    isLight ? AppColors.paperWhite : AppColors.obsidian,
+                    isLight ? AppColors.surfaceLight : AppColors.obsidian,
                   ],
-                  stops: [0, 0.55, 1],
+                  stops: const [0, 0.55, 1],
                 ),
               ),
             ),
@@ -251,9 +251,9 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               numberOfParticles: 18,
               gravity: 0.14,
               colors: const [
-                AppColors.neonViolet,
-                AppColors.neonCyan,
-                Colors.white,
+                AppColors.signal,
+                AppColors.signalLight,
+                AppColors.parchment,
               ],
             ),
           ),
@@ -272,14 +272,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         width: active ? 24 : 8,
         height: 8,
         decoration: BoxDecoration(
-          gradient: active ? AppColors.primaryGradient : null,
-          color: active ? null : AppColors.borderSoft,
+          color: active ? AppColors.signal : AppColors.borderDarkSoft,
           borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
-          boxShadow: active
-              ? const [
-                  BoxShadow(color: AppColors.violetGlowSoft, blurRadius: 10),
-                ]
-              : null,
         ),
       );
     }),
@@ -290,11 +284,21 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        GlowingButton(
-          label: isLast ? 'Let\'s Go!' : 'Next',
-          onPressed: _isSaving ? null : _nextStep,
-          isLoading: _isSaving,
+        SizedBox(
           width: double.infinity,
+          child: FilledButton(
+            onPressed: _isSaving ? null : _nextStep,
+            child: _isSaving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.parchment,
+                    ),
+                  )
+                : Text((isLast ? "Let's Go!" : 'Next').toUpperCase()),
+          ),
         ),
         if (!isLast)
           TextButton(
@@ -329,16 +333,13 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               return Container(
                     width: logoSize,
                     height: logoSize,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      gradient: AppColors.primaryGradient,
-                      boxShadow: [
-                        BoxShadow(
-                          color: AppColors.violetGlow,
-                          blurRadius: 36,
-                          spreadRadius: 2,
-                        ),
-                      ],
+                      color: AppColors.signal,
+                      border: Border.all(
+                        color: AppColors.signalLight,
+                        width: 0.5,
+                      ),
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(24),
@@ -380,7 +381,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   side: const BorderSide(color: AppColors.borderSoft),
                   label: Text(example, style: AppTextStyles.labelSecondary),
                   onPressed: () {
-                    HapticFeedback.selectionClick();
+                    Haptics.selection();
                     setState(() {
                       _courseController.text = example;
                     });
@@ -418,7 +419,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                 final selected = year == _yearLevel;
                 return InkWell(
                   onTap: () {
-                    HapticFeedback.selectionClick();
+                    Haptics.selection();
                     setState(() => _yearLevel = year);
                   },
                   borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
@@ -427,20 +428,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                       borderRadius: BorderRadius.circular(
                         AppSpacing.fieldRadius,
                       ),
-                      gradient: selected ? AppColors.primaryGradient : null,
-                      color: selected ? null : AppColors.surfaceElevated,
-                      border: selected
-                          ? null
-                          : Border.all(color: AppColors.borderSoft, width: 1.1),
-                      boxShadow: selected
-                          ? const [
-                              BoxShadow(
-                                color: AppColors.violetGlowSoft,
-                                blurRadius: 18,
-                                spreadRadius: 1,
-                              ),
-                            ]
-                          : null,
+                      color: selected
+                          ? AppColors.signalMuted
+                          : AppColors.surfaceElevated,
+                      border: Border.all(
+                        color: selected
+                            ? AppColors.signal
+                            : AppColors.borderDarkSoft,
+                        width: 0.5,
+                      ),
                     ),
                     child: Center(
                       child: Text(
@@ -479,7 +475,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               padding: const EdgeInsets.only(bottom: 10),
               child: InkWell(
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  Haptics.selection();
                   setState(() => _primeStudyTime = item.$1);
                 },
                 borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
@@ -490,21 +486,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   ),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-                    gradient: selected ? AppColors.cardGradient : null,
-                    color: selected ? null : AppColors.surfaceElevated,
+                    color: selected
+                        ? AppColors.signalMuted
+                        : AppColors.surfaceElevated,
                     border: Border.all(
-                      color: selected ? AppColors.accent : AppColors.borderSoft,
-                      width: selected ? 1.5 : 1,
+                      color: selected
+                          ? AppColors.signal
+                          : AppColors.borderDarkSoft,
+                      width: 0.5,
                     ),
-                    boxShadow: selected
-                        ? const [
-                            BoxShadow(
-                              color: AppColors.violetGlowSoft,
-                              blurRadius: 18,
-                              spreadRadius: 1,
-                            ),
-                          ]
-                        : null,
                   ),
                   child: Row(
                     children: [
@@ -596,7 +586,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           title: 'Alone',
           subtitle: 'I focus best by myself',
           onTap: () {
-            HapticFeedback.selectionClick();
+            Haptics.selection();
             setState(() => _studyPreference = 'alone');
           },
         ),
@@ -607,7 +597,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           title: 'With others',
           subtitle: 'I learn better with friends',
           onTap: () {
-            HapticFeedback.selectionClick();
+            Haptics.selection();
             setState(() => _studyPreference = 'group');
           },
         ),
@@ -679,21 +669,13 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-        gradient: selected ? AppColors.cardGradient : null,
-        color: selected ? null : AppColors.surfaceElevated,
+        color: selected
+            ? AppColors.signalMuted
+            : AppColors.surfaceElevated,
         border: Border.all(
-          color: selected ? AppColors.accent : AppColors.borderSoft,
-          width: selected ? 1.5 : 1,
+          color: selected ? AppColors.signal : AppColors.borderDarkSoft,
+          width: 0.5,
         ),
-        boxShadow: selected
-            ? const [
-                BoxShadow(
-                  color: AppColors.violetGlowSoft,
-                  blurRadius: 18,
-                  spreadRadius: 1,
-                ),
-              ]
-            : null,
       ),
       child: Row(
         children: [
