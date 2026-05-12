@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE RBProject SYSTEM "xojo.dtd">
+<RBProject version="2023r4" FormatVersion="2" MinIDEVersion="20230400">
+  <block type="Desktop Application" ID="ProjectRoot">
+    <ObjName>StudyTrack</ObjName>
+    <BuildVersion>1.0.0.0</BuildVersion>
+    <AppName>StudyTrack</AppName>
+    <CompanyName>StudyTrack</CompanyName>
+    <Copyright>2026 StudyTrack</Copyright>
+    <Identifier>com.studytrack.app</Identifier>
+    <IncludeFileRef ID="AppClass">
+      <Name>App</Name>
+    </IncludeFileRef>
+    <IncludeFileRef ID="ServicesFolder">
+      <Name>Services</Name>
+    </IncludeFileRef>
+    <IncludeFileRef ID="ModelsFolder">
+      <Name>Models</Name>
+    </IncludeFileRef>
+    <IncludeFileRef ID="WindowsFolder">
+      <Name>Windows</Name>
+    </IncludeFileRef>
+  </block>
+</RBProject>
