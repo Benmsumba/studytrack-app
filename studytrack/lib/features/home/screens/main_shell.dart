@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
-import '../../../core/widgets/glass_card.dart';
+import '../../../core/utils/haptics.dart';
+import '../../../core/widgets/action_capsule.dart';
 
 class MainShell extends StatelessWidget {
   const MainShell({required this.navigationShell, super.key});
@@ -14,13 +14,26 @@ class MainShell extends StatelessWidget {
 
   static const _titles = ['Timetable', 'Modules', 'Progress', 'Group'];
 
+  // Context-aware Action Capsule configuration per branch.
+  // null entries hide the capsule on that screen.
+  static const _capsules = <_CapsuleSpec?>[
+    _CapsuleSpec('Start Session', Icons.play_arrow_rounded, '/study-session'),
+    _CapsuleSpec('Start Session', Icons.play_arrow_rounded, '/study-session'),
+    null,
+    null,
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
     final currentIndex = navigationShell.currentIndex;
-    final showStudyNow = currentIndex == 0 || currentIndex == 1;
+    final capsule = _capsules[currentIndex];
+    final showCapsule = capsule != null;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final navBottom = bottomInset + AppSpacing.md;
-    final shellBottomPadding = showStudyNow ? navBottom + 104 : navBottom + 84;
+    final shellBottomPadding = showCapsule ? navBottom + 116 : navBottom + 84;
+
     final headerActions = currentIndex == 2
         ? [
             TextButton.icon(
@@ -28,18 +41,15 @@ class MainShell extends StatelessWidget {
               icon: const Icon(
                 Icons.auto_awesome,
                 size: 16,
-                color: AppColors.cyan,
+                color: AppColors.signal,
               ),
-              label: const Text(
-                'See Wrapped',
-                style: TextStyle(color: AppColors.cyan),
-              ),
+              label: const Text('See Wrapped'),
             ),
           ]
         : const <Widget>[];
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
       body: Stack(
         children: [
           Column(
@@ -64,11 +74,18 @@ class MainShell extends StatelessWidget {
               ),
             ],
           ),
-          if (showStudyNow)
+          if (showCapsule)
             Positioned(
-              right: AppSpacing.screenHorizontal,
+              left: 0,
+              right: 0,
               bottom: navBottom + 80,
-              child: _StudyNowFab(onTap: () => context.go('/study-session')),
+              child: Center(
+                child: ActionCapsule(
+                  label: capsule.label,
+                  icon: capsule.icon,
+                  onPressed: () => context.go(capsule.route),
+                ),
+              ),
             ),
           Positioned(
             left: AppSpacing.screenHorizontal,
@@ -86,6 +103,13 @@ class MainShell extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CapsuleSpec {
+  const _CapsuleSpec(this.label, this.icon, this.route);
+  final String label;
+  final IconData icon;
+  final String route;
 }
 
 class _Header extends StatelessWidget {
@@ -108,87 +132,105 @@ class _Header extends StatelessWidget {
   final List<Widget> actions;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      AppSpacing.screenHorizontal,
-      AppSpacing.md,
-      AppSpacing.screenHorizontal,
-      AppSpacing.md,
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'StudyTrack',
-                style: AppTextStyles.sectionOverline.copyWith(
-                  color: AppColors.textMuted,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    final fg = isLight ? AppColors.inkPrimary : AppColors.parchment;
+    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
+    final avatarBg = isLight ? AppColors.surfaceLight : AppColors.cardDark;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screenHorizontal,
+        AppSpacing.md,
+        AppSpacing.screenHorizontal,
+        AppSpacing.md,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'STUDYTRACK',
+                  style: AppTextStyles.overline.copyWith(color: mutedFg),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: isLight
+                      ? AppTextStyles.headingLargeLight
+                      : AppTextStyles.headingLarge,
+                ),
+              ],
+            ),
+          ),
+          ...actions,
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              Haptics.selection();
+              if (value == 'voice-notes') {
+                onVoiceNotesTap();
+              } else if (value == 'analytics') {
+                onAnalyticsTap();
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem<String>(
+                value: 'voice-notes',
+                child: Row(
+                  children: [
+                    Icon(Icons.mic_rounded, size: 18, color: fg),
+                    const SizedBox(width: 8),
+                    const Text('Voice Notes'),
+                  ],
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(title, style: AppTextStyles.headingLarge),
+              PopupMenuItem<String>(
+                value: 'analytics',
+                child: Row(
+                  children: [
+                    Icon(Icons.analytics_rounded, size: 18, color: fg),
+                    const SizedBox(width: 8),
+                    const Text('Analytics'),
+                  ],
+                ),
+              ),
             ],
+            icon: Icon(Icons.more_vert_rounded, color: fg),
+            color: isLight ? AppColors.surfaceLight : AppColors.cardDark,
           ),
-        ),
-        ...actions,
-        PopupMenuButton<String>(
-          onSelected: (value) {
-            if (value == 'voice-notes') {
-              onVoiceNotesTap();
-            } else if (value == 'analytics') {
-              onAnalyticsTap();
-            }
-          },
-          itemBuilder: (BuildContext context) => [
-            const PopupMenuItem<String>(
-              value: 'voice-notes',
-              child: Row(
-                children: [
-                  Icon(Icons.mic_rounded, size: 18, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('Voice Notes'),
-                ],
-              ),
+          IconButton(
+            onPressed: () {
+              Haptics.light();
+              onSettingsTap();
+            },
+            icon: Icon(Icons.settings_rounded, color: fg),
+          ),
+          IconButton(
+            onPressed: () {
+              Haptics.light();
+              onNotificationTap();
+            },
+            icon: Icon(Icons.notifications_none_rounded, color: fg),
+          ),
+          GestureDetector(
+            onTap: () {
+              Haptics.light();
+              onProfileTap();
+            },
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: avatarBg,
+              child: Icon(Icons.person_rounded, color: fg, size: 18),
             ),
-            const PopupMenuItem<String>(
-              value: 'analytics',
-              child: Row(
-                children: [
-                  Icon(Icons.analytics_rounded, size: 18, color: Colors.white),
-                  SizedBox(width: 8),
-                  Text('Analytics'),
-                ],
-              ),
-            ),
-          ],
-          icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
-          color: AppColors.cardDark,
-        ),
-        IconButton(
-          onPressed: onSettingsTap,
-          icon: const Icon(Icons.settings_rounded, color: Colors.white),
-        ),
-        IconButton(
-          onPressed: onNotificationTap,
-          icon: const Icon(
-            Icons.notifications_none_rounded,
-            color: Colors.white,
           ),
-        ),
-        GestureDetector(
-          onTap: onProfileTap,
-          child: const CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.cardDark,
-            child: Icon(Icons.person_rounded, color: Colors.white, size: 18),
-          ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 class _BottomNavBar extends StatelessWidget {
@@ -205,98 +247,79 @@ class _BottomNavBar extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) => GlassCard(
-    padding: const EdgeInsets.symmetric(
-      horizontal: AppSpacing.md,
-      vertical: AppSpacing.sm,
-    ),
-    borderRadius: AppSpacing.cardRadius,
-    blurSigma: 16,
-    glowColor: AppColors.neonViolet,
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: List.generate(_items.length, (index) {
-        final selected = index == currentIndex;
-        final item = _items[index];
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final fill = isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
+    final border = isLight ? AppColors.borderLight : AppColors.borderDark;
+    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
 
-        return Expanded(
-          child: GestureDetector(
-            onTap: () {
-              HapticFeedback.selectionClick();
-              onTap(index);
-            },
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AnimatedScale(
-                  duration: const Duration(milliseconds: 240),
-                  curve: Curves.easeOutBack,
-                  scale: selected ? 1.1 : 1.0,
-                  child: Icon(
-                    item.$1,
-                    color: selected ? AppColors.accent : AppColors.textMuted,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 220),
-                  style: selected
-                      ? AppTextStyles.label.copyWith(color: AppColors.primary)
-                      : AppTextStyles.labelSecondary,
-                  child: Text(
-                    item.$2,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 220),
-                  height: 4,
-                  width: selected ? 14 : 6,
-                  decoration: BoxDecoration(
-                    gradient: selected ? AppColors.primaryGradient : null,
-                    color: selected ? null : Colors.transparent,
-                    borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }),
-    ),
-  );
-}
-
-class _StudyNowFab extends StatelessWidget {
-  const _StudyNowFab({required this.onTap});
-
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: () {
-      HapticFeedback.lightImpact();
-      onTap();
-    },
-    child: GlassCard(
+    return Container(
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        border: Border.all(color: border, width: 0.5),
+      ),
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
       ),
-      borderRadius: AppSpacing.pillRadius,
-      blurSigma: 18,
-      glowColor: AppColors.neonCyan,
       child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.play_arrow_rounded, color: Colors.white),
-          const SizedBox(width: 6),
-          Text('Study Now', style: AppTextStyles.button),
-        ],
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(_items.length, (index) {
+          final selected = index == currentIndex;
+          final item = _items[index];
+
+          return Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                Haptics.selection();
+                onTap(index);
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedScale(
+                    duration: const Duration(milliseconds: 240),
+                    curve: Curves.easeOutBack,
+                    scale: selected ? 1.08 : 1.0,
+                    child: Icon(
+                      item.$1,
+                      color: selected ? AppColors.signal : mutedFg,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 220),
+                    style: selected
+                        ? AppTextStyles.overlineSignal
+                        : AppTextStyles.caption.copyWith(color: mutedFg),
+                    child: Text(
+                      item.$2.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  // Subtle ochre underline indicator — width animates on select.
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    height: 2,
+                    width: selected ? 14 : 0,
+                    decoration: BoxDecoration(
+                      color: AppColors.signal,
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.pillRadius),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
       ),
-    ),
-  );
+    );
+  }
 }
