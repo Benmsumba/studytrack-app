@@ -157,48 +157,56 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
-    appBar: AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      title: Text(
-        'Analytics',
-        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
-      ),
-      actions: [
-        TextButton.icon(
-          onPressed: () => context.push('/weekly-wrapped'),
-          icon: const Icon(Icons.auto_awesome, size: 16, color: AppColors.cyan),
-          label: const Text(
-            'See Wrapped',
-            style: TextStyle(color: AppColors.cyan),
-          ),
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Scaffold(
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'Analytics',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
         ),
-      ],
-    ),
-    body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : RefreshIndicator(
-            onRefresh: _loadProgress,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              children: [
-                _buildQuickStats(),
-                const SizedBox(height: 16),
-                _buildWeeklyBarChart(),
-                const SizedBox(height: 16),
-                _buildRadarChart(),
-                const SizedBox(height: 16),
-                _buildHeatmap(),
-                const SizedBox(height: 16),
-                _buildTopicRatingHistory(),
-                const SizedBox(height: 16),
-                _buildModuleDonuts(),
-              ],
+        actions: [
+          TextButton.icon(
+            onPressed: () => context.push('/weekly-wrapped'),
+            icon: const Icon(
+              Icons.auto_awesome,
+              size: 16,
+              color: AppColors.signal,
+            ),
+            label: const Text(
+              'See Wrapped',
+              style: TextStyle(color: AppColors.signal),
             ),
           ),
-  );
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              color: AppColors.signal,
+              onRefresh: _loadProgress,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                children: [
+                  _buildQuickStats(),
+                  const SizedBox(height: 16),
+                  _buildWeeklyBarChart(),
+                  const SizedBox(height: 16),
+                  _buildRadarChart(),
+                  const SizedBox(height: 16),
+                  _buildHeatmap(),
+                  const SizedBox(height: 16),
+                  _buildTopicRatingHistory(),
+                  const SizedBox(height: 16),
+                  _buildModuleDonuts(),
+                ],
+              ),
+            ),
+    );
+  }
 
   Widget _buildQuickStats() => GridView.count(
     shrinkWrap: true,
@@ -258,7 +266,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         Text(
           value,
           style: GoogleFonts.outfit(
-            color: Colors.white,
+            color: AppColors.parchment,
             fontSize: 26,
             fontWeight: FontWeight.w700,
           ),
@@ -314,7 +322,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   BarTooltipItem(
                     '${rod.toY.toInt()} topics',
                     GoogleFonts.inter(
-                      color: Colors.white,
+                      color: AppColors.parchment,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -716,7 +724,7 @@ class _TopicLineChart extends StatelessWidget {
                           radius: 3,
                           color: AppColors.deepViolet,
                           strokeWidth: 1,
-                          strokeColor: Colors.white,
+                          strokeColor: AppColors.parchment,
                         ),
                   ),
                   belowBarData: BarAreaData(

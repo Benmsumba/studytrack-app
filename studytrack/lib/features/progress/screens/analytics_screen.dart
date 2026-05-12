@@ -1,13 +1,13 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/study_session_repository.dart';
@@ -140,9 +140,11 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       '${d.day.toString().padLeft(2, '0')}';
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
-    body: SafeArea(
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Scaffold(
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
+      body: SafeArea(
       child: _isLoading
           ? AppStateView.loadingList(itemCount: 4, itemHeight: 120)
           : RefreshIndicator(
@@ -177,8 +179,8 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 ],
               ),
             ),
-    ),
-  );
+    );
+  }
 
   Widget _buildHeader(BuildContext context) => Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -189,7 +191,6 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
           Text(
             'Analytics',
             style: AppTextStyles.headingLarge.copyWith(
-              color: Colors.white,
               fontSize: 28,
               fontWeight: FontWeight.w800,
             ),
@@ -202,21 +203,15 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
       ),
       GestureDetector(
         onTap: () {
-          HapticFeedback.selectionClick();
+          Haptics.selection();
           context.push('/weekly-wrapped');
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
+            color: AppColors.signalMuted,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.violetGlowSoft,
-                blurRadius: 12,
-                offset: Offset(0, 4),
-              ),
-            ],
+            border: Border.all(color: AppColors.signal, width: 0.5),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -224,11 +219,14 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               Text(
                 'Wrapped ',
                 style: AppTextStyles.bodySmall.copyWith(
-                  color: Colors.white,
+                  color: AppColors.signal,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const Text('✦', style: TextStyle(color: Colors.white, fontSize: 12)),
+              const Text(
+                '✦',
+                style: TextStyle(color: AppColors.signal, fontSize: 12),
+              ),
             ],
           ),
         ),
@@ -281,7 +279,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
                 Text(
                   s.value,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: Colors.white,
+                    color: AppColors.parchment,
                     fontWeight: FontWeight.w800,
                     fontSize: 10,
                   ),
@@ -311,7 +309,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
             const SizedBox(width: 8),
             Text(
               'Subject Radar',
-              style: AppTextStyles.headingSmall.copyWith(color: Colors.white),
+              style: AppTextStyles.headingSmall.copyWith(color: AppColors.parchment),
             ),
             const Spacer(),
             Text(
@@ -438,7 +436,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               const SizedBox(width: 8),
               Text(
                 'Study Consistency',
-                style: AppTextStyles.headingSmall.copyWith(color: Colors.white),
+                style: AppTextStyles.headingSmall.copyWith(color: AppColors.parchment),
               ),
               const Spacer(),
               Text(
@@ -606,7 +604,7 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
               const SizedBox(width: 8),
               Text(
                 'Insights',
-                style: AppTextStyles.headingSmall.copyWith(color: Colors.white),
+                style: AppTextStyles.headingSmall.copyWith(color: AppColors.parchment),
               ),
             ],
           ),
@@ -704,7 +702,7 @@ class _InsightRow extends StatelessWidget {
             Text(
               value,
               style: AppTextStyles.bodySmall.copyWith(
-                color: Colors.white,
+                color: AppColors.parchment,
                 fontWeight: FontWeight.w600,
               ),
             ),
