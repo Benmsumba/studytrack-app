@@ -114,9 +114,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
-    body: _isLoading
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Scaffold(
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
+      body: _isLoading
         ? const Center(child: CircularProgressIndicator())
         : SingleChildScrollView(
             child: SafeArea(
@@ -306,7 +308,8 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     ),
-  );
+    );
+  }
 }
 
 class _QuickActionCard extends StatelessWidget {
@@ -332,10 +335,10 @@ class _QuickActionCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.neonViolet.withValues(alpha: 0.2),
+              color: AppColors.signal.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: AppColors.neonViolet, size: 24),
+            child: Icon(icon, color: AppColors.signal, size: 24),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(

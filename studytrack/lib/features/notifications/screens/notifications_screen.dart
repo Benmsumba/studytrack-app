@@ -200,9 +200,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
-    body: SafeArea(
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Scaffold(
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
+      body: SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -271,7 +273,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ],
       ),
     ),
-  );
+    );
+  }
 }
 
 class _NotificationTileData {

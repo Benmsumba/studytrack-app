@@ -188,7 +188,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 decoration: BoxDecoration(
-                  color: isDark ? AppColors.cardDark : Colors.white,
+                  color: isDark ? AppColors.cardDark : AppColors.surfaceLight,
                   borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
                   border: Border.all(
                     color: isDark
@@ -411,7 +411,7 @@ class _SettingsCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: isDark ? AppColors.cardDark : Colors.white,
+            color: isDark ? AppColors.cardDark : AppColors.surfaceLight,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isDark
@@ -476,7 +476,7 @@ class _SettingsToggle extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.cardDark : Colors.white,
+          color: isDark ? AppColors.cardDark : AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isDark ? AppColors.border : theme.colorScheme.outlineVariant,
@@ -536,7 +536,7 @@ class _ThemeModeSelector extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.cardDark : Colors.white,
+          color: isDark ? AppColors.cardDark : AppColors.surfaceLight,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isDark ? AppColors.border : theme.colorScheme.outlineVariant,
