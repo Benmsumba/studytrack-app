@@ -254,9 +254,10 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final topic = _topic;
+    final isLight = Theme.of(context).brightness == Brightness.light;
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
       body: _isLoading
           ? AppStateView.loadingList(itemCount: 4, itemHeight: 120)
           : _loadError != null
@@ -283,11 +284,11 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                   120,
                 ),
                 children: [
-                  _buildHeader(topic),
+                  _buildHeader(topic, isLight),
                   const SizedBox(height: AppSpacing.md),
                   _buildActionsGrid(),
                   const SizedBox(height: AppSpacing.md),
-                  _buildNotesSection(topic),
+                  _buildNotesSection(topic, isLight),
                   const SizedBox(height: AppSpacing.md),
                   _buildVoiceNotesSection(),
                   const SizedBox(height: AppSpacing.md),
@@ -357,12 +358,12 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     );
   }
 
-  Widget _buildHeader(TopicModel topic) => Container(
+  Widget _buildHeader(TopicModel topic, bool isLight) => Container(
     padding: const EdgeInsets.all(AppSpacing.md),
     decoration: BoxDecoration(
-      gradient: AppColors.cardGradient,
+      color: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
       borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-      border: Border.all(color: AppColors.border),
+      border: Border.all(color: AppColors.border, width: 0.5),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -492,7 +493,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
     );
   }
 
-  Widget _buildNotesSection(TopicModel topic) => Container(
+  Widget _buildNotesSection(TopicModel topic, bool isLight) => Container(
     decoration: BoxDecoration(
       color: AppColors.cardDark,
       borderRadius: BorderRadius.circular(14),
@@ -506,7 +507,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
             _notesExpanded
                 ? Icons.expand_less_rounded
                 : Icons.expand_more_rounded,
-            color: Colors.white,
+            color: isLight ? AppColors.inkPrimary : AppColors.parchment,
           ),
           onTap: () {
             setState(() {
@@ -723,10 +724,12 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                 height: 34,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  gradient: selected ? AppColors.primaryGradient : null,
-                  color: selected ? null : AppColors.surfaceDark,
+                  color: selected ? AppColors.signalMuted : AppColors.surfaceDark,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(
+                    color: selected ? AppColors.signal : AppColors.borderDark,
+                    width: 0.5,
+                  ),
                 ),
                 child: Text('$value', style: AppTextStyles.label),
               ),
@@ -740,7 +743,7 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
             decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              color: AppColors.signal,
               borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
             ),
             alignment: Alignment.center,
