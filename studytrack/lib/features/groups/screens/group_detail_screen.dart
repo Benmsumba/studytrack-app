@@ -1,8 +1,7 @@
 import 'dart:io';
-import '../../../core/utils/app_logger.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import '../../../core/utils/haptics.dart';
 import 'package:go_router/go_router.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
@@ -118,7 +117,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
           .limit(40);
       sharedNotes = (notes as List<dynamic>).cast<Map<String, dynamic>>();
     } catch (error) {
-      AppLogger.warning('group shared notes load error', error: error);
+      debugPrint('group shared notes load error: $error');
     }
 
     final topicNames = <String, String>{};
@@ -261,7 +260,9 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
+        backgroundColor: AppColors.obsidian,
         appBar: AppBar(
+          backgroundColor: AppColors.obsidian,
           title: Text(_groupName(), style: AppTextStyles.headingSmall),
           bottom: const TabBar(
             isScrollable: true,
@@ -521,14 +522,14 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                           return ListTile(
                             leading: const Icon(
                               Icons.description_outlined,
-                              color: Colors.white70,
+                              color: AppColors.parchmentMuted,
                             ),
                             title: Text(
                               fileName,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: AppTextStyles.bodySmall.copyWith(
-                                color: Colors.white,
+                                color: AppColors.parchment,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -625,7 +626,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
                 children: [
                   FilledButton.tonal(
                     onPressed: () {
-                      HapticFeedback.selectionClick();
+                      Haptics.selection();
                       setState(() {
                         if (rsvp) {
                           _rsvpYes.remove(id);
@@ -648,7 +649,7 @@ class _GroupDetailScreenState extends State<GroupDetailScreen> {
   Widget _chatTab() => Center(
     child: FilledButton.icon(
       onPressed: () {
-        HapticFeedback.lightImpact();
+        Haptics.light();
         context.push('/group/${widget.groupId}/chat', extra: widget.group);
       },
       icon: const Icon(Icons.chat_bubble_outline),

@@ -200,9 +200,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Notifications'), centerTitle: false),
-    body: SafeArea(
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Scaffold(
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
+      body: SafeArea(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -271,7 +273,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         ],
       ),
     ),
-  );
+    );
+  }
 }
 
 class _NotificationTileData {
@@ -294,12 +297,7 @@ class _NotificationTileData {
 
 class _NotificationTile extends StatefulWidget {
   const _NotificationTile({
-    required this.title,
-    required this.body,
-    required this.timeLabel,
-    required this.icon,
-    required this.iconColor,
-    super.key,
+    required this.title, required this.body, required this.timeLabel, required this.icon, required this.iconColor, super.key,
     this.unread = false,
     this.index = 0,
   });
@@ -384,9 +382,7 @@ class _NotificationTileState extends State<_NotificationTile>
                       Expanded(
                         child: Text(
                           widget.title,
-                          style: AppTextStyles.headingSmall.copyWith(
-                            fontSize: 14,
-                          ),
+                          style: AppTextStyles.headingSmall.copyWith(fontSize: 14),
                         ),
                       ),
                       if (widget.unread)
@@ -394,7 +390,7 @@ class _NotificationTileState extends State<_NotificationTile>
                           width: 8,
                           height: 8,
                           decoration: const BoxDecoration(
-                            color: AppColors.steelTeal,
+                            color: Color(0xFF06B6D4),
                             shape: BoxShape.circle,
                           ),
                         ),

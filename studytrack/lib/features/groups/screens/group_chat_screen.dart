@@ -7,7 +7,6 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/study_group_repository.dart';
-import '../../../core/utils/helpers.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/widgets/app_state_view.dart';
@@ -34,10 +33,6 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
   bool _loading = true;
   bool _sending = false;
-  bool _loadingMore = false;
-  bool _hasMore = true;
-  int _offset = 0;
-  static const int _pageSize = 50;
   String? _loadError;
   List<GroupMessageModel> _messages = [];
   final Map<String, Map<String, dynamic>> _senderMeta = {};
@@ -48,14 +43,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     super.initState();
     _groupRepository = getIt<StudyGroupRepository>();
     _authRepository = getIt<AuthRepository>();
-    _scrollController.addListener(_onScroll);
     _init();
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels <= 80 && !_loadingMore && _hasMore) {
-      _loadMoreMessages();
-    }
   }
 
   Future<void> _init() async {
@@ -73,13 +61,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
   }
 
   Future<void> _loadMessages() async {
-    _offset = 0;
-    _hasMore = true;
-    final result = await _groupRepository.getGroupMessages(
-      widget.groupId,
-      limit: _pageSize,
-      offset: 0,
-    );
+    final result = await _groupRepository.getGroupMessages(widget.groupId);
     var messages = const <GroupMessageModel>[];
     final failed = result is Failure<List<GroupMessageModel>>;
     result.fold((error) {}, (value) => messages = value);
@@ -87,50 +69,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (!mounted) return;
     setState(() {
       _messages = messages;
-      _offset = messages.length;
-      _hasMore = messages.length >= _pageSize;
       _loadError = failed
           ? 'We could not load messages right now. Pull to retry.'
           : null;
       _loading = false;
     });
     _scrollToBottom();
-  }
-
-  Future<void> _loadMoreMessages() async {
-    if (_loadingMore || !_hasMore) return;
-    setState(() => _loadingMore = true);
-    final result = await _groupRepository.getGroupMessages(
-      widget.groupId,
-      limit: _pageSize,
-      offset: _offset,
-    );
-    if (!mounted) return;
-    result.fold((error) => setState(() => _loadingMore = false), (older) {
-      if (older.isEmpty) {
-        setState(() {
-          _hasMore = false;
-          _loadingMore = false;
-        });
-        return;
-      }
-      final prevExtent = _scrollController.hasClients
-          ? _scrollController.position.maxScrollExtent
-          : 0.0;
-      setState(() {
-        _messages = [...older, ..._messages];
-        _offset += older.length;
-        _hasMore = older.length >= _pageSize;
-        _loadingMore = false;
-      });
-      // Restore scroll position so older messages appear above without
-      // jumping the viewport.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_scrollController.hasClients) return;
-        final newExtent = _scrollController.position.maxScrollExtent;
-        _scrollController.jumpTo(newExtent - prevExtent);
-      });
-    });
   }
 
   Future<void> _hydrateSenderMeta(List<GroupMessageModel> messages) async {
@@ -151,9 +95,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           'year': profile.yearLevel,
         };
       } else {
-        final anonId = Helpers.anonymizeUserId(senderId);
+        final short = senderId.length > 8 ? senderId.substring(0, 8) : senderId;
         _senderMeta[senderId] = {
-          'name': 'Member $anonId',
+          'name': 'Member $short',
           'course': 'Private',
           'year': null,
         };
@@ -229,6 +173,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: AppColors.obsidian,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -280,7 +225,11 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final title = widget.group?['name']?.toString() ?? 'Group Chat';
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      backgroundColor: AppColors.obsidian,
+      appBar: AppBar(
+        backgroundColor: AppColors.obsidian,
+        title: Text(title),
+      ),
       body: Column(
         children: [
           Expanded(
@@ -295,22 +244,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(12),
-                    itemCount: _messages.length + (_loadingMore ? 1 : 0),
+                    itemCount: _messages.length,
                     itemBuilder: (context, index) {
-                      if (_loadingMore && index == 0) {
-                        return const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 8),
-                          child: Center(
-                            child: SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ),
-                        );
-                      }
-                      final index0 = _loadingMore ? index - 1 : index;
-                      final message = _messages[index0];
+                      final message = _messages[index];
                       final sender = message.senderId;
                       final content = message.content;
                       final mine =
@@ -322,7 +258,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                       final subtitle =
                           '$course${year == null ? '' : ' • Year $year'}';
                       final timestamp = _formatTime(message.createdAt);
-                      final showSeparator = _showDateSeparator(index0);
+                      final showSeparator = _showDateSeparator(index);
                       final separatorLabel = showSeparator
                           ? _dateSeparatorLabel(message.createdAt)
                           : null;
@@ -334,13 +270,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               child: Row(
                                 children: [
-                                  const Expanded(
-                                    child: Divider(color: AppColors.border),
-                                  ),
+                                  const Expanded(child: Divider(color: AppColors.border)),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                    ),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
                                     child: Text(
                                       separatorLabel,
                                       style: AppTextStyles.caption.copyWith(
@@ -349,9 +281,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                       ),
                                     ),
                                   ),
-                                  const Expanded(
-                                    child: Divider(color: AppColors.border),
-                                  ),
+                                  const Expanded(child: Divider(color: AppColors.border)),
                                 ],
                               ),
                             ),
@@ -364,14 +294,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               constraints: const BoxConstraints(maxWidth: 320),
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                gradient: mine
-                                    ? AppColors.primaryGradient
-                                    : null,
-                                color: mine ? null : AppColors.cardDark,
+                                color: mine ? AppColors.signalMuted : AppColors.cardDark,
                                 borderRadius: BorderRadius.circular(12),
-                                border: mine
-                                    ? null
-                                    : Border.all(color: AppColors.border),
+                                border: Border.all(
+                                  color: mine ? AppColors.signal : AppColors.border,
+                                  width: 0.5,
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: mine
@@ -385,11 +313,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                         radius: 12,
                                         backgroundColor: _avatarColor(sender),
                                         child: Text(
-                                          displayName
-                                              .substring(0, 1)
-                                              .toUpperCase(),
+                                          displayName.substring(0, 1).toUpperCase(),
                                           style: AppTextStyles.caption.copyWith(
-                                            color: Colors.white,
+                                            color: AppColors.parchment,
                                             fontSize: 10,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -403,22 +329,20 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                         children: [
                                           Text(
                                             displayName,
-                                            style: AppTextStyles.caption
-                                                .copyWith(
-                                                  color: mine
-                                                      ? Colors.white70
-                                                      : AppColors.accent,
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w700,
-                                                ),
+                                            style: AppTextStyles.caption.copyWith(
+                                              color: mine
+                                                  ? Colors.white70
+                                                  : AppColors.accent,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
                                           ),
                                           Text(
                                             subtitle,
-                                            style: AppTextStyles.caption
-                                                .copyWith(
-                                                  color: Colors.white60,
-                                                  fontSize: 10,
-                                                ),
+                                            style: AppTextStyles.caption.copyWith(
+                                              color: Colors.white60,
+                                              fontSize: 10,
+                                            ),
                                           ),
                                         ],
                                       ),
@@ -428,7 +352,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   Text(
                                     content,
                                     style: AppTextStyles.bodyMedium.copyWith(
-                                      color: Colors.white,
+                                      color: AppColors.parchment,
                                     ),
                                   ),
                                   if (timestamp.isNotEmpty) ...[
@@ -460,7 +384,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     child: TextField(
                       controller: _messageController,
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: Colors.white,
+                        color: AppColors.parchment,
                       ),
                       decoration: const InputDecoration(
                         hintText: 'Write a message...',

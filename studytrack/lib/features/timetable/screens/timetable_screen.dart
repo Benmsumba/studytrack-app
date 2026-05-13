@@ -1,11 +1,22 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/services/supabase_service.dart';
-import '../../../models/topic_model.dart';
+import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
+import '../../../core/repositories/auth_repository.dart';
+import '../../../core/utils/haptics.dart';
+import '../../../core/utils/result.dart';
+import '../../../core/utils/service_locator.dart';
+import '../../../core/utils/snackbar_helper.dart';
+import '../../../core/widgets/app_state_view.dart';
+import '../../../models/class_slot_model.dart';
+import '../../../models/study_session_model.dart';
+import '../controllers/timetable_provider.dart';
+import '../controllers/topic_module_provider.dart';
 
 class TimetableScreen extends StatefulWidget {
   const TimetableScreen({super.key});
@@ -15,7 +26,7 @@ class TimetableScreen extends StatefulWidget {
 }
 
 class _TimetableScreenState extends State<TimetableScreen> {
-  final SupabaseService _service = SupabaseService();
+  final AuthRepository _authRepository = getIt<AuthRepository>();
 
   final List<String> _dayLabels = const [
     'Mon',
@@ -27,42 +38,43 @@ class _TimetableScreenState extends State<TimetableScreen> {
     'Sun',
   ];
   late int _selectedDay;
-
-  bool _isLoading = true;
-  List<Map<String, dynamic>> _classSlots = const [];
-  List<Map<String, dynamic>> _studySessions = const [];
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
     _selectedDay = DateTime.now().weekday;
-    _loadData();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadCurrentUserIdAndData();
+    });
   }
 
-  Future<void> _loadData() async {
-    final user = _service.getCurrentUser();
-    if (user == null) {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    final classes = await _service.getClassTimetable(user.id) ?? [];
-    final sessions =
-        await _service.getStudySessions(user.id, _dateForSelectedDay()) ?? [];
+  Future<void> _loadCurrentUserIdAndData() async {
+    final result = await _authRepository.getCurrentUser();
+    final userId = switch (result) {
+      Success(data: final user) => user?.id,
+      Failure(error: final _) => null,
+    };
 
     if (!mounted) return;
     setState(() {
-      _classSlots = classes;
-      _studySessions = sessions;
-      _isLoading = false;
+      _currentUserId = userId;
     });
+
+    await _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final userId = _currentUserId;
+    if (userId == null || userId.isEmpty) return;
+
+    final provider = context.read<TimetableProvider>();
+    final selectedDate = _dateForSelectedDay();
+    provider.setSelectedDate(selectedDate);
+    final result = await provider.loadTimetable(userId);
+    if (!mounted || result.success) return;
+    SnackbarHelper.show(context, result.message, type: AppSnackbarType.error);
   }
 
   DateTime _dateForSelectedDay() {
@@ -71,126 +83,186 @@ class _TimetableScreenState extends State<TimetableScreen> {
     return DateTime(now.year, now.month, now.day).add(Duration(days: offset));
   }
 
-  List<Map<String, dynamic>> get _classesForDay => _classSlots
-      .where((item) => (item['day_of_week'] as int?) == _selectedDay)
+  List<ClassSlotModel> _classesForDay(TimetableProvider provider) => provider
+      .classSlots
+      .where((item) => item.dayOfWeek == _selectedDay)
       .toList();
 
   String _displayTitleForSelectedDay() {
     final today = DateTime.now().weekday;
-    if (_selectedDay == today) {
-      return "Today's Schedule";
-    }
+    if (_selectedDay == today) return "Today's Schedule";
     return '${_dayLabels[_selectedDay - 1]} Schedule';
   }
 
   Color _safeColor(String? colorHex) {
-    if (colorHex == null || colorHex.isEmpty) {
-      return AppColors.accent;
-    }
-
+    if (colorHex == null || colorHex.isEmpty) return AppColors.signal;
     final sanitized = colorHex.replaceAll('#', '');
-    if (sanitized.length != 6) {
-      return AppColors.accent;
-    }
-
+    if (sanitized.length != 6) return AppColors.signal;
     return Color(int.parse('FF$sanitized', radix: 16));
   }
 
   Future<void> _deleteClassSlot(String id) async {
-    await _service.deleteClassSlot(id);
-    await _loadData();
+    final result = await context.read<TimetableProvider>().deleteClassSlot(id);
+    if (!mounted) return;
+    SnackbarHelper.show(
+      context,
+      result.message,
+      type: result.success ? AppSnackbarType.success : AppSnackbarType.error,
+    );
   }
 
   Future<void> _showAddScheduleBottomSheet() async {
-    final changed = await showModalBottomSheet<bool>(
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    final submission = await showModalBottomSheet<_ScheduleSubmission>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surfaceDark,
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.surfaceDark,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) =>
-          _AddScheduleBottomSheet(service: _service, selectedDay: _selectedDay),
+      builder: (context) => _AddScheduleBottomSheet(selectedDay: _selectedDay),
     );
 
-    if (changed == true) {
-      await _loadData();
-    }
+    await _handleScheduleSubmission(submission);
   }
 
-  Future<void> _showEditClassBottomSheet(Map<String, dynamic> slot) async {
-    final changed = await showModalBottomSheet<bool>(
+  Future<void> _showEditClassBottomSheet(ClassSlotModel slot) async {
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    final submission = await showModalBottomSheet<_ScheduleSubmission>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.surfaceDark,
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.surfaceDark,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => _AddScheduleBottomSheet(
-        service: _service,
         selectedDay: _selectedDay,
-        editClassData: slot,
+        editClassData: slot.toJson(),
       ),
     );
 
-    if (changed == true) {
-      await _loadData();
+    await _handleScheduleSubmission(submission);
+  }
+
+  Future<void> _handleScheduleSubmission(
+    _ScheduleSubmission? submission,
+  ) async {
+    if (submission == null) return;
+
+    final provider = context.read<TimetableProvider>();
+
+    final TimetableActionResult result;
+    if (submission.isClass && submission.editClassId != null) {
+      result = await provider.updateClassSlot(
+        classSlotId: submission.editClassId!,
+        classData: submission.payload,
+      );
+    } else {
+      result = submission.isClass
+          ? await provider.addClassSlot(submission.payload)
+          : await provider.addStudySession(submission.payload);
     }
+
+    if (!mounted) return;
+    SnackbarHelper.show(
+      context,
+      result.message,
+      type: result.success ? AppSnackbarType.success : AppSnackbarType.error,
+    );
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : RefreshIndicator(
-            color: AppColors.primary,
-            backgroundColor: AppColors.surfaceDark,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    final fg = isLight ? AppColors.inkPrimary : AppColors.parchment;
+    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
+    final surfaceBg = isLight ? AppColors.surfaceLight : AppColors.cardDark;
+    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
+
+    return Scaffold(
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
+      body: Consumer<TimetableProvider>(
+        builder: (context, provider, _) {
+          final classesForDay = _classesForDay(provider);
+          final studySessions = provider.studySessions;
+
+          if (provider.isLoading) {
+            return AppStateView.loadingList(itemCount: 4, itemHeight: 110);
+          }
+
+          return RefreshIndicator(
+            color: AppColors.signal,
+            backgroundColor: surfaceBg,
             onRefresh: _loadData,
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screenHorizontal,
+                AppSpacing.xs,
+                AppSpacing.screenHorizontal,
+                120,
+              ),
               children: [
-                Text(
-                  _displayTitleForSelectedDay(),
-                  style: GoogleFonts.outfit(
-                    color: AppColors.textPrimary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _displayTitleForSelectedDay(),
+                        style: isLight
+                            ? AppTextStyles.headingSmallLight
+                            : AppTextStyles.headingSmall,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () {
+                        Haptics.light();
+                        _showAddScheduleBottomSheet();
+                      },
+                      icon: const Icon(Icons.add_rounded, size: 16),
+                      label: const Text('ADD'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: AppSpacing.sm),
                 SizedBox(
                   height: 44,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: _dayLabels.length,
-                    separatorBuilder: (_, _) => const SizedBox(width: 8),
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(width: AppSpacing.xs),
                     itemBuilder: (context, index) {
                       final day = index + 1;
                       final selected = day == _selectedDay;
                       return GestureDetector(
-                        onTap: () async {
-                          setState(() {
-                            _selectedDay = day;
-                          });
-                          await _loadData();
+                        onTap: () {
+                          Haptics.selection();
+                          setState(() => _selectedDay = day);
+                          _loadData();
                         },
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 220),
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.md,
+                          ),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
-                            gradient: selected
-                                ? AppColors.primaryGradient
-                                : null,
-                            color: selected ? null : AppColors.cardDark,
-                            border: Border.all(color: AppColors.border),
+                            borderRadius: BorderRadius.circular(
+                              AppSpacing.cardRadius,
+                            ),
+                            color: selected ? AppColors.signalMuted : surfaceBg,
+                            border: Border.all(
+                              color:
+                                  selected ? AppColors.signal : borderColor,
+                              width: 0.5,
+                            ),
                           ),
                           alignment: Alignment.center,
                           child: Text(
-                            _dayLabels[index],
-                            style: GoogleFonts.inter(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w600,
+                            _dayLabels[index].toUpperCase(),
+                            style: AppTextStyles.overline.copyWith(
+                              color: selected ? AppColors.signal : mutedFg,
                             ),
                           ),
                         ),
@@ -198,132 +270,170 @@ class _TimetableScreenState extends State<TimetableScreen> {
                     },
                   ),
                 ),
-                const SizedBox(height: 18),
-                _buildSectionHeader('🎓 Classes', _classesForDay.length),
-                const SizedBox(height: 10),
-                Card(
-                  color: AppColors.cardDark,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: const BorderSide(color: AppColors.border),
-                  ),
-                  child: ExpansionTile(
-                    initiallyExpanded: true,
-                    title: Text(
-                      'Class Timetable',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    iconColor: AppColors.textPrimary,
-                    collapsedIconColor: AppColors.textSecondary,
-                    children: _classesForDay.isEmpty
-                        ? [
-                            _buildEmptyTile(
-                              'No classes scheduled for this day.',
-                            ),
-                          ]
-                        : _classesForDay.map(_buildClassCard).toList(),
-                  ),
+                const SizedBox(height: AppSpacing.md),
+                _buildSectionHeader(
+                  'Classes',
+                  classesForDay.length,
+                  fg,
+                  mutedFg,
+                  surfaceBg,
+                  borderColor,
                 ),
-                const SizedBox(height: 16),
-                _buildSectionHeader('📖 Study Sessions', _studySessions.length),
-                const SizedBox(height: 10),
-                Card(
-                  color: AppColors.cardDark,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    side: const BorderSide(color: AppColors.border),
-                  ),
-                  child: ExpansionTile(
-                    initiallyExpanded: true,
-                    title: Text(
-                      'Planned Sessions',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    iconColor: AppColors.textPrimary,
-                    collapsedIconColor: AppColors.textSecondary,
-                    children: _studySessions.isEmpty
-                        ? [
-                            _buildEmptyTile(
-                              'Nothing scheduled. Add a class or study session.',
-                            ),
-                          ]
-                        : _studySessions.map(_buildStudySessionCard).toList(),
-                  ),
+                const SizedBox(height: AppSpacing.xs),
+                _buildExpansionCard(
+                  title: 'Class Timetable',
+                  fg: fg,
+                  mutedFg: mutedFg,
+                  surfaceBg: surfaceBg,
+                  borderColor: borderColor,
+                  children: classesForDay.isEmpty
+                      ? [
+                          _buildEmptyTile(
+                            'No classes scheduled for this day.',
+                            mutedFg,
+                            surfaceBg,
+                            borderColor,
+                          ),
+                        ]
+                      : classesForDay.map(_buildClassCard).toList(),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                _buildSectionHeader(
+                  'Study Sessions',
+                  studySessions.length,
+                  fg,
+                  mutedFg,
+                  surfaceBg,
+                  borderColor,
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                _buildExpansionCard(
+                  title: 'Planned Sessions',
+                  fg: fg,
+                  mutedFg: mutedFg,
+                  surfaceBg: surfaceBg,
+                  borderColor: borderColor,
+                  children: studySessions.isEmpty
+                      ? [
+                          _buildEmptyTile(
+                            'Nothing scheduled. Tap ADD to create one.',
+                            mutedFg,
+                            surfaceBg,
+                            borderColor,
+                          ),
+                        ]
+                      : studySessions.map(_buildStudySessionCard).toList(),
                 ),
               ],
             ),
-          ),
-    floatingActionButton: FloatingActionButton(
-      onPressed: _showAddScheduleBottomSheet,
-      backgroundColor: AppColors.primary,
-      child: const Icon(Icons.add, color: Colors.white),
-    ),
-  );
-
-  Widget _buildSectionHeader(String title, int count) => Row(
-    children: [
-      Text(
-        title,
-        style: GoogleFonts.outfit(
-          color: AppColors.textPrimary,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-        ),
+          );
+        },
       ),
-      const Spacer(),
+    );
+  }
+
+  Widget _buildExpansionCard({
+    required String title,
+    required Color fg,
+    required Color mutedFg,
+    required Color surfaceBg,
+    required Color borderColor,
+    required List<Widget> children,
+  }) =>
       Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.surfaceDark,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: AppColors.border),
+          color: surfaceBg,
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          border: Border.all(color: borderColor, width: 0.5),
         ),
-        child: Text(
-          '$count',
-          style: GoogleFonts.inter(
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
+        clipBehavior: Clip.antiAlias,
+        child: ExpansionTile(
+          initiallyExpanded: true,
+          title: Text(title, style: AppTextStyles.label.copyWith(color: fg)),
+          iconColor: fg,
+          collapsedIconColor: mutedFg,
+          children: children,
+        ),
+      );
+
+  Widget _buildSectionHeader(
+    String title,
+    int count,
+    Color fg,
+    Color mutedFg,
+    Color surfaceBg,
+    Color borderColor,
+  ) =>
+      Row(
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: AppTextStyles.overline.copyWith(color: fg),
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.xxs,
+            ),
+            decoration: BoxDecoration(
+              color: surfaceBg,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: borderColor, width: 0.5),
+            ),
+            child: Text(
+              '$count',
+              style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
+            ),
+          ),
+        ],
+      );
+
+  Widget _buildEmptyTile(
+    String message,
+    Color mutedFg,
+    Color surfaceBg,
+    Color borderColor,
+  ) =>
+      Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          0,
+          AppSpacing.md,
+          AppSpacing.md,
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.sm),
+          decoration: BoxDecoration(
+            color: surfaceBg,
+            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+            border: Border.all(color: borderColor, width: 0.5),
+          ),
+          child: Text(
+            message,
+            style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
           ),
         ),
-      ),
-    ],
-  );
+      );
 
-  Widget _buildEmptyTile(String message) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-    child: Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      padding: const EdgeInsets.all(14),
-      child: Text(
-        message,
-        style: GoogleFonts.inter(color: AppColors.textSecondary, fontSize: 13),
-      ),
-    ),
-  );
+  Widget _buildClassCard(ClassSlotModel slot) {
+    final color = _safeColor(slot.color);
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final surfaceBg = isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
+    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
+    final fg = isLight ? AppColors.inkPrimary : AppColors.parchment;
+    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
 
-  Widget _buildClassCard(Map<String, dynamic> slot) {
-    final color = _safeColor(slot['color'] as String?);
     return Slidable(
-      key: ValueKey(slot['id']),
+      key: ValueKey(slot.id),
       startActionPane: ActionPane(
         motion: const DrawerMotion(),
         children: [
           SlidableAction(
             onPressed: (_) => _showEditClassBottomSheet(slot),
-            backgroundColor: AppColors.accent,
-            foregroundColor: Colors.white,
-            icon: Icons.edit,
+            backgroundColor: AppColors.signal,
+            foregroundColor: AppColors.parchment,
+            icon: Icons.edit_rounded,
             label: 'Edit',
           ),
         ],
@@ -332,63 +442,53 @@ class _TimetableScreenState extends State<TimetableScreen> {
         motion: const DrawerMotion(),
         children: [
           SlidableAction(
-            onPressed: (_) => _deleteClassSlot(slot['id'] as String),
+            onPressed: (_) => _deleteClassSlot(slot.id),
             backgroundColor: AppColors.danger,
-            foregroundColor: Colors.white,
-            icon: Icons.delete_outline,
+            foregroundColor: AppColors.parchment,
+            icon: Icons.delete_outline_rounded,
             label: 'Delete',
           ),
         ],
       ),
       child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        decoration: BoxDecoration(
-          color: AppColors.surfaceDark,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+        margin: const EdgeInsets.fromLTRB(
+          AppSpacing.sm,
+          0,
+          AppSpacing.sm,
+          AppSpacing.sm,
         ),
+        decoration: BoxDecoration(
+          color: surfaceBg,
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          border: Border.all(color: borderColor, width: 0.5),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: Row(
           children: [
-            Container(
-              width: 4,
-              height: 84,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  bottomLeft: Radius.circular(12),
-                ),
-              ),
-            ),
+            Container(width: 4, height: 84, color: color),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(AppSpacing.sm),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      slot['subject_name']?.toString() ?? 'Class',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textPrimary,
-                        fontSize: 15,
+                      slot.subjectName,
+                      style: AppTextStyles.bodyMedium.copyWith(
                         fontWeight: FontWeight.w700,
+                        color: fg,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
-                      '${slot['start_time'] ?? '--:--'} - ${slot['end_time'] ?? '--:--'}',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                      ),
+                      '${slot.startTime} - ${slot.endTime}',
+                      style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: AppSpacing.xxs),
                     Text(
-                      '${slot['room'] ?? 'Room TBA'} • ${slot['lecturer'] ?? 'Lecturer TBA'}',
-                      style: GoogleFonts.inter(
-                        color: AppColors.textMuted,
-                        fontSize: 12,
-                      ),
+                      '${slot.room ?? 'Room TBA'} • '
+                      '${slot.lecturer ?? 'Lecturer TBA'}',
+                      style: AppTextStyles.caption.copyWith(color: mutedFg),
                     ),
                   ],
                 ),
@@ -400,28 +500,40 @@ class _TimetableScreenState extends State<TimetableScreen> {
     );
   }
 
-  Widget _buildStudySessionCard(Map<String, dynamic> session) {
-    final status = (session['status']?.toString() ?? 'planned').toLowerCase();
+  Widget _buildStudySessionCard(StudySessionModel session) {
+    final status = session.status.toLowerCase();
     final badgeColor = switch (status) {
       'completed' => AppColors.success,
       'missed' => AppColors.danger,
       _ => AppColors.warning,
     };
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final surfaceBg = isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
+    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
+    final fg = isLight ? AppColors.inkPrimary : AppColors.parchment;
+    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
 
     return GestureDetector(
       onTap: () {
-        final topicId = session['topic_id']?.toString();
+        Haptics.selection();
+        final topicId = session.topicId;
+        if (!mounted) return;
         if (topicId != null && topicId.isNotEmpty) {
           context.push('/topics/$topicId');
         }
       },
       child: Container(
-        margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-        padding: const EdgeInsets.all(12),
+        margin: const EdgeInsets.fromLTRB(
+          AppSpacing.sm,
+          0,
+          AppSpacing.sm,
+          AppSpacing.sm,
+        ),
+        padding: const EdgeInsets.all(AppSpacing.sm),
         decoration: BoxDecoration(
-          color: AppColors.surfaceDark,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.border),
+          color: surfaceBg,
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          border: Border.all(color: borderColor, width: 0.5),
         ),
         child: Row(
           children: [
@@ -430,38 +542,34 @@ class _TimetableScreenState extends State<TimetableScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    session['title']?.toString() ?? 'Study Session',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textPrimary,
-                      fontSize: 15,
+                    session.title,
+                    style: AppTextStyles.bodyMedium.copyWith(
                       fontWeight: FontWeight.w700,
+                      color: fg,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: AppSpacing.xxs),
                   Text(
-                    '${session['start_time'] ?? '--:--'} - ${session['end_time'] ?? '--:--'}',
-                    style: GoogleFonts.inter(
-                      color: AppColors.textSecondary,
-                      fontSize: 13,
-                    ),
+                    '${session.startTime ?? '--:--'} - '
+                    '${session.endTime ?? '--:--'}',
+                    style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
                   ),
                 ],
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.sm,
+                vertical: AppSpacing.xxs,
+              ),
               decoration: BoxDecoration(
                 color: badgeColor.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: badgeColor),
+                border: Border.all(color: badgeColor, width: 0.5),
               ),
               child: Text(
-                status,
-                style: GoogleFonts.inter(
-                  color: badgeColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
+                status.toUpperCase(),
+                style: AppTextStyles.overline.copyWith(color: badgeColor),
               ),
             ),
           ],
@@ -471,14 +579,24 @@ class _TimetableScreenState extends State<TimetableScreen> {
   }
 }
 
+class _ScheduleSubmission {
+  const _ScheduleSubmission({
+    required this.isClass,
+    required this.payload,
+    this.editClassId,
+  });
+
+  final bool isClass;
+  final Map<String, dynamic> payload;
+  final String? editClassId;
+}
+
 class _AddScheduleBottomSheet extends StatefulWidget {
   const _AddScheduleBottomSheet({
-    required this.service,
     required this.selectedDay,
     this.editClassData,
   });
 
-  final SupabaseService service;
   final int selectedDay;
   final Map<String, dynamic>? editClassData;
 
@@ -489,12 +607,12 @@ class _AddScheduleBottomSheet extends StatefulWidget {
 
 class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     with SingleTickerProviderStateMixin {
+  final AuthRepository _authRepository = getIt<AuthRepository>();
   late final TabController _tabController;
 
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _roomController = TextEditingController();
   final TextEditingController _lecturerController = TextEditingController();
-
   final TextEditingController _sessionTitleController = TextEditingController();
 
   TimeOfDay? _classStart;
@@ -504,7 +622,6 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   DateTime _sessionDate = DateTime.now();
   int _classDay = DateTime.now().weekday;
 
-  List<TopicModel> _topics = const [];
   String? _selectedTopicId;
   String? _selectedModuleId;
 
@@ -527,7 +644,8 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       _classEnd = _parseTimeString(edit['end_time']?.toString());
     }
 
-    _loadTopics();
+    final provider = context.read<TopicModuleProvider>();
+    unawaited(provider.loadModulesAndTopics());
   }
 
   @override
@@ -541,15 +659,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   }
 
   TimeOfDay? _parseTimeString(String? value) {
-    if (value == null || value.isEmpty) {
-      return null;
-    }
-
+    if (value == null || value.isEmpty) return null;
     final parts = value.split(':');
-    if (parts.length < 2) {
-      return null;
-    }
-
+    if (parts.length < 2) return null;
     return TimeOfDay(
       hour: int.tryParse(parts[0]) ?? 0,
       minute: int.tryParse(parts[1]) ?? 0,
@@ -560,24 +672,6 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute:00';
-  }
-
-  Future<void> _loadTopics() async {
-    final user = widget.service.getCurrentUser();
-    if (user == null) return;
-
-    final modules = await widget.service.getModules(user.id) ?? [];
-    final allTopics = <TopicModel>[];
-
-    for (final module in modules) {
-      final topics = await widget.service.getTopics(module.id) ?? [];
-      allTopics.addAll(topics);
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _topics = allTopics;
-    });
   }
 
   Future<void> _pickTime({required bool isClass, required bool isStart}) async {
@@ -616,18 +710,21 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       return;
     }
 
-    final user = widget.service.getCurrentUser();
-    if (user == null) {
+    final result = await _authRepository.getCurrentUser();
+    final userId = switch (result) {
+      Success(data: final user) => user?.id,
+      Failure(error: final _) => null,
+    };
+
+    if (userId == null || userId.isEmpty) {
       _showSnack('Please sign in again.');
       return;
     }
 
-    setState(() {
-      _isSaving = true;
-    });
+    setState(() => _isSaving = true);
 
     final payload = {
-      'user_id': user.id,
+      'user_id': userId,
       'subject_name': _subjectController.text.trim(),
       'day_of_week': _classDay,
       'start_time': _to24h(_classStart!),
@@ -638,21 +735,14 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       'lecturer': _lecturerController.text.trim().isEmpty
           ? null
           : _lecturerController.text.trim(),
-      'color': '#06B6D4',
+      'color': '#977E41',
     };
 
     final editId = widget.editClassData?['id']?.toString();
-    final saved = editId != null
-        ? await widget.service.updateClassSlot(editId, payload)
-        : await widget.service.addClassSlot(payload);
-
     if (!mounted) return;
-    if (saved == null) {
-      setState(() => _isSaving = false);
-      _showSnack('Could not save class. Please try again.');
-      return;
-    }
-    Navigator.of(context).pop(true);
+    Navigator.of(context).pop(
+      _ScheduleSubmission(isClass: true, payload: payload, editClassId: editId),
+    );
   }
 
   Future<void> _saveStudySession() async {
@@ -663,22 +753,25 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       return;
     }
 
-    final user = widget.service.getCurrentUser();
-    if (user == null) {
+    final result = await _authRepository.getCurrentUser();
+    final userId = switch (result) {
+      Success(data: final user) => user?.id,
+      Failure(error: final _) => null,
+    };
+
+    if (userId == null || userId.isEmpty) {
       _showSnack('Please sign in again.');
       return;
     }
 
-    setState(() {
-      _isSaving = true;
-    });
+    setState(() => _isSaving = true);
 
     final startMinutes = _sessionStart!.hour * 60 + _sessionStart!.minute;
     final endMinutes = _sessionEnd!.hour * 60 + _sessionEnd!.minute;
     final duration = (endMinutes - startMinutes).clamp(0, 600);
 
-    final saved = await widget.service.addStudySession({
-      'user_id': user.id,
+    final payload = {
+      'user_id': userId,
       'topic_id': _selectedTopicId,
       'module_id': _selectedModuleId,
       'title': _sessionTitleController.text.trim(),
@@ -687,112 +780,104 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       'end_time': _to24h(_sessionEnd!),
       'duration_minutes': duration,
       'status': 'planned',
-    });
+    };
 
     if (!mounted) return;
-    if (saved == null) {
-      setState(() => _isSaving = false);
-      _showSnack('Could not save session. Please try again.');
-      return;
-    }
-    Navigator.of(context).pop(true);
+    Navigator.of(context)
+        .pop(_ScheduleSubmission(isClass: false, payload: payload));
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    SnackbarHelper.show(context, message, type: AppSnackbarType.warning);
   }
 
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
+    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-    final screenHeight = MediaQuery.of(context).size.height;
-    // Reserve space for: drag handle(17) + gap(12) + TabBar(48) + gap(12) + save(50) + gaps(24)
-    final tabViewHeight = (screenHeight * 0.55 - bottomInset).clamp(
-      240.0,
-      400.0,
-    );
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 42,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(99),
-                ),
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        AppSpacing.md,
+        AppSpacing.sm,
+        AppSpacing.md,
+        bottomInset + AppSpacing.md,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Center(
+            child: Container(
+              width: 42,
+              height: 5,
+              decoration: BoxDecoration(
+                color: borderColor,
+                borderRadius: BorderRadius.circular(99),
               ),
-              const SizedBox(height: 12),
-              TabBar(
-                controller: _tabController,
-                indicatorColor: AppColors.accent,
-                labelColor: AppColors.textPrimary,
-                unselectedLabelColor: AppColors.textSecondary,
-                tabs: const [
-                  Tab(text: 'Add Class'),
-                  Tab(text: 'Add Study Session'),
-                ],
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: tabViewHeight,
-                child: TabBarView(
-                  controller: _tabController,
-                  children: [_buildAddClassTab(), _buildAddStudyTab()],
-                ),
-              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TabBar(
+            controller: _tabController,
+            indicatorColor: AppColors.signal,
+            labelColor: AppColors.signal,
+            unselectedLabelColor: mutedFg,
+            tabs: const [
+              Tab(text: 'Add Class'),
+              Tab(text: 'Add Study Session'),
             ],
           ),
-        ),
-        Padding(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, bottomInset + 16),
-          child: SizedBox(
+          const SizedBox(height: AppSpacing.sm),
+          SizedBox(
+            height: 380,
+            child: TabBarView(
+              controller: _tabController,
+              children: [_buildAddClassTab(), _buildAddStudyTab()],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
+            child: FilledButton(
               onPressed: _isSaving
                   ? null
                   : () {
+                      Haptics.light();
                       if (_tabController.index == 0) {
                         _saveClass();
                       } else {
                         _saveStudySession();
                       }
                     },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
               child: _isSaving
                   ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.parchment,
+                      ),
                     )
                   : Text(
-                      widget.editClassData == null ? 'Save' : 'Update Class',
+                      widget.editClassData == null
+                          ? 'SAVE'
+                          : 'UPDATE CLASS',
                     ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildAddClassTab() => ListView(
     children: [
       _buildInput(_subjectController, 'Subject name'),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       _buildDayDropdown(),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       Row(
         children: [
           Expanded(
@@ -802,7 +887,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
               onTap: () => _pickTime(isClass: true, isStart: true),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: _buildTimePicker(
               label: 'End time',
@@ -812,9 +897,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
           ),
         ],
       ),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       _buildInput(_roomController, 'Room (optional)'),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       _buildInput(_lecturerController, 'Lecturer (optional)'),
     ],
   );
@@ -822,9 +907,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   Widget _buildAddStudyTab() => ListView(
     children: [
       _buildInput(_sessionTitleController, 'Session title'),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       _buildDatePicker(),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       Row(
         children: [
           Expanded(
@@ -834,7 +919,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
               onTap: () => _pickTime(isClass: false, isStart: true),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: AppSpacing.xs),
           Expanded(
             child: _buildTimePicker(
               label: 'End time',
@@ -844,7 +929,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
           ),
         ],
       ),
-      const SizedBox(height: 10),
+      const SizedBox(height: AppSpacing.xs),
       _buildTopicDropdown(),
     ],
   );
@@ -852,43 +937,16 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   Widget _buildInput(TextEditingController controller, String hint) =>
       TextField(
         controller: controller,
-        style: GoogleFonts.inter(color: AppColors.textPrimary),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: GoogleFonts.inter(color: AppColors.textMuted),
-          filled: true,
-          fillColor: AppColors.cardDark,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-        ),
+        decoration: InputDecoration(hintText: hint),
       );
 
   Widget _buildDayDropdown() {
     const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final isLight = Theme.of(context).brightness == Brightness.light;
     return DropdownButtonFormField<int>(
       initialValue: _classDay,
-      dropdownColor: AppColors.surfaceDark,
-      style: GoogleFonts.inter(color: AppColors.textPrimary),
-      decoration: InputDecoration(
-        labelText: 'Day',
-        labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
-        filled: true,
-        fillColor: AppColors.cardDark,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-      ),
+      dropdownColor: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
+      decoration: const InputDecoration(labelText: 'Day'),
       items: List.generate(
         7,
         (index) =>
@@ -896,105 +954,122 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       ),
       onChanged: (value) {
         if (value == null) return;
-        setState(() {
-          _classDay = value;
-        });
+        Haptics.selection();
+        setState(() => _classDay = value);
       },
     );
   }
 
-  Widget _buildDatePicker() => InkWell(
-    onTap: _pickDate,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+  Widget _buildDatePicker() {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
+    final surfaceBg = isLight ? AppColors.surfaceLight : AppColors.cardDark;
+    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
+
+    return InkWell(
+      onTap: () {
+        Haptics.selection();
+        _pickDate();
+      },
+      borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: surfaceBg,
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          border: Border.all(color: borderColor, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_today_rounded, color: mutedFg, size: 18),
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              '${_sessionDate.year}-'
+              '${_sessionDate.month.toString().padLeft(2, '0')}-'
+              '${_sessionDate.day.toString().padLeft(2, '0')}',
+              style: AppTextStyles.bodySmall,
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.calendar_today,
-            color: AppColors.textSecondary,
-            size: 18,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '${_sessionDate.year}-${_sessionDate.month.toString().padLeft(2, '0')}-${_sessionDate.day.toString().padLeft(2, '0')}',
-            style: GoogleFonts.inter(color: AppColors.textPrimary),
-          ),
-        ],
-      ),
-    ),
-  );
+    );
+  }
 
   Widget _buildTimePicker({
     required String label,
     required TimeOfDay? value,
     required VoidCallback onTap,
-  }) => InkWell(
-    onTap: onTap,
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: BoxDecoration(
-        color: AppColors.cardDark,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.schedule, color: AppColors.textSecondary, size: 18),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              value == null ? label : value.format(context),
-              style: GoogleFonts.inter(
-                color: value == null
-                    ? AppColors.textMuted
-                    : AppColors.textPrimary,
+  }) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
+    final surfaceBg = isLight ? AppColors.surfaceLight : AppColors.cardDark;
+    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
+    final activeFg = isLight ? AppColors.inkPrimary : AppColors.parchment;
+
+    return InkWell(
+      onTap: () {
+        Haptics.selection();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: surfaceBg,
+          borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+          border: Border.all(color: borderColor, width: 0.5),
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.schedule_rounded, color: mutedFg, size: 18),
+            const SizedBox(width: AppSpacing.xs),
+            Expanded(
+              child: Text(
+                value == null ? label : value.format(context),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: value == null ? mutedFg : activeFg,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _buildTopicDropdown() => DropdownButtonFormField<String>(
-    initialValue: _selectedTopicId,
-    dropdownColor: AppColors.surfaceDark,
-    style: GoogleFonts.inter(color: AppColors.textPrimary),
-    decoration: InputDecoration(
-      labelText: 'Linked topic (optional)',
-      labelStyle: GoogleFonts.inter(color: AppColors.textSecondary),
-      filled: true,
-      fillColor: AppColors.cardDark,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: AppColors.border),
-      ),
-    ),
-    items: _topics
-        .map(
-          (topic) => DropdownMenuItem<String>(
-            value: topic.id,
-            child: Text(topic.name),
-          ),
-        )
-        .toList(),
-    onChanged: (value) {
-      setState(() {
-        _selectedTopicId = value;
-        _selectedModuleId = _topics
-            .where((topic) => topic.id == value)
-            .map((topic) => topic.moduleId)
-            .firstOrNull;
-      });
+  Widget _buildTopicDropdown() => Consumer<TopicModuleProvider>(
+    builder: (context, provider, _) {
+      final isLight = Theme.of(context).brightness == Brightness.light;
+      return DropdownButtonFormField<String>(
+        initialValue: _selectedTopicId,
+        dropdownColor: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
+        decoration:
+            const InputDecoration(labelText: 'Linked topic (optional)'),
+        items: provider.topics
+            .map(
+              (topic) => DropdownMenuItem<String>(
+                value: topic.id,
+                child: Text(topic.name),
+              ),
+            )
+            .toList(),
+        onChanged: (value) {
+          Haptics.selection();
+          setState(() {
+            _selectedTopicId = value;
+            _selectedModuleId = provider.topics
+                .where((topic) => topic.id == value)
+                .map((topic) => topic.moduleId)
+                .firstOrNull;
+          });
+        },
+      );
     },
   );
 }

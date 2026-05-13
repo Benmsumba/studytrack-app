@@ -5,8 +5,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/theme/app_palette.dart';
-import '../../../core/widgets/app_scaffold.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../controllers/auth_provider.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -17,22 +17,34 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  // Logo matches the StudyTrack brand: split brain (purple left / cyan right)
+  // rising from an open book, with soft glow halos behind each hemisphere.
   static const String _logoAsset = 'assets/icon/app_icon.jpeg';
+
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
-    _timer = Timer(const Duration(milliseconds: 1100), _handleRedirect);
+    _timer = Timer(const Duration(milliseconds: 1000), _handleRedirect);
   }
 
   Future<void> _handleRedirect() async {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
+
     final auth = context.read<AuthProvider>();
     await auth.refreshCurrentUser(silent: true);
-    if (!mounted) return;
+
+    if (!mounted) {
+      return;
+    }
+
+    // Let the router's redirect logic handle all navigation
+    // This ensures consistent routing based on auth state and onboarding status
     if (auth.isAuthenticated) {
-      context.go('/home/dashboard');
+      context.go('/home/timetable');
     } else {
       context.go('/login');
     }
@@ -45,80 +57,64 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    final theme = Theme.of(context);
-    return AppScaffold(
-      ambientGlow: true,
-      ambientIntensity: 1.5,
-      useDeepBackground: true,
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                    width: 144,
-                    height: 144,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: palette.brandPrimary,
-                    ),
-                    padding: const EdgeInsets.all(20),
-                    child: ClipOval(
-                      child: Image.asset(_logoAsset, fit: BoxFit.cover),
-                    ),
-                  )
-                  .animate(onPlay: (c) => c.repeat(reverse: true))
-                  .fadeIn(duration: 700.ms)
-                  .scale(
-                    begin: const Offset(0.92, 0.92),
-                    end: const Offset(1, 1),
-                    duration: 900.ms,
-                    curve: Curves.easeOut,
-                  )
-                  .then()
-                  .scale(
-                    begin: const Offset(1, 1),
-                    end: const Offset(1.04, 1.04),
-                    duration: 1400.ms,
-                    curve: Curves.easeInOut,
-                  ),
-              const SizedBox(height: 28),
-              Text(
-                    'StudyTrack',
-                    style: theme.textTheme.displayMedium?.copyWith(
-                      color: palette.textPrimary,
-                    ),
-                  )
-                  .animate()
-                  .fadeIn(duration: 700.ms, delay: 200.ms)
-                  .slideY(begin: 0.12, end: 0, duration: 700.ms),
-              const SizedBox(height: 8),
-              Text(
-                    'Study smarter. Know where you stand.',
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: palette.textSecondary,
-                    ),
-                  )
-                  .animate()
-                  .fadeIn(duration: 700.ms, delay: 350.ms)
-                  .slideY(begin: 0.12, end: 0, duration: 700.ms),
-              const SizedBox(height: 40),
-              SizedBox(
-                width: 32,
-                height: 32,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  color: palette.brandSecondary,
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: AppColors.obsidian,
+    body: SafeArea(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+                  _logoAsset,
+                  width: 128,
+                  height: 128,
+                  fit: BoxFit.contain,
+                )
+                .animate(
+                  onPlay: (controller) => controller.repeat(reverse: true),
+                )
+                .fadeIn(duration: 700.ms, curve: Curves.easeOut)
+                .scale(
+                  begin: const Offset(0.92, 0.92),
+                  end: const Offset(1, 1),
+                  duration: 900.ms,
+                  curve: Curves.easeOut,
+                )
+                .then()
+                .scale(
+                  begin: const Offset(1, 1),
+                  end: const Offset(1.03, 1.03),
+                  duration: 1200.ms,
+                  curve: Curves.easeInOut,
                 ),
-              ).animate().fadeIn(duration: 600.ms, delay: 500.ms),
-            ],
-          ),
+            const SizedBox(height: 24),
+            Text('StudyTrack', style: AppTextStyles.displayMedium)
+                .animate()
+                .fadeIn(duration: 700.ms, delay: 200.ms, curve: Curves.easeOut)
+                .slideY(
+                  begin: 0.12,
+                  end: 0,
+                  duration: 700.ms,
+                  curve: Curves.easeOut,
+                ),
+            const SizedBox(height: 8),
+            Text(
+                  'Study smarter. Know where you stand.',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyMediumSecondary,
+                )
+                .animate()
+                .fadeIn(duration: 700.ms, delay: 350.ms, curve: Curves.easeOut)
+                .slideY(
+                  begin: 0.12,
+                  end: 0,
+                  duration: 700.ms,
+                  curve: Curves.easeOut,
+                ),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }

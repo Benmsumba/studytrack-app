@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
@@ -11,8 +10,8 @@ import '../../../core/repositories/study_group_repository.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/utils/snackbar_helper.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/widgets/app_state_view.dart';
-import '../../../core/widgets/custom_button.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../../../models/study_group_model.dart';
 import '../../auth/controllers/auth_provider.dart';
@@ -106,14 +105,13 @@ class _GroupsScreenState extends State<GroupsScreen> {
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            GlowingButton(
-              label: 'Create',
-              isLoading: _working,
+            SizedBox(
               width: double.infinity,
+              child: FilledButton(
               onPressed: _working
                   ? null
                   : () async {
-                      HapticFeedback.lightImpact();
+                      Haptics.light();
                       final auth = Provider.of<AuthProvider>(
                         context,
                         listen: false,
@@ -201,6 +199,11 @@ class _GroupsScreenState extends State<GroupsScreen> {
 
                       await _loadGroups();
                     },
+                child: _working
+                    ? const SizedBox(width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
+                    : const Text('CREATE'),
+              ),
             ),
           ],
         ),
@@ -240,51 +243,55 @@ class _GroupsScreenState extends State<GroupsScreen> {
               decoration: const InputDecoration(labelText: 'Enter invite code'),
             ),
             const SizedBox(height: AppSpacing.md),
-            GlowingButton(
-              label: 'Join Group',
-              isLoading: _working,
+            SizedBox(
               width: double.infinity,
-              onPressed: _working
-                  ? null
-                  : () async {
-                      HapticFeedback.lightImpact();
-                      final auth = Provider.of<AuthProvider>(
-                        context,
-                        listen: false,
-                      );
-                      final user = auth.currentUser;
-                      final code = codeController.text.trim();
-                      if (user == null || code.isEmpty) return;
+              child: FilledButton(
+                onPressed: _working
+                    ? null
+                    : () async {
+                        Haptics.light();
+                        final auth = Provider.of<AuthProvider>(
+                          context,
+                          listen: false,
+                        );
+                        final user = auth.currentUser;
+                        final code = codeController.text.trim();
+                        if (user == null || code.isEmpty) return;
 
-                      setState(() => _working = true);
+                        setState(() => _working = true);
 
-                      final navigator = Navigator.of(context);
+                        final navigator = Navigator.of(context);
 
-                      final joinedResult = await _groupRepo.joinGroupByCode(
-                        code,
-                      );
+                        final joinedResult = await _groupRepo.joinGroupByCode(
+                          code,
+                        );
 
-                      if (!mounted) return;
-                      setState(() => _working = false);
-                      navigator.pop();
+                        if (!mounted) return;
+                        setState(() => _working = false);
+                        navigator.pop();
 
-                      if (joinedResult is! Success<void>) {
+                        if (joinedResult is! Success<void>) {
+                          SnackbarHelper.show(
+                            context,
+                            AppStrings.inviteNotFound,
+                            type: AppSnackbarType.error,
+                          );
+                          return;
+                        }
+
+                        await _loadGroups();
+                        if (!mounted) return;
                         SnackbarHelper.show(
                           context,
-                          AppStrings.inviteNotFound,
-                          type: AppSnackbarType.error,
+                          AppStrings.joinedGroupSuccess,
+                          type: AppSnackbarType.success,
                         );
-                        return;
-                      }
-
-                      await _loadGroups();
-                      if (!mounted) return;
-                      SnackbarHelper.show(
-                        context,
-                        AppStrings.joinedGroupSuccess,
-                        type: AppSnackbarType.success,
-                      );
-                    },
+                      },
+                child: _working
+                    ? const SizedBox(width: 18, height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
+                    : const Text('JOIN GROUP'),
+              ),
             ),
           ],
         ),
@@ -323,7 +330,10 @@ class _GroupsScreenState extends State<GroupsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Scaffold(
+    backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
     body: _loading
         ? AppStateView.loadingList(itemCount: 4, itemHeight: 110)
         : RefreshIndicator(
@@ -355,7 +365,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                     message: AppStrings.noGroupsSubtitle,
                     actionLabel: 'Create or Join a Group',
                     onAction: () async {
-                      HapticFeedback.lightImpact();
+                      Haptics.light();
                       await showModalBottomSheet<void>(
                         context: context,
                         backgroundColor: AppColors.surfaceDark,
@@ -414,7 +424,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
                       onTap: groupId.isEmpty
                           ? null
                           : () {
-                              HapticFeedback.selectionClick();
+                              Haptics.selection();
                               context.push('/group/$groupId', extra: g);
                             },
                       child: GlassCard(
@@ -484,7 +494,7 @@ class _GroupsScreenState extends State<GroupsScreen> {
           ),
     floatingActionButton: FloatingActionButton.extended(
       onPressed: () async {
-        HapticFeedback.lightImpact();
+        Haptics.light();
         await showModalBottomSheet<void>(
           context: context,
           backgroundColor: AppColors.surfaceDark,
@@ -528,5 +538,6 @@ class _GroupsScreenState extends State<GroupsScreen> {
       icon: const Icon(Icons.add),
       label: const Text('Group'),
     ),
-  );
+    );
+  }
 }

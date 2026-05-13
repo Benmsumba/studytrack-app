@@ -1,23 +1,19 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
+import '../../../core/constants/app_text_styles.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/repositories/profile_repository.dart';
-import '../../../core/services/analytics_service.dart';
-import '../../../core/theme/app_palette.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/utils/snackbar_helper.dart';
-import '../../../core/widgets/app_scaffold.dart';
 import '../../../core/widgets/glass_card.dart';
 
-/// Onboarding flow — six steps, exact copy preserved verbatim from the
-/// existing app. Visuals reimagined: a per-step gradient backdrop, a
-/// progress rail at the top, animated illustrations, and tactile inputs.
 class OnboardingFlow extends StatefulWidget {
   const OnboardingFlow({super.key});
 
@@ -27,6 +23,7 @@ class OnboardingFlow extends StatefulWidget {
 
 class _OnboardingFlowState extends State<OnboardingFlow> {
   static const String _brandAsset = 'assets/icon/app_icon.jpeg';
+
   static const int _steps = 6;
   static const List<String> _courseExamples = [
     'Pharmacy',
@@ -68,37 +65,31 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     super.dispose();
   }
 
-  Future<void> _next() async {
-    if (!_validate(_currentStep)) return;
-    await HapticFeedback.lightImpact();
+  Future<void> _nextStep() async {
+    final canContinue = _validateStep(_currentStep);
+    if (!canContinue) return;
+
+    await Haptics.light();
+
     if (_currentStep == _steps - 1) {
-      await _complete();
+      await _completeOnboarding();
       return;
     }
+
     final next = _currentStep + 1;
     setState(() => _currentStep = next);
     await _pageController.animateToPage(
       next,
-      duration: const Duration(milliseconds: 360),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  Future<void> _back() async {
-    if (_currentStep == 0) return;
-    await HapticFeedback.selectionClick();
-    final prev = _currentStep - 1;
-    setState(() => _currentStep = prev);
-    await _pageController.animateToPage(
-      prev,
       duration: const Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
     );
   }
 
-  Future<void> _skip() async {
+  Future<void> _skipStep() async {
     if (_currentStep >= _steps - 1) return;
-    await HapticFeedback.selectionClick();
+
+    await Haptics.selection();
+
     final next = _currentStep + 1;
     setState(() => _currentStep = next);
     await _pageController.animateToPage(
@@ -108,25 +99,40 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     );
   }
 
-  bool _validate(int step) {
+  bool _validateStep(int step) {
     if (step == 0 && _nameController.text.trim().isEmpty) {
-      _show(AppStrings.enterName);
+      _showMessage(AppStrings.enterName);
       return false;
     }
+
     if (step == 1 && _courseController.text.trim().isEmpty) {
-      _show(AppStrings.enterCourse);
+      _showMessage(AppStrings.enterCourse);
       return false;
     }
+
     return true;
   }
 
-  Future<void> _complete() async {
+  Future<void> _completeOnboarding() async {
     if (_isSaving) return;
+
     setState(() => _isSaving = true);
     try {
-      // Always attempt to persist — updateProfile upserts the row, so it
-      // works for both brand-new users (no profile row yet) and returning
-      // users updating their preferences.
+      final profileResult = await _profileRepository.getCurrentProfile();
+      final currentProfile = profileResult.fold(
+        (error) => null,
+        (profile) => profile,
+      );
+      if (currentProfile == null) {
+        // User should always be logged in at this point, but if not,
+        // complete onboarding locally and let them access the app
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('onboarding_complete', true);
+        if (mounted) context.go('/home');
+        return;
+      }
+
+      // Attempt to save profile preferences to backend
       await _profileRepository.updateProfile({
         'name': _nameController.text.trim(),
         'course': _courseController.text.trim(),
@@ -135,22 +141,27 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
         'study_hours_per_day': _dailyStudyHours.round(),
         'study_preference': _studyPreference,
       });
+
+      // Mark onboarding as complete regardless of backend result
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('onboarding_complete', true);
-      Analytics.onboardingCompleted();
+
       _confettiController.play();
+
       if (mounted) context.go('/home');
-    } catch (_) {
-      // Save flag locally so the guard doesn't re-show onboarding; data
-      // will sync to the cloud on next successful connection.
+    } catch (e) {
+      // Even if backend save fails, mark onboarding as complete locally
+      // so users aren't stuck on the onboarding screen
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('onboarding_complete', true);
+
       if (mounted) {
         _confettiController.play();
-        _show(
+        _showMessage(
           'Your setup has been saved. '
           'We will sync with the cloud when internet is available.',
         );
+        // Wait a moment so user sees the message, then navigate
         await Future<void>.delayed(const Duration(milliseconds: 800));
         if (mounted) context.go('/home');
       }
@@ -159,40 +170,54 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     }
   }
 
-  void _show(String msg) {
+  void _showMessage(String message) {
     if (!mounted) return;
-    SnackbarHelper.show(context, msg, type: AppSnackbarType.warning);
+    SnackbarHelper.show(context, message, type: AppSnackbarType.warning);
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final hPad = size.width >= 600
+    final horizontalPadding = size.width >= 600
         ? AppSpacing.xl
         : AppSpacing.screenHorizontal;
-    final maxWidth = size.width >= 720 ? 640.0 : double.infinity;
-    final isLast = _currentStep == _steps - 1;
+    final maxContentWidth = size.width >= 720 ? 640.0 : double.infinity;
 
-    return AppScaffold(
-      ambientGlow: true,
-      ambientIntensity: 1.4,
-      useDeepBackground: true,
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Scaffold(
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
       body: Stack(
         children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: Alignment.topCenter,
+                  radius: 1.3,
+                  colors: [
+                    AppColors.signalSubtle,
+                    isLight ? AppColors.paperWhite : AppColors.obsidian,
+                    isLight ? AppColors.surfaceLight : AppColors.obsidian,
+                  ],
+                  stops: const [0, 0.55, 1],
+                ),
+              ),
+            ),
+          ),
           SafeArea(
             child: Center(
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
+                constraints: BoxConstraints(maxWidth: maxContentWidth),
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(
-                    hPad,
+                    horizontalPadding,
                     AppSpacing.md,
-                    hPad,
+                    horizontalPadding,
                     AppSpacing.lg,
                   ),
                   child: Column(
                     children: [
-                      _StepRail(current: _currentStep, total: _steps),
+                      _buildDots(),
                       const SizedBox(height: AppSpacing.lg),
                       Expanded(
                         child: PageView(
@@ -209,14 +234,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      _BottomActions(
-                        isLast: isLast,
-                        isFirst: _currentStep == 0,
-                        isSaving: _isSaving,
-                        onNext: _next,
-                        onBack: _back,
-                        onSkip: _skip,
-                      ),
+                      _buildBottomActions(),
                     ],
                   ),
                 ),
@@ -230,12 +248,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               blastDirectionality: BlastDirectionality.explosive,
               shouldLoop: false,
               emissionFrequency: 0.05,
-              numberOfParticles: 22,
+              numberOfParticles: 18,
               gravity: 0.14,
-              colors: [
-                context.palette.brandPrimary,
-                context.palette.brandSecondary,
-                Colors.white,
+              colors: const [
+                AppColors.signal,
+                AppColors.signalLight,
+                AppColors.parchment,
               ],
             ),
           ),
@@ -244,157 +262,198 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     );
   }
 
-  // ── Step 1: Welcome ──────────────────────────────────────────────────────
-  Widget _stepWelcome() {
-    final palette = context.palette;
-    return _StepShell(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Welcome to StudyTrack 👋',
-            style: Theme.of(context).textTheme.displayMedium,
+  Widget _buildDots() => Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: List.generate(_steps, (index) {
+      final active = index == _currentStep;
+      return AnimatedContainer(
+        duration: const Duration(milliseconds: 240),
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        width: active ? 24 : 8,
+        height: 8,
+        decoration: BoxDecoration(
+          color: active ? AppColors.signal : AppColors.borderDarkSoft,
+          borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
+        ),
+      );
+    }),
+  );
+
+  Widget _buildBottomActions() {
+    final isLast = _currentStep == _steps - 1;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: _isSaving ? null : _nextStep,
+            child: _isSaving
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: AppColors.parchment,
+                    ),
+                  )
+                : Text((isLast ? "Let's Go!" : 'Next').toUpperCase()),
           ),
-          const SizedBox(height: 10),
-          Text(
-            "Let's set up your personal study companion",
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: palette.textSecondary),
-          ),
-          const SizedBox(height: 28),
-          Center(
-            child: LayoutBuilder(
-              builder: (context, c) {
-                final size = c.maxWidth < 360 ? 144.0 : 168.0;
-                return Container(
-                      width: size,
-                      height: size,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: palette.brandGradient,
-                        boxShadow: [
-                          BoxShadow(
-                            color: palette.glowPrimary.withValues(alpha: 0.55),
-                            blurRadius: 40,
-                            spreadRadius: 4,
-                          ),
-                          BoxShadow(
-                            color: palette.glowSecondary.withValues(alpha: 0.4),
-                            blurRadius: 28,
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      padding: const EdgeInsets.all(22),
-                      child: ClipOval(
-                        child: Image.asset(_brandAsset, fit: BoxFit.cover),
-                      ),
-                    )
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .scale(
-                      begin: const Offset(0.96, 0.96),
-                      end: const Offset(1.05, 1.05),
-                      duration: 1800.ms,
-                      curve: Curves.easeInOut,
-                    );
-              },
+        ),
+        if (!isLast)
+          TextButton(
+            onPressed: _skipStep,
+            child: Text(
+              'Skip',
+              style: AppTextStyles.labelSecondary.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
-          const SizedBox(height: 24),
-          _Field(
-            controller: _nameController,
-            label: "What's your name?",
-            icon: Icons.person_outline_rounded,
-            autofocus: true,
-            textCapitalization: TextCapitalization.words,
-          ),
-        ],
-      ),
+      ],
     );
   }
 
-  // ── Step 2: Course ───────────────────────────────────────────────────────
-  Widget _stepCourse() => _StepShell(
+  Widget _stepWelcome() => _stepContainer(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        _StepTitle(title: 'What are you studying?', emoji: '📚'),
-        const SizedBox(height: 16),
-        _Field(
-          controller: _courseController,
-          label: 'Course name',
-          icon: Icons.school_outlined,
-          textCapitalization: TextCapitalization.words,
-        ),
-        const SizedBox(height: 18),
+        Text('Welcome to StudyTrack 👋', style: AppTextStyles.displayMedium),
+        const SizedBox(height: 10),
         Text(
-          'Popular courses',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: context.palette.textSecondary,
-            letterSpacing: 0.4,
+          'Let\'s set up your personal study companion',
+          style: AppTextStyles.bodyMediumSecondary,
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final logoSize = constraints.maxWidth < 360 ? 136.0 : 160.0;
+              return Container(
+                    width: logoSize,
+                    height: logoSize,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.signal,
+                      border: Border.all(
+                        color: AppColors.signalLight,
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Image.asset(_brandAsset, fit: BoxFit.contain),
+                    ),
+                  )
+                  .animate(onPlay: (c) => c.repeat(reverse: true))
+                  .scale(
+                    begin: const Offset(0.95, 0.95),
+                    end: const Offset(1.04, 1.04),
+                    duration: 1800.ms,
+                    curve: Curves.easeInOut,
+                  );
+            },
           ),
         ),
         const SizedBox(height: 10),
+        _inputField(controller: _nameController, label: 'What\'s your name?'),
+      ],
+    ).animate().fadeIn(duration: 350.ms),
+  );
+
+  Widget _stepCourse() => _stepContainer(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _title('What are you studying?'),
+        const SizedBox(height: 12),
+        _inputField(controller: _courseController, label: 'Course name'),
+        const SizedBox(height: 18),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _courseExamples.map((example) {
-            final selected = _courseController.text == example;
-            return _ChoiceChip(
-              label: example,
-              selected: selected,
-              onTap: () {
-                HapticFeedback.selectionClick();
-                setState(() => _courseController.text = example);
-              },
-            );
-          }).toList(),
+          children: _courseExamples
+              .map(
+                (example) => ActionChip(
+                  backgroundColor: AppColors.surfaceElevated,
+                  side: const BorderSide(color: AppColors.borderSoft),
+                  label: Text(example, style: AppTextStyles.labelSecondary),
+                  onPressed: () {
+                    Haptics.selection();
+                    setState(() {
+                      _courseController.text = example;
+                    });
+                  },
+                ),
+              )
+              .toList(),
         ),
       ],
-    ),
+    ).animate().fadeIn(duration: 350.ms),
   );
 
-  // ── Step 3: Year level ───────────────────────────────────────────────────
-  Widget _stepYearLevel() => _StepShell(
+  Widget _stepYearLevel() => _stepContainer(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        _StepTitle(title: 'What year are you in?', emoji: '🎓'),
-        const SizedBox(height: 24),
+        _title('What year are you in?'),
+        const SizedBox(height: 16),
         LayoutBuilder(
-          builder: (c, constraints) {
-            final cross = constraints.maxWidth < 360 ? 3 : 4;
+          builder: (context, constraints) {
+            final crossAxisCount = constraints.maxWidth < 360 ? 3 : 4;
             return GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: cross,
+                crossAxisCount: crossAxisCount,
                 crossAxisSpacing: AppSpacing.sm,
                 mainAxisSpacing: AppSpacing.sm,
-                childAspectRatio: 1.05,
+                childAspectRatio: 1.08,
               ),
               itemCount: 7,
-              itemBuilder: (c, i) {
-                final year = i + 1;
+              itemBuilder: (context, index) {
+                final year = index + 1;
                 final selected = year == _yearLevel;
-                return _NumberTile(
-                  number: year,
-                  selected: selected,
+                return InkWell(
                   onTap: () {
-                    HapticFeedback.selectionClick();
+                    Haptics.selection();
                     setState(() => _yearLevel = year);
                   },
+                  borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+                  child: Ink(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.fieldRadius,
+                      ),
+                      color: selected
+                          ? AppColors.signalMuted
+                          : AppColors.surfaceElevated,
+                      border: Border.all(
+                        color: selected
+                            ? AppColors.signal
+                            : AppColors.borderDarkSoft,
+                        width: 0.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '$year',
+                        style: AppTextStyles.statValue.copyWith(fontSize: 28),
+                      ),
+                    ),
+                  ),
                 );
               },
             );
           },
         ),
       ],
-    ),
+    ).animate().fadeIn(duration: 350.ms),
   );
 
-  // ── Step 4: Prime study time ─────────────────────────────────────────────
   Widget _stepPrimeTime() {
     final options = [
       ('morning', '🌅', 'Morning', '5am-12pm'),
@@ -403,191 +462,174 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       ('night', '🌙', 'Night', '9pm-late'),
     ];
 
-    return _StepShell(
+    return _stepContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _StepTitle(title: 'When do you study best?', emoji: '⏰'),
-          const SizedBox(height: 16),
+          _title('When do you study best?'),
+          const SizedBox(height: 14),
           ...options.map((item) {
             final selected = _primeStudyTime == item.$1;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _OptionCard(
-                emoji: item.$2,
-                title: item.$3,
-                subtitle: item.$4,
-                selected: selected,
+              child: InkWell(
                 onTap: () {
-                  HapticFeedback.selectionClick();
+                  Haptics.selection();
                   setState(() => _primeStudyTime = item.$1);
                 },
+                borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+                child: Ink(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: AppSpacing.md,
+                  ),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+                    color: selected
+                        ? AppColors.signalMuted
+                        : AppColors.surfaceElevated,
+                    border: Border.all(
+                      color: selected
+                          ? AppColors.signal
+                          : AppColors.borderDarkSoft,
+                      width: 0.5,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(item.$2, style: const TextStyle(fontSize: 24)),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item.$3, style: AppTextStyles.headingSmall),
+                            Text(
+                              item.$4,
+                              style: AppTextStyles.bodySmallSecondary,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             );
           }),
         ],
-      ),
+      ).animate().fadeIn(duration: 350.ms),
     );
   }
 
-  // ── Step 5: Daily hours ──────────────────────────────────────────────────
   Widget _stepDailyHours() {
-    final palette = context.palette;
     final hours = _dailyStudyHours.round();
-    final weekly = hours * 7;
-    return _StepShell(
+    final weeklyHours = hours * 7;
+
+    return _stepContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _StepTitle(title: 'How many hours can you study daily?', emoji: '⚡'),
-          const SizedBox(height: 28),
+          _title('How many hours can you study daily?'),
+          const SizedBox(height: 26),
           Center(
             child: Text(
               '$hours',
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                fontSize: 96,
-                color: palette.brandPrimary,
-              ),
+              style: AppTextStyles.displayLarge.copyWith(fontSize: 76),
             ),
           ),
           Center(
-            child: Text(
-              'hours/day',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: palette.textSecondary),
-            ),
+            child: Text('hours/day', style: AppTextStyles.bodyMediumSecondary),
           ),
           const SizedBox(height: 24),
-          Slider(
-            min: 1,
-            max: 12,
-            divisions: 11,
-            value: _dailyStudyHours,
-            onChanged: (v) => setState(() => _dailyStudyHours = v),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: AppColors.accent,
+              inactiveTrackColor: AppColors.border,
+              thumbColor: AppColors.primary,
+              overlayColor: AppColors.accent.withValues(alpha: 0.18),
+            ),
+            child: Slider(
+              min: 1,
+              max: 12,
+              divisions: 11,
+              value: _dailyStudyHours,
+              onChanged: (value) {
+                setState(() => _dailyStudyHours = value);
+              },
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Center(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                color: palette.brandSecondary.withValues(alpha: 0.14),
-              ),
-              child: Text(
-                "That's $weekly hours per week",
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: palette.brandSecondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+            child: Text(
+              'That\'s $weeklyHours hours per week',
+              style: AppTextStyles.labelSecondary,
             ),
           ),
         ],
-      ),
+      ).animate().fadeIn(duration: 350.ms),
     );
   }
 
-  // ── Step 6: Study style + summary ────────────────────────────────────────
-  Widget _stepStudyStyle() => _StepShell(
+  Widget _stepStudyStyle() => _stepContainer(
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        _StepTitle(title: 'How do you prefer to study?', emoji: '✨'),
-        const SizedBox(height: 14),
-        _OptionCard(
+        _title('How do you prefer to study?'),
+        const SizedBox(height: 12),
+        _studyStyleCard(
+          selected: _studyPreference == 'alone',
           emoji: '🎧',
           title: 'Alone',
           subtitle: 'I focus best by myself',
-          selected: _studyPreference == 'alone',
           onTap: () {
-            HapticFeedback.selectionClick();
+            Haptics.selection();
             setState(() => _studyPreference = 'alone');
           },
         ),
         const SizedBox(height: 10),
-        _OptionCard(
+        _studyStyleCard(
+          selected: _studyPreference == 'group',
           emoji: '👥',
           title: 'With others',
           subtitle: 'I learn better with friends',
-          selected: _studyPreference == 'group',
           onTap: () {
-            HapticFeedback.selectionClick();
+            Haptics.selection();
             setState(() => _studyPreference = 'group');
           },
         ),
         const SizedBox(height: 18),
         Text(
-          "Almost ready! Here's what we set up for you:",
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: context.palette.textSecondary,
-          ),
+          'Almost ready! Here\'s what we set up for you:',
+          style: AppTextStyles.bodyMediumSecondary,
         ),
-        const SizedBox(height: 12),
-        _SummaryCard(
-          rows: [
-            ('Name', _nameController.text.trim()),
-            ('Course', _courseController.text.trim()),
-            ('Year', '$_yearLevel'),
-            ('Best time', _primeStudyTime),
-            ('Hours/day', _dailyStudyHours.round().toString()),
-            ('Style', _studyPreference == 'alone' ? 'Alone' : 'With others'),
-          ],
+        const SizedBox(height: 10),
+        GlassCard(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          borderRadius: AppSpacing.fieldRadius,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _summaryRow('Name', _nameController.text.trim()),
+              _summaryRow('Course', _courseController.text.trim()),
+              _summaryRow('Year', '$_yearLevel'),
+              _summaryRow('Best time', _primeStudyTime),
+              _summaryRow('Hours/day', _dailyStudyHours.round().toString()),
+              _summaryRow(
+                'Style',
+                _studyPreference == 'alone' ? 'Alone' : 'With others',
+              ),
+            ],
+          ),
         ),
       ],
-    ),
+    ).animate().fadeIn(duration: 350.ms),
   );
-}
 
-// ── Sub-widgets ─────────────────────────────────────────────────────────────
-
-class _StepRail extends StatelessWidget {
-  const _StepRail({required this.current, required this.total});
-
-  final int current;
-  final int total;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Row(
-      children: List.generate(total, (i) {
-        final active = i <= current;
-        final isCurrent = i == current;
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 280),
-              height: 6,
-              decoration: BoxDecoration(
-                gradient: active ? palette.brandGradient : null,
-                color: active ? null : palette.borderSoft,
-                borderRadius: BorderRadius.circular(999),
-                boxShadow: isCurrent
-                    ? [
-                        BoxShadow(
-                          color: palette.glowPrimary.withValues(alpha: 0.5),
-                          blurRadius: 10,
-                        ),
-                      ]
-                    : null,
-              ),
-            ),
-          ),
-        );
-      }),
-    );
-  }
-}
-
-class _StepShell extends StatelessWidget {
-  const _StepShell({required this.child});
-
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) => SingleChildScrollView(
+  Widget _stepContainer({required Widget child}) => SingleChildScrollView(
     physics: const BouncingScrollPhysics(),
     child: GlassCard(
       animateEntrance: true,
@@ -596,431 +638,75 @@ class _StepShell extends StatelessWidget {
       child: child,
     ),
   );
-}
 
-class _StepTitle extends StatelessWidget {
-  const _StepTitle({required this.title, required this.emoji});
-
-  final String title;
-  final String emoji;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(emoji, style: const TextStyle(fontSize: 28)),
-      const SizedBox(width: 10),
-      Expanded(
-        child: Text(title, style: Theme.of(context).textTheme.headlineMedium),
-      ),
-    ],
-  );
-}
-
-class _Field extends StatelessWidget {
-  const _Field({
-    required this.controller,
-    required this.label,
-    this.icon,
-    this.autofocus = false,
-    this.textCapitalization = TextCapitalization.none,
-  });
-
-  final TextEditingController controller;
-  final String label;
-  final IconData? icon;
-  final bool autofocus;
-  final TextCapitalization textCapitalization;
-
-  @override
-  Widget build(BuildContext context) => TextField(
+  Widget _inputField({
+    required TextEditingController controller,
+    required String label,
+  }) => TextField(
     controller: controller,
-    autofocus: autofocus,
-    textCapitalization: textCapitalization,
-    style: Theme.of(context).textTheme.bodyLarge,
+    style: AppTextStyles.bodyMedium,
     decoration: InputDecoration(
       labelText: label,
-      prefixIcon: icon != null ? Icon(icon, size: 20) : null,
+      labelStyle: AppTextStyles.labelSecondary,
     ),
   );
-}
 
-class _ChoiceChip extends StatelessWidget {
-  const _ChoiceChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
+  Widget _title(String text) => Text(text, style: AppTextStyles.headingLarge);
 
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(999),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(999),
-            gradient: selected
-                ? LinearGradient(
-                    colors: [
-                      palette.brandPrimary.withValues(alpha: 0.22),
-                      palette.brandSecondary.withValues(alpha: 0.18),
-                    ],
-                  )
-                : null,
-            color: selected ? null : palette.surfaceElevated,
-            border: Border.all(
-              color: selected ? palette.brandPrimary : palette.borderSoft,
-              width: selected ? 1.4 : 1,
-            ),
-          ),
-          child: Text(
-            label,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: selected ? palette.textPrimary : palette.textSecondary,
-              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-            ),
-          ),
-        ),
+  Widget _studyStyleCard({
+    required bool selected,
+    required String emoji,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) => InkWell(
+    onTap: onTap,
+    borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
+    child: Ink(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.md,
       ),
-    );
-  }
-}
-
-class _NumberTile extends StatelessWidget {
-  const _NumberTile({
-    required this.number,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final int number;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-            gradient: selected ? palette.brandGradient : null,
-            color: selected ? null : palette.surfaceElevated,
-            border: Border.all(
-              color: selected ? Colors.transparent : palette.borderSoft,
-              width: 1.2,
-            ),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: palette.glowPrimary.withValues(alpha: 0.4),
-                      blurRadius: 18,
-                    ),
-                  ]
-                : null,
-          ),
-          child: Center(
-            child: Text(
-              '$number',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: selected ? Colors.white : palette.textPrimary,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _OptionCard extends StatelessWidget {
-  const _OptionCard({
-    required this.emoji,
-    required this.title,
-    required this.subtitle,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String emoji;
-  final String title;
-  final String subtitle;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 240),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.md,
-          ),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-            gradient: selected
-                ? LinearGradient(
-                    colors: [
-                      palette.brandPrimary.withValues(alpha: 0.18),
-                      palette.brandSecondary.withValues(alpha: 0.12),
-                    ],
-                  )
-                : null,
-            color: selected ? null : palette.surfaceElevated,
-            border: Border.all(
-              color: selected ? palette.brandSecondary : palette.borderSoft,
-              width: selected ? 1.5 : 1,
-            ),
-            boxShadow: selected
-                ? [
-                    BoxShadow(
-                      color: palette.glowPrimary.withValues(alpha: 0.4),
-                      blurRadius: 18,
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 26)),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: Theme.of(context).textTheme.titleLarge),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: palette.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              AnimatedScale(
-                duration: const Duration(milliseconds: 220),
-                scale: selected ? 1 : 0,
-                child: Icon(
-                  Icons.check_circle_rounded,
-                  color: palette.brandSecondary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({required this.rows});
-
-  final List<(String, String)> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-        color: palette.surfaceElevated,
-        border: Border.all(color: palette.borderSoft),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (final row in rows)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 96,
-                    child: Text(
-                      '${row.$1}:',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: palette.textSecondary,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      row.$2.isEmpty ? '-' : row.$2,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BottomActions extends StatelessWidget {
-  const _BottomActions({
-    required this.isLast,
-    required this.isFirst,
-    required this.isSaving,
-    required this.onNext,
-    required this.onBack,
-    required this.onSkip,
-  });
-
-  final bool isLast;
-  final bool isFirst;
-  final bool isSaving;
-  final VoidCallback onNext;
-  final VoidCallback onBack;
-  final VoidCallback onSkip;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            if (!isFirst) ...[
-              _RoundIconButton(icon: Icons.arrow_back_rounded, onTap: onBack),
-              const SizedBox(width: 10),
-            ],
-            Expanded(
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: isSaving ? null : onNext,
-                  borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-                  child: Ink(
-                    height: 56,
-                    decoration: BoxDecoration(
-                      gradient: palette.brandGradient,
-                      borderRadius: BorderRadius.circular(
-                        AppSpacing.buttonRadius,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: palette.glowPrimary.withValues(alpha: 0.5),
-                          blurRadius: 22,
-                          offset: const Offset(0, 8),
-                        ),
-                      ],
-                    ),
-                    child: Center(
-                      child: isSaving
-                          ? const SizedBox(
-                              width: 22,
-                              height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.4,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            )
-                          : Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  isLast ? "Let's Go!" : 'Next',
-                                  style: Theme.of(context).textTheme.labelLarge
-                                      ?.copyWith(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w800,
-                                        letterSpacing: 0.5,
-                                      ),
-                                ),
-                                const SizedBox(width: 6),
-                                Icon(
-                                  isLast
-                                      ? Icons.celebration_rounded
-                                      : Icons.arrow_forward_rounded,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+        color: selected
+            ? AppColors.signalMuted
+            : AppColors.surfaceElevated,
+        border: Border.all(
+          color: selected ? AppColors.signal : AppColors.borderDarkSoft,
+          width: 0.5,
         ),
-        if (!isLast)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: TextButton(
-              onPressed: onSkip,
-              child: Text(
-                'Skip',
-                style: Theme.of(
-                  context,
-                ).textTheme.labelMedium?.copyWith(color: palette.textSecondary),
-              ),
+      ),
+      child: Row(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: AppTextStyles.headingSmall),
+                Text(subtitle, style: AppTextStyles.bodySmallSecondary),
+              ],
             ),
           ),
-      ],
-    );
-  }
-}
-
-class _RoundIconButton extends StatelessWidget {
-  const _RoundIconButton({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Material(
-      color: palette.surfaceElevated,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-        side: BorderSide(color: palette.borderSoft),
+        ],
       ),
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.selectionClick();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
-        child: SizedBox(
-          width: 56,
-          height: 56,
-          child: Icon(icon, color: palette.textPrimary),
+    ),
+  );
+
+  Widget _summaryRow(String label, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 88,
+          child: Text('$label:', style: AppTextStyles.labelSecondary),
         ),
-      ),
-    );
-  }
+        Expanded(
+          child: Text(value.isEmpty ? '-' : value, style: AppTextStyles.label),
+        ),
+      ],
+    ),
+  );
 }

@@ -10,7 +10,6 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/widgets/custom_button.dart';
 import '../controllers/auth_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -178,6 +177,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
+    backgroundColor: AppColors.obsidian,
     body: SafeArea(
       child: Consumer<AuthProvider>(
         builder: (context, auth, _) => SingleChildScrollView(
@@ -221,18 +221,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ).animate().fadeIn(duration: 500.ms, delay: 150.ms),
                 const SizedBox(height: 36),
                 Container(
-                      padding: const EdgeInsets.all(1.2),
-                      decoration: BoxDecoration(
-                        gradient: AppColors.primaryGradient,
-                        borderRadius: BorderRadius.circular(
-                          AppSpacing.cardRadius,
-                        ),
-                      ),
-                      child: Container(
                         padding: const EdgeInsets.all(AppSpacing.lg),
                         decoration: BoxDecoration(
                           color: AppColors.surfaceDark,
-                          borderRadius: BorderRadius.circular(17),
+                          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+                          border: Border.all(color: AppColors.signal, width: 0.5),
                         ),
                         child: Column(
                           children: [
@@ -301,16 +294,19 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            GlowingButton(
-                              label: AppStrings.login,
-                              isLoading: auth.isLoading,
-                              onPressed: auth.isLoading ? null : _onLoginTap,
+                            SizedBox(
                               width: double.infinity,
+                              child: FilledButton(
+                                onPressed: auth.isLoading ? null : _onLoginTap,
+                                child: auth.isLoading
+                                    ? const SizedBox(width: 18, height: 18,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
+                                    : Text(AppStrings.login.toUpperCase()),
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                    )
+                      )
                     .animate()
                     .fadeIn(duration: 600.ms, delay: 200.ms)
                     .slideY(begin: 0.12, end: 0, duration: 600.ms),

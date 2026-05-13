@@ -1,137 +1,203 @@
 import 'package:flutter/material.dart';
 
-/// Architectural Minimalism palette. The legacy "neon" identifiers are
-/// preserved as compatibility aliases so existing widgets keep compiling, but
-/// they now resolve to the new industrial accent colors (steel teal + warm
-/// amber). Every visible surface is sourced from this file or, preferably,
-/// from `AppPalette` via `context.palette`.
+/// Quiet Luxury 2026 colour system for StudyTrack.
+///
+/// Single signal accent: Deep Ochre (#977E41).
+/// Used exclusively for interactive focus points — never decorative.
+///
+/// Materiality comes from 0.5px tonal borders, not shadows or neon glows.
 class AppColors {
-  // ============ Core Backgrounds (Deep Obsidian / Slate) ============
-  static const Color backgroundDeep = Color(0xFF07090B);
-  static const Color backgroundDark = Color(0xFF0B0E11);
-  static const Color surfaceDark = Color(0xFF11151A);
-  static const Color surfaceElevated = Color(0xFF161B21);
-  static const Color cardDark = Color(0xFF1A1F26);
-  static const Color cardDarkAlt = Color(0xFF0F1318);
-  static const Color glassOverlay = Color(0xEB11151A);
+  AppColors._();
 
-  // ============ Industrial Accent Colors ============
-  /// Steel teal — calm primary action color. Replaces the legacy violet.
-  static const Color steelTeal = Color(0xFF4A9EBD);
+  // ── Backgrounds ────────────────────────────────────────────────────────────
 
-  /// Warm amber — secondary accent and progress highlights. Replaces cyan.
-  static const Color amberWarm = Color(0xFFE8B96A);
+  /// Light mode canvas — warm off-white. Never pure #FFFFFF.
+  static const Color paperWhite = Color(0xFFF9F8F6);
 
-  /// Terracotta — tertiary accent used sparingly for alerts and emphasis.
-  static const Color terracotta = Color(0xFFD97757);
+  /// Dark mode canvas — near-black with a faint warm undertone. Never pure #000000.
+  static const Color obsidian = Color(0xFF0F0F10);
 
-  // Legacy aliases — kept so old call sites continue to build.
-  // They now resolve to the new industrial palette, not the old neon values.
-  static const Color neonViolet = steelTeal;
-  static const Color neonCyan = amberWarm;
-  static const Color primary = steelTeal;
-  static const Color accent = amberWarm;
-  static const Color cyan = amberWarm;
-  static const Color deepViolet = steelTeal;
+  // ── Surface materiality ────────────────────────────────────────────────────
 
-  // ============ Glow Colors (zeroed — architectural minimalism) ============
-  // Retained as identifiers so legacy widgets keep compiling, but each
-  // resolves to a fully-transparent color so no halo actually renders.
-  static const Color violetGlow = Color(0x00000000);
-  static const Color cyanGlow = Color(0x00000000);
-  static const Color violetGlowSoft = Color(0x00000000);
-  static const Color cyanGlowSoft = Color(0x00000000);
-  static const Color borderGlow = Color(0x00000000);
-  static const Color borderGlowSoft = Color(0x00000000);
+  /// Card surface (light) — one step denser than the canvas.
+  static const Color surfaceLight = Color(0xFFF3F2EF);
 
-  // ============ UI Elements ============
-  static const Color border = Color(0xFF2A323D);
-  static const Color borderSoft = Color(0xFF1E242C);
-  static const Color borderGradientStart = steelTeal;
-  static const Color borderGradientEnd = amberWarm;
-  static const Color inputFill = Color(0xFF141921);
-  static const Color success = Color(0xFF5FB682);
-  static const Color warning = Color(0xFFE8B96A);
-  static const Color danger = Color(0xFFD26E6E);
-  static const Color info = steelTeal;
+  /// Elevated surface (light) — dialogs, bottom sheets, floating panels.
+  static const Color surfaceElevatedLight = Color(0xFFEEEDEA);
 
-  // ============ Typography ============
-  static const Color textPrimary = Color(0xFFF2F4F7);
-  static const Color textSecondary = Color(0xFFA8B0BC);
-  static const Color textMuted = Color(0xFF6B7480);
-  static const Color textDisabled = Color(0xFF4A5260);
-  static const Color textGlow = Color(0xFFDCE3EC);
+  /// Card surface (dark) — one step lighter/warmer than obsidian.
+  static const Color surfaceDark = Color(0xFF161617);
 
-  // ============ Gradients ============
-  /// Primary brand gradient — steel teal to warm amber.
-  static const LinearGradient primaryGradient = LinearGradient(
-    colors: [steelTeal, amberWarm],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
+  /// Elevated surface (dark) — dialogs, bottom sheets, overlays.
+  static const Color surfaceElevated = Color(0xFF1D1D1F);
 
-  /// Card gradient (soft tonal step on dark surfaces).
+  // ── Hairline borders — materiality without shadow ──────────────────────────
+  // Use width: 0.5 in BorderSide. Slightly lighter/darker than the background
+  // is all that's needed to convey physical layering.
+
+  static const Color borderLight = Color(0xFFE3E2DF); // on paperWhite
+  static const Color borderLightSoft = Color(0xFFEAE9E6); // subtle dividers (light)
+  static const Color borderDark = Color(0xFF2C2C2E); // on obsidian
+  static const Color borderDarkSoft = Color(0xFF232325); // subtle dividers (dark)
+
+  // Legacy aliases (widely used in existing widgets — kept while screens migrate)
+  static const Color border = borderDark;
+  static const Color borderSoft = borderDarkSoft;
+
+  // ── Signal accent: Deep Ochre ───────────────────────────────────────────────
+  // Used ONLY for: focus rings, active states, CTAs, selected indicators.
+  // Never as a decorative fill or background on large surfaces.
+
+  /// Primary interactive accent.
+  static const Color signal = Color(0xFF977E41);
+
+  /// Slightly brighter variant for dark-mode filled buttons and legibility.
+  static const Color signalLight = Color(0xFFB9974D);
+
+  /// 20 % opacity — selected tile backgrounds, chip fills.
+  static const Color signalMuted = Color(0x33977E41);
+
+  /// 10 % opacity — hover tint, very subtle pressed state.
+  static const Color signalSubtle = Color(0x1A977E41);
+
+  // Legacy aliases — migrate callsites progressively to `signal`
+  static const Color primary = signal;
+  static const Color accent = signal;
+  static const Color neonViolet = signal;
+  static const Color neonCyan = signal;
+  static const Color cyan = signal;
+  static const Color deepViolet = signal;
+
+  // Glow aliases — zeroed out. Existing widgets that reference these will
+  // simply produce invisible shadows. Remove shadow calls during screen-level
+  // refactors (Phase 3 onwards).
+  static const Color violetGlow = Color(0x00977E41);
+  static const Color cyanGlow = Color(0x00977E41);
+  static const Color violetGlowSoft = Color(0x00977E41);
+  static const Color cyanGlowSoft = Color(0x00977E41);
+  static const Color borderGlow = Color(0x00977E41);
+  static const Color borderGlowSoft = Color(0x00977E41);
+  static const Color borderGradientStart = signal;
+  static const Color borderGradientEnd = signal;
+
+  // ── Glassmorphism ──────────────────────────────────────────────────────────
+  // Heavy blur (30px+) defined in GlassCard. These overlays are the fill colour
+  // behind the blur — should be semi-transparent to reveal the blurred content.
+
+  /// Frosted glass fill — light mode.
+  static const Color glassLight = Color(0xD0F9F8F6);
+
+  /// Frosted glass fill — dark mode.
+  static const Color glassDark = Color(0xD00F0F10);
+
+  // Legacy alias
+  static const Color glassOverlay = glassDark;
+
+  // ── Typography — dark mode ─────────────────────────────────────────────────
+
+  /// Primary text on dark backgrounds — warm near-white.
+  static const Color parchment = Color(0xFFEAE8E3);
+  static const Color parchmentSecondary = Color(0xFF8A8882);
+  static const Color parchmentMuted = Color(0xFF5A5856);
+  static const Color parchmentDisabled = Color(0xFF3A3836);
+
+  // Legacy aliases — dark mode primary
+  static const Color textPrimary = parchment;
+  static const Color textSecondary = parchmentSecondary;
+  static const Color textMuted = parchmentMuted;
+  static const Color textDisabled = parchmentDisabled;
+  static const Color textGlow = parchment;
+
+  // ── Typography — light mode ────────────────────────────────────────────────
+
+  /// Primary text on light backgrounds — near-black with warmth.
+  static const Color inkPrimary = Color(0xFF1A1917);
+  static const Color inkSecondary = Color(0xFF6B6860);
+  static const Color inkMuted = Color(0xFF9B9890);
+  static const Color inkDisabled = Color(0xFFB8B6AF);
+
+  // ── Semantic states — desaturated, earthy, not neon ───────────────────────
+  static const Color success = Color(0xFF2D6A4F);
+  static const Color warning = Color(0xFF9A6B1C);
+  static const Color danger = Color(0xFF8B2635);
+  static const Color info = Color(0xFF3A5F8A);
+
+  static const Color errorBackground = Color(0xFF1C1014);
+  static const Color successBackground = Color(0xFF0E1C14);
+  static const Color warningBackground = Color(0xFF1C160D);
+  static const Color infoBackground = Color(0xFF0D1420);
+
+  // ── Inputs ────────────────────────────────────────────────────────────────
+  static const Color inputFill = Color(0xFF1A1A1C);
+  static const Color inputFillLight = Color(0xFFEFEEEB);
+
+  // ── Convenience tonal aliases used in legacy widget code ──────────────────
+  static const Color cardDark = surfaceDark;
+  static const Color cardDarkAlt = Color(0xFF121214);
+  static const Color backgroundDeep = Color(0xFF0A0A0B);
+  static const Color backgroundDark = obsidian;
+  static const Color surfaceObsidian = surfaceDark;
+
+  // ── Gradients — purely tonal, no neon ─────────────────────────────────────
+
+  /// Subtle tonal card gradient (dark) — barely perceptible surface depth.
   static const LinearGradient cardGradient = LinearGradient(
-    colors: [Color(0xFF1A1F26), Color(0xFF0F1318)],
+    colors: [Color(0xFF181819), Color(0xFF121213)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  /// Border gradient.
-  static const LinearGradient borderGradient = LinearGradient(
-    colors: [steelTeal, amberWarm],
+  /// Subtle tonal card gradient (light).
+  static const LinearGradient cardGradientLight = LinearGradient(
+    colors: [Color(0xFFF3F2EF), Color(0xFFECEBE8)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  /// Button gradient.
+  /// CTA button fill — signal ochre with a touch of depth.
   static const LinearGradient buttonGradient = LinearGradient(
-    colors: [Color(0xFF5BAFCB), steelTeal],
+    colors: [Color(0xFF977E41), Color(0xFF7D6733)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  /// Success gradient.
+  // Legacy gradient aliases — redirected to neutral/tonal versions
+  static const LinearGradient primaryGradient = buttonGradient;
+  static const LinearGradient borderGradient = LinearGradient(
+    colors: [borderDark, borderDarkSoft],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
   static const LinearGradient successGradient = LinearGradient(
-    colors: [Color(0xFF6FC692), Color(0xFF4FA372)],
+    colors: [Color(0xFF2D6A4F), Color(0xFF245540)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
-
-  /// Warning gradient.
   static const LinearGradient warningGradient = LinearGradient(
-    colors: [Color(0xFFEDC57A), Color(0xFFD9A655)],
+    colors: [Color(0xFF9A6B1C), Color(0xFF7D5615)],
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
   );
 
-  // ============ Subject / Module Colors ============
-  // Curated to live in the same tonal family as the rest of the system —
-  // muted, never neon. Used in charts and module color picker chips.
+  // ── Subject / module accent colours — desaturated, earthy ────────────────
   static const Map<String, Color> subjectColors = {
-    'clinical-sciences': Color(0xFFD26E6E),
-    'anatomy': Color(0xFF4A9EBD),
-    'biochemistry': Color(0xFF5FB682),
-    'physiology': Color(0xFFE8B96A),
-    'pathology': Color(0xFFD97757),
-    'microbiology': Color(0xFF6FAEB8),
-    'immunology': Color(0xFF9577B5),
-    'neuroscience': Color(0xFF5B8BC4),
+    'clinical-sciences': Color(0xFF7A3B3B), // deep terracotta
+    'anatomy': Color(0xFF4A5E6A), // slate
+    'biochemistry': Color(0xFF3D5A45), // sage
+    'physiology': Color(0xFF7D5E2E), // warm ochre
+    'pathology': Color(0xFF5A3E5A), // plum
+    'microbiology': Color(0xFF2E5050), // teal
+    'immunology': Color(0xFF5A4A3A), // walnut
+    'neuroscience': Color(0xFF3A4A6A), // navy
   };
 
-  // ============ Chart Colors ============
+  // ── Chart colours — curated earthy palette ────────────────────────────────
   static const List<Color> chartColors = [
-    steelTeal,
-    amberWarm,
-    Color(0xFF5FB682),
-    terracotta,
-    Color(0xFFD26E6E),
-    Color(0xFF9577B5),
+    Color(0xFF977E41), // ochre (signal)
+    Color(0xFF4A5E6A), // slate
+    Color(0xFF3D5A45), // sage
+    Color(0xFF7A3B3B), // terracotta
+    Color(0xFF5A3E5A), // plum
+    Color(0xFF2E5050), // teal
   ];
-
-  // ============ Semantic Backgrounds ============
-  static const Color errorBackground = Color(0xFF1C1012);
-  static const Color successBackground = Color(0xFF0F1815);
-  static const Color warningBackground = Color(0xFF1C170F);
-  static const Color infoBackground = Color(0xFF0F1518);
 }

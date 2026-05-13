@@ -1,228 +1,325 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
-import '../../../core/theme/app_palette.dart';
-import '../../../core/widgets/app_bottom_nav.dart';
-import '../../../core/widgets/app_drawer.dart';
-import '../../../core/widgets/app_header.dart';
-import '../../../core/widgets/app_scaffold.dart';
+import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/haptics.dart';
+import '../../../core/widgets/action_capsule.dart';
 
-/// Main app shell. Five-tab bottom navigation, persistent drawer with all
-/// secondary screens, and a unified glass header. The "Study Now" floating
-/// CTA stays available on Home, Today, and Learn tabs.
 class MainShell extends StatelessWidget {
   const MainShell({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
 
-  static const _tabs = <_TabConfig>[
-    _TabConfig(
-      label: 'Home',
-      title: 'Home',
-      eyebrow: 'Dashboard',
-      subtitle: 'Your day, in one glance.',
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home,
-    ),
-    _TabConfig(
-      label: 'Today',
-      title: 'Timetable',
-      eyebrow: 'Today',
-      subtitle: 'Classes, sessions and reminders.',
-      icon: Icons.calendar_today_outlined,
-      activeIcon: Icons.calendar_today,
-    ),
-    _TabConfig(
-      label: 'Learn',
-      title: 'Modules',
-      eyebrow: 'Learn',
-      subtitle: 'Topics, ratings and AI tutor.',
-      icon: Icons.menu_book_outlined,
-      activeIcon: Icons.menu_book,
-    ),
-    _TabConfig(
-      label: 'Insights',
-      title: 'Progress',
-      eyebrow: 'Insights',
-      subtitle: 'Streaks, charts and your wrapped.',
-      icon: Icons.insights_outlined,
-      activeIcon: Icons.insights,
-    ),
-    _TabConfig(
-      label: 'Connect',
-      title: 'Groups',
-      eyebrow: 'Connect',
-      subtitle: 'Study together — chat & share.',
-      icon: Icons.groups_outlined,
-      activeIcon: Icons.groups,
-    ),
+  static const _titles = ['Timetable', 'Modules', 'Progress', 'Group'];
+
+  // Context-aware Action Capsule configuration per branch.
+  // null entries hide the capsule on that screen.
+  static const _capsules = <_CapsuleSpec?>[
+    _CapsuleSpec('Start Session', Icons.play_arrow_rounded, '/study-session'),
+    _CapsuleSpec('Start Session', Icons.play_arrow_rounded, '/study-session'),
+    null,
+    null,
   ];
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
     final currentIndex = navigationShell.currentIndex;
-    final tab = _tabs[currentIndex];
-    final showStudyFab =
-        currentIndex == 0 || currentIndex == 1 || currentIndex == 2;
+    final capsule = _capsules[currentIndex];
+    final showCapsule = capsule != null;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
-    final navBottom = bottomInset + AppSpacing.sm;
-    final shellBottomPadding = navBottom + 96 + (showStudyFab ? 12 : 0);
+    final navBottom = bottomInset + AppSpacing.md;
+    final shellBottomPadding = showCapsule ? navBottom + 116 : navBottom + 84;
 
-    final headerActions = <Widget>[
-      if (currentIndex == 3)
-        HeaderActionButton(
-          icon: Icons.celebration_rounded,
-          tooltip: 'Weekly Wrapped',
-          color: palette.brandSecondary,
-          onTap: () => context.push('/weekly-wrapped'),
-        ),
-      HeaderActionButton(
-        icon: Icons.notifications_none_rounded,
-        tooltip: 'Notifications',
-        onTap: () => context.push('/notifications'),
-      ),
-    ];
+    final headerActions = currentIndex == 2
+        ? [
+            TextButton.icon(
+              onPressed: () => context.push('/weekly-wrapped'),
+              icon: const Icon(
+                Icons.auto_awesome,
+                size: 16,
+                color: AppColors.signal,
+              ),
+              label: const Text('See Wrapped'),
+            ),
+          ]
+        : const <Widget>[];
 
-    return AppScaffold(
-      useDeepBackground: true,
-      drawer: const AppDrawer(),
-      body: Builder(
-        builder: (innerContext) => Column(
-          children: [
-            SafeArea(
-              bottom: false,
-              child: AppHeader(
-                eyebrow: tab.eyebrow,
-                title: tab.title,
-                subtitle: tab.subtitle,
-                onMenuTap: () => Scaffold.of(innerContext).openDrawer(),
-                trailing: headerActions,
+    return Scaffold(
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
+      body: Stack(
+        children: [
+          Column(
+            children: [
+              SafeArea(
+                bottom: false,
+                child: _Header(
+                  title: _titles[currentIndex],
+                  onProfileTap: () => context.go('/profile'),
+                  onNotificationTap: () => context.push('/notifications'),
+                  onSettingsTap: () => context.push('/settings'),
+                  onVoiceNotesTap: () => context.push('/voice-notes'),
+                  onAnalyticsTap: () => context.push('/analytics'),
+                  actions: headerActions,
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: shellBottomPadding),
+                  child: navigationShell,
+                ),
+              ),
+            ],
+          ),
+          if (showCapsule)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: navBottom + 80,
+              child: Center(
+                child: ActionCapsule(
+                  label: capsule.label,
+                  icon: capsule.icon,
+                  onPressed: () => context.go(capsule.route),
+                ),
               ),
             ),
-            Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(bottom: shellBottomPadding),
-                child: navigationShell,
-              ),
-            ),
-          ],
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.fromLTRB(
-          AppSpacing.screenHorizontal,
-          0,
-          AppSpacing.screenHorizontal,
-          AppSpacing.sm,
-        ),
-        child: Stack(
-          alignment: Alignment.topCenter,
-          clipBehavior: Clip.none,
-          children: [
-            AppBottomNav(
+          Positioned(
+            left: AppSpacing.screenHorizontal,
+            right: AppSpacing.screenHorizontal,
+            bottom: navBottom,
+            child: _BottomNavBar(
               currentIndex: currentIndex,
               onTap: (index) => navigationShell.goBranch(
                 index,
                 initialLocation: index == currentIndex,
               ),
-              items: _tabs
-                  .map(
-                    (t) => AppNavItem(
-                      icon: t.icon,
-                      activeIcon: t.activeIcon,
-                      label: t.label,
-                    ),
-                  )
-                  .toList(),
             ),
-            if (showStudyFab)
-              Positioned(
-                top: -32,
-                right: 0,
-                child: _StudyNowFab(
-                  onTap: () => context.push('/study-session'),
-                ),
-              ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _StudyNowFab extends StatelessWidget {
-  const _StudyNowFab({required this.onTap});
+class _CapsuleSpec {
+  const _CapsuleSpec(this.label, this.icon, this.route);
+  final String label;
+  final IconData icon;
+  final String route;
+}
 
-  final VoidCallback onTap;
+class _Header extends StatelessWidget {
+  const _Header({
+    required this.title,
+    required this.onProfileTap,
+    required this.onNotificationTap,
+    required this.onSettingsTap,
+    required this.onVoiceNotesTap,
+    required this.onAnalyticsTap,
+    required this.actions,
+  });
+
+  final String title;
+  final VoidCallback onProfileTap;
+  final VoidCallback onNotificationTap;
+  final VoidCallback onSettingsTap;
+  final VoidCallback onVoiceNotesTap;
+  final VoidCallback onAnalyticsTap;
+  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          HapticFeedback.lightImpact();
-          onTap();
-        },
-        borderRadius: BorderRadius.circular(999),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          decoration: BoxDecoration(
-            gradient: palette.brandGradient,
-            borderRadius: BorderRadius.circular(999),
-            boxShadow: [
-              BoxShadow(
-                color: palette.glowPrimary,
-                blurRadius: 24,
-                spreadRadius: 1,
-                offset: const Offset(0, 8),
-              ),
-            ],
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    final fg = isLight ? AppColors.inkPrimary : AppColors.parchment;
+    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
+    final avatarBg = isLight ? AppColors.surfaceLight : AppColors.cardDark;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screenHorizontal,
+        AppSpacing.md,
+        AppSpacing.screenHorizontal,
+        AppSpacing.md,
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'STUDYTRACK',
+                  style: AppTextStyles.overline.copyWith(color: mutedFg),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: isLight
+                      ? AppTextStyles.headingLargeLight
+                      : AppTextStyles.headingLarge,
+                ),
+              ],
+            ),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.play_arrow_rounded,
-                color: Colors.white,
-                size: 20,
+          ...actions,
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              Haptics.selection();
+              if (value == 'voice-notes') {
+                onVoiceNotesTap();
+              } else if (value == 'analytics') {
+                onAnalyticsTap();
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem<String>(
+                value: 'voice-notes',
+                child: Row(
+                  children: [
+                    Icon(Icons.mic_rounded, size: 18, color: fg),
+                    const SizedBox(width: 8),
+                    const Text('Voice Notes'),
+                  ],
+                ),
               ),
-              const SizedBox(width: 6),
-              Text(
-                'Study Now',
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.4,
+              PopupMenuItem<String>(
+                value: 'analytics',
+                child: Row(
+                  children: [
+                    Icon(Icons.analytics_rounded, size: 18, color: fg),
+                    const SizedBox(width: 8),
+                    const Text('Analytics'),
+                  ],
                 ),
               ),
             ],
+            icon: Icon(Icons.more_vert_rounded, color: fg),
+            color: isLight ? AppColors.surfaceLight : AppColors.cardDark,
           ),
-        ),
+          IconButton(
+            onPressed: () {
+              Haptics.light();
+              onSettingsTap();
+            },
+            icon: Icon(Icons.settings_rounded, color: fg),
+          ),
+          IconButton(
+            onPressed: () {
+              Haptics.light();
+              onNotificationTap();
+            },
+            icon: Icon(Icons.notifications_none_rounded, color: fg),
+          ),
+          GestureDetector(
+            onTap: () {
+              Haptics.light();
+              onProfileTap();
+            },
+            child: CircleAvatar(
+              radius: 18,
+              backgroundColor: avatarBg,
+              child: Icon(Icons.person_rounded, color: fg, size: 18),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _TabConfig {
-  const _TabConfig({
-    required this.label,
-    required this.title,
-    required this.eyebrow,
-    required this.subtitle,
-    required this.icon,
-    required this.activeIcon,
-  });
+class _BottomNavBar extends StatelessWidget {
+  const _BottomNavBar({required this.currentIndex, required this.onTap});
 
-  final String label;
-  final String title;
-  final String eyebrow;
-  final String subtitle;
-  final IconData icon;
-  final IconData activeIcon;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  static const _items = [
+    (Icons.calendar_month_rounded, 'Timetable'),
+    (Icons.menu_book_rounded, 'Modules'),
+    (Icons.auto_graph_rounded, 'Progress'),
+    (Icons.groups_rounded, 'Group'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    final fill = isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
+    final border = isLight ? AppColors.borderLight : AppColors.borderDark;
+    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        border: Border.all(color: border, width: 0.5),
+      ),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: List.generate(_items.length, (index) {
+          final selected = index == currentIndex;
+          final item = _items[index];
+
+          return Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                Haptics.selection();
+                onTap(index);
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedScale(
+                    duration: const Duration(milliseconds: 240),
+                    curve: Curves.easeOutBack,
+                    scale: selected ? 1.08 : 1.0,
+                    child: Icon(
+                      item.$1,
+                      color: selected ? AppColors.signal : mutedFg,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 220),
+                    style: selected
+                        ? AppTextStyles.overlineSignal
+                        : AppTextStyles.caption.copyWith(color: mutedFg),
+                    child: Text(
+                      item.$2.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  // Subtle ochre underline indicator — width animates on select.
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    height: 2,
+                    width: selected ? 14 : 0,
+                    decoration: BoxDecoration(
+                      color: AppColors.signal,
+                      borderRadius:
+                          BorderRadius.circular(AppSpacing.pillRadius),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
 }

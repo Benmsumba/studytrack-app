@@ -4,15 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/utils/service_locator.dart';
-import '../../../core/widgets/glass_card.dart';
 import '../../../models/module_model.dart';
-import '../../../models/study_session_model.dart';
 import '../../../models/topic_model.dart';
 import '../../../models/topic_rating_history_model.dart';
 
@@ -52,17 +49,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
     setState(() => _isLoading = true);
 
     final now = DateTime.now();
-    final heatmapStart = DateTime(
-      now.year,
-      now.month,
-      now.day,
-    ).subtract(const Duration(days: 83));
+    final heatmapStart = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 83));
 
     // Round-trip 1 — fire modules, sessions, and profile in parallel.
     late final moduleResult = getIt<ModuleRepository>().getAllModules();
     late final sessionResult = getIt<StudySessionRepository>()
         .getSessionsByDateRange(startDate: heatmapStart, endDate: now);
-    late final profileResult = getIt<ProfileRepository>().getCurrentProfile();
+    late final profileResult =
+        getIt<ProfileRepository>().getCurrentProfile();
 
     final (modules, allSessions, profile) = await (
       moduleResult,
@@ -71,17 +66,14 @@ class _ProgressScreenState extends State<ProgressScreen> {
     ).wait;
 
     final resolvedModules = modules.fold((_) => <ModuleModel>[], (m) => m);
-    final resolvedSessions = allSessions.fold(
-      (_) => const <StudySessionModel>[],
-      (s) => s,
-    );
+    final resolvedSessions =
+        allSessions.fold((_) => const <StudySessionModel>[], (s) => s);
     final resolvedProfile = profile.fold((_) => null, (p) => p);
 
     // Round-trip 2 — batch topics (needs module IDs from round-trip 1).
     final moduleIds = resolvedModules.map((m) => m.id).toList();
-    final topicResult = await getIt<TopicRepository>().getTopicsByModuleIds(
-      moduleIds,
-    );
+    final topicResult =
+        await getIt<TopicRepository>().getTopicsByModuleIds(moduleIds);
     final allTopics = topicResult.fold((_) => <TopicModel>[], (t) => t);
 
     // All stats computed client-side — zero additional queries.
@@ -90,9 +82,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
         .map((t) => t.currentRating!)
         .toList();
 
-    final topicsMastered = allTopics
-        .where((t) => (t.currentRating ?? 0) >= 7)
-        .length;
+    final topicsMastered =
+        allTopics.where((t) => (t.currentRating ?? 0) >= 7).length;
 
     final averageRating = ratings.isEmpty
         ? 0.0
@@ -166,120 +157,98 @@ class _ProgressScreenState extends State<ProgressScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      title: Text(
-        'Analytics',
-        style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
-      ),
-      actions: [
-        TextButton.icon(
-          onPressed: () => context.push('/weekly-wrapped'),
-          icon: const Icon(
-            Icons.auto_awesome,
-            size: 16,
-            color: AppColors.amberWarm,
-          ),
-          label: const Text(
-            'Wrapped',
-            style: TextStyle(color: AppColors.amberWarm),
-          ),
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Scaffold(
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text(
+          'Analytics',
+          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
         ),
-      ],
-    ),
-    body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : RefreshIndicator(
-            onRefresh: _loadProgress,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.screenHorizontal,
-                12,
-                AppSpacing.screenHorizontal,
-                32,
-              ),
-              children: [
-                _buildQuickStats(),
-                const SizedBox(height: 16),
-                _buildWeeklyBarChart(),
-                const SizedBox(height: 16),
-                _buildRadarChart(),
-                const SizedBox(height: 16),
-                _buildHeatmap(),
-                const SizedBox(height: 16),
-                _buildTopicRatingHistory(),
-                const SizedBox(height: 16),
-                _buildModuleDonuts(),
-              ],
+        actions: [
+          TextButton.icon(
+            onPressed: () => context.push('/weekly-wrapped'),
+            icon: const Icon(
+              Icons.auto_awesome,
+              size: 16,
+              color: AppColors.signal,
+            ),
+            label: const Text(
+              'See Wrapped',
+              style: TextStyle(color: AppColors.signal),
             ),
           ),
-  );
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : RefreshIndicator(
+              color: AppColors.signal,
+              onRefresh: _loadProgress,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                children: [
+                  _buildQuickStats(),
+                  const SizedBox(height: 16),
+                  _buildWeeklyBarChart(),
+                  const SizedBox(height: 16),
+                  _buildRadarChart(),
+                  const SizedBox(height: 16),
+                  _buildHeatmap(),
+                  const SizedBox(height: 16),
+                  _buildTopicRatingHistory(),
+                  const SizedBox(height: 16),
+                  _buildModuleDonuts(),
+                ],
+              ),
+            ),
+    );
+  }
 
   Widget _buildQuickStats() => GridView.count(
     shrinkWrap: true,
     physics: const NeverScrollableScrollPhysics(),
     crossAxisCount: 2,
-    crossAxisSpacing: AppSpacing.md,
-    mainAxisSpacing: AppSpacing.md,
-    childAspectRatio: 1.6,
+    crossAxisSpacing: 12,
+    mainAxisSpacing: 12,
+    childAspectRatio: 1.5,
     children: [
-      _statCard(
-        'Topics Mastered',
-        '$_topicsMastered',
-        Icons.school_rounded,
-        AppColors.steelTeal,
-      ),
+      _statCard('Topics Mastered', '$_topicsMastered', Icons.school_rounded),
       _statCard(
         'Current Streak',
         '$_currentStreak',
         Icons.local_fire_department,
-        AppColors.amberWarm,
       ),
       _statCard(
         "This Week's Sessions",
         '$_weeklySessions',
         Icons.menu_book_rounded,
-        AppColors.success,
       ),
       _statCard(
         'Average Rating',
         _averageRating.toStringAsFixed(1),
         Icons.star_rounded,
-        AppColors.warning,
       ),
     ],
   );
 
-  Widget _statCard(
-    String label,
-    String value,
-    IconData icon,
-    Color accentColor,
-  ) => GlassCard(
-    padding: const EdgeInsets.all(AppSpacing.md),
-    borderRadius: AppSpacing.cardRadius,
-    borderColors: [accentColor.withValues(alpha: 0.9), AppColors.borderSoft],
+  Widget _statCard(String label, String value, IconData icon) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.border),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Container(
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [accentColor.withValues(alpha: 0.8), accentColor],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: Colors.white, size: 14),
-            ),
-            const SizedBox(width: 8),
+            Icon(icon, color: AppColors.accent, size: 16),
+            const SizedBox(width: 6),
             Expanded(
               child: Text(
                 label,
@@ -288,7 +257,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
                 style: GoogleFonts.inter(
                   color: AppColors.textSecondary,
                   fontSize: 11,
-                  fontWeight: FontWeight.w500,
                 ),
               ),
             ),
@@ -298,9 +266,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
         Text(
           value,
           style: GoogleFonts.outfit(
-            color: accentColor,
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
+            color: AppColors.parchment,
+            fontSize: 26,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
@@ -311,23 +279,19 @@ class _ProgressScreenState extends State<ProgressScreen> {
     String title,
     Widget child, {
     double? fixedHeight,
-  }) => GlassCard(
-    padding: const EdgeInsets.all(AppSpacing.lg),
-    borderRadius: AppSpacing.cardRadius,
-    borderColors: const [
-      AppColors.borderGradientStart,
-      AppColors.borderGradientEnd,
-    ],
+  }) => Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: AppColors.cardDark,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: AppColors.border),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: GoogleFonts.outfit(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textGlow,
-          ),
+          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 12),
         if (fixedHeight != null)
@@ -358,7 +322,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                   BarTooltipItem(
                     '${rod.toY.toInt()} topics',
                     GoogleFonts.inter(
-                      color: Colors.white,
+                      color: AppColors.parchment,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -714,14 +678,7 @@ class _TopicLineChart extends StatelessWidget {
             );
           }
 
-          final points = history
-              .asMap()
-              .entries
-              .map(
-                (entry) =>
-                    FlSpot(entry.key.toDouble(), entry.value.rating.toDouble()),
-              )
-              .toList();
+          final points = history.asMap().entries.map((entry) => FlSpot(entry.key.toDouble(), entry.value.rating.toDouble())).toList();
 
           return LineChart(
             LineChartData(
@@ -767,7 +724,7 @@ class _TopicLineChart extends StatelessWidget {
                           radius: 3,
                           color: AppColors.deepViolet,
                           strokeWidth: 1,
-                          strokeColor: Colors.white,
+                          strokeColor: AppColors.parchment,
                         ),
                   ),
                   belowBarData: BarAreaData(
@@ -859,4 +816,3 @@ class _ModuleDonutCard extends StatelessWidget {
     );
   }
 }
-

@@ -1,8 +1,6 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import '../../../core/utils/app_logger.dart';
-import 'package:flutter/services.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -16,10 +14,12 @@ import '../../../core/repositories/weekly_report_repository.dart';
 import '../../../core/services/achievement_service.dart';
 import '../../../core/services/export_service.dart';
 import '../../../core/services/supabase_service.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/widgets/loading_shimmer_widget.dart';
+import '../../../models/badge_model.dart';
 import '../../../models/exam_model.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
@@ -120,9 +120,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       getIt<WeeklyReportRepository>();
   final ExamRepository _examRepository = getIt<ExamRepository>();
   final ExportService _exportService = ExportService();
-  late final AchievementService _achievementService = AchievementService(
-    supabaseService: getIt<SupabaseService>(),
-  );
+  late final AchievementService _achievementService =
+      AchievementService(supabaseService: getIt<SupabaseService>());
 
   bool _isLoading = true;
   bool _isExporting = false;
@@ -168,7 +167,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       for (final module in modules) {
         final topics = await _loadTopics(module.id);
         total += topics.length;
-        mastered += topics.where((t) => (t.currentRating ?? 0) >= 7).length;
+        mastered +=
+            topics.where((t) => (t.currentRating ?? 0) >= 7).length;
       }
 
       // Load earned badges
@@ -176,7 +176,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       var earnedTypes = <String>{};
       if (userId.isNotEmpty) {
         try {
-          final badges = await _achievementService.checkAllBadges(userId);
+          final badges =
+              await _achievementService.checkAllBadges(userId);
           earnedTypes = badges.map((b) => b.badgeType).toSet();
         } catch (_) {}
       }
@@ -192,7 +193,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      AppLogger.warning('Error loading profile', error: e);
+      debugPrint('Error loading profile: $e');
       if (mounted) {
         setState(() {
           _profile = <String, dynamic>{};
@@ -236,226 +237,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
     };
   }
 
-  // ── Edit Profile Sheet ────────────────────────────────────────────────────
-
-  Future<void> _showEditSheet(BuildContext context) async {
-    final name = (_profile?['name'] as String?) ?? '';
-    final course = (_profile?['course'] as String?) ?? '';
-    final yearLevel = (_profile?['year_level'] as num?)?.toInt() ?? 1;
-    final studyPreference =
-        (_profile?['study_preference'] as String?) ?? 'alone';
-
-    final nameCtrl = TextEditingController(text: name);
-    final courseCtrl = TextEditingController(text: course);
-    var year = yearLevel;
-    var preference = studyPreference;
-    var isSaving = false;
-    final formKey = GlobalKey<FormState>();
-
-    const courseOptions = [
-      'Pharmacy',
-      'MBBS',
-      'Physiotherapy',
-      'Nursing',
-      'Dentistry',
-      'Other',
-    ];
-    const prefOptions = [
-      ('alone', 'Study alone'),
-      ('groups', 'Study in groups'),
-      ('mixed', 'Mixed'),
-    ];
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setLocal) => Padding(
-          padding: EdgeInsets.only(
-            left: 24,
-            right: 24,
-            top: 24,
-            bottom: MediaQuery.viewInsetsOf(ctx).bottom + 32,
-          ),
-          child: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Edit Profile',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Name
-                  TextFormField(
-                    controller: nameCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Full name',
-                      prefixIcon: Icon(Icons.person_outline),
-                    ),
-                    textCapitalization: TextCapitalization.words,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Name cannot be empty'
-                        : null,
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Course
-                  DropdownButtonFormField<String>(
-                    value: courseOptions.contains(courseCtrl.text)
-                        ? courseCtrl.text
-                        : (courseOptions.isNotEmpty
-                              ? courseOptions.last
-                              : null),
-                    decoration: const InputDecoration(
-                      labelText: 'Course / Programme',
-                      prefixIcon: Icon(Icons.school_outlined),
-                    ),
-                    items: courseOptions
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                        .toList(),
-                    onChanged: (v) {
-                      if (v != null) courseCtrl.text = v;
-                    },
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Year Level
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          'Year level',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.remove_circle_outline),
-                        onPressed: year > 1
-                            ? () => setLocal(() => year--)
-                            : null,
-                      ),
-                      Text(
-                        '$year',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.add_circle_outline),
-                        onPressed: year < 10
-                            ? () => setLocal(() => year++)
-                            : null,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-
-                  // Study Preference
-                  const Text(
-                    'Study preference',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: prefOptions.map(((String, String) opt) {
-                      final (value, label) = opt;
-                      return ChoiceChip(
-                        label: Text(label),
-                        selected: preference == value,
-                        onSelected: (_) => setLocal(() => preference = value),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Save button
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: isSaving
-                          ? null
-                          : () async {
-                              if (!formKey.currentState!.validate()) return;
-                              setLocal(() => isSaving = true);
-                              try {
-                                await _profileRepository.updateProfile({
-                                  'name': nameCtrl.text.trim(),
-                                  'course': courseCtrl.text.trim(),
-                                  'year_level': year,
-                                  'study_preference': preference,
-                                });
-                                if (ctx.mounted) Navigator.pop(ctx);
-                                await _load();
-                                if (context.mounted) {
-                                  SnackbarHelper.show(
-                                    context,
-                                    'Profile updated successfully.',
-                                    type: AppSnackbarType.success,
-                                  );
-                                }
-                              } catch (_) {
-                                setLocal(() => isSaving = false);
-                                if (ctx.mounted) {
-                                  SnackbarHelper.show(
-                                    ctx,
-                                    'Failed to update profile. Please try again.',
-                                    type: AppSnackbarType.error,
-                                  );
-                                }
-                              }
-                            },
-                      child: isSaving
-                          ? const SizedBox(
-                              height: 18,
-                              width: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Save Changes'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    nameCtrl.dispose();
-    courseCtrl.dispose();
-  }
-
-  // ── Build ─────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Profile'), centerTitle: false),
+        backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
         body: const LoadingShimmerWidget.profile(),
       );
     }
@@ -469,19 +257,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final xpProgress = (xp % 100) / 100.0;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        centerTitle: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: 'Edit profile',
-            onPressed: () => _showEditSheet(context),
-          ),
-        ],
-      ),
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
       body: RefreshIndicator(
-        color: AppColors.accent,
+        color: AppColors.signal,
         backgroundColor: AppColors.surfaceDark,
         onRefresh: _load,
         child: SingleChildScrollView(
@@ -509,7 +287,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   name,
                   style: AppTextStyles.displayMedium.copyWith(
-                    color: Colors.white,
+                    color: isLight ? AppColors.inkPrimary : AppColors.parchment,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -517,9 +295,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(course, style: AppTextStyles.bodyMediumSecondary),
+                    Text(
+                      course,
+                      style: AppTextStyles.bodyMediumSecondary,
+                    ),
                     if (yearLevel > 0) ...[
-                      Text(' • ', style: AppTextStyles.bodyMediumSecondary),
+                      Text(
+                        ' • ',
+                        style: AppTextStyles.bodyMediumSecondary,
+                      ),
                       Text(
                         'Year $yearLevel',
                         style: AppTextStyles.bodyMediumSecondary,
@@ -536,20 +320,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
+                    color: AppColors.signalMuted,
                     borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: AppColors.signal, width: 0.5),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text(
                         '✦ ',
-                        style: TextStyle(color: Colors.white, fontSize: 12),
+                        style: TextStyle(color: AppColors.signal, fontSize: 12),
                       ),
                       Text(
                         'Level $level · ${_levelTitle(level)}',
                         style: AppTextStyles.label.copyWith(
-                          color: Colors.white,
+                          color: AppColors.signal,
                         ),
                       ),
                     ],
@@ -585,7 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         value: xpProgress,
                         backgroundColor: AppColors.border,
                         valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppColors.steelTeal,
+                          AppColors.signal,
                         ),
                         minHeight: 6,
                       ),
@@ -651,7 +436,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text(
                       'Achievements',
                       style: AppTextStyles.headingSmall.copyWith(
-                        color: Colors.white,
+                        color: isLight ? AppColors.inkPrimary : AppColors.parchment,
                       ),
                     ),
                     const Spacer(),
@@ -667,7 +452,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 4,
                     childAspectRatio: 0.85,
                     mainAxisSpacing: 12,
@@ -683,7 +469,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       description: meta.description,
                       earned: earned,
                       onTap: () {
-                        HapticFeedback.selectionClick();
+                        Haptics.selection();
                         _showBadgeTooltip(context, meta, earned);
                       },
                     );
@@ -697,19 +483,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: _isExporting
                       ? 'Preparing PDF…'
                       : 'Export Weekly Report (PDF)',
-                  gradient: AppColors.primaryGradient,
+                  isPrimary: true,
                   loading: _isExporting,
                   onTap: _isExporting ? null : _exportWeeklyReport,
                 ),
                 const SizedBox(height: 12),
                 _ActionButton(
                   icon: Icons.backup_rounded,
-                  label: _isBackingUp
-                      ? 'Preparing Backup…'
-                      : 'Backup to Google Drive',
-                  gradient: const LinearGradient(
-                    colors: [AppColors.surfaceDark, AppColors.cardDark],
-                  ),
+                  label:
+                      _isBackingUp ? 'Preparing Backup…' : 'Backup to Google Drive',
                   loading: _isBackingUp,
                   onTap: _isBackingUp ? null : _backupToGoogleDrive,
                 ),
@@ -721,7 +503,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showBadgeTooltip(BuildContext context, _BadgeMeta meta, bool earned) {
+  void _showBadgeTooltip(
+    BuildContext context,
+    _BadgeMeta meta,
+    bool earned,
+  ) {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -729,8 +515,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
           side: BorderSide(
-            color: earned ? AppColors.primary : AppColors.border,
-            width: earned ? 1.5 : 1,
+            color: earned ? AppColors.signal : AppColors.borderDark,
+            width: 0.5,
           ),
         ),
         content: Column(
@@ -740,13 +526,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
               meta.emoji,
               style: TextStyle(
                 fontSize: 48,
-                color: earned ? Colors.white : Colors.white38,
+                color: earned
+                    ? AppColors.parchment
+                    : AppColors.parchment.withValues(alpha: 0.38),
               ),
             ),
             const SizedBox(height: 12),
             Text(
               meta.label,
-              style: AppTextStyles.headingSmall.copyWith(color: Colors.white),
+              style: AppTextStyles.headingSmall.copyWith(
+                color: AppColors.parchment,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -899,7 +689,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _AvatarWithRing extends StatelessWidget {
-  const _AvatarWithRing({required this.name, required this.masteryProgress});
+  const _AvatarWithRing({
+    required this.name,
+    required this.masteryProgress,
+  });
 
   final String name;
   final double masteryProgress;
@@ -921,14 +714,14 @@ class _AvatarWithRing extends StatelessWidget {
           width: 80,
           height: 80,
           decoration: const BoxDecoration(
-            gradient: AppColors.primaryGradient,
+            color: AppColors.signal,
             shape: BoxShape.circle,
           ),
           child: Center(
             child: Text(
               name.isNotEmpty ? name[0].toUpperCase() : '?',
               style: AppTextStyles.displayMedium.copyWith(
-                color: Colors.white,
+                color: AppColors.parchment,
                 fontSize: 32,
                 fontWeight: FontWeight.w800,
               ),
@@ -945,13 +738,13 @@ class _AvatarWithRing extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.success,
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.backgroundDark, width: 2),
+              border: Border.all(color: AppColors.obsidian, width: 2),
             ),
             child: Center(
               child: Text(
                 '${(masteryProgress * 100).round()}%',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: AppColors.parchment,
                   fontSize: 7,
                   fontWeight: FontWeight.w800,
                 ),
@@ -991,9 +784,7 @@ class _RingPainter extends CustomPainter {
         2 * math.pi * progress.clamp(0.0, 1.0),
         false,
         Paint()
-          ..shader = const LinearGradient(
-            colors: [AppColors.steelTeal, AppColors.amberWarm],
-          ).createShader(Rect.fromCircle(center: center, radius: radius))
+          ..color = AppColors.signal
           ..style = PaintingStyle.stroke
           ..strokeWidth = 4
           ..strokeCap = StrokeCap.round,
@@ -1002,7 +793,8 @@ class _RingPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _RingPainter old) => old.progress != progress;
+  bool shouldRepaint(covariant _RingPainter old) =>
+      old.progress != progress;
 }
 
 class _StatCard extends StatelessWidget {
@@ -1070,8 +862,9 @@ class _SocialCard extends StatelessWidget {
     width: double.infinity,
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      gradient: AppColors.primaryGradient,
+      color: AppColors.surfaceDark,
       borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+      border: Border.all(color: AppColors.signal, width: 0.5),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1080,11 +873,11 @@ class _SocialCard extends StatelessWidget {
           children: [
             const Text(
               '✦ ',
-              style: TextStyle(color: Colors.white, fontSize: 13),
+              style: TextStyle(color: AppColors.signal, fontSize: 13),
             ),
             Text(
               'Share Your Progress',
-              style: AppTextStyles.label.copyWith(color: Colors.white),
+              style: AppTextStyles.label.copyWith(color: AppColors.signal),
             ),
           ],
         ),
@@ -1092,7 +885,7 @@ class _SocialCard extends StatelessWidget {
         Text(
           name,
           style: AppTextStyles.headingSmall.copyWith(
-            color: Colors.white,
+            color: AppColors.parchment,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -1100,36 +893,36 @@ class _SocialCard extends StatelessWidget {
         Text(
           'Level $level · $levelTitle  •  $masteredTopics/$totalTopics mastered  •  $streak day streak 🔥',
           style: AppTextStyles.bodySmall.copyWith(
-            color: Colors.white70,
+            color: AppColors.parchmentMuted,
             fontSize: 12,
           ),
         ),
         const SizedBox(height: 14),
         GestureDetector(
           onTap: () {
-            HapticFeedback.lightImpact();
+            Haptics.light();
             onShare();
           },
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
+              color: AppColors.signalMuted,
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: Colors.white38),
+              border: Border.all(color: AppColors.signal, width: 0.5),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Icon(
                   Icons.ios_share_rounded,
-                  color: Colors.white,
+                  color: AppColors.signal,
                   size: 16,
                 ),
                 const SizedBox(width: 6),
                 Text(
                   'Share Card',
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: Colors.white,
+                    color: AppColors.signal,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1186,7 +979,9 @@ class _BadgeWidget extends StatelessWidget {
               emoji,
               style: TextStyle(
                 fontSize: 26,
-                color: earned ? Colors.white : Colors.white38,
+                color: earned
+                    ? AppColors.parchment
+                    : AppColors.parchment.withValues(alpha: 0.38),
               ),
             ),
             const SizedBox(height: 4),
@@ -1198,7 +993,7 @@ class _BadgeWidget extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.captionMuted.copyWith(
-                  color: earned ? Colors.white : AppColors.textMuted,
+                  color: earned ? AppColors.parchment : AppColors.parchmentMuted,
                   fontSize: 9,
                   fontWeight: earned ? FontWeight.w700 : FontWeight.w400,
                 ),
@@ -1215,53 +1010,64 @@ class _ActionButton extends StatelessWidget {
   const _ActionButton({
     required this.icon,
     required this.label,
-    required this.gradient,
+    this.isPrimary = false,
     this.loading = false,
     this.onTap,
   });
 
   final IconData icon;
   final String label;
-  final Gradient gradient;
+  final bool isPrimary;
   final bool loading;
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: () {
-      HapticFeedback.lightImpact();
-      onTap?.call();
-    },
-    child: Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: BoxDecoration(
-        gradient: onTap == null ? null : gradient,
-        color: onTap == null ? AppColors.cardDark : null,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+  Widget build(BuildContext context) {
+    final disabled = onTap == null;
+    final bg = disabled
+        ? AppColors.cardDark
+        : isPrimary
+            ? AppColors.signal
+            : AppColors.surfaceDark;
+    final fg = isPrimary ? AppColors.parchment : AppColors.parchment;
+    final border =
+        isPrimary ? AppColors.signal : AppColors.borderDark;
+
+    return GestureDetector(
+      onTap: () {
+        Haptics.light();
+        onTap?.call();
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: border, width: 0.5),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (loading)
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: fg,
+                ),
+              )
+            else
+              Icon(icon, color: fg, size: 18),
+            const SizedBox(width: 10),
+            Text(
+              label,
+              style: AppTextStyles.button.copyWith(color: fg),
+            ),
+          ],
+        ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (loading)
-            const SizedBox(
-              width: 16,
-              height: 16,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
-            )
-          else
-            Icon(icon, color: Colors.white, size: 18),
-          const SizedBox(width: 10),
-          Text(
-            label,
-            style: AppTextStyles.button.copyWith(color: Colors.white),
-          ),
-        ],
-      ),
-    ),
-  );
+    );
+  }
 }

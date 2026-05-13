@@ -7,10 +7,10 @@ import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../core/widgets/app_state_view.dart';
-import '../../../core/widgets/custom_button.dart';
 import '../../../models/module_model.dart';
 import '../../../models/topic_model.dart';
 import '../../auth/controllers/auth_provider.dart';
@@ -46,51 +46,46 @@ class _ModulesScreenState extends State<ModulesScreen> {
   }
 
   Future<void> _loadModules() async {
-    if (!mounted) return;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.currentUser;
+    if (user == null) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _loadError = null;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
     });
 
     final modulesResult = await _moduleRepo.getAllModules();
-
-    if (modulesResult is Failure<List<ModuleModel>>) {
-      // Auth failure: session may have expired. Let the router redirect if needed.
-      final auth = Provider.of<AuthProvider>(context, listen: false);
-      await auth.refreshCurrentUser(silent: true);
-
-      if (!mounted) return;
-      // After refresh, retry once.
-      final retryResult = await _moduleRepo.getAllModules();
-      if (retryResult is Failure<List<ModuleModel>>) {
-        setState(() {
-          _isLoading = false;
-          _loadError =
-              'We could not load your modules right now. Pull to retry.';
-        });
-        return;
-      }
-    }
-
     final modules = switch (modulesResult) {
       Success<List<ModuleModel>>(data: final data) => data,
       Failure<List<ModuleModel>>() => <ModuleModel>[],
     };
+    final modulesFailed = modulesResult is Failure<List<ModuleModel>>;
 
-    // Load topics for each module; topic failures don't block module display.
     final topicsByModule = <String, List<TopicModel>>{};
+    var topicsFailed = false;
     for (final module in modules) {
       final topicsResult = await _topicRepo.getTopicsByModule(module.id);
       topicsByModule[module.id] = switch (topicsResult) {
         Success<List<TopicModel>>(data: final data) => data,
         Failure<List<TopicModel>>() => <TopicModel>[],
       };
+      topicsFailed = topicsFailed || topicsResult is Failure<List<TopicModel>>;
     }
 
     if (!mounted) return;
     setState(() {
       _modules = modules;
       _topicsByModule = topicsByModule;
-      _loadError = null;
+      _loadError = modulesFailed || topicsFailed
+          ? 'We could not load your modules right now. Pull to retry.'
+          : null;
       _isLoading = false;
     });
   }
@@ -177,57 +172,57 @@ class _ModulesScreenState extends State<ModulesScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: _isLoading
-        ? AppStateView.loadingGrid(itemCount: 4, childAspectRatio: 0.78)
-        : RefreshIndicator(
-            color: AppColors.primary,
-            backgroundColor: AppColors.surfaceDark,
-            onRefresh: _loadModules,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.screenHorizontal,
-                AppSpacing.xs,
-                AppSpacing.screenHorizontal,
-                120,
-              ),
-              children: [
-                TextField(
-                  controller: _searchController,
-                  style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Search modules',
-                    hintStyle: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.textMuted,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
+    return Scaffold(
+      backgroundColor:
+          isLight ? AppColors.paperWhite : AppColors.obsidian,
+      body: _isLoading
+          ? AppStateView.loadingGrid(itemCount: 4, childAspectRatio: 0.78)
+          : RefreshIndicator(
+              color: AppColors.signal,
+              backgroundColor:
+                  isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
+              onRefresh: _loadModules,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenHorizontal,
+                  AppSpacing.xs,
+                  AppSpacing.screenHorizontal,
+                  120,
+                ),
+                children: [
+                  // Search — inherits from theme's InputDecorationTheme.
+                  // No inline overrides: hairline border + signal focus ring.
+                  TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Search modules',
+                      prefixIcon: Icon(Icons.search_rounded),
                     ),
-                    prefixIcon: const Icon(
-                      Icons.search_rounded,
-                      color: AppColors.textMuted,
-                    ),
-                    filled: true,
-                    fillColor: AppColors.cardDark,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.border),
+                    onChanged: (value) {
+                      setState(() {
+                        _query = value;
+                      });
+                    },
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  FilledButton.icon(
+                    onPressed: () {
+                      Haptics.light();
+                      _showAddOrEditModuleSheet();
+                    },
+                    icon: const Icon(Icons.add_rounded, size: 18),
+                    label: Text('ADD MODULE'.toUpperCase()),
+                    style: FilledButton.styleFrom(
+                      minimumSize: const Size.fromHeight(48),
+                      textStyle: AppTextStyles.overline.copyWith(
+                        color: AppColors.parchment,
+                      ),
                     ),
                   ),
-                  onChanged: (value) {
-                    setState(() {
-                      _query = value;
-                    });
-                  },
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                GlowingButton(
-                  label: 'Add Module',
-                  onPressed: _showAddOrEditModuleSheet,
-                  width: double.infinity,
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 16),
                 if (_loadError != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 36),
@@ -273,16 +268,23 @@ class _ModulesScreenState extends State<ModulesScreen> {
                       final stats = _ModuleStats.fromTopics(topics);
 
                       return GestureDetector(
-                        onLongPress: () => _showCardOptions(module),
-                        onTap: () => context.push('/modules/${module.id}'),
+                        onLongPress: () {
+                          Haptics.medium();
+                          _showCardOptions(module);
+                        },
+                        onTap: () {
+                          Haptics.light();
+                          context.push('/modules/${module.id}');
+                        },
                         child: _ModuleCard(module: module, stats: stats),
                       );
                     },
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
-  );
+    );
+  }
 }
 
 class _ModuleCard extends StatelessWidget {
@@ -305,83 +307,99 @@ class _ModuleCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isLight = theme.brightness == Brightness.light;
     final subjectColor = _parseColor();
+    final surface =
+        isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
+    final border = isLight ? AppColors.borderLight : AppColors.borderDark;
+    final fg = isLight ? AppColors.inkPrimary : AppColors.parchment;
+    final fgSecondary =
+        isLight ? AppColors.inkSecondary : AppColors.parchmentSecondary;
+    final fgMuted = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [subjectColor.withValues(alpha: 0.45), AppColors.cardDark],
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+      child: Container(
+        decoration: BoxDecoration(
+          color: surface,
+          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+          // 0.5px hairline border — no shadow, no gradient.
+          border: Border.all(color: border, width: 0.5),
         ),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            module.name,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.headingSmall.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${stats.totalTopics} topics',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: stats.mastery,
-            minHeight: 8,
-            backgroundColor: AppColors.surfaceDark,
-            color: AppColors.success,
-            borderRadius: BorderRadius.circular(99),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${(stats.mastery * 100).round()}% rated 7+',
-            style: AppTextStyles.caption.copyWith(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-            ),
-          ),
-          const Spacer(),
-          Row(
-            children: [
-              SizedBox(
-                width: 34,
-                height: 34,
-                child: CircularProgressIndicator(
-                  value: stats.studiedProgress,
-                  backgroundColor: AppColors.surfaceDark,
-                  color: AppColors.accent,
-                  strokeWidth: 4,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Subject colour as a thin left edge stripe — a wax-seal accent,
+            // not a wash of colour.
+            Container(width: 3, color: subjectColor),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Module name — Instrument Sans, tight tracking
+                    Text(
+                      module.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: (isLight
+                              ? AppTextStyles.headingSmallLight
+                              : AppTextStyles.headingSmall)
+                          .copyWith(fontSize: 18),
+                    ),
+                    const SizedBox(height: 6),
+                    // Micro-copy in expanded all-caps tracking
+                    Text(
+                      '${stats.totalTopics} TOPICS',
+                      style: AppTextStyles.overline.copyWith(color: fgMuted),
+                    ),
+                    const SizedBox(height: 12),
+                    // Mastery bar — signal ochre, not neon green
+                    LinearProgressIndicator(
+                      value: stats.mastery,
+                      minHeight: 4,
+                      backgroundColor: border,
+                      color: AppColors.signal,
+                      borderRadius: BorderRadius.circular(99),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '${(stats.mastery * 100).round()}% rated 7+',
+                      style: AppTextStyles.caption.copyWith(color: fgSecondary),
+                    ),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 28,
+                          height: 28,
+                          child: CircularProgressIndicator(
+                            value: stats.studiedProgress,
+                            backgroundColor: border,
+                            color: AppColors.signal,
+                            strokeWidth: 2.5,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            '${stats.studiedTopics}/${stats.totalTopics} studied',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: fg,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  '${stats.studiedTopics}/${stats.totalTopics} studied',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -481,33 +499,21 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
       _isSaving = true;
     });
 
-    final colorHex = _hexColor(_selectedColor);
-    final result = widget.module == null
-        ? await widget.moduleRepo.createModule(
-            name: name,
-            code: name.toLowerCase().replaceAll(' ', '-'),
-            description: '',
-            color: colorHex,
-          )
-        : await widget.moduleRepo.updateModule(
-            widget.module!.copyWith(name: name, color: colorHex),
-          );
-
-    if (!mounted) return;
-
-    final saved = result is Success;
-    if (!saved) {
-      setState(() {
-        _isSaving = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Could not save module. Please try again.'),
-        ),
+    if (widget.module == null) {
+      await widget.moduleRepo.createModule(
+        name: name,
+        code: name.toLowerCase().replaceAll(' ', '-'),
+        description: '',
       );
-      return;
+    } else {
+      final updated = widget.module!.copyWith(
+        name: name,
+        color: _hexColor(_selectedColor),
+      );
+      await widget.moduleRepo.updateModule(updated);
     }
 
+    if (!mounted) return;
     Navigator.of(context).pop(true);
   }
 
@@ -586,11 +592,17 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          GlowingButton(
-            label: widget.module == null ? 'Add Module' : 'Save Changes',
-            onPressed: _isSaving ? null : _save,
-            isLoading: _isSaving,
+          SizedBox(
             width: double.infinity,
+            child: FilledButton(
+              onPressed: _isSaving ? null : _save,
+              child: _isSaving
+                  ? const SizedBox(width: 18, height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
+                  : Text(
+                      (widget.module == null ? 'Add Module' : 'Save Changes').toUpperCase(),
+                    ),
+            ),
           ),
         ],
       ),

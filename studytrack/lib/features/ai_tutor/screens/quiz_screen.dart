@@ -1,8 +1,7 @@
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-
 import '../../../core/constants/app_colors.dart';
+import '../../../core/utils/haptics.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/profile_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
@@ -104,7 +103,7 @@ class _QuizScreenState extends State<QuizScreen> {
   void _selectOption(int index) {
     if (_answered) return;
 
-    HapticFeedback.lightImpact();
+    Haptics.light();
     setState(() {
       _selectedIndex = index;
       _answered = true;
@@ -161,13 +160,15 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
+        backgroundColor: AppColors.obsidian,
         body: AppStateView.loadingList(itemCount: 4, itemHeight: 88),
       );
     }
 
     if (_loadError != null) {
       return Scaffold(
-        appBar: AppBar(backgroundColor: AppColors.backgroundDark),
+        backgroundColor: AppColors.obsidian,
+        appBar: AppBar(backgroundColor: AppColors.obsidian),
         body: AppStateView.error(
           title: 'Quiz unavailable',
           message: _loadError!,
@@ -178,7 +179,8 @@ class _QuizScreenState extends State<QuizScreen> {
 
     if (_topic == null || _questions.isEmpty) {
       return Scaffold(
-        appBar: AppBar(backgroundColor: AppColors.backgroundDark),
+        backgroundColor: AppColors.obsidian,
+        appBar: AppBar(backgroundColor: AppColors.obsidian),
         body: AppStateView.empty(
           icon: Icons.quiz_outlined,
           title: 'Unable to generate quiz',
@@ -204,11 +206,13 @@ class _QuizScreenState extends State<QuizScreen> {
     final progress = (_currentIndex + 1) / _questions.length;
 
     return Scaffold(
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
+        backgroundColor: AppColors.obsidian,
         title: Text(
           'Quiz',
           style: AppTextStyles.headingSmall.copyWith(
-            color: Colors.white,
+            color: AppColors.parchment,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -232,7 +236,7 @@ class _QuizScreenState extends State<QuizScreen> {
             Text(
               question.question,
               style: AppTextStyles.headingLarge.copyWith(
-                color: Colors.white,
+                color: AppColors.parchment,
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
               ),
@@ -270,7 +274,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
+                    color: AppColors.signal,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
@@ -278,7 +282,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     _currentIndex == _questions.length - 1
                         ? 'See Results'
                         : 'Next Question',
-                    style: AppTextStyles.button.copyWith(color: Colors.white),
+                    style: AppTextStyles.button.copyWith(color: AppColors.parchment),
                   ),
                 ),
               ),
@@ -371,7 +375,7 @@ class _OptionCard extends StatelessWidget {
               child: Text(
                 label,
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: Colors.white,
+                  color: AppColors.parchment,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -380,7 +384,7 @@ class _OptionCard extends StatelessWidget {
             Expanded(
               child: Text(
                 text,
-                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.parchment),
               ),
             ),
             if (trailing != null) Icon(trailing, color: border),
@@ -422,10 +426,8 @@ class _ResultsViewState extends State<_ResultsView> {
 
   String _message() {
     if (widget.score == widget.total) return "Perfect! You've mastered this 🏆";
-    if (widget.score >= widget.total * 0.8)
-      return 'Excellent work! Almost there ⭐';
-    if (widget.score >= widget.total * 0.6)
-      return 'Good effort! A bit more practice 📚';
+    if (widget.score >= widget.total * 0.8) return 'Excellent work! Almost there ⭐';
+    if (widget.score >= widget.total * 0.6) return 'Good effort! A bit more practice 📚';
     return "Keep studying — you'll get there 💪";
   }
 
@@ -446,7 +448,8 @@ class _ResultsViewState extends State<_ResultsView> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(backgroundColor: AppColors.backgroundDark),
+    backgroundColor: AppColors.obsidian,
+    appBar: AppBar(backgroundColor: AppColors.obsidian),
     body: Stack(
       alignment: Alignment.topCenter,
       children: [
@@ -458,7 +461,7 @@ class _ResultsViewState extends State<_ResultsView> {
               Text(
                 '${widget.score}/${widget.total}',
                 style: AppTextStyles.displayMedium.copyWith(
-                  color: Colors.white,
+                  color: AppColors.parchment,
                   fontSize: 52,
                   fontWeight: FontWeight.w800,
                 ),
@@ -497,10 +500,10 @@ class _ResultsViewState extends State<_ResultsView> {
           blastDirectionality: BlastDirectionality.explosive,
           numberOfParticles: 30,
           colors: const [
-            AppColors.steelTeal,
-            AppColors.amberWarm,
+            AppColors.signal,
+            AppColors.signalLight,
             AppColors.success,
-            Colors.white,
+            AppColors.parchment,
           ],
           shouldLoop: false,
         ),
@@ -522,13 +525,13 @@ class _PrimaryButton extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
+        color: AppColors.signal,
         borderRadius: BorderRadius.circular(12),
       ),
       alignment: Alignment.center,
       child: Text(
         label,
-        style: AppTextStyles.button.copyWith(color: Colors.white),
+        style: AppTextStyles.button.copyWith(color: AppColors.parchment),
       ),
     ),
   );

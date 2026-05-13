@@ -246,7 +246,9 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
     final hasNotes = _topic?.notes?.trim().isNotEmpty ?? false;
 
     return Scaffold(
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
+        backgroundColor: AppColors.obsidian,
         elevation: 0,
         titleSpacing: 0,
         title: Row(
@@ -259,7 +261,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                 Text(
                   topicName,
                   style: AppTextStyles.headingSmall.copyWith(
-                    color: Colors.white,
+                    color: AppColors.parchment,
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                   ),
@@ -385,7 +387,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                             child: TextField(
                               controller: _inputController,
                               style: AppTextStyles.bodyMedium.copyWith(
-                                color: Colors.white,
+                                color: AppColors.parchment,
                               ),
                               decoration: InputDecoration(
                                 hintText: 'Ask me anything about $topicName',
@@ -414,12 +416,9 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                gradient: (_isThinking || _isStreaming)
-                                    ? null
-                                    : AppColors.primaryGradient,
                                 color: (_isThinking || _isStreaming)
                                     ? AppColors.cardDark
-                                    : null,
+                                    : AppColors.signal,
                                 borderRadius: BorderRadius.circular(
                                   AppSpacing.fieldRadius,
                                 ),
@@ -428,7 +427,7 @@ class _AiTutorScreenState extends State<AiTutorScreen> {
                                 Icons.send_rounded,
                                 color: (_isThinking || _isStreaming)
                                     ? AppColors.textMuted
-                                    : Colors.white,
+                                    : AppColors.parchment,
                               ),
                             ),
                           ),
@@ -477,16 +476,18 @@ class _ChatBubble extends StatelessWidget {
           vertical: AppSpacing.xs,
         ),
         decoration: BoxDecoration(
-          gradient: message.isUser ? AppColors.primaryGradient : null,
-          color: message.isUser ? null : AppColors.cardDark,
+          color: message.isUser ? AppColors.signalMuted : AppColors.cardDark,
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          border: message.isUser ? null : Border.all(color: AppColors.border),
+          border: Border.all(
+            color: message.isUser ? AppColors.signal : AppColors.border,
+            width: 0.5,
+          ),
         ),
         child: message.isUser
             ? Text(
                 message.text,
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: Colors.white,
+                  color: AppColors.parchment,
                   fontSize: 14,
                 ),
               )
@@ -656,7 +657,7 @@ class _MarkdownText extends StatelessWidget {
                   Text(
                     '• ',
                     style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.white,
+                      color: AppColors.parchment,
                     ),
                   ),
                   Expanded(child: _buildInline(trimmed.substring(2))),
@@ -707,7 +708,7 @@ class _MarkdownText extends StatelessWidget {
     return RichText(
       text: TextSpan(
         style: AppTextStyles.bodyMedium.copyWith(
-          color: Colors.white,
+          color: AppColors.parchment,
           fontSize: 14,
           height: 1.4,
         ),

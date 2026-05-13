@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
+import '../../../core/utils/haptics.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
@@ -203,6 +204,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      backgroundColor: AppColors.obsidian,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -255,7 +257,9 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
         '${widget.moduleName ?? 'Module'} • ${widget.groupName ?? 'Group'}';
 
     return Scaffold(
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
+        backgroundColor: AppColors.obsidian,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -378,7 +382,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                                             .substring(0, 1)
                                             .toUpperCase(),
                                         style: AppTextStyles.caption.copyWith(
-                                          color: Colors.white,
+                                          color: AppColors.parchment,
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),
@@ -413,7 +417,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                                 Text(
                                   content,
                                   style: AppTextStyles.bodySmall.copyWith(
-                                    color: Colors.white,
+                                    color: AppColors.parchment,
                                   ),
                                 ),
                                 const SizedBox(height: AppSpacing.xxs),
@@ -463,7 +467,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                       const SizedBox(width: AppSpacing.xs),
                       IconButton(
                         onPressed: () {
-                          HapticFeedback.lightImpact();
+                          Haptics.light();
                           _openVoiceRecorder();
                         },
                         icon: const Icon(Icons.mic_none_rounded),
@@ -474,7 +478,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                         onPressed: _sending
                             ? null
                             : () {
-                                HapticFeedback.lightImpact();
+                                Haptics.light();
                                 _sendMessage();
                               },
                         icon: _sending
@@ -488,7 +492,7 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        HapticFeedback.selectionClick();
+                        Haptics.selection();
                         _flagStruggleAnonymously();
                       },
                       icon: const Icon(Icons.flag_outlined),
@@ -507,12 +511,12 @@ class _TopicChatScreenState extends State<TopicChatScreen> {
   Widget _promptChip(String text) => ActionChip(
     label: Text(text),
     onPressed: () {
-      HapticFeedback.selectionClick();
+      Haptics.selection();
       _sendMessage(text);
     },
     backgroundColor: AppColors.surfaceDark,
     labelStyle: AppTextStyles.caption.copyWith(
-      color: Colors.white,
+      color: AppColors.parchment,
       fontSize: 12,
     ),
     side: const BorderSide(color: AppColors.border),

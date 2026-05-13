@@ -131,7 +131,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
               Text(
                 'Add Topic',
                 style: AppTextStyles.headingMedium.copyWith(
-                  color: Colors.white,
+                  color: AppColors.parchment,
                   fontWeight: FontWeight.w700,
                   fontSize: 24,
                 ),
@@ -139,7 +139,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
-                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.parchment),
                 decoration: InputDecoration(
                   hintText: 'Topic name',
                   hintStyle: AppTextStyles.bodyMedium.copyWith(
@@ -170,14 +170,14 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
+                    color: AppColors.signal,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
                   child: Text(
-                    'Save Topic',
+                    'SAVE TOPIC',
                     style: AppTextStyles.button.copyWith(
-                      color: Colors.white,
+                      color: AppColors.parchment,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
@@ -203,15 +203,17 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
         : ratedTopics.map((t) => t.currentRating!).reduce((a, b) => a + b) /
               ratedTopics.length;
 
+    final isLight = Theme.of(context).brightness == Brightness.light;
     return Scaffold(
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddTopicSheet,
-        backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add_rounded, color: Colors.white),
+        backgroundColor: AppColors.signal,
+        icon: const Icon(Icons.add_rounded, color: AppColors.parchment),
         label: Text(
           'Add Topic',
           style: AppTextStyles.button.copyWith(
-            color: Colors.white,
+            color: AppColors.parchment,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -241,15 +243,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          moduleColor.withValues(alpha: 0.6),
-                          AppColors.cardDark,
-                        ],
-                      ),
-                      border: Border.all(color: AppColors.border),
+                      color: moduleColor.withValues(alpha: 0.12),
+                      border: Border.all(color: moduleColor.withValues(alpha: 0.3), width: 0.5),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,7 +252,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                         Text(
                           _module!.name,
                           style: AppTextStyles.headingLarge.copyWith(
-                            color: Colors.white,
+                            color: AppColors.parchment,
                             fontWeight: FontWeight.w700,
                             fontSize: 28,
                           ),
@@ -289,7 +284,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                         selected: selected,
                         labelStyle: AppTextStyles.bodyMedium.copyWith(
                           color: selected
-                              ? Colors.white
+                              ? AppColors.parchment
                               : AppColors.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
@@ -357,7 +352,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                                           topic.name,
                                           style: AppTextStyles.headingSmall
                                               .copyWith(
-                                                color: Colors.white,
+                                                color: AppColors.parchment,
                                                 fontWeight: FontWeight.w700,
                                                 fontSize: 16,
                                               ),
@@ -389,7 +384,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                                           children: [
                                             const Icon(
                                               Icons.star_rounded,
-                                              color: Colors.white,
+                                              color: AppColors.parchment,
                                               size: 14,
                                             ),
                                             const SizedBox(width: 4),
@@ -397,7 +392,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                                               '${topic.currentRating ?? 0}/10',
                                               style: AppTextStyles.bodyMedium
                                                   .copyWith(
-                                                    color: Colors.white,
+                                                    color: AppColors.parchment,
                                                     fontWeight: FontWeight.w700,
                                                     fontSize: 12,
                                                   ),
@@ -465,13 +460,13 @@ class _StatChip extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.12),
+      color: AppColors.parchment.withValues(alpha: 0.12),
       borderRadius: BorderRadius.circular(999),
     ),
     child: Text(
       label,
       style: AppTextStyles.bodyMedium.copyWith(
-        color: Colors.white,
+        color: AppColors.parchment,
         fontSize: 12,
         fontWeight: FontWeight.w600,
       ),
