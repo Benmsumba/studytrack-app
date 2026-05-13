@@ -592,11 +592,17 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
             ),
           ),
           const SizedBox(height: AppSpacing.md),
-          GlowingButton(
-            label: widget.module == null ? 'Add Module' : 'Save Changes',
-            onPressed: _isSaving ? null : _save,
-            isLoading: _isSaving,
+          SizedBox(
             width: double.infinity,
+            child: FilledButton(
+              onPressed: _isSaving ? null : _save,
+              child: _isSaving
+                  ? const SizedBox(width: 18, height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
+                  : Text(
+                      (widget.module == null ? 'Add Module' : 'Save Changes').toUpperCase(),
+                    ),
+            ),
           ),
         ],
       ),
