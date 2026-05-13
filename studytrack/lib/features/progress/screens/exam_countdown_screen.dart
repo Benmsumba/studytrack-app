@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -62,13 +63,13 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0F0F1A),
+        appBar: AppBar(title: const Text('Exam Countdown'), centerTitle: false),
         body: AppStateView.loadingList(itemCount: 3, itemHeight: 110),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
+      appBar: AppBar(title: const Text('Exam Countdown'), centerTitle: false),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -189,7 +190,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
         ? const Color(0xFFF43F5E)
         : daysLeft <= 14
         ? const Color(0xFFF59E0B)
-        : const Color(0xFF06B6D4);
+        : AppColors.steelTeal;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -330,11 +331,9 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: () {
-                if (_exams.isEmpty) return;
-              },
+              onPressed: () => context.push('/study-session'),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF7C3AED)),
+                side: const BorderSide(color: AppColors.steelTeal),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -342,7 +341,7 @@ class _ExamCountdownScreenState extends State<ExamCountdownScreen> {
               child: Text(
                 'Start Prep',
                 style: AppTextStyles.bodyMedium.copyWith(
-                  color: const Color(0xFF7C3AED),
+                  color: AppColors.steelTeal,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),

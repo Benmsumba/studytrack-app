@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 
 import '../repositories/auth_repository.dart';
@@ -22,6 +21,7 @@ import '../repositories/topic_chat_repository.dart';
 import '../repositories/topic_repository.dart';
 import '../repositories/weekly_report_repository.dart';
 import '../services/achievement_service.dart';
+import '../services/encryption_service.dart';
 import '../services/export_service.dart';
 import '../services/gemini_service.dart';
 import '../services/notification_service.dart';
@@ -30,24 +30,44 @@ import '../services/offline_sync_service.dart';
 import '../services/storage_service.dart';
 import '../services/supabase_service.dart';
 import '../services/voice_note_service.dart';
+import 'app_logger.dart';
 
 final getIt = GetIt.instance;
 
 Future<void> setupServiceLocator() async {
+  // ── Encryption (must be first — OfflineDataStore depends on it) ────────────
+  final encryptionService = EncryptionService();
+  try {
+    await encryptionService.initialize();
+  } on Object catch (e, stackTrace) {
+    AppLogger.warning(
+      'EncryptionService init failed',
+      error: e,
+      stackTrace: stackTrace,
+    );
+  }
+  getIt.registerSingleton<EncryptionService>(encryptionService);
+
+  // ── Core services ──────────────────────────────────────────────────────────
   final supabaseService = SupabaseService();
   getIt.registerSingleton<SupabaseService>(supabaseService);
 
   final offlineDataStore = OfflineDataStore.instance;
   try {
-    await offlineDataStore.initialize();
-  } on Object catch (e) {
-    debugPrint('OfflineDataStore init failed: $e');
+    await offlineDataStore.initialize(encryptionService: encryptionService);
+  } on Object catch (e, stackTrace) {
+    AppLogger.error(
+      'OfflineDataStore init failed',
+      error: e,
+      stackTrace: stackTrace,
+    );
   }
   getIt.registerSingleton<OfflineDataStore>(offlineDataStore);
 
   final offlineSyncService = OfflineSyncService.instance;
   getIt.registerSingleton<OfflineSyncService>(offlineSyncService);
 
+  // ── Repositories ───────────────────────────────────────────────────────────
   getIt.registerSingleton<AuthRepository>(AuthRepositoryImpl(supabaseService));
   getIt.registerSingleton<ProfileRepository>(
     ProfileRepositoryImpl(supabaseService),
@@ -75,11 +95,16 @@ Future<void> setupServiceLocator() async {
     WeeklyReportRepositoryImpl(supabaseService),
   );
 
+  // ── Feature services ───────────────────────────────────────────────────────
   final notificationService = NotificationService();
   try {
     await notificationService.initialize();
-  } on Object catch (e) {
-    debugPrint('NotificationService init failed: $e');
+  } on Object catch (e, stackTrace) {
+    AppLogger.warning(
+      'NotificationService init failed',
+      error: e,
+      stackTrace: stackTrace,
+    );
   }
   getIt.registerSingleton<NotificationService>(notificationService);
 
@@ -92,7 +117,5 @@ Future<void> setupServiceLocator() async {
   getIt.registerSingleton<VoiceNoteService>(VoiceNoteService());
 }
 
-/// Reset the service locator (useful for testing)
-void resetServiceLocator() {
-  getIt.reset();
-}
+/// Reset the service locator (useful for testing).
+void resetServiceLocator() => getIt.reset();

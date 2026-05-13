@@ -20,8 +20,8 @@ class GroupActionResult {
 
 class GroupsProvider extends ChangeNotifier {
   GroupsProvider({StudyGroupRepository? studyGroupRepository})
-      : _studyGroupRepository =
-            studyGroupRepository ?? getIt<StudyGroupRepository>();
+    : _studyGroupRepository =
+          studyGroupRepository ?? getIt<StudyGroupRepository>();
 
   final StudyGroupRepository _studyGroupRepository;
 
@@ -188,16 +188,18 @@ class GroupsProvider extends ChangeNotifier {
   void subscribeToMessages({required String groupId}) {
     if (groupId.isEmpty) return;
 
-    _studyGroupRepository.subscribeToGroupMessages(groupId).listen(
-      (messages) {
-        _messages = messages;
-        notifyListeners();
-      },
-      onError: (Object error) {
-        _errorMessage = 'Failed to subscribe to messages: $error';
-        notifyListeners();
-      },
-    );
+    _studyGroupRepository
+        .subscribeToGroupMessages(groupId)
+        .listen(
+          (messages) {
+            _messages = messages;
+            notifyListeners();
+          },
+          onError: (Object error) {
+            _errorMessage = 'Failed to subscribe to messages: $error';
+            notifyListeners();
+          },
+        );
   }
 
   void setSelectedGroup(StudyGroupModel? group) {

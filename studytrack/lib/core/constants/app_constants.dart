@@ -3,36 +3,28 @@ class AppConstants {
   static const String appName = 'StudyTrack';
   static const String appVersion = '1.1.0';
 
-  // Self-update — must match the +build_number in pubspec.yaml.
-  // Bump this whenever you publish a new APK.
-  static const int currentVersionCode = 1;
+  // Fallback used only when PackageInfo.fromPlatform() fails at runtime.
+  // The CI patches this value automatically before every build so it always
+  // equals the actual versionCode baked into the APK (10000 + run_number).
+  // Do not edit manually — the deploy_release.yml workflow owns this value.
+  static const int currentVersionCode = 2;
 
-  // Self-update — must match the +build_number in pubspec.yaml.
-  // Bump this whenever you publish a new APK.
-  static const int currentVersionCode = 1;
-
-  // URL that returns the version manifest JSON.
-  // Replace with your actual hosted JSON URL before building.
-  //
-  // Expected format:
-  // {
-  //   "versionCode": 2,
-  //   "versionName": "1.1.0",
-  //   "downloadUrl": "https://your-host.com/studytrack.apk",
-  //   "releaseNotes": "Bug fixes and new features"
-  // }
-  static const String updateCheckUrl = 'YOUR_UPDATE_CHECK_URL';
-
-  // Environment placeholders. Provide real values via --dart-define.
-  // Fallback to actual Supabase URL so OTA works even if --dart-define is missing.
-  static const String supabaseUrl = 'https://xidpslwjxnyiptebwdff.supabase.co';
+  // Environment placeholders — supply real values via --dart-define at build time.
+  // Never hard-code real keys here; leave these as empty or placeholder strings.
+  static const String _supabaseUrlFallback = '';
   static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
   static const String geminiApiKey = 'YOUR_GEMINI_API_KEY';
   static const String sentryDsn = '';
 
+  // Public repository links used throughout the app and docs.
+  static const String repositoryUrl =
+      'https://github.com/Benmsumba/studytrack-app';
+  static const String repositoryIssuesUrl =
+      'https://github.com/Benmsumba/studytrack-app/issues/new/choose';
+
   static String get resolvedSupabaseUrl {
     const fromEnv = String.fromEnvironment('SUPABASE_URL');
-    return fromEnv.isNotEmpty ? fromEnv : supabaseUrl;
+    return fromEnv.isNotEmpty ? fromEnv : _supabaseUrlFallback;
   }
 
   static String get resolvedSupabaseAnonKey {
@@ -53,7 +45,7 @@ class AppConstants {
   static bool get isSupabaseConfigured =>
       resolvedSupabaseUrl.isNotEmpty &&
       resolvedSupabaseAnonKey.isNotEmpty &&
-      resolvedSupabaseUrl != 'YOUR_SUPABASE_URL' &&
+      !resolvedSupabaseUrl.startsWith('YOUR_') &&
       resolvedSupabaseAnonKey != 'YOUR_SUPABASE_ANON_KEY';
 
   static bool get isGeminiConfigured {
@@ -64,6 +56,13 @@ class AppConstants {
   static String get resolvedSentryDsn {
     const fromEnv = String.fromEnvironment('SENTRY_DSN');
     return fromEnv.isNotEmpty ? fromEnv : sentryDsn;
+  }
+
+  static const String updateCertificateSha256 = '';
+
+  static String get resolvedUpdateCertificateSha256 {
+    const fromEnv = String.fromEnvironment('UPDATE_CERTIFICATE_SHA256');
+    return fromEnv.isNotEmpty ? fromEnv : updateCertificateSha256;
   }
 
   // Spotify
@@ -78,12 +77,10 @@ class AppConstants {
     return dsn.isNotEmpty && dsn != 'YOUR_SENTRY_DSN';
   }
 
-  // OTA self-update: points at the public latest.json manifest in Supabase Storage.
+  // OTA self-update manifest in Supabase Storage.
   static String get updateCheckUrl {
     final base = resolvedSupabaseUrl;
-    if (base.isEmpty || base == 'YOUR_SUPABASE_URL') {
-      return '';
-    }
+    if (base.isEmpty) return '';
     return '$base/storage/v1/object/public/app-updates/latest.json';
   }
 

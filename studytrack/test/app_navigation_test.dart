@@ -56,7 +56,7 @@ void main() {
           hasUser: true,
           onboardingComplete: true,
         );
-        expect(result, '/home/timetable');
+        expect(result, '/home/dashboard');
       },
     );
 
@@ -83,14 +83,14 @@ void main() {
       expect(result, '/login');
     });
 
-    test('resolveAppRedirect normalizes /home to /home/timetable', () {
+    test('resolveAppRedirect normalizes /home to /home/dashboard', () {
       final result = resolveAppRedirect(
         location: '/home',
         isSupabaseConfigured: true,
         hasUser: true,
         onboardingComplete: true,
       );
-      expect(result, '/home/timetable');
+      expect(result, '/home/dashboard');
     });
   });
 }

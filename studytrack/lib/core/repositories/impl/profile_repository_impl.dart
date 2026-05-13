@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' as supabase;
 
 import '../../services/supabase_service.dart';
@@ -23,7 +23,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       final profile = await _supabaseService.getProfile(uid);
       return Success(profile);
     } on Exception catch (e, stack) {
-      debugPrint('getCurrentProfile error: $e');
+      AppLogger.warning('getCurrentProfile error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch profile: $e',
@@ -42,7 +42,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       final profile = await _supabaseService.getProfile(userId);
       return Success(profile);
     } on Exception catch (e, stack) {
-      debugPrint('getProfileById error: $e');
+      AppLogger.warning('getProfileById error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch profile: $e',
@@ -68,7 +68,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       }
       return Success(updated);
     } on Exception catch (e, stack) {
-      debugPrint('updateProfile error: $e');
+      AppLogger.warning('updateProfile error', error: e);
       return Failure(
         DataException(
           message: 'Failed to update profile: $e',
@@ -89,7 +89,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       await _supabaseService.updateProfile(uid, {'bio': bio});
       return const Success(null);
     } on Exception catch (e, stack) {
-      debugPrint('updateBio error: $e');
+      AppLogger.warning('updateBio error', error: e);
       return Failure(
         DataException(message: 'Failed to update bio: $e', stackTrace: stack),
       );
@@ -107,7 +107,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       await _supabaseService.updateProfile(uid, {'avatar_url': avatarUrl});
       return const Success(null);
     } on Exception catch (e, stack) {
-      debugPrint('updateAvatarUrl error: $e');
+      AppLogger.warning('updateAvatarUrl error', error: e);
       return Failure(
         DataException(
           message: 'Failed to update avatar: $e',
@@ -130,7 +130,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
       await _supabaseService.updateProfile(uid, preferences);
       return const Success(null);
     } on Exception catch (e, stack) {
-      debugPrint('updatePreferences error: $e');
+      AppLogger.warning('updatePreferences error', error: e);
       return Failure(
         DataException(
           message: 'Failed to update preferences: $e',
@@ -181,7 +181,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
       return const Success(null);
     } on Exception catch (e, stack) {
-      debugPrint('deleteAccount error: $e');
+      AppLogger.warning('deleteAccount error', error: e);
       return Failure(
         DataException(
           message: 'Failed to delete account: $e',
@@ -223,7 +223,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
         'total_modules': (modules as List).length,
       });
     } on Exception catch (e, stack) {
-      debugPrint('getUserStatistics error: $e');
+      AppLogger.warning('getUserStatistics error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch user statistics: $e',

@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 
 import '../../../models/study_session_model.dart';
 import '../../services/supabase_service.dart';
@@ -17,7 +17,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       final sessions = await _supabaseService.getSessions();
       return Success(sessions);
     } on Object catch (e, stack) {
-      debugPrint('getAllSessions error: $e');
+      AppLogger.warning('getAllSessions error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch sessions: $e',
@@ -39,7 +39,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       );
       return Success(sessions);
     } on Object catch (e, stack) {
-      debugPrint('getSessionsByDateRange error: $e');
+      AppLogger.warning('getSessionsByDateRange error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch sessions: $e',
@@ -57,7 +57,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       final sessions = await _supabaseService.getSessionsByTopic(topicId);
       return Success(sessions);
     } on Object catch (e, stack) {
-      debugPrint('getSessionsByTopic error: $e');
+      AppLogger.warning('getSessionsByTopic error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch sessions: $e',
@@ -83,7 +83,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       );
       return Success(session);
     } on Object catch (e, stack) {
-      debugPrint('createSession error: $e');
+      AppLogger.warning('createSession error', error: e);
       return Failure(
         DataException(
           message: 'Failed to create session: $e',
@@ -101,7 +101,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       final updated = await _supabaseService.updateSession(session);
       return Success(updated);
     } on Object catch (e, stack) {
-      debugPrint('updateSession error: $e');
+      AppLogger.warning('updateSession error', error: e);
       return Failure(
         DataException(
           message: 'Failed to update session: $e',
@@ -130,7 +130,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       }
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('updateSessionStatus error: $e');
+      AppLogger.warning('updateSessionStatus error', error: e);
       return Failure(
         DataException(
           message: 'Failed to update session status: $e',
@@ -146,7 +146,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       await _supabaseService.deleteSession(sessionId);
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('deleteSession error: $e');
+      AppLogger.warning('deleteSession error', error: e);
       return Failure(
         DataException(
           message: 'Failed to delete session: $e',
@@ -162,7 +162,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       final session = await _supabaseService.endSession(sessionId);
       return Success(session);
     } on Object catch (e, stack) {
-      debugPrint('endSession error: $e');
+      AppLogger.warning('endSession error', error: e);
       return Failure(
         DataException(message: 'Failed to end session: $e', stackTrace: stack),
       );
@@ -175,7 +175,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       final total = await _supabaseService.getTotalStudyTime();
       return Success(total);
     } on Object catch (e, stack) {
-      debugPrint('getTotalStudyTime error: $e');
+      AppLogger.warning('getTotalStudyTime error', error: e);
       return Failure(
         DataException(
           message: 'Failed to get total study time: $e',
@@ -191,7 +191,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       final streak = await _supabaseService.getDailyStreak();
       return Success(streak);
     } on Object catch (e, stack) {
-      debugPrint('getDailyStreak error: $e');
+      AppLogger.warning('getDailyStreak error', error: e);
       return Failure(
         DataException(
           message: 'Failed to get daily streak: $e',
@@ -207,7 +207,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       final sessions = await _supabaseService.getSessionsToday();
       return Success(sessions);
     } on Object catch (e, stack) {
-      debugPrint('getSessionsToday error: $e');
+      AppLogger.warning('getSessionsToday error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch sessions: $e',
@@ -223,7 +223,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       final average = await _supabaseService.getAverageSessionDuration();
       return Success(average);
     } on Object catch (e, stack) {
-      debugPrint('getAverageSessionDuration error: $e');
+      AppLogger.warning('getAverageSessionDuration error', error: e);
       return Failure(
         DataException(
           message: 'Failed to get average session duration: $e',
@@ -239,7 +239,7 @@ class StudySessionRepositoryImpl implements StudySessionRepository {
       // Sync handled by offline sync service
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('syncSessions error: $e');
+      AppLogger.warning('syncSessions error', error: e);
       return Failure(
         DataException(
           message: 'Failed to sync sessions: $e',

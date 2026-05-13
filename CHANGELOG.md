@@ -17,6 +17,17 @@ Versions follow [Semantic Versioning](https://semver.org/).
 - Improved settings accessibility semantics and made settings cards adapt to active theme
 - Added shared loading, empty, and error state components with shimmer placeholders on major screens
 - Extended the shared loading and retry states to exam countdown, weekly wrap, notifications, timetable, module/topic detail, group detail/chat, and AI tutor/quiz screens
+- **Security:** Upgraded user ID anonymization from weak truncation to SHA-256 hashing for group members
+- **Security:** Encrypted cached query payloads at rest in the offline data store
+- **Security:** Encrypted local voice-note recordings before they are stored on disk
+- **Security:** Added configurable TLS certificate pinning for the update downloader
+- **Data retention:** Added soft-delete support and orphan cleanup for modules, topics, exams, timetables, and uploaded notes
+- **Reliability:** Added a shared logger for the core service layer and tightened error reporting paths
+- **Performance:** Optimized topic cache writes by batching per-module instead of per-item writes
+- **Config:** Extracted hardcoded configuration values (cache TTL, rate limits, error history size) to `AppConfig` class
+- **UI:** Enhanced home screen and progress screen with glass cards, ambient glows, and improved visual hierarchy
+- **Router:** Added missing analytics and voice notes screens to navigation routes
+- **Docs:** Updated repository clone commands in CONTRIBUTING.md and README.md
 
 ### Planned
 - Privacy Policy and Terms of Service pages

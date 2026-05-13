@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
+
+import '../constants/app_constants.dart';
+import '../utils/app_logger.dart';
+import '../utils/debug_print_compat.dart';
 
 class AppUpdateInfo {
   const AppUpdateInfo({
@@ -58,7 +61,7 @@ class AppUpdateService {
     required int currentVersionCode,
   }) async {
     if (checkUrl.isEmpty || checkUrl == 'YOUR_UPDATE_CHECK_URL') {
-      debugPrint(
+      AppLogger.debug(
         '[AppUpdateService] Update check skipped: empty or placeholder URL',
       );
       return null;
@@ -68,8 +71,8 @@ class AppUpdateService {
     client.connectionTimeout = const Duration(seconds: 10);
 
     try {
-      debugPrint('[AppUpdateService] Fetching update manifest...');
-      debugPrint('[AppUpdateService] URL: $checkUrl');
+      AppLogger.debug('[AppUpdateService] Fetching update manifest...');
+      AppLogger.debug('[AppUpdateService] URL: $checkUrl');
 
       final request = await client.getUrl(Uri.parse(checkUrl));
       request.headers.set(HttpHeaders.cacheControlHeader, 'no-cache');
@@ -79,7 +82,8 @@ class AppUpdateService {
       );
 
       final response = await request.close();
-      debugPrint(
+      _validatePinnedCertificate(response, Uri.parse(checkUrl));
+      AppLogger.debug(
         '[AppUpdateService] HTTP response status: ${response.statusCode}',
       );
 
@@ -91,7 +95,7 @@ class AppUpdateService {
       }
 
       final body = await response.transform(utf8.decoder).join();
-      debugPrint(
+      AppLogger.debug(
         '[AppUpdateService] Response body length: ${body.length} bytes',
       );
 
@@ -105,19 +109,23 @@ class AppUpdateService {
       }
 
       final info = AppUpdateInfo.fromJson(Map<String, dynamic>.from(json));
-      debugPrint('[AppUpdateService] Parsed manifest:');
-      debugPrint('[AppUpdateService]   - versionCode: ${info.versionCode}');
-      debugPrint('[AppUpdateService]   - versionName: ${info.versionName}');
-      debugPrint(
+      AppLogger.debug('[AppUpdateService] Parsed manifest:');
+      AppLogger.debug(
+        '[AppUpdateService]   - versionCode: ${info.versionCode}',
+      );
+      AppLogger.debug(
+        '[AppUpdateService]   - versionName: ${info.versionName}',
+      );
+      AppLogger.debug(
         '[AppUpdateService]   - downloadUrl: ${info.downloadUrl.isNotEmpty}',
       );
-      debugPrint(
+      AppLogger.debug(
         '[AppUpdateService]   - apkSha256: ${info.apkSha256.isNotEmpty}',
       );
 
       if (info.versionCode <= currentVersionCode) {
-        debugPrint('[AppUpdateService] No update needed:');
-        debugPrint(
+        AppLogger.debug('[AppUpdateService] No update needed:');
+        AppLogger.debug(
           '[AppUpdateService]   Remote versionCode (${info.versionCode}) ≤ Current ($currentVersionCode)',
         );
         return null;
@@ -127,24 +135,24 @@ class AppUpdateService {
         throw const FormatException('Update manifest is missing downloadUrl');
       }
 
-      debugPrint('[AppUpdateService] ✓ UPDATE AVAILABLE!');
-      debugPrint(
+      AppLogger.debug('[AppUpdateService] ✓ UPDATE AVAILABLE!');
+      AppLogger.debug(
         '[AppUpdateService]   Upgrade: $currentVersionCode → ${info.versionCode}',
       );
       return info;
     } on SocketException catch (e) {
-      debugPrint('[AppUpdateService] ✗ SOCKET ERROR: ${e.message}');
-      debugPrint('[AppUpdateService]   (Network connectivity issue)');
+      AppLogger.warning('[AppUpdateService] ✗ SOCKET ERROR: ${e.message}');
+      AppLogger.debug('[AppUpdateService]   (Network connectivity issue)');
       rethrow;
     } on HttpException catch (e) {
-      debugPrint('[AppUpdateService] ✗ HTTP ERROR: $e');
+      AppLogger.warning('[AppUpdateService] ✗ HTTP ERROR', error: e);
       rethrow;
     } on FormatException catch (e) {
-      debugPrint('[AppUpdateService] ✗ FORMAT ERROR: $e');
+      AppLogger.warning('[AppUpdateService] ✗ FORMAT ERROR', error: e);
       rethrow;
     } on Exception catch (e) {
-      debugPrint('[AppUpdateService] ✗ EXCEPTION: ${e.runtimeType}');
-      debugPrint('[AppUpdateService]   Error: $e');
+      AppLogger.warning('[AppUpdateService] ✗ EXCEPTION: ${e.runtimeType}');
+      AppLogger.warning('[AppUpdateService]   Error', error: e);
       rethrow;
     } finally {
       client.close();
@@ -159,6 +167,7 @@ class AppUpdateService {
       final request = await client.getUrl(Uri.parse(url));
       request.headers.set(HttpHeaders.cacheControlHeader, 'no-cache');
       final response = await request.close();
+      _validatePinnedCertificate(response, Uri.parse(url));
       if (response.statusCode != 200) {
         throw HttpException(
           'APK download failed (${response.statusCode}).',
@@ -179,7 +188,7 @@ class AppUpdateService {
       await sink.flush();
       await sink.close();
     } on Exception catch (e) {
-      debugPrint('APK download failed: $e');
+      AppLogger.warning('APK download failed', error: e);
       rethrow;
     } finally {
       client.close();
@@ -214,8 +223,37 @@ class AppUpdateService {
   }
 
   Future<String> get apkSavePath async {
-    final dir = await getTemporaryDirectory();
+    // Prefer the app-specific external files directory on Android.
+    // The system package installer reliably holds a FileProvider URI that
+    // points here, whereas getCacheDir() (getTemporaryDirectory) is blocked
+    // by some OEM package installers running in isolated processes.
+    final Directory dir;
+    if (Platform.isAndroid) {
+      dir =
+          await getExternalStorageDirectory() ?? await getTemporaryDirectory();
+    } else {
+      dir = await getTemporaryDirectory();
+    }
     return '${dir.path}/studytrack_update.apk';
+  }
+
+  void _validatePinnedCertificate(HttpClientResponse response, Uri uri) {
+    final expectedFingerprint = AppConstants.resolvedUpdateCertificateSha256
+        .trim()
+        .toLowerCase();
+    if (expectedFingerprint.isEmpty) {
+      return;
+    }
+
+    final certificate = response.certificate;
+    if (certificate == null) {
+      throw StateError('TLS certificate pinning failed for $uri');
+    }
+
+    final actualFingerprint = sha256.convert(certificate.der).toString();
+    if (actualFingerprint != expectedFingerprint) {
+      throw StateError('TLS certificate pinning failed for $uri');
+    }
   }
 }
 

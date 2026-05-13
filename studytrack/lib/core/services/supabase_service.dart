@@ -1,8 +1,9 @@
 // ignore_for_file: avoid_catches_without_on_clauses, unawaited_futures
 
 import 'dart:async';
+import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide debugPrint;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -12,7 +13,11 @@ import '../../models/module_model.dart';
 import '../../models/study_group_model.dart';
 import '../../models/study_session_model.dart';
 import '../../models/topic_model.dart';
+import '../constants/app_config.dart';
 import '../constants/app_constants.dart';
+import '../utils/app_logger.dart';
+import '../utils/debug_print_compat.dart';
+import '../utils/helpers.dart';
 import 'offline_sync_service.dart';
 
 class SupabaseService {
@@ -23,6 +28,9 @@ class SupabaseService {
   SupabaseService._internal();
 
   static final SupabaseService _instance = SupabaseService._internal();
+
+  /// Named accessor for code that cannot use the factory (e.g. static helpers).
+  static SupabaseService get instance => _instance;
   RealtimeChannel? _messagesChannel;
   String? _lastAuthError;
   final OfflineSyncService _offlineSync = OfflineSyncService.instance;
@@ -83,6 +91,42 @@ class SupabaseService {
 
   String _newId() => _uuid.v4();
 
+  bool _isActiveRow(Map<String, dynamic> row) => row['deleted_at'] == null;
+
+  List<Map<String, dynamic>> _activeRows(List<dynamic> response) => response
+      .whereType<Map<String, dynamic>>()
+      .where(_isActiveRow)
+      .toList(growable: false);
+
+  Map<String, dynamic>? _activeRow(Map<String, dynamic>? row) =>
+      row == null || !_isActiveRow(row) ? null : row;
+
+  Future<void> _purgeCachedListItem({
+    required String entity,
+    required String scope,
+    required String recordId,
+  }) async {
+    final cached = await _cachedList(entity, scope);
+    if (cached == null || cached.isEmpty) {
+      return;
+    }
+
+    final filtered = cached
+        .where((row) => row['id']?.toString() != recordId)
+        .toList();
+    await _cacheList(entity, scope, filtered);
+  }
+
+  Future<void> _clearCachedList(String entity, String scope) async {
+    await _cacheList(entity, scope, const []);
+  }
+
+  Future<void> _purgeCachedRecord(String entity, String recordId) async {
+    await _offlineSync.deleteCachedRecord(entity: entity, recordId: recordId);
+  }
+
+  Future<String?> _currentUserId() async => getCurrentUser()?.id;
+
   // ---------------------------------------------------------------------------
   // AUTH
   // ---------------------------------------------------------------------------
@@ -140,8 +184,11 @@ class SupabaseService {
           } on Object catch (error, stackTrace) {
             // Account creation already succeeded in Auth. A profile can be
             // created/updated later during onboarding or on next login.
-            debugPrint('signUpWithEmail profile upsert error: $error');
-            debugPrint('$stackTrace');
+            AppLogger.warning(
+              'signUpWithEmail profile upsert error',
+              error: error,
+              stackTrace: stackTrace,
+            );
           }
         }
 
@@ -153,8 +200,11 @@ class SupabaseService {
           continue;
         }
         _lastAuthError = _mapAuthErrorText(errorMessage);
-        debugPrint('signUpWithEmail auth error: $errorMessage');
-        debugPrint('$stackTrace');
+        AppLogger.warning(
+          'signUpWithEmail auth error',
+          error: errorMessage,
+          stackTrace: stackTrace,
+        );
         return null;
       }
     }
@@ -184,8 +234,11 @@ class SupabaseService {
           continue;
         }
         _lastAuthError = _mapAuthErrorText(errorMessage);
-        debugPrint('signInWithEmail auth error: $errorMessage');
-        debugPrint('$stackTrace');
+        AppLogger.warning(
+          'signInWithEmail auth error',
+          error: errorMessage,
+          stackTrace: stackTrace,
+        );
         return null;
       }
     }
@@ -199,8 +252,7 @@ class SupabaseService {
       await client.auth.signOut();
       return true;
     } on Object catch (error, stackTrace) {
-      debugPrint('signOut error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning('signOut error', error: error, stackTrace: stackTrace);
       return null;
     }
   }
@@ -210,8 +262,11 @@ class SupabaseService {
       await client.auth.resetPasswordForEmail(email.trim());
       return true;
     } on Object catch (error, stackTrace) {
-      debugPrint('resetPasswordForEmail error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'resetPasswordForEmail error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -229,8 +284,11 @@ class SupabaseService {
       return launched;
     } on Object catch (error, stackTrace) {
       _lastAuthError = _mapAuthErrorText(error.toString());
-      debugPrint('signInWithGoogle error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'signInWithGoogle error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -239,8 +297,11 @@ class SupabaseService {
     try {
       return client.auth.currentUser;
     } on Object catch (error, stackTrace) {
-      debugPrint('getCurrentUser error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'getCurrentUser error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -249,8 +310,11 @@ class SupabaseService {
     try {
       return client.auth.currentUser != null;
     } on Object catch (error, stackTrace) {
-      debugPrint('isLoggedIn error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'isLoggedIn error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return false;
     }
   }
@@ -275,8 +339,11 @@ class SupabaseService {
 
       return await _cachedRecord('profiles', userId);
     } on Object catch (error, stackTrace) {
-      debugPrint('getProfile error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'getProfile error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return _cachedRecord('profiles', userId);
     }
   }
@@ -305,8 +372,11 @@ class SupabaseService {
       await _cacheRecord('profiles', userId, optimistic);
       return optimistic;
     } on Object catch (error, stackTrace) {
-      debugPrint('updateProfile error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'updateProfile error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       try {
         await _queueChange('profiles', 'upsert', payload, recordId: userId);
         final existing =
@@ -315,8 +385,11 @@ class SupabaseService {
         await _cacheRecord('profiles', userId, optimistic);
         return optimistic;
       } on Object catch (queueError, queueStack) {
-        debugPrint('updateProfile queue fallback error: $queueError');
-        debugPrint('$queueStack');
+        AppLogger.warning(
+          'updateProfile queue fallback error',
+          error: queueError,
+          stackTrace: queueStack,
+        );
         return null;
       }
     }
@@ -347,8 +420,11 @@ class SupabaseService {
       );
     } on Object catch (error, stackTrace) {
       // Non-fatal: user can still proceed and retry profile updates later.
-      debugPrint('ensureProfileExists error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'ensureProfileExists error',
+        error: error,
+        stackTrace: stackTrace,
+      );
     }
   }
 
@@ -450,8 +526,11 @@ class SupabaseService {
         'last_study_date': todayDate.toIso8601String().split('T').first,
       });
     } on Object catch (error, stackTrace) {
-      debugPrint('updateStreak error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'updateStreak error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -468,20 +547,25 @@ class SupabaseService {
             .select()
             .eq('user_id', userId)
             .order('created_at');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('modules', userId, rows);
         return rows.map(ModuleModel.fromJson).toList();
       }
 
       final cached = await _cachedList('modules', userId);
-      return cached?.map(ModuleModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(ModuleModel.fromJson).toList(growable: false);
     } on Object catch (error, stackTrace) {
-      debugPrint('getModules error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'getModules error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       final cached = await _cachedList('modules', userId);
-      return cached?.map(ModuleModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(ModuleModel.fromJson).toList(growable: false);
     }
   }
 
@@ -494,7 +578,7 @@ class SupabaseService {
             .eq('id', moduleId)
             .maybeSingle();
 
-        if (response == null) {
+        if (response == null || response['deleted_at'] != null) {
           return null;
         }
 
@@ -503,12 +587,15 @@ class SupabaseService {
       }
 
       final cached = await _cachedRecord('modules', moduleId);
-      return cached == null ? null : ModuleModel.fromJson(cached);
+      return _activeRow(cached) == null ? null : ModuleModel.fromJson(cached!);
     } on Object catch (error, stackTrace) {
-      debugPrint('getModuleById error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'getModuleById error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       final cached = await _cachedRecord('modules', moduleId);
-      return cached == null ? null : ModuleModel.fromJson(cached);
+      return _activeRow(cached) == null ? null : ModuleModel.fromJson(cached!);
     }
   }
 
@@ -519,11 +606,14 @@ class SupabaseService {
   ) async {
     try {
       final moduleId = _newId();
+      // The DB CHECK constraint rejects empty/non-hex colors. Pass null
+      // instead of an empty string so the row is accepted.
+      final normalizedColor = color.trim().isEmpty ? null : color;
       final payload = {
         'id': moduleId,
         'user_id': userId,
         'name': name,
-        'color': color,
+        'color': normalizedColor,
         'created_at': DateTime.now().toIso8601String(),
       };
 
@@ -543,8 +633,11 @@ class SupabaseService {
       await _cacheRecord('modules', moduleId, payload);
       return payload;
     } on Object catch (error, stackTrace) {
-      debugPrint('addModule error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'addModule error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -575,8 +668,11 @@ class SupabaseService {
       await _cacheRecord('modules', moduleId, optimistic);
       return optimistic;
     } on Object catch (error, stackTrace) {
-      debugPrint('updateModule error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'updateModule error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -584,21 +680,35 @@ class SupabaseService {
   Future<bool?> deleteModule(String moduleId) async {
     try {
       if (await _isOnline()) {
-        await client.from('modules').delete().eq('id', moduleId);
-        await _offlineSync.deleteCachedRecord(
-          entity: 'modules',
-          recordId: moduleId,
-        );
+        final userId = await _currentUserId();
+        await client
+            .from('modules')
+            .update({'deleted_at': DateTime.now().toIso8601String()})
+            .eq('id', moduleId);
+        if (userId != null) {
+          await _purgeCachedListItem(
+            entity: 'modules',
+            scope: userId,
+            recordId: moduleId,
+          );
+          await _clearCachedList('exams', userId);
+        }
+        await _clearCachedList('topics', moduleId);
+        await _purgeCachedRecord('modules', moduleId);
         return true;
       }
 
-      await _queueChange('modules', 'delete', {
+      await _queueChange('modules', 'update', {
         'id': moduleId,
+        'deleted_at': DateTime.now().toIso8601String(),
       }, recordId: moduleId);
       return true;
     } on Object catch (error, stackTrace) {
-      debugPrint('deleteModule error: $error');
-      debugPrint('$stackTrace');
+      AppLogger.warning(
+        'deleteModule error',
+        error: error,
+        stackTrace: stackTrace,
+      );
       return null;
     }
   }
@@ -615,19 +725,21 @@ class SupabaseService {
             .select()
             .eq('module_id', moduleId)
             .order('created_at');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('topics', moduleId, rows);
         return rows.map(TopicModel.fromJson).toList();
       }
 
       final cached = await _cachedList('topics', moduleId);
-      return cached?.map(TopicModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(TopicModel.fromJson).toList(growable: false);
     } on Object catch (error) {
-      debugPrint('getTopics error: $error');
+      AppLogger.warning('getTopics error', error: error);
       final cached = await _cachedList('topics', moduleId);
-      return cached?.map(TopicModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(TopicModel.fromJson).toList(growable: false);
     }
   }
 
@@ -645,10 +757,18 @@ class SupabaseService {
         final rows = (response as List<dynamic>)
             .map((item) => item as Map<String, dynamic>)
             .toList();
-        for (final row in rows) {
-          await _cacheRecord('topics', row['id'].toString(), row);
+        final activeRows = _activeRows(rows);
+        // Group by module then cache each bucket — keeps per-module cache keys
+        // consistent with getTopics() so offline reads find them correctly.
+        final rowsByModule = <String, List<Map<String, dynamic>>>{};
+        for (final row in activeRows) {
+          final moduleId = row['module_id']?.toString() ?? '';
+          rowsByModule.putIfAbsent(moduleId, () => []).add(row);
         }
-        return rows.map(TopicModel.fromJson).toList();
+        for (final entry in rowsByModule.entries) {
+          await _cacheList('topics', entry.key, entry.value);
+        }
+        return activeRows.map(TopicModel.fromJson).toList();
       }
 
       // Offline: aggregate from per-module caches.
@@ -659,7 +779,7 @@ class SupabaseService {
       }
       return all;
     } on Object catch (error) {
-      debugPrint('getTopicsByModuleIds error: $error');
+      AppLogger.warning('getTopicsByModuleIds error', error: error);
       final all = <TopicModel>[];
       for (final moduleId in moduleIds) {
         final cached = await _cachedList('topics', moduleId);
@@ -678,7 +798,7 @@ class SupabaseService {
             .eq('id', topicId)
             .maybeSingle();
 
-        if (response == null) {
+        if (response == null || response['deleted_at'] != null) {
           return null;
         }
 
@@ -687,11 +807,11 @@ class SupabaseService {
       }
 
       final cached = await _cachedRecord('topics', topicId);
-      return cached == null ? null : TopicModel.fromJson(cached);
+      return _activeRow(cached) == null ? null : TopicModel.fromJson(cached!);
     } on Object catch (error) {
-      debugPrint('getTopicById error: $error');
+      AppLogger.warning('getTopicById error', error: error);
       final cached = await _cachedRecord('topics', topicId);
-      return cached == null ? null : TopicModel.fromJson(cached);
+      return _activeRow(cached) == null ? null : TopicModel.fromJson(cached!);
     }
   }
 
@@ -719,7 +839,7 @@ class SupabaseService {
       final cached = await _cachedList('topic_ratings_history', queryKey);
       return cached?.reversed.toList();
     } catch (error) {
-      debugPrint('getTopicRatingHistory error: $error');
+      AppLogger.warning('getTopicRatingHistory error', error: error);
       final queryKey = 'topic_ratings_history:$topicId:$limit';
       final cached = await _cachedList('topic_ratings_history', queryKey);
       return cached?.reversed.toList();
@@ -759,7 +879,7 @@ class SupabaseService {
       await _cacheRecord('topics', topicId, payload);
       return payload;
     } catch (error) {
-      debugPrint('addTopic error: $error');
+      AppLogger.warning('addTopic error', error: error);
       return null;
     }
   }
@@ -819,7 +939,7 @@ class SupabaseService {
       await _cacheRecord('topics', topicId, optimistic);
       return optimistic;
     } catch (error) {
-      debugPrint('updateTopicRating error: $error');
+      AppLogger.warning('updateTopicRating error', error: error);
       return null;
     }
   }
@@ -860,7 +980,7 @@ class SupabaseService {
       await _cacheRecord('topics', topicId, optimistic);
       return optimistic;
     } catch (error) {
-      debugPrint('markTopicStudied error: $error');
+      AppLogger.warning('markTopicStudied error', error: error);
       return null;
     }
   }
@@ -894,7 +1014,7 @@ class SupabaseService {
       await _cacheRecord('topics', topicId, optimistic);
       return optimistic;
     } catch (error) {
-      debugPrint('updateTopicNotes error: $error');
+      AppLogger.warning('updateTopicNotes error', error: error);
       return null;
     }
   }
@@ -910,40 +1030,62 @@ class SupabaseService {
             .eq('user_id', userId)
             .lte('next_review_at', nowIso)
             .order('next_review_at');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('topics_needing_review', queryKey, rows);
         return rows.map(TopicModel.fromJson).toList();
       }
 
       final cached = await _cachedList('topics_needing_review', queryKey);
-      return cached?.map(TopicModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(TopicModel.fromJson).toList(growable: false);
     } catch (error) {
-      debugPrint('getTopicsNeedingReview error: $error');
+      AppLogger.warning('getTopicsNeedingReview error', error: error);
       final queryKey = 'topics_needing_review:$userId';
       final cached = await _cachedList('topics_needing_review', queryKey);
-      return cached?.map(TopicModel.fromJson).toList();
+      return _activeRows(
+        cached ?? const [],
+      ).map(TopicModel.fromJson).toList(growable: false);
     }
   }
 
   Future<bool?> deleteTopic(String topicId) async {
     try {
       if (await _isOnline()) {
-        await client.from('topics').delete().eq('id', topicId);
-        await _offlineSync.deleteCachedRecord(
-          entity: 'topics',
-          recordId: topicId,
-        );
+        final topic = await client
+            .from('topics')
+            .select('id,module_id,user_id')
+            .eq('id', topicId)
+            .maybeSingle();
+        await client
+            .from('topics')
+            .update({'deleted_at': DateTime.now().toIso8601String()})
+            .eq('id', topicId);
+        if (topic != null) {
+          final moduleId = topic['module_id']?.toString();
+          if (moduleId != null && moduleId.isNotEmpty) {
+            await _clearCachedList('topics', moduleId);
+          }
+          final userId = topic['user_id']?.toString();
+          if (userId != null && userId.isNotEmpty) {
+            await _purgeCachedListItem(
+              entity: 'topics_needing_review',
+              scope: userId,
+              recordId: topicId,
+            );
+          }
+        }
+        await _purgeCachedRecord('topics', topicId);
         return true;
       }
 
-      await _queueChange('topics', 'delete', {
+      await _queueChange('topics', 'update', {
         'id': topicId,
+        'deleted_at': DateTime.now().toIso8601String(),
       }, recordId: topicId);
       return true;
     } catch (error) {
-      debugPrint('deleteTopic error: $error');
+      AppLogger.warning('deleteTopic error', error: error);
       return null;
     }
   }
@@ -961,17 +1103,19 @@ class SupabaseService {
             .eq('user_id', userId)
             .order('day_of_week')
             .order('start_time');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('class_timetable', userId, rows);
         return rows;
       }
 
-      return await _cachedList('class_timetable', userId);
+      return _activeRows(
+        await _cachedList('class_timetable', userId) ?? const [],
+      );
     } catch (error) {
-      debugPrint('getClassTimetable error: $error');
-      return _cachedList('class_timetable', userId);
+      AppLogger.warning('getClassTimetable error', error: error);
+      return _activeRows(
+        await _cachedList('class_timetable', userId) ?? const [],
+      );
     }
   }
 
@@ -1003,7 +1147,7 @@ class SupabaseService {
       await _cacheRecord('class_timetable', id, payload);
       return payload;
     } catch (error) {
-      debugPrint('addClassSlot error: $error');
+      AppLogger.warning('addClassSlot error', error: error);
       return null;
     }
   }
@@ -1031,7 +1175,7 @@ class SupabaseService {
       await _cacheRecord('class_timetable', id, payload);
       return payload;
     } catch (error) {
-      debugPrint('updateClassSlot error: $error');
+      AppLogger.warning('updateClassSlot error', error: error);
       return null;
     }
   }
@@ -1039,18 +1183,29 @@ class SupabaseService {
   Future<bool?> deleteClassSlot(String id) async {
     try {
       if (await _isOnline()) {
-        await client.from('class_timetable').delete().eq('id', id);
-        await _offlineSync.deleteCachedRecord(
-          entity: 'class_timetable',
-          recordId: id,
-        );
+        final userId = await _currentUserId();
+        await client
+            .from('class_timetable')
+            .update({'deleted_at': DateTime.now().toIso8601String()})
+            .eq('id', id);
+        if (userId != null) {
+          await _purgeCachedListItem(
+            entity: 'class_timetable',
+            scope: userId,
+            recordId: id,
+          );
+        }
+        await _purgeCachedRecord('class_timetable', id);
         return true;
       }
 
-      await _queueChange('class_timetable', 'delete', {'id': id}, recordId: id);
+      await _queueChange('class_timetable', 'update', {
+        'id': id,
+        'deleted_at': DateTime.now().toIso8601String(),
+      }, recordId: id);
       return true;
     } catch (error) {
-      debugPrint('deleteClassSlot error: $error');
+      AppLogger.warning('deleteClassSlot error', error: error);
       return null;
     }
   }
@@ -1069,16 +1224,14 @@ class SupabaseService {
             .eq('user_id', userId)
             .eq('scheduled_date', day)
             .order('start_time');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('study_sessions', scope, rows);
         return rows;
       }
 
       return _cachedList('study_sessions', scope);
     } catch (error) {
-      debugPrint('getStudySessions error: $error');
+      AppLogger.warning('getStudySessions error', error: error);
       return _cachedList(
         'study_sessions',
         '$userId:${date.toIso8601String().split('T').first}',
@@ -1116,7 +1269,7 @@ class SupabaseService {
       await _cacheRecord('study_sessions', id, payload);
       return payload;
     } catch (error) {
-      debugPrint('addStudySession error: $error');
+      AppLogger.warning('addStudySession error', error: error);
       return null;
     }
   }
@@ -1157,7 +1310,7 @@ class SupabaseService {
       await _cacheRecord('study_sessions', sessionId, payload);
       return payload;
     } catch (error) {
-      debugPrint('updateSessionStatus error: $error');
+      AppLogger.warning('updateSessionStatus error', error: error);
       return null;
     }
   }
@@ -1174,17 +1327,15 @@ class SupabaseService {
             .select()
             .eq('user_id', userId)
             .order('exam_date');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('exams', userId, rows);
         return rows;
       }
 
-      return _cachedList('exams', userId);
+      return _activeRows(await _cachedList('exams', userId) ?? const []);
     } catch (error) {
-      debugPrint('getExams error: $error');
-      return _cachedList('exams', userId);
+      AppLogger.warning('getExams error', error: error);
+      return _activeRows(await _cachedList('exams', userId) ?? const []);
     }
   }
 
@@ -1212,7 +1363,7 @@ class SupabaseService {
       await _cacheRecord('exams', id, payload);
       return payload;
     } catch (error) {
-      debugPrint('addExam error: $error');
+      AppLogger.warning('addExam error', error: error);
       return null;
     }
   }
@@ -1240,7 +1391,7 @@ class SupabaseService {
       await _cacheRecord('exams', id, payload);
       return payload;
     } catch (error) {
-      debugPrint('updateExam error: $error');
+      AppLogger.warning('updateExam error', error: error);
       return null;
     }
   }
@@ -1248,15 +1399,29 @@ class SupabaseService {
   Future<bool?> deleteExam(String id) async {
     try {
       if (await _isOnline()) {
-        await client.from('exams').delete().eq('id', id);
-        await _offlineSync.deleteCachedRecord(entity: 'exams', recordId: id);
+        final userId = await _currentUserId();
+        await client
+            .from('exams')
+            .update({'deleted_at': DateTime.now().toIso8601String()})
+            .eq('id', id);
+        if (userId != null) {
+          await _purgeCachedListItem(
+            entity: 'exams',
+            scope: userId,
+            recordId: id,
+          );
+        }
+        await _purgeCachedRecord('exams', id);
         return true;
       }
 
-      await _queueChange('exams', 'delete', {'id': id}, recordId: id);
+      await _queueChange('exams', 'update', {
+        'id': id,
+        'deleted_at': DateTime.now().toIso8601String(),
+      }, recordId: id);
       return true;
     } catch (error) {
-      debugPrint('deleteExam error: $error');
+      AppLogger.warning('deleteExam error', error: error);
       return null;
     }
   }
@@ -1271,17 +1436,19 @@ class SupabaseService {
             .eq('user_id', userId)
             .gte('exam_date', DateTime.now().toIso8601String().split('T').first)
             .order('exam_date');
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('upcoming_exams', scope, rows);
         return rows;
       }
 
-      return _cachedList('upcoming_exams', scope);
+      return _activeRows(
+        await _cachedList('upcoming_exams', scope) ?? const [],
+      );
     } catch (error) {
-      debugPrint('getUpcomingExams error: $error');
-      return _cachedList('upcoming_exams', userId);
+      AppLogger.warning('getUpcomingExams error', error: error);
+      return _activeRows(
+        await _cachedList('upcoming_exams', userId) ?? const [],
+      );
     }
   }
 
@@ -1345,7 +1512,7 @@ class SupabaseService {
       await _cacheRecord('study_groups', groupId, groupPayload);
       return groupPayload;
     } catch (error) {
-      debugPrint('createGroup error: $error');
+      AppLogger.warning('createGroup error', error: error);
       return null;
     }
   }
@@ -1389,7 +1556,7 @@ class SupabaseService {
         'status': 'pending',
       };
     } catch (error) {
-      debugPrint('joinGroup error: $error');
+      AppLogger.warning('joinGroup error', error: error);
       return null;
     }
   }
@@ -1416,7 +1583,7 @@ class SupabaseService {
 
       return _cachedList('my_groups', userId);
     } catch (error) {
-      debugPrint('getMyGroups error: $error');
+      AppLogger.warning('getMyGroups error', error: error);
       return _cachedList('my_groups', userId);
     }
   }
@@ -1448,12 +1615,10 @@ class SupabaseService {
           }
 
           final rawUserId = member['user_id']?.toString() ?? '';
-          final shortId = rawUserId.length <= 8
-              ? rawUserId
-              : rawUserId.substring(0, 8);
+          final anonId = Helpers.anonymizeUserId(rawUserId);
           return {
             ...member,
-            'name': 'Member $shortId',
+            'name': 'Member $anonId',
             'course': 'Private',
             'year_level': null,
           };
@@ -1465,7 +1630,7 @@ class SupabaseService {
 
       return _cachedList('group_members', groupId);
     } catch (error) {
-      debugPrint('getGroupMembers error: $error');
+      AppLogger.warning('getGroupMembers error', error: error);
       return _cachedList('group_members', groupId);
     }
   }
@@ -1487,7 +1652,7 @@ class SupabaseService {
       });
       return true;
     } catch (error) {
-      debugPrint('removeGroupMember error: $error');
+      AppLogger.warning('removeGroupMember error', error: error);
       return null;
     }
   }
@@ -1509,7 +1674,7 @@ class SupabaseService {
       });
       return true;
     } catch (error) {
-      debugPrint('leaveGroup error: $error');
+      AppLogger.warning('leaveGroup error', error: error);
       return null;
     }
   }
@@ -1535,30 +1700,45 @@ class SupabaseService {
 
       return _cachedList('topic_messages', topicId);
     } catch (error) {
-      debugPrint('getTopicMessages error: $error');
+      AppLogger.warning('getTopicMessages error', error: error);
       return _cachedList('topic_messages', topicId);
     }
   }
 
-  Future<List<Map<String, dynamic>>?> getGroupMessages(String groupId) async {
+  Future<List<Map<String, dynamic>>?> getGroupMessages(
+    String groupId, {
+    int limit = AppConfig.messagesPaginationSize,
+    int offset = 0,
+  }) async {
     try {
       if (await _isOnline()) {
         final response = await client
             .from('group_messages')
             .select()
             .eq('group_id', groupId)
-            .order('created_at');
+            .order('created_at', ascending: false)
+            .range(offset, offset + limit - 1);
         final rows = (response as List<dynamic>)
             .map((item) => item as Map<String, dynamic>)
+            .toList()
+            .reversed
             .toList();
-        await _cacheList('group_messages', groupId, rows);
+        // Only cache the first page (offset 0) — subsequent pages are
+        // appended in the UI layer and do not replace the cache.
+        if (offset == 0) {
+          await _cacheList('group_messages', groupId, rows);
+        }
         return rows;
       }
 
-      return _cachedList('group_messages', groupId);
+      final cached = await _cachedList('group_messages', groupId);
+      if (cached == null) return null;
+      return cached.skip(offset).take(limit).toList();
     } catch (error) {
-      debugPrint('getGroupMessages error: $error');
-      return _cachedList('group_messages', groupId);
+      AppLogger.warning('getGroupMessages error', error: error);
+      final cached = await _cachedList('group_messages', groupId);
+      if (cached == null) return null;
+      return cached.skip(offset).take(limit).toList();
     }
   }
 
@@ -1596,7 +1776,7 @@ class SupabaseService {
       await _cacheList('group_messages', scope, [...cached, payload]);
       return payload;
     } catch (error) {
-      debugPrint('sendMessage error: $error');
+      AppLogger.warning('sendMessage error', error: error);
       return null;
     }
   }
@@ -1630,7 +1810,7 @@ class SupabaseService {
 
       return _messagesChannel;
     } catch (error) {
-      debugPrint('subscribeToMessages error: $error');
+      AppLogger.warning('subscribeToMessages error', error: error);
       return null;
     }
   }
@@ -1664,7 +1844,7 @@ class SupabaseService {
 
       return _messagesChannel;
     } catch (error) {
-      debugPrint('subscribeToGroupMessages error: $error');
+      AppLogger.warning('subscribeToGroupMessages error', error: error);
       return null;
     }
   }
@@ -1682,7 +1862,7 @@ class SupabaseService {
         return StudyGroupModel.fromJson(gm);
       }).toList();
     } catch (e) {
-      debugPrint('getStudyGroups wrapper error: $e');
+      AppLogger.warning('getStudyGroups wrapper error', error: e);
       return null;
     }
   }
@@ -1697,7 +1877,7 @@ class SupabaseService {
       if (response == null) return null;
       return StudyGroupModel.fromJson(response);
     } catch (e) {
-      debugPrint('getStudyGroup error: $e');
+      AppLogger.warning('getStudyGroup error', error: e);
       return null;
     }
   }
@@ -1714,7 +1894,7 @@ class SupabaseService {
       if (res == null) return null;
       return StudyGroupModel.fromJson(res);
     } catch (e) {
-      debugPrint('createStudyGroup wrapper error: $e');
+      AppLogger.warning('createStudyGroup wrapper error', error: e);
       return null;
     }
   }
@@ -1730,7 +1910,7 @@ class SupabaseService {
       if (response == null) return null;
       return StudyGroupModel.fromJson(response);
     } catch (e) {
-      debugPrint('updateStudyGroup error: $e');
+      AppLogger.warning('updateStudyGroup error', error: e);
       return null;
     }
   }
@@ -1740,7 +1920,7 @@ class SupabaseService {
       final resp = await client.from('study_groups').delete().eq('id', groupId);
       return resp != null;
     } catch (e) {
-      debugPrint('deleteStudyGroup error: $e');
+      AppLogger.warning('deleteStudyGroup error', error: e);
       return null;
     }
   }
@@ -1752,7 +1932,7 @@ class SupabaseService {
       await joinGroup(inviteCode, currentUser.id);
       return true;
     } catch (e) {
-      debugPrint('joinGroupByCode error: $e');
+      AppLogger.warning('joinGroupByCode error', error: e);
       return null;
     }
   }
@@ -1764,7 +1944,7 @@ class SupabaseService {
       await leaveGroup(groupId, currentUser.id);
       return true;
     } catch (e) {
-      debugPrint('leaveStudyGroup error: $e');
+      AppLogger.warning('leaveStudyGroup error', error: e);
       return null;
     }
   }
@@ -1775,18 +1955,26 @@ class SupabaseService {
       if (rows == null) return null;
       return rows.map(GroupMemberModel.fromJson).toList();
     } catch (e) {
-      debugPrint('getGroupMembersTyped error: $e');
+      AppLogger.warning('getGroupMembersTyped error', error: e);
       return null;
     }
   }
 
-  Future<List<GroupMessageModel>?> getGroupMessagesTyped(String groupId) async {
+  Future<List<GroupMessageModel>?> getGroupMessagesTyped(
+    String groupId, {
+    int limit = AppConfig.messagesPaginationSize,
+    int offset = 0,
+  }) async {
     try {
-      final rows = await getGroupMessages(groupId);
+      final rows = await getGroupMessages(
+        groupId,
+        limit: limit,
+        offset: offset,
+      );
       if (rows == null) return null;
       return rows.map(GroupMessageModel.fromJson).toList();
     } catch (e) {
-      debugPrint('getGroupMessagesTyped error: $e');
+      AppLogger.warning('getGroupMessagesTyped error', error: e);
       return null;
     }
   }
@@ -1806,7 +1994,7 @@ class SupabaseService {
       if (resp == null) return null;
       return GroupMessageModel.fromJson(resp);
     } catch (e) {
-      debugPrint('sendGroupMessage wrapper error: $e');
+      AppLogger.warning('sendGroupMessage wrapper error', error: e);
       return null;
     }
   }
@@ -1846,7 +2034,7 @@ class SupabaseService {
         'created_at': DateTime.now().toIso8601String(),
       });
     } catch (e) {
-      debugPrint('inviteUserToGroup error: $e');
+      AppLogger.warning('inviteUserToGroup error', error: e);
     }
   }
 
@@ -1864,7 +2052,7 @@ class SupabaseService {
         _messagesChannel = null;
       }
     } catch (error) {
-      debugPrint('unsubscribeFromMessages error: $error');
+      AppLogger.warning('unsubscribeFromMessages error', error: error);
     }
   }
 
@@ -1956,7 +2144,10 @@ class SupabaseService {
   }
 
   Future<void> deleteSession(String sessionId) async {
-    await client.from('study_sessions').delete().eq('id', sessionId);
+    await client
+        .from('study_sessions')
+        .update({'deleted_at': DateTime.now().toIso8601String()})
+        .eq('id', sessionId);
   }
 
   Future<StudySessionModel> endSession(String sessionId) async {
@@ -2069,17 +2260,22 @@ class SupabaseService {
     if (currentUser == null) {
       throw StateError('No authenticated user available');
     }
+    // The topics table has no `description` column; map it onto `notes`
+    // (the closest existing column) so the insert is accepted.
+    final payload = <String, dynamic>{
+      'module_id': moduleId,
+      'user_id': currentUser.id,
+      'name': name,
+      'is_studied': false,
+      'study_count': 0,
+      'created_at': DateTime.now().toIso8601String(),
+    };
+    if (description.trim().isNotEmpty) {
+      payload['notes'] = description;
+    }
     final response = await client
         .from('topics')
-        .insert({
-          'module_id': moduleId,
-          'user_id': currentUser.id,
-          'name': name,
-          'description': description,
-          'is_studied': false,
-          'study_count': 0,
-          'created_at': DateTime.now().toIso8601String(),
-        })
+        .insert(payload)
         .select()
         .maybeSingle();
     if (response == null) {
@@ -2173,7 +2369,7 @@ class SupabaseService {
       await _cacheRecord('weekly_reports', id, payload);
       return payload;
     } catch (error) {
-      debugPrint('saveWeeklyReport error: $error');
+      AppLogger.warning('saveWeeklyReport error', error: error);
       return null;
     }
   }
@@ -2200,7 +2396,7 @@ class SupabaseService {
 
       return _cachedList('weekly_reports', scope);
     } catch (error) {
-      debugPrint('getWeeklyReports error: $error');
+      AppLogger.warning('getWeeklyReports error', error: error);
       return _cachedList('weekly_reports', '$userId:$limit');
     }
   }
@@ -2223,7 +2419,7 @@ class SupabaseService {
 
       return _cachedRecord('weekly_reports', userId);
     } catch (error) {
-      debugPrint('getLastWeekReport error: $error');
+      AppLogger.warning('getLastWeekReport error', error: error);
       return _cachedRecord('weekly_reports', userId);
     }
   }
@@ -2265,7 +2461,7 @@ class SupabaseService {
       await _cacheList('uploaded_notes', topicId, [...cached, payload]);
       return payload;
     } catch (error) {
-      debugPrint('saveUploadedNote error: $error');
+      AppLogger.warning('saveUploadedNote error', error: error);
       return null;
     }
   }
@@ -2278,17 +2474,19 @@ class SupabaseService {
             .select()
             .eq('topic_id', topicId)
             .order('created_at', ascending: false);
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('uploaded_notes', topicId, rows);
         return rows;
       }
 
-      return _cachedList('uploaded_notes', topicId);
+      return _activeRows(
+        await _cachedList('uploaded_notes', topicId) ?? const [],
+      );
     } catch (error) {
-      debugPrint('getNotesByTopic error: $error');
-      return _cachedList('uploaded_notes', topicId);
+      AppLogger.warning('getNotesByTopic error', error: error);
+      return _activeRows(
+        await _cachedList('uploaded_notes', topicId) ?? const [],
+      );
     }
   }
 
@@ -2300,20 +2498,22 @@ class SupabaseService {
         final response = await client
             .from('uploaded_notes')
             .select()
-            .eq('is_shared', true)
+            .eq('is_shared_with_group', true)
             .order('created_at', ascending: false)
             .limit(limit);
-        final rows = (response as List<dynamic>)
-            .map((item) => item as Map<String, dynamic>)
-            .toList();
+        final rows = _activeRows(response as List<dynamic>);
         await _cacheList('shared_uploaded_notes', 'all', rows);
         return rows;
       }
 
-      return _cachedList('shared_uploaded_notes', 'all');
+      return _activeRows(
+        await _cachedList('shared_uploaded_notes', 'all') ?? const [],
+      );
     } catch (error) {
-      debugPrint('getSharedUploadedNotes error: $error');
-      return _cachedList('shared_uploaded_notes', 'all');
+      AppLogger.warning('getSharedUploadedNotes error', error: error);
+      return _activeRows(
+        await _cachedList('shared_uploaded_notes', 'all') ?? const [],
+      );
     }
   }
 
@@ -2343,7 +2543,7 @@ class SupabaseService {
       await _cacheRecord('uploaded_notes', noteId, optimistic);
       return optimistic;
     } catch (error) {
-      debugPrint('updateNoteProcessingStatus error: $error');
+      AppLogger.warning('updateNoteProcessingStatus error', error: error);
       return null;
     }
   }
@@ -2374,28 +2574,39 @@ class SupabaseService {
       await _cacheRecord('uploaded_notes', noteId, optimistic);
       return optimistic;
     } catch (error) {
-      debugPrint('updateUploadedNoteSharing error: $error');
+      AppLogger.warning('updateUploadedNoteSharing error', error: error);
       return null;
     }
   }
 
   Future<bool?> deleteUploadedNote(String noteId) async {
     try {
+      final existing = await _cachedRecord('uploaded_notes', noteId);
+      final topicId = existing?['topic_id']?.toString();
       if (await _isOnline()) {
-        await client.from('uploaded_notes').delete().eq('id', noteId);
-        await _offlineSync.deleteCachedRecord(
-          entity: 'uploaded_notes',
-          recordId: noteId,
-        );
+        await client
+            .from('uploaded_notes')
+            .update({'deleted_at': DateTime.now().toIso8601String()})
+            .eq('id', noteId);
+        if (topicId != null && topicId.isNotEmpty) {
+          await _purgeCachedListItem(
+            entity: 'uploaded_notes',
+            scope: topicId,
+            recordId: noteId,
+          );
+        }
+        await _clearCachedList('shared_uploaded_notes', 'all');
+        await _purgeCachedRecord('uploaded_notes', noteId);
         return true;
       }
 
-      await _queueChange('uploaded_notes', 'delete', {
+      await _queueChange('uploaded_notes', 'update', {
         'id': noteId,
+        'deleted_at': DateTime.now().toIso8601String(),
       }, recordId: noteId);
       return true;
     } catch (error) {
-      debugPrint('deleteUploadedNote error: $error');
+      AppLogger.warning('deleteUploadedNote error', error: error);
       return null;
     }
   }
@@ -2417,7 +2628,7 @@ class SupabaseService {
 
       return _cachedList('note_chunks', noteId);
     } catch (error) {
-      debugPrint('getNoteChunks error: $error');
+      AppLogger.warning('getNoteChunks error', error: error);
       return _cachedList('note_chunks', noteId);
     }
   }
@@ -2464,7 +2675,7 @@ class SupabaseService {
       await _cacheList('note_chunks', noteId, payload);
       return payload;
     } catch (error) {
-      debugPrint('saveNoteChunks error: $error');
+      AppLogger.warning('saveNoteChunks error', error: error);
       return null;
     }
   }

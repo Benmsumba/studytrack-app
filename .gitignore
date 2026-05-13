@@ -16,9 +16,12 @@
 .idea/
 *.iml
 
-# Local env and secrets
+# Local env and secrets — keep .env.example tracked as a template
 .env
-.env.*
+.env.local
+.env.production
+.env.staging
+studytrack/.env
 studytrack/.env
 
 # Android signing

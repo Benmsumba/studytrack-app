@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 
 import '../../services/supabase_service.dart';
 import '../../utils/app_exception.dart';
@@ -18,7 +18,7 @@ class TopicChatRepositoryImpl implements TopicChatRepository {
       final messages = await _supabaseService.getTopicMessages(topicId) ?? [];
       return Success(messages);
     } on Object catch (e, stack) {
-      debugPrint('getTopicMessages error: $e');
+      AppLogger.warning('getTopicMessages error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch topic messages: $e',
@@ -47,7 +47,7 @@ class TopicChatRepositoryImpl implements TopicChatRepository {
       }
       return Success(message);
     } on Object catch (e, stack) {
-      debugPrint('sendTopicMessage error: $e');
+      AppLogger.warning('sendTopicMessage error', error: e);
       return Failure(
         DataException(
           message: 'Failed to send topic message: $e',

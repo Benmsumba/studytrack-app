@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 
 import '../../../models/uploaded_note_model.dart';
 import '../../services/supabase_service.dart';
@@ -22,8 +22,7 @@ class UploadedNoteRepositoryImpl implements UploadedNoteRepository {
           .toList(growable: false);
       return Success(notes);
     } on Object catch (e, st) {
-      debugPrint('getNotesByTopic repo error: $e');
-      debugPrint('$st');
+      AppLogger.warning('getNotesByTopic repo error', error: e, stackTrace: st);
       return Failure(
         DataException(message: 'Failed to load notes: $e', stackTrace: st),
       );
@@ -41,8 +40,7 @@ class UploadedNoteRepositoryImpl implements UploadedNoteRepository {
           .toList(growable: false);
       return Success(notes);
     } on Object catch (e, st) {
-      debugPrint('getSharedNotes repo error: $e');
-      debugPrint('$st');
+      AppLogger.warning('getSharedNotes repo error', error: e, stackTrace: st);
       return Failure(
         DataException(
           message: 'Failed to load shared notes: $e',
@@ -67,8 +65,11 @@ class UploadedNoteRepositoryImpl implements UploadedNoteRepository {
       }
       return Success(UploadedNoteModel.fromJson(response));
     } on Object catch (e, st) {
-      debugPrint('updateNoteSharing repo error: $e');
-      debugPrint('$st');
+      AppLogger.warning(
+        'updateNoteSharing repo error',
+        error: e,
+        stackTrace: st,
+      );
       return Failure(
         DataException(message: 'Failed to update sharing: $e', stackTrace: st),
       );
@@ -81,8 +82,11 @@ class UploadedNoteRepositoryImpl implements UploadedNoteRepository {
       final deleted = await _supabaseService.deleteUploadedNote(noteId);
       return Success(deleted == true);
     } on Object catch (e, st) {
-      debugPrint('deleteUploadedNote repo error: $e');
-      debugPrint('$st');
+      AppLogger.warning(
+        'deleteUploadedNote repo error',
+        error: e,
+        stackTrace: st,
+      );
       return Failure(
         DataException(message: 'Failed to delete note: $e', stackTrace: st),
       );

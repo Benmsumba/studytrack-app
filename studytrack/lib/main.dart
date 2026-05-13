@@ -12,11 +12,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'app.dart';
 import 'core/constants/app_constants.dart';
+import 'core/services/analytics_service.dart';
 import 'core/services/app_update_service.dart';
 import 'core/services/crash_reporter.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/offline_sync_service.dart';
 import 'core/services/spotify_service.dart';
+import 'core/utils/app_logger.dart';
 import 'core/utils/service_locator.dart';
 import 'features/auth/controllers/auth_provider.dart';
 import 'features/groups/controllers/groups_provider.dart';
@@ -106,9 +108,8 @@ Future<void> _bootstrapApp() async {
         'Supabase configuration is required for release builds.',
       );
     }
-    debugPrint(
-      'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY '
-      'via --dart-define or update AppConstants.',
+    AppLogger.warning(
+      'Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY via --dart-define or update AppConstants.',
     );
   }
 
@@ -132,10 +133,17 @@ Future<void> _bootstrapApp() async {
     await _safeInit(notificationService.bootstrapForCurrentUser);
   }
 
+  // Seed Sentry user context on sign-in; clear it on sign-out.
   authProvider.addListener(() {
     final currentAuthState = authProvider.isAuthenticated;
     if (!lastAuthState && currentAuthState) {
       unawaited(_safeInit(notificationService.bootstrapForCurrentUser));
+      final uid = Supabase.instance.client.auth.currentUser?.id;
+      if (uid != null) {
+        Analytics.setUser(userId: uid);
+      }
+    } else if (lastAuthState && !currentAuthState) {
+      Analytics.clearUser();
     }
     lastAuthState = currentAuthState;
   });
@@ -186,7 +194,7 @@ void _setupUriListener() {
       }
     },
     onError: (Object err) {
-      debugPrint('app_links error: $err');
+      AppLogger.warning('app_links error', error: err);
     },
   );
 }

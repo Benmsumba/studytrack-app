@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import '../../utils/app_logger.dart';
 
 import '../../../models/exam_model.dart';
 import '../../services/supabase_service.dart';
@@ -24,7 +24,7 @@ class ExamRepositoryImpl implements ExamRepository {
       final models = (exams ?? []).map(ExamModel.fromJson).toList();
       return Success(models);
     } on Object catch (e, stack) {
-      debugPrint('getAllExams error: $e');
+      AppLogger.warning('getAllExams error', error: e);
       return Failure(
         DataException(message: 'Failed to fetch exams: $e', stackTrace: stack),
       );
@@ -42,7 +42,7 @@ class ExamRepositoryImpl implements ExamRepository {
       final models = (exams ?? []).map(ExamModel.fromJson).toList();
       return Success(models);
     } on Object catch (e, stack) {
-      debugPrint('getUpcomingExams error: $e');
+      AppLogger.warning('getUpcomingExams error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch upcoming exams: $e',
@@ -65,7 +65,7 @@ class ExamRepositoryImpl implements ExamRepository {
       }
       return Success(ExamModel.fromJson(examData));
     } on Object catch (e, stack) {
-      debugPrint('getExamById error: $e');
+      AppLogger.warning('getExamById error', error: e);
       return Failure(
         DataException(message: 'Failed to fetch exam: $e', stackTrace: stack),
       );
@@ -104,7 +104,7 @@ class ExamRepositoryImpl implements ExamRepository {
 
       return Success(ExamModel.fromJson(result));
     } on Object catch (e, stack) {
-      debugPrint('createExam error: $e');
+      AppLogger.warning('createExam error', error: e);
       return Failure(
         DataException(message: 'Failed to create exam: $e', stackTrace: stack),
       );
@@ -129,7 +129,7 @@ class ExamRepositoryImpl implements ExamRepository {
 
       return Success(ExamModel.fromJson(result));
     } on Object catch (e, stack) {
-      debugPrint('updateExam error: $e');
+      AppLogger.warning('updateExam error', error: e);
       return Failure(
         DataException(message: 'Failed to update exam: $e', stackTrace: stack),
       );
@@ -145,7 +145,7 @@ class ExamRepositoryImpl implements ExamRepository {
       }
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('deleteExam error: $e');
+      AppLogger.warning('deleteExam error', error: e);
       return Failure(
         DataException(message: 'Failed to delete exam: $e', stackTrace: stack),
       );
@@ -168,7 +168,7 @@ class ExamRepositoryImpl implements ExamRepository {
           [];
       return Success(filtered);
     } on Object catch (e, stack) {
-      debugPrint('getExamsByModuleId error: $e');
+      AppLogger.warning('getExamsByModuleId error', error: e);
       return Failure(
         DataException(
           message: 'Failed to fetch exams for module: $e',
@@ -200,7 +200,7 @@ class ExamRepositoryImpl implements ExamRepository {
           [];
       return Success(filtered);
     } on Object catch (e, stack) {
-      debugPrint('searchExams error: $e');
+      AppLogger.warning('searchExams error', error: e);
       return Failure(
         DataException(message: 'Failed to search exams: $e', stackTrace: stack),
       );
@@ -217,7 +217,7 @@ class ExamRepositoryImpl implements ExamRepository {
       final exams = await _supabaseService.getExams(uid);
       return Success(exams?.length ?? 0);
     } on Object catch (e, stack) {
-      debugPrint('getExamCount error: $e');
+      AppLogger.warning('getExamCount error', error: e);
       return Failure(
         DataException(
           message: 'Failed to get exam count: $e',
@@ -239,7 +239,7 @@ class ExamRepositoryImpl implements ExamRepository {
       await _supabaseService.getExams(uid);
       return const Success(null);
     } on Object catch (e, stack) {
-      debugPrint('syncExams error: $e');
+      AppLogger.warning('syncExams error', error: e);
       return Failure(
         DataException(message: 'Failed to sync exams: $e', stackTrace: stack),
       );

@@ -1,4 +1,7 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide debugPrint;
+
+import '../utils/app_logger.dart';
+import '../utils/debug_print_compat.dart';
 
 typedef CrashReportCallback = void Function(Object error, StackTrace stack);
 
@@ -33,7 +36,7 @@ class CrashReporter {
       return;
     }
     // Fallback: log to console in all modes so nothing is silently swallowed.
-    debugPrint('[CrashReporter] $error');
+    AppLogger.error('CrashReporter: $error');
     debugPrintStack(stackTrace: stack, maxFrames: 20);
   }
 }

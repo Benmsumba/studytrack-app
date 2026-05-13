@@ -3,13 +3,15 @@ import 'dart:convert';
 import 'dart:math';
 
 import 'package:crypto/crypto.dart';
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' hide debugPrint;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import '../constants/app_constants.dart';
-import 'supabase_service.dart';
+import '../utils/app_logger.dart';
 
 class SpotifyStudyPlaylist {
   const SpotifyStudyPlaylist({
@@ -47,14 +49,14 @@ class SpotifyService {
       description: 'Soft beats for deep reading sessions.',
       searchQuery: 'lofi study beats',
       emoji: '🎧',
-      accentColor: Color(0xFF7C3AED),
+      accentColor: Color(0xFF4A9EBD),
     ),
     SpotifyStudyPlaylist(
       title: 'Deep Work Flow',
       description: 'Instrumental focus for long modules.',
       searchQuery: 'deep focus study music',
       emoji: '🧠',
-      accentColor: Color(0xFF06B6D4),
+      accentColor: Color(0xFFE8B96A),
     ),
     SpotifyStudyPlaylist(
       title: 'Brain Food',
@@ -89,7 +91,7 @@ class SpotifyService {
       }
       return launchUrl(webLink, mode: LaunchMode.externalApplication);
     } on Object catch (error) {
-      debugPrint('openPlaylist error: $error');
+      AppLogger.warning('openPlaylist error', error: error);
       return false;
     }
   }
@@ -147,11 +149,11 @@ class SpotifyService {
       try {
         await _storage.write(key: _codeVerifierKey, value: codeVerifier);
       } on Object catch (e) {
-        debugPrint('Failed to persist code verifier: $e');
+        AppLogger.warning('Failed to persist code verifier', error: e);
       }
       return codeVerifier;
     } on Object catch (e) {
-      debugPrint('startAuth error: $e');
+      AppLogger.warning('startAuth error', error: e);
       return null;
     }
   }
@@ -178,7 +180,7 @@ class SpotifyService {
       );
 
       if (resp.statusCode != 200) {
-        debugPrint(
+        AppLogger.warning(
           'Spotify token exchange failed: ${resp.statusCode} ${resp.body}',
         );
         return false;
@@ -189,7 +191,7 @@ class SpotifyService {
       final refreshToken = data['refresh_token'] as String?;
       final expiresIn = (data['expires_in'] as num?)?.toInt();
 
-      final user = SupabaseService().getCurrentUser();
+      final user = Supabase.instance.client.auth.currentUser;
       if (user == null || accessToken == null) return false;
 
       final expiresAt = expiresIn != null
@@ -207,7 +209,7 @@ class SpotifyService {
       await scheduleTokenRefresh(clientId: clientId);
       return true;
     } on Object catch (e) {
-      debugPrint('handleAuthCodeExchange error: $e');
+      AppLogger.warning('handleAuthCodeExchange error', error: e);
       return false;
     }
   }
@@ -216,7 +218,7 @@ class SpotifyService {
     try {
       return _storage.read(key: _codeVerifierKey);
     } on Object catch (e) {
-      debugPrint('retrieveCodeVerifier error: $e');
+      AppLogger.warning('retrieveCodeVerifier error', error: e);
       return null;
     }
   }
@@ -225,7 +227,7 @@ class SpotifyService {
     try {
       await _storage.delete(key: _codeVerifierKey);
     } on Object catch (e) {
-      debugPrint('clearCodeVerifier error: $e');
+      AppLogger.warning('clearCodeVerifier error', error: e);
     }
   }
 
@@ -233,7 +235,7 @@ class SpotifyService {
     try {
       return _storage.read(key: _accessTokenKey);
     } on Object catch (e) {
-      debugPrint('readAccessToken error: $e');
+      AppLogger.warning('readAccessToken error', error: e);
       return null;
     }
   }
@@ -242,7 +244,7 @@ class SpotifyService {
     try {
       return _storage.read(key: _refreshTokenKey);
     } on Object catch (e) {
-      debugPrint('readRefreshToken error: $e');
+      AppLogger.warning('readRefreshToken error', error: e);
       return null;
     }
   }
@@ -253,7 +255,7 @@ class SpotifyService {
       if (raw == null || raw.isEmpty) return null;
       return DateTime.tryParse(raw);
     } on Object catch (e) {
-      debugPrint('readExpiresAt error: $e');
+      AppLogger.warning('readExpiresAt error', error: e);
       return null;
     }
   }
@@ -272,7 +274,7 @@ class SpotifyService {
       await _storage.delete(key: _expiresAtKey);
       stopTokenRefreshMonitor();
     } on Object catch (e) {
-      debugPrint('clearStoredSession error: $e');
+      AppLogger.warning('clearStoredSession error', error: e);
     }
   }
 
@@ -293,7 +295,9 @@ class SpotifyService {
       );
 
       if (resp.statusCode != 200) {
-        debugPrint('Spotify refresh failed: ${resp.statusCode} ${resp.body}');
+        AppLogger.warning(
+          'Spotify refresh failed: ${resp.statusCode} ${resp.body}',
+        );
         return false;
       }
 
@@ -314,7 +318,7 @@ class SpotifyService {
       await scheduleTokenRefresh(clientId: clientId);
       return true;
     } on Object catch (e) {
-      debugPrint('refreshToken error: $e');
+      AppLogger.warning('refreshToken error', error: e);
       return false;
     }
   }

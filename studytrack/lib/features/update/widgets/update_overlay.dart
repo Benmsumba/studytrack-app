@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/app_palette.dart';
 import '../controllers/update_provider.dart';
 
 class UpdateOverlay extends StatelessWidget {
@@ -42,15 +42,16 @@ class _UpdateCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final update = context.watch<UpdateProvider>();
     final info = update.updateInfo;
+    final palette = context.palette;
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.cardDark,
+        color: palette.card,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
+        border: Border.all(color: palette.border),
+        boxShadow: [
           BoxShadow(
-            color: AppColors.violetGlow,
+            color: palette.glowPrimary,
             blurRadius: 32,
             spreadRadius: 0,
           ),
@@ -116,8 +117,9 @@ class _UpdateIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final icon = switch (status) {
-      UpdateStatus.readyToInstall => Icons.install_mobile_rounded,
+      UpdateStatus.readyToInstall => Icons.download_done_rounded,
       UpdateStatus.installing => Icons.install_mobile_rounded,
       UpdateStatus.verifying => Icons.verified_rounded,
       UpdateStatus.error => Icons.error_outline_rounded,
@@ -128,17 +130,17 @@ class _UpdateIcon extends StatelessWidget {
       width: 72,
       height: 72,
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
+        gradient: palette.brandGradient,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: AppColors.violetGlowSoft,
+            color: palette.glowPrimary,
             blurRadius: 16,
             spreadRadius: 2,
           ),
         ],
       ),
-      child: Icon(icon, color: Colors.white, size: 36),
+      child: Icon(icon, color: Colors.white, size: 34),
     );
   }
 }
@@ -150,6 +152,9 @@ class _UpdateTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final theme = Theme.of(context);
+
     final title = switch (status) {
       UpdateStatus.downloading => 'Downloading Update',
       UpdateStatus.verifying => 'Verifying Download',
@@ -175,17 +180,17 @@ class _UpdateTitle extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: palette.textPrimary,
           ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 6),
         Text(
           subtitle,
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 14),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: palette.textSecondary,
+          ),
           textAlign: TextAlign.center,
         ),
       ],
@@ -200,21 +205,20 @@ class _VersionBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (versionName.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (versionName.isEmpty) return const SizedBox.shrink();
 
+    final palette = context.palette;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: AppColors.neonViolet.withAlpha(30),
+        color: palette.brandPrimary.withAlpha(30),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.neonViolet.withAlpha(80)),
+        border: Border.all(color: palette.brandPrimary.withAlpha(80)),
       ),
       child: Text(
         'Version $versionName',
-        style: const TextStyle(
-          color: AppColors.neonViolet,
+        style: TextStyle(
+          color: palette.brandPrimary,
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),
@@ -229,38 +233,33 @@ class _ReleaseNotes extends StatelessWidget {
   final String notes;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: AppColors.surfaceDark,
-      borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: AppColors.border),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "What's new",
-          style: TextStyle(
-            color: AppColors.textSecondary,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 0.8,
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: palette.surfaceElevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: palette.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("What's new", style: theme.textTheme.labelSmall),
+          const SizedBox(height: 6),
+          Text(
+            notes,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: palette.textPrimary,
+              height: 1.5,
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          notes,
-          style: const TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 13,
-            height: 1.5,
-          ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 class _ProgressSection extends StatelessWidget {
@@ -271,6 +270,8 @@ class _ProgressSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
+    final theme = Theme.of(context);
     final percent = (progress * 100).toInt();
 
     return Column(
@@ -278,18 +279,11 @@ class _ProgressSection extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-                fontSize: 13,
-              ),
-            ),
+            Text(label, style: theme.textTheme.bodySmall),
             Text(
               '$percent%',
-              style: const TextStyle(
-                color: AppColors.neonCyan,
-                fontSize: 13,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: palette.brandSecondary,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -300,9 +294,9 @@ class _ProgressSection extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
           child: LinearProgressIndicator(
             value: progress,
-            minHeight: 8,
-            backgroundColor: AppColors.border,
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.neonCyan),
+            minHeight: 6,
+            backgroundColor: palette.border,
+            valueColor: AlwaysStoppedAnimation<Color>(palette.brandSecondary),
           ),
         ),
       ],
@@ -318,13 +312,15 @@ class _ErrorSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final update = context.read<UpdateProvider>();
+    final palette = context.palette;
+    final theme = Theme.of(context);
 
     return Column(
       children: [
         if (message != null)
           Text(
             message!,
-            style: const TextStyle(color: AppColors.danger, fontSize: 12),
+            style: theme.textTheme.bodySmall?.copyWith(color: palette.danger),
             textAlign: TextAlign.center,
           ),
         const SizedBox(height: 16),
@@ -392,40 +388,43 @@ class _GradientButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    width: double.infinity,
-    height: 50,
-    child: DecoratedBox(
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.violetGlowSoft,
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: palette.brandGradient,
           borderRadius: BorderRadius.circular(14),
-          child: Center(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
+          boxShadow: [
+            BoxShadow(
+              color: palette.glowPrimary,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            borderRadius: BorderRadius.circular(14),
+            child: Center(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _WifiOnlySection extends StatelessWidget {
@@ -435,20 +434,24 @@ class _WifiOnlySection extends StatelessWidget {
   final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context) => SwitchListTile.adaptive(
-    contentPadding: EdgeInsets.zero,
-    title: const Text(
-      'Wi-Fi only',
-      style: TextStyle(color: AppColors.textPrimary, fontSize: 14),
-    ),
-    subtitle: const Text(
-      'Avoid mobile data during downloads',
-      style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
-    ),
-    value: value,
-    onChanged: onChanged,
-    activeThumbColor: AppColors.neonCyan,
-  );
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    final theme = Theme.of(context);
+    return SwitchListTile.adaptive(
+      contentPadding: EdgeInsets.zero,
+      title: Text(
+        'Wi-Fi only',
+        style: theme.textTheme.bodyMedium?.copyWith(color: palette.textPrimary),
+      ),
+      subtitle: Text(
+        'Avoid mobile data during downloads',
+        style: theme.textTheme.bodySmall,
+      ),
+      value: value,
+      onChanged: onChanged,
+      activeColor: palette.brandPrimary,
+    );
+  }
 }
 
 class _DismissLink extends StatelessWidget {
@@ -457,11 +460,14 @@ class _DismissLink extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => TextButton(
-    onPressed: onPressed,
-    child: const Text(
-      'Remind me later',
-      style: TextStyle(color: AppColors.textMuted, fontSize: 13),
-    ),
-  );
+  Widget build(BuildContext context) {
+    final palette = context.palette;
+    return TextButton(
+      onPressed: onPressed,
+      child: Text(
+        'Remind me later',
+        style: TextStyle(color: palette.textMuted, fontSize: 13),
+      ),
+    );
+  }
 }

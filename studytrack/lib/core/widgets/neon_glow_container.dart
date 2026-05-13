@@ -1,10 +1,12 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
-import '../constants/app_colors.dart';
 import '../constants/app_spacing.dart';
+import '../theme/app_palette.dart';
 
+/// Container that previously rendered a neon-glow border. Repurposed for
+/// Architectural Minimalism as a flat tonal panel with a single hairline
+/// border. The class name and constructor are preserved so existing call
+/// sites continue to compile without edits.
 class NeonGlowContainer extends StatelessWidget {
   const NeonGlowContainer({
     required this.child,
@@ -22,6 +24,7 @@ class NeonGlowContainer extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   final double borderRadius;
+  // Retained for API compatibility — no longer rendered.
   final Gradient? gradient;
   final Color? glowColor;
   final double glowBlur;
@@ -31,40 +34,17 @@ class NeonGlowContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     final radius = BorderRadius.circular(borderRadius);
-    final innerRadius = math.max(0, borderRadius - borderWidth).toDouble();
-    final innerBorderRadius = BorderRadius.circular(innerRadius);
-    final resolvedGradient = gradient ?? AppColors.primaryGradient;
 
     return Container(
       decoration: BoxDecoration(
+        color: backgroundColor ?? palette.card,
         borderRadius: radius,
-        boxShadow: [
-          BoxShadow(
-            color: (glowColor ?? AppColors.violetGlow).withValues(alpha: 0.45),
-            blurRadius: glowBlur,
-            spreadRadius: glowSpread,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: palette.borderSoft, width: borderWidth),
       ),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: radius,
-          gradient: resolvedGradient,
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(borderWidth),
-          child: ClipRRect(
-            borderRadius: innerBorderRadius,
-            child: Container(
-              color: backgroundColor ?? AppColors.backgroundDark,
-              padding: padding,
-              child: child,
-            ),
-          ),
-        ),
-      ),
+      padding: padding,
+      child: child,
     );
   }
 }

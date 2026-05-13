@@ -54,7 +54,7 @@ class PlaybackControlBar extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: const BoxDecoration(
-                    color: AppColors.neonViolet,
+                    color: AppColors.steelTeal,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -76,7 +76,7 @@ class PlaybackControlBar extends StatelessWidget {
                         minHeight: 4,
                         backgroundColor: AppColors.border,
                         valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppColors.neonViolet,
+                          AppColors.steelTeal,
                         ),
                       ),
                     ),

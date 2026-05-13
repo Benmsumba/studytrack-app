@@ -34,9 +34,21 @@ body:
       description: What happened instead?
     validations:
       required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Paste any stack trace, logs, or attach screenshots that help diagnose the problem.
+      placeholder: Exception stack trace, console output, or screen recording links.
   - type: input
     id: environment
     attributes:
       label: Environment
       description: Flutter version, device, and platform.
       placeholder: Flutter 3.29.2, Pixel 7, Android 14
+  - type: input
+    id: frequency
+    attributes:
+      label: Frequency
+      description: How often does this happen?
+      placeholder: Always, sometimes, once after login, etc.

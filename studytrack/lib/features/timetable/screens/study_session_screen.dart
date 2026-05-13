@@ -6,10 +6,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_text_styles.dart';
+import '../../../core/services/analytics_service.dart';
 import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
+import '../../../core/services/achievement_service.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/service_locator.dart';
+import '../../../core/widgets/badge_celebration_overlay.dart';
 
 class StudySessionScreen extends StatefulWidget {
   const StudySessionScreen({
@@ -341,6 +345,16 @@ class _StudySessionScreenState extends State<StudySessionScreen>
     );
     final elapsedMinutes = (elapsedSeconds / 60).ceil();
 
+    final achievementService = getIt<AchievementService>();
+    final userId = SupabaseService.instance.getCurrentUser()?.id;
+
+    // Snapshot pre-session badges so we can detect newly earned ones.
+    final preSessionBadgeTypes = userId == null
+        ? <String>{}
+        : (await achievementService.getEarnedBadges(
+            userId,
+          )).map((b) => b.badgeType).toSet();
+
     final sessionId = widget.sessionId;
     if (sessionId != null && sessionId.isNotEmpty) {
       final sessionResult = await _studySessionRepository.updateSessionStatus(
@@ -371,6 +385,8 @@ class _StudySessionScreenState extends State<StudySessionScreen>
       }
     }
 
+    Analytics.sessionCompleted(durationMinutes: elapsedMinutes, rating: rating);
+
     _confettiController.play();
     if (!mounted) return;
     setState(() {
@@ -378,7 +394,55 @@ class _StudySessionScreenState extends State<StudySessionScreen>
     });
 
     await _showInfoDialog('Great session! Your progress has been saved.');
+
+    // Check for newly earned badges and celebrate each one.
+    if (userId != null && mounted) {
+      final allBadges = await achievementService.checkAllBadges(userId);
+      final newBadges = allBadges
+          .where((b) => !preSessionBadgeTypes.contains(b.badgeType))
+          .toList();
+      for (final badge in newBadges) {
+        if (!mounted) break;
+        Analytics.badgeEarned(badgeType: badge.badgeType);
+        await _showBadgeCelebration(badge.badgeType);
+      }
+    }
+
     await _clearSessionState();
+  }
+
+  Future<void> _showBadgeCelebration(String badgeType) async {
+    if (!mounted) return;
+    final titles = <String, String>{
+      'first_step': 'First Step',
+      'week_warrior': 'Week Warrior',
+      'perfectionist': 'Perfectionist',
+      'bookworm': 'Bookworm',
+      'master': 'Master',
+      'month_streak': 'Month Streak',
+      'century': 'Century Club',
+    };
+    final descriptions = <String, String>{
+      'first_step': 'You studied your first topic!',
+      'week_warrior': 'You maintained a 7-day study streak!',
+      'perfectionist': 'You rated a topic 10/10!',
+      'bookworm': 'You have studied 50 topics!',
+      'master': 'You rated 10 topics 8+/10!',
+      'month_streak': 'You maintained a 30-day study streak!',
+      'century': 'You have 100 topics across all modules!',
+    };
+    final title = titles[badgeType] ?? badgeType;
+    final description = descriptions[badgeType] ?? 'Badge earned!';
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => BadgeCelebrationOverlay(
+        badgeTitle: title,
+        badgeDescription: description,
+        onDismiss: () => Navigator.of(context, rootNavigator: true).pop(),
+      ),
+    );
   }
 
   Future<void> _showInfoDialog(String message) async {
@@ -415,7 +479,6 @@ class _StudySessionScreenState extends State<StudySessionScreen>
     final seconds = (_remainingSeconds % 60).toString().padLeft(2, '0');
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

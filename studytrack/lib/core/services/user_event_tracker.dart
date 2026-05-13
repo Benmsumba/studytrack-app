@@ -1,5 +1,8 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide debugPrint;
+
+import '../utils/app_logger.dart';
+import '../utils/debug_print_compat.dart';
 
 /// Represents a tracked user event for analytics and monitoring
 class UserEvent {
@@ -43,7 +46,7 @@ class UserEventTracker {
     if (_initialized) return;
     _initialized = true;
     _sessionStart = DateTime.now();
-    debugPrint('UserEventTracker initialized');
+    AppLogger.debug('UserEventTracker initialized');
   }
 
   /// Set current user ID
@@ -73,7 +76,10 @@ class UserEventTracker {
     }
 
     if (kDebugMode) {
-      debugPrint('📊 EVENT: $eventName ${properties ?? ''}');
+      AppLogger.debug(
+        'EVENT: \$eventName \${properties ?? '
+        '}',
+      );
     }
   }
 

@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 
+import '../utils/app_logger.dart';
+
 /// Represents a sync conflict between local and remote data
 class SyncConflict {
   SyncConflict({
@@ -79,13 +81,13 @@ class SyncConflictResolver {
   ) {
     switch (strategy) {
       case ConflictResolutionStrategy.favorRemote:
-        debugPrint(
+        AppLogger.info(
           'Conflict resolved: favoring remote for ${conflict.entity}/${conflict.recordId}',
         );
         return conflict.remoteData;
 
       case ConflictResolutionStrategy.favorLocal:
-        debugPrint(
+        AppLogger.info(
           'Conflict resolved: favoring local for ${conflict.entity}/${conflict.recordId}',
         );
         return conflict.localData;
@@ -94,7 +96,7 @@ class SyncConflictResolver {
         return _mergeData(conflict.localData, conflict.remoteData);
 
       case ConflictResolutionStrategy.manual:
-        debugPrint(
+        AppLogger.warning(
           'Conflict requires manual resolution: ${conflict.entity}/${conflict.recordId}',
         );
         throw Exception(

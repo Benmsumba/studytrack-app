@@ -2,12 +2,15 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' hide debugPrint;
 import 'package:home_widget/home_widget.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
+import '../constants/app_constants.dart';
 import '../services/supabase_service.dart';
+import '../utils/app_logger.dart';
+import '../utils/debug_print_compat.dart';
 import 'crash_reporter.dart';
 import 'offline_data_store.dart';
 
@@ -73,12 +76,33 @@ class OfflineSyncService extends ChangeNotifier {
       return false;
     }
 
-    try {
-      final lookup = await InternetAddress.lookup('google.com');
-      return lookup.isNotEmpty && lookup.first.rawAddress.isNotEmpty;
-    } on Object catch (_) {
-      return false;
+    // Probe the app's own backend so this works in restricted networks where
+    // google.com is blocked (e.g. China). Fall back through multiple hosts.
+    for (final host in _probeHosts) {
+      try {
+        final lookup = await InternetAddress.lookup(
+          host,
+        ).timeout(const Duration(seconds: 5));
+        if (lookup.isNotEmpty && lookup.first.rawAddress.isNotEmpty) {
+          return true;
+        }
+      } on Object catch (_) {
+        continue;
+      }
     }
+    return false;
+  }
+
+  /// Ordered list of hosts to probe. The Supabase host is first so we confirm
+  /// the backend is reachable, not just that some internet exists.
+  static List<String> get _probeHosts {
+    final supabaseUrl = AppConstants.resolvedSupabaseUrl;
+    final supabaseHost = Uri.tryParse(supabaseUrl)?.host ?? '';
+    return [
+      if (supabaseHost.isNotEmpty) supabaseHost,
+      'cloudflare.com',
+      '1.1.1.1',
+    ];
   }
 
   Future<bool> get onlineNow async {
@@ -95,6 +119,19 @@ class OfflineSyncService extends ChangeNotifier {
       entity: entity,
       recordId: recordId,
       payload: payload,
+    );
+  }
+
+  /// Batch-upsert a list of records in a single SQLite transaction.
+  Future<void> batchCacheRecords({
+    required String entity,
+    required List<Map<String, dynamic>> records,
+    required String Function(Map<String, dynamic>) idExtractor,
+  }) async {
+    await _store.batchUpsertRecords(
+      entity: entity,
+      records: records,
+      idExtractor: idExtractor,
     );
   }
 
@@ -211,6 +248,20 @@ class OfflineSyncService extends ChangeNotifier {
           if (recordId == null || recordId.isEmpty) {
             return false;
           }
+          if (const {
+            'modules',
+            'topics',
+            'class_timetable',
+            'exams',
+            'uploaded_notes',
+          }.contains(change.entity)) {
+            await client
+                .from(change.entity)
+                .update({'deleted_at': DateTime.now().toIso8601String()})
+                .eq('id', recordId);
+            return true;
+          }
+
           await client.from(change.entity).delete().eq('id', recordId);
           return true;
         case 'upsert':
@@ -267,8 +318,9 @@ class OfflineSyncService extends ChangeNotifier {
           return false;
       }
     } on Object catch (error) {
-      debugPrint(
-        'sync change failed (${change.entity}/${change.operation}): $error',
+      AppLogger.warning(
+        'sync change failed (${change.entity}/${change.operation})',
+        error: error,
       );
       return false;
     }
@@ -288,7 +340,9 @@ class OfflineSyncService extends ChangeNotifier {
       return;
     }
 
-    final service = SupabaseService();
+    // Use the existing singleton — do NOT call SupabaseService() which would
+    // bypass the registered instance and any injected test doubles.
+    final service = SupabaseService.instance;
     final profile = await service.getProfile(userId);
     final timetable = await service.getClassTimetable(userId) ?? [];
     final exams = await service.getUpcomingExams(userId) ?? [];
@@ -342,7 +396,7 @@ class OfflineSyncService extends ChangeNotifier {
     try {
       await saveWidgetSnapshot(userId: user.id);
     } on Object catch (error) {
-      debugPrint('saveWidgetSnapshot error: $error');
+      AppLogger.warning('saveWidgetSnapshot error', error: error);
     }
   }
 
