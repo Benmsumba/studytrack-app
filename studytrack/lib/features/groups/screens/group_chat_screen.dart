@@ -173,7 +173,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: AppColors.obsidian,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -225,9 +225,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     final title = widget.group?['name']?.toString() ?? 'Group Chat';
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: AppColors.obsidian,
       appBar: AppBar(
-        backgroundColor: AppColors.backgroundDark,
+        backgroundColor: AppColors.obsidian,
         title: Text(title),
       ),
       body: Column(
@@ -294,12 +294,12 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               constraints: const BoxConstraints(maxWidth: 320),
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                gradient: mine ? AppColors.primaryGradient : null,
-                                color: mine ? null : AppColors.cardDark,
+                                color: mine ? AppColors.signalMuted : AppColors.cardDark,
                                 borderRadius: BorderRadius.circular(12),
-                                border: mine
-                                    ? null
-                                    : Border.all(color: AppColors.border),
+                                border: Border.all(
+                                  color: mine ? AppColors.signal : AppColors.border,
+                                  width: 0.5,
+                                ),
                               ),
                               child: Column(
                                 crossAxisAlignment: mine
@@ -315,7 +315,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                         child: Text(
                                           displayName.substring(0, 1).toUpperCase(),
                                           style: AppTextStyles.caption.copyWith(
-                                            color: Colors.white,
+                                            color: AppColors.parchment,
                                             fontSize: 10,
                                             fontWeight: FontWeight.w700,
                                           ),
@@ -352,7 +352,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                   Text(
                                     content,
                                     style: AppTextStyles.bodyMedium.copyWith(
-                                      color: Colors.white,
+                                      color: AppColors.parchment,
                                     ),
                                   ),
                                   if (timestamp.isNotEmpty) ...[
@@ -384,7 +384,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                     child: TextField(
                       controller: _messageController,
                       style: AppTextStyles.bodyMedium.copyWith(
-                        color: Colors.white,
+                        color: AppColors.parchment,
                       ),
                       decoration: const InputDecoration(
                         hintText: 'Write a message...',
