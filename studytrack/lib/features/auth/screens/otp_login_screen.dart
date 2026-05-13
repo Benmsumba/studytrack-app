@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -95,8 +94,10 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: AppColors.backgroundDark,
+  Widget build(BuildContext context) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return Scaffold(
+    backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
     body: SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(
@@ -108,7 +109,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
           children: [
             // Back button
             IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.parchment),
               onPressed: _goBack,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -157,7 +158,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
                 child: Text(
                   'Sign in with password instead',
                   style: AppTextStyles.bodyMediumSecondary.copyWith(
-                    color: AppColors.neonCyan,
+                    color: AppColors.signal,
                   ),
                 ),
               ),
@@ -165,8 +166,8 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
           ],
         ),
       ),
-    ),
-  );
+    );
+  }
 
   Widget _buildHeader() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,19 +177,13 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              gradient: AppColors.primaryGradient,
+              color: AppColors.signal,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: const [
-                BoxShadow(
-                  color: AppColors.violetGlowSoft,
-                  blurRadius: 20,
-                  spreadRadius: 2,
-                ),
-              ],
+              border: Border.all(color: AppColors.signalLight, width: 0.5),
             ),
             child: const Icon(
               Icons.mark_email_unread_rounded,
-              color: Colors.white,
+              color: AppColors.parchment,
               size: 28,
             ),
           )
@@ -365,7 +360,7 @@ InputDecoration _inputDecoration({
 }) => InputDecoration(
   labelText: label,
   hintText: label,
-  prefixIcon: Icon(icon, color: AppColors.neonCyan, size: 20),
+  prefixIcon: Icon(icon, color: AppColors.signal, size: 20),
   filled: true,
   fillColor: AppColors.cardDark,
   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
@@ -379,7 +374,7 @@ InputDecoration _inputDecoration({
   ),
   focusedBorder: OutlineInputBorder(
     borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.neonCyan),
+    borderSide: const BorderSide(color: AppColors.signal),
   ),
   errorBorder: OutlineInputBorder(
     borderRadius: BorderRadius.circular(12),
@@ -412,7 +407,7 @@ class _GradientButton extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
+          color: AppColors.signal,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
@@ -422,12 +417,12 @@ class _GradientButton extends StatelessWidget {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: AppColors.parchment,
                   ),
                 )
               : Text(
                   label,
-                  style: AppTextStyles.button.copyWith(color: Colors.white),
+                  style: AppTextStyles.button.copyWith(color: AppColors.parchment),
                 ),
         ),
       ),

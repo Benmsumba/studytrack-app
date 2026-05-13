@@ -10,7 +10,6 @@ import '../../../core/constants/app_text_styles.dart';
 import '../../../core/l10n/app_strings.dart';
 import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/validators.dart';
-import '../../../core/widgets/custom_button.dart';
 import '../controllers/auth_provider.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -116,7 +115,7 @@ class _SignupScreenState extends State<SignupScreen> {
     final strengthLabel = auth.passwordStrengthLabel(_passwordController.text);
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundDark,
+      backgroundColor: AppColors.obsidian,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(
@@ -137,20 +136,11 @@ class _SignupScreenState extends State<SignupScreen> {
               ).animate().fadeIn(duration: 600.ms, delay: 100.ms),
               const SizedBox(height: AppSpacing.lg),
               Container(
-                    padding: const EdgeInsets.all(1.2),
-                    decoration: BoxDecoration(
-                      gradient: AppColors.primaryGradient,
-                      borderRadius: BorderRadius.circular(
-                        AppSpacing.cardRadius,
-                      ),
-                    ),
-                    child: Container(
                       padding: const EdgeInsets.all(AppSpacing.lg),
                       decoration: BoxDecoration(
                         color: AppColors.surfaceDark,
-                        borderRadius: BorderRadius.circular(
-                          AppSpacing.cardRadius - 1,
-                        ),
+                        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+                        border: Border.all(color: AppColors.signal, width: 0.5),
                       ),
                       child: Form(
                         key: _formKey,
@@ -230,7 +220,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                     });
                                   },
                                   activeColor: AppColors.accent,
-                                  checkColor: AppColors.backgroundDark,
+                                  checkColor: AppColors.obsidian,
                                   side: const BorderSide(
                                     color: AppColors.border,
                                   ),
@@ -249,18 +239,19 @@ class _SignupScreenState extends State<SignupScreen> {
                               ],
                             ),
                             const SizedBox(height: AppSpacing.xs),
-                            GlowingButton(
-                              label: AppStrings.createAccount,
-                              isLoading: auth.isLoading,
-                              onPressed: auth.isLoading
-                                  ? null
-                                  : _onCreateAccountTap,
+                            SizedBox(
                               width: double.infinity,
+                              child: FilledButton(
+                                onPressed: auth.isLoading ? null : _onCreateAccountTap,
+                                child: auth.isLoading
+                                    ? const SizedBox(width: 18, height: 18,
+                                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
+                                    : Text(AppStrings.createAccount.toUpperCase()),
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ),
                   )
                   .animate()
                   .fadeIn(duration: 650.ms, delay: 150.ms)
