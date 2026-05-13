@@ -153,9 +153,9 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: AppColors.cardGradient,
+        color: AppColors.surfaceDark,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.border, width: 0.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -167,10 +167,10 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  gradient: AppColors.primaryGradient,
+                  color: AppColors.signal,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.mic_rounded, color: Colors.white),
+                child: const Icon(Icons.mic_rounded, color: AppColors.parchment),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -180,7 +180,7 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
                     Text(
                       widget.title,
                       style: AppTextStyles.headingSmall.copyWith(
-                        color: Colors.white,
+                        color: AppColors.parchment,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
@@ -231,18 +231,18 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
               Expanded(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
+                    color: AppColors.signal,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: TextButton.icon(
                     onPressed: _isProcessing ? null : _toggleRecording,
                     icon: Icon(
                       _isRecording ? Icons.stop_rounded : Icons.mic_rounded,
-                      color: Colors.white,
+                      color: AppColors.parchment,
                     ),
                     label: Text(
                       _isRecording ? 'Stop recording' : 'Start recording',
-                      style: AppTextStyles.button.copyWith(color: Colors.white),
+                      style: AppTextStyles.button.copyWith(color: AppColors.parchment),
                     ),
                   ),
                 ),

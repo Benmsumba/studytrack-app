@@ -54,9 +54,9 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(14),
     decoration: BoxDecoration(
-      gradient: AppColors.cardGradient,
+      color: AppColors.surfaceDark,
       borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.border),
+      border: Border.all(color: AppColors.border, width: 0.5),
     ),
     child: Row(
       children: [
@@ -64,10 +64,10 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            gradient: AppColors.primaryGradient,
+            color: AppColors.signal,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Icon(Icons.graphic_eq_rounded, color: Colors.white),
+          child: const Icon(Icons.graphic_eq_rounded, color: AppColors.parchment),
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -77,7 +77,7 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
               Text(
                 widget.title,
                 style: AppTextStyles.headingSmall.copyWith(
-                  color: Colors.white,
+                  color: AppColors.parchment,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
