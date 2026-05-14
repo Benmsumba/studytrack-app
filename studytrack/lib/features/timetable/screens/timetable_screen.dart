@@ -72,7 +72,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
     final provider = context.read<TimetableProvider>();
     final selectedDate = _dateForSelectedDay();
     provider.setSelectedDate(selectedDate);
-    final result = await provider.loadTimetable(userId);
+    final result = await provider.loadTimetable();
     if (!mounted || result.success) return;
     SnackbarHelper.show(context, result.message, type: AppSnackbarType.error);
   }

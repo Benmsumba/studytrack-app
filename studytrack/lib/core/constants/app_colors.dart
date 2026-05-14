@@ -67,6 +67,9 @@ class AppColors {
   static const Color neonCyan = signal;
   static const Color cyan = signal;
   static const Color deepViolet = signal;
+  static const Color steelTeal = Color(0xFF1C6E8C);
+  static const Color amberWarm = Color(0xFFB8893E);
+  static const Color terracotta = Color(0xFFB35C4A);
 
   // Glow aliases — zeroed out. Existing widgets that reference these will
   // simply produce invisible shadows. Remove shadow calls during screen-level

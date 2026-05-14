@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -97,73 +98,77 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
     return Scaffold(
-    backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
-    body: SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenHorizontal,
-          vertical: AppSpacing.screenVertical,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Back button
-            IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.parchment),
-              onPressed: _goBack,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-            const SizedBox(height: AppSpacing.xl),
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.screenHorizontal,
+            vertical: AppSpacing.screenVertical,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Back button
+              IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: AppColors.parchment,
+                ),
+                onPressed: _goBack,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(height: AppSpacing.xl),
 
-            // Header
-            _buildHeader(),
-            const SizedBox(height: AppSpacing.xxxl),
+              // Header
+              _buildHeader(),
+              const SizedBox(height: AppSpacing.xxxl),
 
-            // Body
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _codeSent
-                  ? _OtpStep(
-                      key: const ValueKey('otp'),
-                      formKey: _otpFormKey,
-                      otpController: _otpController,
-                      email: _emailController.text.trim(),
-                      loading: _loading,
-                      errorMessage: _errorMessage,
-                      onVerify: _verifyCode,
-                      onResend: () {
-                        setState(() {
-                          _codeSent = false;
-                          _otpController.clear();
-                        });
-                      },
-                    )
-                  : _EmailStep(
-                      key: const ValueKey('email'),
-                      formKey: _emailFormKey,
-                      emailController: _emailController,
-                      loading: _loading,
-                      errorMessage: _errorMessage,
-                      onSend: _sendCode,
+              // Body
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: _codeSent
+                    ? _OtpStep(
+                        key: const ValueKey('otp'),
+                        formKey: _otpFormKey,
+                        otpController: _otpController,
+                        email: _emailController.text.trim(),
+                        loading: _loading,
+                        errorMessage: _errorMessage,
+                        onVerify: _verifyCode,
+                        onResend: () {
+                          setState(() {
+                            _codeSent = false;
+                            _otpController.clear();
+                          });
+                        },
+                      )
+                    : _EmailStep(
+                        key: const ValueKey('email'),
+                        formKey: _emailFormKey,
+                        emailController: _emailController,
+                        loading: _loading,
+                        errorMessage: _errorMessage,
+                        onSend: _sendCode,
+                      ),
+              ),
+
+              const SizedBox(height: AppSpacing.xl),
+
+              // Back to password login
+              Center(
+                child: TextButton(
+                  onPressed: () => context.go('/login'),
+                  child: Text(
+                    'Sign in with password instead',
+                    style: AppTextStyles.bodyMediumSecondary.copyWith(
+                      color: AppColors.signal,
                     ),
-            ),
-
-            const SizedBox(height: AppSpacing.xl),
-
-            // Back to password login
-            Center(
-              child: TextButton(
-                onPressed: () => context.go('/login'),
-                child: Text(
-                  'Sign in with password instead',
-                  style: AppTextStyles.bodyMediumSecondary.copyWith(
-                    color: AppColors.signal,
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

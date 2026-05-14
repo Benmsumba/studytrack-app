@@ -10,6 +10,7 @@ import '../../../core/repositories/study_session_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
 import '../../../core/utils/service_locator.dart';
 import '../../../models/module_model.dart';
+import '../../../models/study_session_model.dart';
 import '../../../models/topic_model.dart';
 import '../../../models/topic_rating_history_model.dart';
 

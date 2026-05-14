@@ -145,40 +145,41 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
     return Scaffold(
       backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
       body: SafeArea(
-      child: _isLoading
-          ? AppStateView.loadingList(itemCount: 4, itemHeight: 120)
-          : RefreshIndicator(
-              color: AppColors.accent,
-              backgroundColor: AppColors.surfaceDark,
-              onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.screenHorizontal,
-                  AppSpacing.md,
-                  AppSpacing.screenHorizontal,
-                  AppSpacing.xxxl,
-                ),
-                children: [
-                  if (_loadError != null)
-                    AppStateView.error(
-                      title: 'Analytics unavailable',
-                      message: _loadError!,
-                      onRetry: _load,
-                    )
-                  else ...[
-                    _buildHeader(context),
-                    const SizedBox(height: AppSpacing.lg),
-                    _buildStatsRow(),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildRadarCard(),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildHeatmapCard(),
-                    const SizedBox(height: AppSpacing.md),
-                    _buildInsightCard(),
+        child: _isLoading
+            ? AppStateView.loadingList(itemCount: 4, itemHeight: 120)
+            : RefreshIndicator(
+                color: AppColors.accent,
+                backgroundColor: AppColors.surfaceDark,
+                onRefresh: _load,
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.screenHorizontal,
+                    AppSpacing.md,
+                    AppSpacing.screenHorizontal,
+                    AppSpacing.xxxl,
+                  ),
+                  children: [
+                    if (_loadError != null)
+                      AppStateView.error(
+                        title: 'Analytics unavailable',
+                        message: _loadError!,
+                        onRetry: _load,
+                      )
+                    else ...[
+                      _buildHeader(context),
+                      const SizedBox(height: AppSpacing.lg),
+                      _buildStatsRow(),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildRadarCard(),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildHeatmapCard(),
+                      const SizedBox(height: AppSpacing.md),
+                      _buildInsightCard(),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
+      ),
     );
   }
 
