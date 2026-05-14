@@ -109,100 +109,106 @@ class _GroupsScreenState extends State<GroupsScreen> {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-              onPressed: _working
-                  ? null
-                  : () async {
-                      Haptics.light();
-                      final auth = Provider.of<AuthProvider>(
-                        context,
-                        listen: false,
-                      );
-                      final user = auth.currentUser;
-                      final name = nameController.text.trim();
-                      final description = descriptionController.text.trim();
-                      if (user == null || name.isEmpty) return;
-
-                      setState(() => _working = true);
-
-                      final navigator = Navigator.of(context);
-
-                      final createdResult = await _groupRepo.createGroup(
-                        name: name,
-                        description: description.isEmpty ? '' : description,
-                      );
-
-                      if (!mounted) return;
-                      setState(() => _working = false);
-                      navigator.pop();
-
-                      if (createdResult is! Success<StudyGroupModel>) {
-                        SnackbarHelper.show(
+                onPressed: _working
+                    ? null
+                    : () async {
+                        Haptics.light();
+                        final auth = Provider.of<AuthProvider>(
                           context,
-                          AppStrings.failedCreateGroup,
-                          type: AppSnackbarType.error,
+                          listen: false,
                         );
-                        return;
-                      }
+                        final user = auth.currentUser;
+                        final name = nameController.text.trim();
+                        final description = descriptionController.text.trim();
+                        if (user == null || name.isEmpty) return;
 
-                      final invite = createdResult.data.inviteCode;
-                      if (!mounted) return;
-                      showDialog<void>(
-                        context: navigator.context,
-                        builder: (dialogContext) => AlertDialog(
-                          backgroundColor: AppColors.cardDark,
-                          title: Text(
-                            AppStrings.groupCreated,
-                            style: AppTextStyles.headingSmall,
-                          ),
-                          content: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                AppStrings.shareInviteCode,
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  color: AppColors.textSecondary,
+                        setState(() => _working = true);
+
+                        final navigator = Navigator.of(context);
+
+                        final createdResult = await _groupRepo.createGroup(
+                          name: name,
+                          description: description.isEmpty ? '' : description,
+                        );
+
+                        if (!mounted) return;
+                        setState(() => _working = false);
+                        navigator.pop();
+
+                        if (createdResult is! Success<StudyGroupModel>) {
+                          SnackbarHelper.show(
+                            context,
+                            AppStrings.failedCreateGroup,
+                            type: AppSnackbarType.error,
+                          );
+                          return;
+                        }
+
+                        final invite = createdResult.data.inviteCode;
+                        if (!mounted) return;
+                        showDialog<void>(
+                          context: navigator.context,
+                          builder: (dialogContext) => AlertDialog(
+                            backgroundColor: AppColors.cardDark,
+                            title: Text(
+                              AppStrings.groupCreated,
+                              style: AppTextStyles.headingSmall,
+                            ),
+                            content: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  AppStrings.shareInviteCode,
+                                  style: AppTextStyles.bodySmall.copyWith(
+                                    color: AppColors.textSecondary,
+                                  ),
                                 ),
+                                const SizedBox(height: AppSpacing.xs),
+                                SelectableText(
+                                  invite,
+                                  style: AppTextStyles.statValue.copyWith(
+                                    color: AppColors.accent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () async {
+                                  await Clipboard.setData(
+                                    ClipboardData(text: invite),
+                                  );
+                                  if (!dialogContext.mounted) return;
+                                  Navigator.of(dialogContext).pop();
+                                  if (!mounted) return;
+                                  SnackbarHelper.show(
+                                    context,
+                                    AppStrings.inviteCopied,
+                                    type: AppSnackbarType.success,
+                                  );
+                                },
+                                child: const Text('Copy'),
                               ),
-                              const SizedBox(height: AppSpacing.xs),
-                              SelectableText(
-                                invite,
-                                style: AppTextStyles.statValue.copyWith(
-                                  color: AppColors.accent,
-                                ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(dialogContext).pop(),
+                                child: const Text('Done'),
                               ),
                             ],
                           ),
-                          actions: [
-                            TextButton(
-                              onPressed: () async {
-                                await Clipboard.setData(
-                                  ClipboardData(text: invite),
-                                );
-                                if (!dialogContext.mounted) return;
-                                Navigator.of(dialogContext).pop();
-                                if (!mounted) return;
-                                SnackbarHelper.show(
-                                  context,
-                                  AppStrings.inviteCopied,
-                                  type: AppSnackbarType.success,
-                                );
-                              },
-                              child: const Text('Copy'),
-                            ),
-                            TextButton(
-                              onPressed: () =>
-                                  Navigator.of(dialogContext).pop(),
-                              child: const Text('Done'),
-                            ),
-                          ],
-                        ),
-                      );
+                        );
 
-                      await _loadGroups();
-                    },
+                        await _loadGroups();
+                      },
                 child: _working
-                    ? const SizedBox(width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.parchment,
+                        ),
+                      )
                     : const Text('CREATE'),
               ),
             ),
@@ -289,8 +295,14 @@ class _GroupsScreenState extends State<GroupsScreen> {
                         );
                       },
                 child: _working
-                    ? const SizedBox(width: 18, height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.parchment,
+                        ),
+                      )
                     : const Text('JOIN GROUP'),
               ),
             ),
@@ -334,211 +346,217 @@ class _GroupsScreenState extends State<GroupsScreen> {
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
     return Scaffold(
-    backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
-    body: _loading
-        ? AppStateView.loadingList(itemCount: 4, itemHeight: 110)
-        : RefreshIndicator(
-            onRefresh: _loadGroups,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.screenHorizontal,
-                AppSpacing.lg,
-                AppSpacing.screenHorizontal,
-                AppSpacing.xxxl +
-                    AppSpacing.xxl +
-                    AppSpacing.md +
-                    AppSpacing.xs,
-              ),
-              children: [
-                if (_loadError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 44),
-                    child: AppStateView.error(
-                      title: AppStrings.groupsUnavailable,
-                      message: _loadError!,
-                      onRetry: _loadGroups,
-                    ),
-                  )
-                else if (_groups.isEmpty) ...[
-                  AppStateView.empty(
-                    icon: Icons.groups_2_outlined,
-                    title: AppStrings.noGroupsTitle,
-                    message: AppStrings.noGroupsSubtitle,
-                    actionLabel: 'Create or Join a Group',
-                    onAction: () async {
-                      Haptics.light();
-                      await showModalBottomSheet<void>(
-                        context: context,
-                        backgroundColor: AppColors.surfaceDark,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(AppSpacing.cardRadius),
-                          ),
-                        ),
-                        builder: (context) => SafeArea(
-                          child: Padding(
-                            padding: const EdgeInsets.all(AppSpacing.md),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.group_add,
-                                    color: AppColors.accent,
-                                  ),
-                                  title: const Text('Create Group'),
-                                  onTap: () async {
-                                    Navigator.of(context).pop();
-                                    await _showCreateGroupSheet();
-                                  },
-                                ),
-                                ListTile(
-                                  leading: const Icon(
-                                    Icons.login,
-                                    color: AppColors.accent,
-                                  ),
-                                  title: const Text('Join Group'),
-                                  onTap: () async {
-                                    Navigator.of(context).pop();
-                                    await _showJoinGroupSheet();
-                                  },
-                                ),
-                              ],
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
+      body: _loading
+          ? AppStateView.loadingList(itemCount: 4, itemHeight: 110)
+          : RefreshIndicator(
+              onRefresh: _loadGroups,
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screenHorizontal,
+                  AppSpacing.lg,
+                  AppSpacing.screenHorizontal,
+                  AppSpacing.xxxl +
+                      AppSpacing.xxl +
+                      AppSpacing.md +
+                      AppSpacing.xs,
+                ),
+                children: [
+                  if (_loadError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 44),
+                      child: AppStateView.error(
+                        title: AppStrings.groupsUnavailable,
+                        message: _loadError!,
+                        onRetry: _loadGroups,
+                      ),
+                    )
+                  else if (_groups.isEmpty) ...[
+                    AppStateView.empty(
+                      icon: Icons.groups_2_outlined,
+                      title: AppStrings.noGroupsTitle,
+                      message: AppStrings.noGroupsSubtitle,
+                      actionLabel: 'Create or Join a Group',
+                      onAction: () async {
+                        Haptics.light();
+                        await showModalBottomSheet<void>(
+                          context: context,
+                          backgroundColor: AppColors.surfaceDark,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(AppSpacing.cardRadius),
                             ),
                           ),
-                        ),
-                      );
-                    },
-                  ),
-                ] else ...[
-                  Text('My Study Groups', style: AppTextStyles.headingSmall),
-                  const SizedBox(height: AppSpacing.sm),
-                  ..._groups.map((group) {
-                    final g = group;
-                    final name = g.name;
-                    final description = g.description ?? 'No description yet';
-                    final groupId = g.id;
-                    const memberCount = 1; // placeholder
-                    const String? lastActivity = null;
-
-                    return GestureDetector(
-                      onTap: groupId.isEmpty
-                          ? null
-                          : () {
-                              Haptics.selection();
-                              context.push('/group/$groupId', extra: g);
-                            },
-                      child: GlassCard(
-                        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                        padding: const EdgeInsets.all(AppSpacing.sm),
-                        backgroundColor: AppColors.cardDark,
-                        borderRadius: AppSpacing.fieldRadius,
-                        borderColors: const [
-                          AppColors.border,
-                          AppColors.border,
-                        ],
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 24,
-                              backgroundColor: AppColors.primary,
-                              child: Text(
-                                _initials(name),
-                                style: AppTextStyles.label,
-                              ),
-                            ),
-                            const SizedBox(width: AppSpacing.sm),
-                            Expanded(
+                          builder: (context) => SafeArea(
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppSpacing.md),
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(name, style: AppTextStyles.headingSmall),
-                                  const SizedBox(height: AppSpacing.xxs),
-                                  Text(
-                                    description,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: AppTextStyles.bodySmall.copyWith(
-                                      color: AppColors.textSecondary,
+                                  ListTile(
+                                    leading: const Icon(
+                                      Icons.group_add,
+                                      color: AppColors.accent,
                                     ),
+                                    title: const Text('Create Group'),
+                                    onTap: () async {
+                                      Navigator.of(context).pop();
+                                      await _showCreateGroupSheet();
+                                    },
                                   ),
-                                  const SizedBox(height: AppSpacing.xs),
-                                  Text(
-                                    '$memberCount member${memberCount == 1 ? '' : 's'}',
-                                    style: AppTextStyles.caption.copyWith(
-                                      color: AppColors.textMuted,
-                                      fontWeight: FontWeight.w600,
+                                  ListTile(
+                                    leading: const Icon(
+                                      Icons.login,
+                                      color: AppColors.accent,
                                     ),
-                                  ),
-                                  const SizedBox(height: AppSpacing.xxs),
-                                  Text(
-                                    _formatLastActivity(lastActivity),
-                                    style: AppTextStyles.caption.copyWith(
-                                      color: AppColors.textMuted,
-                                    ),
+                                    title: const Text('Join Group'),
+                                    onTap: () async {
+                                      Navigator.of(context).pop();
+                                      await _showJoinGroupSheet();
+                                    },
                                   ),
                                 ],
                               ),
                             ),
-                            const Icon(
-                              Icons.chevron_right,
-                              color: AppColors.textSecondary,
-                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ] else ...[
+                    Text('My Study Groups', style: AppTextStyles.headingSmall),
+                    const SizedBox(height: AppSpacing.sm),
+                    ..._groups.map((group) {
+                      final g = group;
+                      final name = g.name;
+                      final description = g.description ?? 'No description yet';
+                      final groupId = g.id;
+                      const memberCount = 1; // placeholder
+                      const String? lastActivity = null;
+
+                      return GestureDetector(
+                        onTap: groupId.isEmpty
+                            ? null
+                            : () {
+                                Haptics.selection();
+                                context.push('/group/$groupId', extra: g);
+                              },
+                        child: GlassCard(
+                          margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          padding: const EdgeInsets.all(AppSpacing.sm),
+                          backgroundColor: AppColors.cardDark,
+                          borderRadius: AppSpacing.fieldRadius,
+                          borderColors: const [
+                            AppColors.border,
+                            AppColors.border,
                           ],
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 24,
+                                backgroundColor: AppColors.primary,
+                                child: Text(
+                                  _initials(name),
+                                  style: AppTextStyles.label,
+                                ),
+                              ),
+                              const SizedBox(width: AppSpacing.sm),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      name,
+                                      style: AppTextStyles.headingSmall,
+                                    ),
+                                    const SizedBox(height: AppSpacing.xxs),
+                                    Text(
+                                      description,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppTextStyles.bodySmall.copyWith(
+                                        color: AppColors.textSecondary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: AppSpacing.xs),
+                                    Text(
+                                      '$memberCount member${memberCount == 1 ? '' : 's'}',
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: AppColors.textMuted,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: AppSpacing.xxs),
+                                    Text(
+                                      _formatLastActivity(lastActivity),
+                                      style: AppTextStyles.caption.copyWith(
+                                        color: AppColors.textMuted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(
+                                Icons.chevron_right,
+                                color: AppColors.textSecondary,
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    );
-                  }),
-                ],
-              ],
-            ),
-          ),
-    floatingActionButton: FloatingActionButton.extended(
-      onPressed: () async {
-        Haptics.light();
-        await showModalBottomSheet<void>(
-          context: context,
-          backgroundColor: AppColors.surfaceDark,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          builder: (context) => SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ListTile(
-                    leading: const Icon(
-                      Icons.group_add,
-                      color: AppColors.accent,
-                    ),
-                    title: Text(
-                      'Create Group',
-                      style: AppTextStyles.bodyMedium,
-                    ),
-                    onTap: () async {
-                      Navigator.of(context).pop();
-                      await _showCreateGroupSheet();
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.login, color: AppColors.accent),
-                    title: Text('Join Group', style: AppTextStyles.bodyMedium),
-                    onTap: () async {
-                      Navigator.of(context).pop();
-                      await _showJoinGroupSheet();
-                    },
-                  ),
+                      );
+                    }),
+                  ],
                 ],
               ),
             ),
-          ),
-        );
-      },
-      icon: const Icon(Icons.add),
-      label: const Text('Group'),
-    ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          Haptics.light();
+          await showModalBottomSheet<void>(
+            context: context,
+            backgroundColor: AppColors.surfaceDark,
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            builder: (context) => SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ListTile(
+                      leading: const Icon(
+                        Icons.group_add,
+                        color: AppColors.accent,
+                      ),
+                      title: Text(
+                        'Create Group',
+                        style: AppTextStyles.bodyMedium,
+                      ),
+                      onTap: () async {
+                        Navigator.of(context).pop();
+                        await _showCreateGroupSheet();
+                      },
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.login, color: AppColors.accent),
+                      title: Text(
+                        'Join Group',
+                        style: AppTextStyles.bodyMedium,
+                      ),
+                      onTap: () async {
+                        Navigator.of(context).pop();
+                        await _showJoinGroupSheet();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+        icon: const Icon(Icons.add),
+        label: const Text('Group'),
+      ),
     );
   }
 }

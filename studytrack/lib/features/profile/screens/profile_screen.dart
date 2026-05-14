@@ -120,8 +120,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       getIt<WeeklyReportRepository>();
   final ExamRepository _examRepository = getIt<ExamRepository>();
   final ExportService _exportService = ExportService();
-  late final AchievementService _achievementService =
-      AchievementService(supabaseService: getIt<SupabaseService>());
+  late final AchievementService _achievementService = AchievementService(
+    supabaseService: getIt<SupabaseService>(),
+  );
 
   bool _isLoading = true;
   bool _isExporting = false;
@@ -167,8 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       for (final module in modules) {
         final topics = await _loadTopics(module.id);
         total += topics.length;
-        mastered +=
-            topics.where((t) => (t.currentRating ?? 0) >= 7).length;
+        mastered += topics.where((t) => (t.currentRating ?? 0) >= 7).length;
       }
 
       // Load earned badges
@@ -176,8 +176,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       var earnedTypes = <String>{};
       if (userId.isNotEmpty) {
         try {
-          final badges =
-              await _achievementService.checkAllBadges(userId);
+          final badges = await _achievementService.checkAllBadges(userId);
           earnedTypes = badges.map((b) => b.badgeType).toSet();
         } catch (_) {}
       }
@@ -295,15 +294,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      course,
-                      style: AppTextStyles.bodyMediumSecondary,
-                    ),
+                    Text(course, style: AppTextStyles.bodyMediumSecondary),
                     if (yearLevel > 0) ...[
-                      Text(
-                        ' • ',
-                        style: AppTextStyles.bodyMediumSecondary,
-                      ),
+                      Text(' • ', style: AppTextStyles.bodyMediumSecondary),
                       Text(
                         'Year $yearLevel',
                         style: AppTextStyles.bodyMediumSecondary,
@@ -436,7 +429,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Text(
                       'Achievements',
                       style: AppTextStyles.headingSmall.copyWith(
-                        color: isLight ? AppColors.inkPrimary : AppColors.parchment,
+                        color: isLight
+                            ? AppColors.inkPrimary
+                            : AppColors.parchment,
                       ),
                     ),
                     const Spacer(),
@@ -452,8 +447,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 GridView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 4,
                     childAspectRatio: 0.85,
                     mainAxisSpacing: 12,
@@ -490,8 +484,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 12),
                 _ActionButton(
                   icon: Icons.backup_rounded,
-                  label:
-                      _isBackingUp ? 'Preparing Backup…' : 'Backup to Google Drive',
+                  label: _isBackingUp
+                      ? 'Preparing Backup…'
+                      : 'Backup to Google Drive',
                   loading: _isBackingUp,
                   onTap: _isBackingUp ? null : _backupToGoogleDrive,
                 ),
@@ -503,11 +498,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showBadgeTooltip(
-    BuildContext context,
-    _BadgeMeta meta,
-    bool earned,
-  ) {
+  void _showBadgeTooltip(BuildContext context, _BadgeMeta meta, bool earned) {
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -689,10 +680,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 class _AvatarWithRing extends StatelessWidget {
-  const _AvatarWithRing({
-    required this.name,
-    required this.masteryProgress,
-  });
+  const _AvatarWithRing({required this.name, required this.masteryProgress});
 
   final String name;
   final double masteryProgress;
@@ -793,8 +781,7 @@ class _RingPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _RingPainter old) =>
-      old.progress != progress;
+  bool shouldRepaint(covariant _RingPainter old) => old.progress != progress;
 }
 
 class _StatCard extends StatelessWidget {
@@ -993,7 +980,9 @@ class _BadgeWidget extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.captionMuted.copyWith(
-                  color: earned ? AppColors.parchment : AppColors.parchmentMuted,
+                  color: earned
+                      ? AppColors.parchment
+                      : AppColors.parchmentMuted,
                   fontSize: 9,
                   fontWeight: earned ? FontWeight.w700 : FontWeight.w400,
                 ),
@@ -1027,11 +1016,10 @@ class _ActionButton extends StatelessWidget {
     final bg = disabled
         ? AppColors.cardDark
         : isPrimary
-            ? AppColors.signal
-            : AppColors.surfaceDark;
+        ? AppColors.signal
+        : AppColors.surfaceDark;
     final fg = isPrimary ? AppColors.parchment : AppColors.parchment;
-    final border =
-        isPrimary ? AppColors.signal : AppColors.borderDark;
+    final border = isPrimary ? AppColors.signal : AppColors.borderDark;
 
     return GestureDetector(
       onTap: () {
@@ -1053,18 +1041,12 @@ class _ActionButton extends StatelessWidget {
               SizedBox(
                 width: 16,
                 height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: fg,
-                ),
+                child: CircularProgressIndicator(strokeWidth: 2, color: fg),
               )
             else
               Icon(icon, color: fg, size: 18),
             const SizedBox(width: 10),
-            Text(
-              label,
-              style: AppTextStyles.button.copyWith(color: fg),
-            ),
+            Text(label, style: AppTextStyles.button.copyWith(color: fg)),
           ],
         ),
       ),

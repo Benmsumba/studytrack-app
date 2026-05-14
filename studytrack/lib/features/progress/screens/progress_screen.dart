@@ -50,15 +50,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
     setState(() => _isLoading = true);
 
     final now = DateTime.now();
-    final heatmapStart = DateTime(now.year, now.month, now.day)
-        .subtract(const Duration(days: 83));
+    final heatmapStart = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(const Duration(days: 83));
 
     // Round-trip 1 — fire modules, sessions, and profile in parallel.
     late final moduleResult = getIt<ModuleRepository>().getAllModules();
     late final sessionResult = getIt<StudySessionRepository>()
         .getSessionsByDateRange(startDate: heatmapStart, endDate: now);
-    late final profileResult =
-        getIt<ProfileRepository>().getCurrentProfile();
+    late final profileResult = getIt<ProfileRepository>().getCurrentProfile();
 
     final (modules, allSessions, profile) = await (
       moduleResult,
@@ -67,14 +69,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
     ).wait;
 
     final resolvedModules = modules.fold((_) => <ModuleModel>[], (m) => m);
-    final resolvedSessions =
-        allSessions.fold((_) => const <StudySessionModel>[], (s) => s);
+    final resolvedSessions = allSessions.fold(
+      (_) => const <StudySessionModel>[],
+      (s) => s,
+    );
     final resolvedProfile = profile.fold((_) => null, (p) => p);
 
     // Round-trip 2 — batch topics (needs module IDs from round-trip 1).
     final moduleIds = resolvedModules.map((m) => m.id).toList();
-    final topicResult =
-        await getIt<TopicRepository>().getTopicsByModuleIds(moduleIds);
+    final topicResult = await getIt<TopicRepository>().getTopicsByModuleIds(
+      moduleIds,
+    );
     final allTopics = topicResult.fold((_) => <TopicModel>[], (t) => t);
 
     // All stats computed client-side — zero additional queries.
@@ -83,8 +88,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
         .map((t) => t.currentRating!)
         .toList();
 
-    final topicsMastered =
-        allTopics.where((t) => (t.currentRating ?? 0) >= 7).length;
+    final topicsMastered = allTopics
+        .where((t) => (t.currentRating ?? 0) >= 7)
+        .length;
 
     final averageRating = ratings.isEmpty
         ? 0.0
@@ -679,7 +685,14 @@ class _TopicLineChart extends StatelessWidget {
             );
           }
 
-          final points = history.asMap().entries.map((entry) => FlSpot(entry.key.toDouble(), entry.value.rating.toDouble())).toList();
+          final points = history
+              .asMap()
+              .entries
+              .map(
+                (entry) =>
+                    FlSpot(entry.key.toDouble(), entry.value.rating.toDouble()),
+              )
+              .toList();
 
           return LineChart(
             LineChartData(

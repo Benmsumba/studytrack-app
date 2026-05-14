@@ -59,12 +59,15 @@ class AppTextStyles {
   );
 
   // Light-mode overrides — same metrics, ink-coloured.
-  static final TextStyle headingLargeLight =
-      headingLarge.copyWith(color: AppColors.inkPrimary);
-  static final TextStyle headingMediumLight =
-      headingMedium.copyWith(color: AppColors.inkPrimary);
-  static final TextStyle headingSmallLight =
-      headingSmall.copyWith(color: AppColors.inkPrimary);
+  static final TextStyle headingLargeLight = headingLarge.copyWith(
+    color: AppColors.inkPrimary,
+  );
+  static final TextStyle headingMediumLight = headingMedium.copyWith(
+    color: AppColors.inkPrimary,
+  );
+  static final TextStyle headingSmallLight = headingSmall.copyWith(
+    color: AppColors.inkPrimary,
+  );
 
   // ── Body — Inter Tight, line-height 1.6 ──────────────────────────────────
 

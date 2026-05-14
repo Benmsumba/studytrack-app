@@ -176,14 +176,14 @@ class _ModulesScreenState extends State<ModulesScreen> {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
     return Scaffold(
-      backgroundColor:
-          isLight ? AppColors.paperWhite : AppColors.obsidian,
+      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
       body: _isLoading
           ? AppStateView.loadingGrid(itemCount: 4, childAspectRatio: 0.78)
           : RefreshIndicator(
               color: AppColors.signal,
-              backgroundColor:
-                  isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
+              backgroundColor: isLight
+                  ? AppColors.surfaceLight
+                  : AppColors.surfaceDark,
               onRefresh: _loadModules,
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(
@@ -223,63 +223,65 @@ class _ModulesScreenState extends State<ModulesScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                if (_loadError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 36),
-                    child: AppStateView.error(
-                      title: 'Modules unavailable',
-                      message: _loadError!,
-                      onRetry: _loadModules,
-                    ),
-                  )
-                else if (_filteredModules.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 36),
-                    child: AppStateView.empty(
-                      icon: Icons.layers_outlined,
-                      title: _query.trim().isEmpty
-                          ? 'No modules yet'
-                          : 'No matches found',
-                      message: _query.trim().isEmpty
-                          ? 'Add your first module to start tracking your coursework.'
-                          : 'Try a different search term or clear the filter.',
-                      actionLabel: _query.trim().isEmpty ? 'Add Module' : null,
-                      onAction: _query.trim().isEmpty
-                          ? _showAddOrEditModuleSheet
-                          : null,
-                    ),
-                  )
-                else
-                  GridView.builder(
-                    itemCount: _filteredModules.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.78,
-                        ),
-                    itemBuilder: (context, index) {
-                      final module = _filteredModules[index];
-                      final topics =
-                          _topicsByModule[module.id] ?? const <TopicModel>[];
-                      final stats = _ModuleStats.fromTopics(topics);
+                  if (_loadError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 36),
+                      child: AppStateView.error(
+                        title: 'Modules unavailable',
+                        message: _loadError!,
+                        onRetry: _loadModules,
+                      ),
+                    )
+                  else if (_filteredModules.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 36),
+                      child: AppStateView.empty(
+                        icon: Icons.layers_outlined,
+                        title: _query.trim().isEmpty
+                            ? 'No modules yet'
+                            : 'No matches found',
+                        message: _query.trim().isEmpty
+                            ? 'Add your first module to start tracking your coursework.'
+                            : 'Try a different search term or clear the filter.',
+                        actionLabel: _query.trim().isEmpty
+                            ? 'Add Module'
+                            : null,
+                        onAction: _query.trim().isEmpty
+                            ? _showAddOrEditModuleSheet
+                            : null,
+                      ),
+                    )
+                  else
+                    GridView.builder(
+                      itemCount: _filteredModules.length,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
+                            childAspectRatio: 0.78,
+                          ),
+                      itemBuilder: (context, index) {
+                        final module = _filteredModules[index];
+                        final topics =
+                            _topicsByModule[module.id] ?? const <TopicModel>[];
+                        final stats = _ModuleStats.fromTopics(topics);
 
-                      return GestureDetector(
-                        onLongPress: () {
-                          Haptics.medium();
-                          _showCardOptions(module);
-                        },
-                        onTap: () {
-                          Haptics.light();
-                          context.push('/modules/${module.id}');
-                        },
-                        child: _ModuleCard(module: module, stats: stats),
-                      );
-                    },
-                  ),
+                        return GestureDetector(
+                          onLongPress: () {
+                            Haptics.medium();
+                            _showCardOptions(module);
+                          },
+                          onTap: () {
+                            Haptics.light();
+                            context.push('/modules/${module.id}');
+                          },
+                          child: _ModuleCard(module: module, stats: stats),
+                        );
+                      },
+                    ),
                 ],
               ),
             ),
@@ -310,12 +312,12 @@ class _ModuleCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
     final subjectColor = _parseColor();
-    final surface =
-        isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
+    final surface = isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
     final border = isLight ? AppColors.borderLight : AppColors.borderDark;
     final fg = isLight ? AppColors.inkPrimary : AppColors.parchment;
-    final fgSecondary =
-        isLight ? AppColors.inkSecondary : AppColors.parchmentSecondary;
+    final fgSecondary = isLight
+        ? AppColors.inkSecondary
+        : AppColors.parchmentSecondary;
     final fgMuted = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
 
     return ClipRRect(
@@ -344,10 +346,11 @@ class _ModuleCard extends StatelessWidget {
                       module.name,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: (isLight
-                              ? AppTextStyles.headingSmallLight
-                              : AppTextStyles.headingSmall)
-                          .copyWith(fontSize: 18),
+                      style:
+                          (isLight
+                                  ? AppTextStyles.headingSmallLight
+                                  : AppTextStyles.headingSmall)
+                              .copyWith(fontSize: 18),
                     ),
                     const SizedBox(height: 6),
                     // Micro-copy in expanded all-caps tracking
@@ -597,10 +600,17 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
             child: FilledButton(
               onPressed: _isSaving ? null : _save,
               child: _isSaving
-                  ? const SizedBox(width: 18, height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.parchment,
+                      ),
+                    )
                   : Text(
-                      (widget.module == null ? 'Add Module' : 'Save Changes').toUpperCase(),
+                      (widget.module == null ? 'Add Module' : 'Save Changes')
+                          .toUpperCase(),
                     ),
             ),
           ),

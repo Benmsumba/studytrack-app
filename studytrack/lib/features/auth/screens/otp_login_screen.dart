@@ -427,7 +427,9 @@ class _GradientButton extends StatelessWidget {
                 )
               : Text(
                   label,
-                  style: AppTextStyles.button.copyWith(color: AppColors.parchment),
+                  style: AppTextStyles.button.copyWith(
+                    color: AppColors.parchment,
+                  ),
                 ),
         ),
       ),

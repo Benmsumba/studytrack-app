@@ -221,92 +221,99 @@ class _LoginScreenState extends State<LoginScreen> {
                 ).animate().fadeIn(duration: 500.ms, delay: 150.ms),
                 const SizedBox(height: 36),
                 Container(
-                        padding: const EdgeInsets.all(AppSpacing.lg),
-                        decoration: BoxDecoration(
-                          color: AppColors.surfaceDark,
-                          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                          border: Border.all(color: AppColors.signal, width: 0.5),
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceDark,
+                        borderRadius: BorderRadius.circular(
+                          AppSpacing.cardRadius,
                         ),
-                        child: Column(
-                          children: [
-                            _buildTextField(
-                              controller: _emailController,
-                              hintText: AppStrings.emailAddress,
-                              keyboardType: TextInputType.emailAddress,
-                              prefixIcon: Icons.email_outlined,
-                              validator: Validators.email,
-                              semanticLabel: AppStrings.emailAddress,
-                              helperText: 'example@domain.com',
-                            ),
-                            const SizedBox(height: 14),
-                            _buildTextField(
-                              controller: _passwordController,
-                              hintText: AppStrings.password,
-                              prefixIcon: Icons.lock_outline,
-                              obscureText: _obscurePassword,
-                              suffixIcon: Semantics(
-                                label: _obscurePassword
-                                    ? 'Show password'
-                                    : 'Hide password',
-                                button: true,
-                                enabled: true,
-                                onTap: () => setState(
+                        border: Border.all(color: AppColors.signal, width: 0.5),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildTextField(
+                            controller: _emailController,
+                            hintText: AppStrings.emailAddress,
+                            keyboardType: TextInputType.emailAddress,
+                            prefixIcon: Icons.email_outlined,
+                            validator: Validators.email,
+                            semanticLabel: AppStrings.emailAddress,
+                            helperText: 'example@domain.com',
+                          ),
+                          const SizedBox(height: 14),
+                          _buildTextField(
+                            controller: _passwordController,
+                            hintText: AppStrings.password,
+                            prefixIcon: Icons.lock_outline,
+                            obscureText: _obscurePassword,
+                            suffixIcon: Semantics(
+                              label: _obscurePassword
+                                  ? 'Show password'
+                                  : 'Hide password',
+                              button: true,
+                              enabled: true,
+                              onTap: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
+                              child: IconButton(
+                                onPressed: () => setState(
                                   () => _obscurePassword = !_obscurePassword,
                                 ),
-                                child: IconButton(
-                                  onPressed: () => setState(
-                                    () => _obscurePassword = !_obscurePassword,
-                                  ),
-                                  icon: Icon(
-                                    _obscurePassword
-                                        ? Icons.visibility_off_rounded
-                                        : Icons.visibility_rounded,
-                                    color: AppColors.textMuted,
-                                  ),
-                                  tooltip: _obscurePassword
-                                      ? 'Show password'
-                                      : 'Hide password',
+                                icon: Icon(
+                                  _obscurePassword
+                                      ? Icons.visibility_off_rounded
+                                      : Icons.visibility_rounded,
+                                  color: AppColors.textMuted,
                                 ),
+                                tooltip: _obscurePassword
+                                    ? 'Show password'
+                                    : 'Hide password',
                               ),
-                              validator: Validators.requiredField,
-                              semanticLabel: AppStrings.password,
-                              helperText: 'At least 8 characters',
-                              obscured: true,
                             ),
-                            const SizedBox(height: 6),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: _onForgotPasswordTap,
-                                style: TextButton.styleFrom(
-                                  padding: EdgeInsets.zero,
-                                  tapTargetSize:
-                                      MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: Text(
-                                  AppStrings.forgotPassword,
-                                  style: AppTextStyles.bodyMedium.copyWith(
-                                    color: AppColors.accent,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                            validator: Validators.requiredField,
+                            semanticLabel: AppStrings.password,
+                            helperText: 'At least 8 characters',
+                            obscured: true,
+                          ),
+                          const SizedBox(height: 6),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: _onForgotPasswordTap,
+                              style: TextButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: Text(
+                                AppStrings.forgotPassword,
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.accent,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            SizedBox(
-                              width: double.infinity,
-                              child: FilledButton(
-                                onPressed: auth.isLoading ? null : _onLoginTap,
-                                child: auth.isLoading
-                                    ? const SizedBox(width: 18, height: 18,
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
-                                    : Text(AppStrings.login.toUpperCase()),
-                              ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: auth.isLoading ? null : _onLoginTap,
+                              child: auth.isLoading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.parchment,
+                                      ),
+                                    )
+                                  : Text(AppStrings.login.toUpperCase()),
                             ),
-                          ],
-                        ),
-                      )
+                          ),
+                        ],
+                      ),
+                    )
                     .animate()
                     .fadeIn(duration: 600.ms, delay: 200.ms)
                     .slideY(begin: 0.12, end: 0, duration: 600.ms),

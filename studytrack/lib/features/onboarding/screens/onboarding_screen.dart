@@ -669,9 +669,7 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-        color: selected
-            ? AppColors.signalMuted
-            : AppColors.surfaceElevated,
+        color: selected ? AppColors.signalMuted : AppColors.surfaceElevated,
         border: Border.all(
           color: selected ? AppColors.signal : AppColors.borderDarkSoft,
           width: 0.5,

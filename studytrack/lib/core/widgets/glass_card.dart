@@ -42,8 +42,8 @@ class GlassCard extends StatelessWidget {
     final innerBorderRadius = BorderRadius.circular(innerRadius);
     // Single tonal hairline border — materiality comes from the subtle contrast
     // between the card surface and its border, not from glow or shadow.
-    final colors = borderColors ??
-        const [AppColors.borderDark, AppColors.borderDarkSoft];
+    final colors =
+        borderColors ?? const [AppColors.borderDark, AppColors.borderDarkSoft];
 
     Widget card = Container(
       margin: margin,

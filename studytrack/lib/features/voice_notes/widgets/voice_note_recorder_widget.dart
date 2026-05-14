@@ -170,7 +170,10 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
                   color: AppColors.signal,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.mic_rounded, color: AppColors.parchment),
+                child: const Icon(
+                  Icons.mic_rounded,
+                  color: AppColors.parchment,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -242,7 +245,9 @@ class _VoiceNoteRecorderWidgetState extends State<VoiceNoteRecorderWidget> {
                     ),
                     label: Text(
                       _isRecording ? 'Stop recording' : 'Start recording',
-                      style: AppTextStyles.button.copyWith(color: AppColors.parchment),
+                      style: AppTextStyles.button.copyWith(
+                        color: AppColors.parchment,
+                      ),
                     ),
                   ),
                 ),

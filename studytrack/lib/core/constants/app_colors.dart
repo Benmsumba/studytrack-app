@@ -36,9 +36,13 @@ class AppColors {
   // is all that's needed to convey physical layering.
 
   static const Color borderLight = Color(0xFFE3E2DF); // on paperWhite
-  static const Color borderLightSoft = Color(0xFFEAE9E6); // subtle dividers (light)
+  static const Color borderLightSoft = Color(
+    0xFFEAE9E6,
+  ); // subtle dividers (light)
   static const Color borderDark = Color(0xFF2C2C2E); // on obsidian
-  static const Color borderDarkSoft = Color(0xFF232325); // subtle dividers (dark)
+  static const Color borderDarkSoft = Color(
+    0xFF232325,
+  ); // subtle dividers (dark)
 
   // Legacy aliases (widely used in existing widgets — kept while screens migrate)
   static const Color border = borderDark;

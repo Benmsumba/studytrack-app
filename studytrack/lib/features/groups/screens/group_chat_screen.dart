@@ -226,10 +226,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.obsidian,
-      appBar: AppBar(
-        backgroundColor: AppColors.obsidian,
-        title: Text(title),
-      ),
+      appBar: AppBar(backgroundColor: AppColors.obsidian, title: Text(title)),
       body: Column(
         children: [
           Expanded(
@@ -270,9 +267,13 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               child: Row(
                                 children: [
-                                  const Expanded(child: Divider(color: AppColors.border)),
+                                  const Expanded(
+                                    child: Divider(color: AppColors.border),
+                                  ),
                                   Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                    ),
                                     child: Text(
                                       separatorLabel,
                                       style: AppTextStyles.caption.copyWith(
@@ -281,7 +282,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                       ),
                                     ),
                                   ),
-                                  const Expanded(child: Divider(color: AppColors.border)),
+                                  const Expanded(
+                                    child: Divider(color: AppColors.border),
+                                  ),
                                 ],
                               ),
                             ),
@@ -294,10 +297,14 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                               constraints: const BoxConstraints(maxWidth: 320),
                               padding: const EdgeInsets.all(10),
                               decoration: BoxDecoration(
-                                color: mine ? AppColors.signalMuted : AppColors.cardDark,
+                                color: mine
+                                    ? AppColors.signalMuted
+                                    : AppColors.cardDark,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: mine ? AppColors.signal : AppColors.border,
+                                  color: mine
+                                      ? AppColors.signal
+                                      : AppColors.border,
                                   width: 0.5,
                                 ),
                               ),
@@ -313,7 +320,9 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                         radius: 12,
                                         backgroundColor: _avatarColor(sender),
                                         child: Text(
-                                          displayName.substring(0, 1).toUpperCase(),
+                                          displayName
+                                              .substring(0, 1)
+                                              .toUpperCase(),
                                           style: AppTextStyles.caption.copyWith(
                                             color: AppColors.parchment,
                                             fontSize: 10,
@@ -329,20 +338,22 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
                                         children: [
                                           Text(
                                             displayName,
-                                            style: AppTextStyles.caption.copyWith(
-                                              color: mine
-                                                  ? Colors.white70
-                                                  : AppColors.accent,
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w700,
-                                            ),
+                                            style: AppTextStyles.caption
+                                                .copyWith(
+                                                  color: mine
+                                                      ? Colors.white70
+                                                      : AppColors.accent,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
                                           ),
                                           Text(
                                             subtitle,
-                                            style: AppTextStyles.caption.copyWith(
-                                              color: Colors.white60,
-                                              fontSize: 10,
-                                            ),
+                                            style: AppTextStyles.caption
+                                                .copyWith(
+                                                  color: Colors.white60,
+                                                  fontSize: 10,
+                                                ),
                                           ),
                                         ],
                                       ),

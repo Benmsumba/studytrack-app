@@ -119,195 +119,197 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
       body: _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : SingleChildScrollView(
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.screenHorizontal,
-                  vertical: AppSpacing.md,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header with greeting
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(_greeting, style: AppTextStyles.headingLarge),
-                        Text(
-                          _userName ?? 'Student',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    // Daily Goal
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Today\'s Goal',
-                          style: AppTextStyles.headingSmall.copyWith(
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.lg),
-                        Center(
-                          child: ProgressRing(
-                            progress: _dailyGoalProgress,
-                            goal: _dailyGoalTarget,
-                            unit: 'hours',
-                            size: 140,
-                            completed: _dailyGoalProgress >= _dailyGoalTarget,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-
-                    // Up Next Card
-                    if (_nextEventTitle != null)
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.screenHorizontal,
+                    vertical: AppSpacing.md,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header with greeting
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          Text(_greeting, style: AppTextStyles.headingLarge),
                           Text(
-                            'Up Next',
-                            style: AppTextStyles.headingSmall.copyWith(
-                              color: AppColors.textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: AppSpacing.md),
-                          GestureDetector(
-                            onTap: () => context.push('/exams'),
-                            child: GlassCard(
-                              padding: const EdgeInsets.all(AppSpacing.lg),
-                              borderRadius: AppSpacing.cardRadius,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _nextEventTitle!,
-                                    style: AppTextStyles.headingSmall.copyWith(
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppSpacing.sm),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.calendar_today,
-                                        size: 16,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                      const SizedBox(width: AppSpacing.sm),
-                                      Text(
-                                        _nextEventTime ?? 'N/A',
-                                        style: AppTextStyles.bodyMedium
-                                            .copyWith(
-                                              color: AppColors.textSecondary,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                  if (_examCountdownDays != null &&
-                                      _examCountdownDays! < 2)
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        top: AppSpacing.md,
-                                      ),
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: AppSpacing.md,
-                                          vertical: AppSpacing.sm,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.danger.withValues(
-                                            alpha: 0.2,
-                                          ),
-                                          borderRadius: BorderRadius.circular(
-                                            8,
-                                          ),
-                                        ),
-                                        child: Text(
-                                          'Exam approaching! Start preparing now',
-                                          style: AppTextStyles.caption.copyWith(
-                                            color: AppColors.danger,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
+                            _userName ?? 'Student',
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textSecondary,
                             ),
                           ),
                         ],
                       ),
-                    const SizedBox(height: AppSpacing.xl),
+                      const SizedBox(height: AppSpacing.xl),
 
-                    // Quick actions section
-                    Text(
-                      'Quick Start',
-                      style: AppTextStyles.headingSmall.copyWith(
-                        color: AppColors.textPrimary,
+                      // Daily Goal
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Today\'s Goal',
+                            style: AppTextStyles.headingSmall.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          Center(
+                            child: ProgressRing(
+                              progress: _dailyGoalProgress,
+                              goal: _dailyGoalTarget,
+                              unit: 'hours',
+                              size: 140,
+                              completed: _dailyGoalProgress >= _dailyGoalTarget,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Column(
-                      children: [
-                        _QuickActionCard(
-                          icon: Icons.calendar_month_rounded,
-                          label: 'View Timetable',
-                          onTap: () => context.go('/home/timetable'),
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // Up Next Card
+                      if (_nextEventTitle != null)
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Up Next',
+                              style: AppTextStyles.headingSmall.copyWith(
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            GestureDetector(
+                              onTap: () => context.push('/exams'),
+                              child: GlassCard(
+                                padding: const EdgeInsets.all(AppSpacing.lg),
+                                borderRadius: AppSpacing.cardRadius,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _nextEventTitle!,
+                                      style: AppTextStyles.headingSmall
+                                          .copyWith(
+                                            color: AppColors.textPrimary,
+                                          ),
+                                    ),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.calendar_today,
+                                          size: 16,
+                                          color: AppColors.textSecondary,
+                                        ),
+                                        const SizedBox(width: AppSpacing.sm),
+                                        Text(
+                                          _nextEventTime ?? 'N/A',
+                                          style: AppTextStyles.bodyMedium
+                                              .copyWith(
+                                                color: AppColors.textSecondary,
+                                              ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (_examCountdownDays != null &&
+                                        _examCountdownDays! < 2)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: AppSpacing.md,
+                                        ),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: AppSpacing.md,
+                                            vertical: AppSpacing.sm,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.danger.withValues(
+                                              alpha: 0.2,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            'Exam approaching! Start preparing now',
+                                            style: AppTextStyles.caption
+                                                .copyWith(
+                                                  color: AppColors.danger,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                        _QuickActionCard(
-                          icon: Icons.menu_book_rounded,
-                          label: 'Browse Modules',
-                          onTap: () => context.go('/home/modules'),
+                      const SizedBox(height: AppSpacing.xl),
+
+                      // Quick actions section
+                      Text(
+                        'Quick Start',
+                        style: AppTextStyles.headingSmall.copyWith(
+                          color: AppColors.textPrimary,
                         ),
-                        const SizedBox(height: AppSpacing.md),
-                        _QuickActionCard(
-                          icon: Icons.auto_graph_rounded,
-                          label: 'Check Progress',
-                          onTap: () => context.go('/home/progress'),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        _QuickActionCard(
-                          icon: Icons.groups_rounded,
-                          label: 'Join Study Group',
-                          onTap: () => context.go('/home/groups'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.xl),
-                  ],
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      Column(
+                        children: [
+                          _QuickActionCard(
+                            icon: Icons.calendar_month_rounded,
+                            label: 'View Timetable',
+                            onTap: () => context.go('/home/timetable'),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          _QuickActionCard(
+                            icon: Icons.menu_book_rounded,
+                            label: 'Browse Modules',
+                            onTap: () => context.go('/home/modules'),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          _QuickActionCard(
+                            icon: Icons.auto_graph_rounded,
+                            label: 'Check Progress',
+                            onTap: () => context.go('/home/progress'),
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          _QuickActionCard(
+                            icon: Icons.groups_rounded,
+                            label: 'Join Study Group',
+                            onTap: () => context.go('/home/groups'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.xl),
+                    ],
+                  ),
                 ),
               ),
             ),
+      floatingActionButton: ExpandableFAB(
+        actions: [
+          (
+            label: 'Voice Note',
+            icon: Icons.mic_rounded,
+            onTap: () => context.push('/voice-notes'),
           ),
-    floatingActionButton: ExpandableFAB(
-      actions: [
-        (
-          label: 'Voice Note',
-          icon: Icons.mic_rounded,
-          onTap: () => context.push('/voice-notes'),
-        ),
-        (
-          label: 'Quick Quiz',
-          icon: Icons.quiz_rounded,
-          onTap: () => context.go('/home/modules'),
-        ),
-        (
-          label: 'Study Session',
-          icon: Icons.timer_rounded,
-          onTap: () => context.push('/study-session'),
-        ),
-      ],
-    ),
+          (
+            label: 'Quick Quiz',
+            icon: Icons.quiz_rounded,
+            onTap: () => context.go('/home/modules'),
+          ),
+          (
+            label: 'Study Session',
+            icon: Icons.timer_rounded,
+            onTap: () => context.push('/study-session'),
+          ),
+        ],
+      ),
     );
   }
 }
