@@ -67,7 +67,10 @@ class _VoiceNotePlayerWidgetState extends State<VoiceNotePlayerWidget> {
             color: AppColors.signal,
             borderRadius: BorderRadius.circular(14),
           ),
-          child: const Icon(Icons.graphic_eq_rounded, color: AppColors.parchment),
+          child: const Icon(
+            Icons.graphic_eq_rounded,
+            color: AppColors.parchment,
+          ),
         ),
         const SizedBox(width: 12),
         Expanded(

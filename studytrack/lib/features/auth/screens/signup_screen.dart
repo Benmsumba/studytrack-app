@@ -136,122 +136,132 @@ class _SignupScreenState extends State<SignupScreen> {
               ).animate().fadeIn(duration: 600.ms, delay: 100.ms),
               const SizedBox(height: AppSpacing.lg),
               Container(
-                      padding: const EdgeInsets.all(AppSpacing.lg),
-                      decoration: BoxDecoration(
-                        color: AppColors.surfaceDark,
-                        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-                        border: Border.all(color: AppColors.signal, width: 0.5),
+                    padding: const EdgeInsets.all(AppSpacing.lg),
+                    decoration: BoxDecoration(
+                      color: AppColors.surfaceDark,
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.cardRadius,
                       ),
-                      child: Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            _buildTextField(
-                              controller: _nameController,
-                              hintText: AppStrings.fullName,
-                              validator: Validators.requiredField,
+                      border: Border.all(color: AppColors.signal, width: 0.5),
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          _buildTextField(
+                            controller: _nameController,
+                            hintText: AppStrings.fullName,
+                            validator: Validators.requiredField,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          _buildTextField(
+                            controller: _emailController,
+                            hintText: AppStrings.emailAddress,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: Validators.email,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          _buildTextField(
+                            controller: _passwordController,
+                            hintText: AppStrings.password,
+                            obscureText: _obscurePassword,
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off_rounded
+                                    : Icons.visibility_rounded,
+                                color: AppColors.textMuted,
+                              ),
                             ),
-                            const SizedBox(height: AppSpacing.md),
-                            _buildTextField(
-                              controller: _emailController,
-                              hintText: AppStrings.emailAddress,
-                              keyboardType: TextInputType.emailAddress,
-                              validator: Validators.email,
+                            onChanged: (_) => setState(() {}),
+                            validator: Validators.password,
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          _buildPasswordStrengthIndicator(
+                            value: passwordStrength,
+                            label: strengthLabel,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          _buildTextField(
+                            controller: _confirmPasswordController,
+                            hintText: AppStrings.confirmPassword,
+                            obscureText: _obscureConfirmPassword,
+                            suffixIcon: IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _obscureConfirmPassword =
+                                      !_obscureConfirmPassword;
+                                });
+                              },
+                              icon: Icon(
+                                _obscureConfirmPassword
+                                    ? Icons.visibility_off_rounded
+                                    : Icons.visibility_rounded,
+                                color: AppColors.textMuted,
+                              ),
                             ),
-                            const SizedBox(height: AppSpacing.md),
-                            _buildTextField(
-                              controller: _passwordController,
-                              hintText: AppStrings.password,
-                              obscureText: _obscurePassword,
-                              suffixIcon: IconButton(
-                                onPressed: () {
+                            validator: (value) => Validators.confirmPassword(
+                              value,
+                              _passwordController.text,
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Checkbox(
+                                value: _acceptedTerms,
+                                onChanged: (value) {
                                   setState(() {
-                                    _obscurePassword = !_obscurePassword;
+                                    _acceptedTerms = value ?? false;
                                   });
                                 },
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_off_rounded
-                                      : Icons.visibility_rounded,
-                                  color: AppColors.textMuted,
-                                ),
+                                activeColor: AppColors.accent,
+                                checkColor: AppColors.obsidian,
+                                side: const BorderSide(color: AppColors.border),
                               ),
-                              onChanged: (_) => setState(() {}),
-                              validator: Validators.password,
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            _buildPasswordStrengthIndicator(
-                              value: passwordStrength,
-                              label: strengthLabel,
-                            ),
-                            const SizedBox(height: AppSpacing.md),
-                            _buildTextField(
-                              controller: _confirmPasswordController,
-                              hintText: AppStrings.confirmPassword,
-                              obscureText: _obscureConfirmPassword,
-                              suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _obscureConfirmPassword =
-                                        !_obscureConfirmPassword;
-                                  });
-                                },
-                                icon: Icon(
-                                  _obscureConfirmPassword
-                                      ? Icons.visibility_off_rounded
-                                      : Icons.visibility_rounded,
-                                  color: AppColors.textMuted,
-                                ),
-                              ),
-                              validator: (value) => Validators.confirmPassword(
-                                value,
-                                _passwordController.text,
-                              ),
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Checkbox(
-                                  value: _acceptedTerms,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _acceptedTerms = value ?? false;
-                                    });
-                                  },
-                                  activeColor: AppColors.accent,
-                                  checkColor: AppColors.obsidian,
-                                  side: const BorderSide(
-                                    color: AppColors.border,
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: AppSpacing.sm,
+                                  ),
+                                  child: Text(
+                                    AppStrings.acceptTerms,
+                                    style: AppTextStyles.bodySmallSecondary,
                                   ),
                                 ),
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.only(
-                                      top: AppSpacing.sm,
-                                    ),
-                                    child: Text(
-                                      AppStrings.acceptTerms,
-                                      style: AppTextStyles.bodySmallSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: AppSpacing.xs),
-                            SizedBox(
-                              width: double.infinity,
-                              child: FilledButton(
-                                onPressed: auth.isLoading ? null : _onCreateAccountTap,
-                                child: auth.isLoading
-                                    ? const SizedBox(width: 18, height: 18,
-                                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
-                                    : Text(AppStrings.createAccount.toUpperCase()),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: AppSpacing.xs),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton(
+                              onPressed: auth.isLoading
+                                  ? null
+                                  : _onCreateAccountTap,
+                              child: auth.isLoading
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.parchment,
+                                      ),
+                                    )
+                                  : Text(
+                                      AppStrings.createAccount.toUpperCase(),
+                                    ),
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
+                    ),
                   )
                   .animate()
                   .fadeIn(duration: 650.ms, delay: 150.ms)

@@ -86,10 +86,7 @@ class _FadeThroughTransitionsBuilder extends PageTransitionsBuilder {
   ) {
     return FadeTransition(
       // Incoming: ease in over the full 300 ms.
-      opacity: CurvedAnimation(
-        parent: animation,
-        curve: Curves.easeInOutCubic,
-      ),
+      opacity: CurvedAnimation(parent: animation, curve: Curves.easeInOutCubic),
       child: FadeTransition(
         // Outgoing: fade out quickly in the first third, leaving a brief
         // clean canvas before the next screen appears.
@@ -429,8 +426,9 @@ class StudyTrackApp extends StatelessWidget {
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
         backgroundColor: AppColors.surfaceElevatedLight,
-        contentTextStyle:
-            AppTextStyles.bodyMedium.copyWith(color: AppColors.inkPrimary),
+        contentTextStyle: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.inkPrimary,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.buttonRadius),
           side: const BorderSide(color: AppColors.borderLight, width: 0.5),
@@ -447,11 +445,17 @@ class StudyTrackApp extends StatelessWidget {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.borderLight, width: 0.5),
+          borderSide: const BorderSide(
+            color: AppColors.borderLight,
+            width: 0.5,
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
-          borderSide: const BorderSide(color: AppColors.borderLight, width: 0.5),
+          borderSide: const BorderSide(
+            color: AppColors.borderLight,
+            width: 0.5,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppSpacing.fieldRadius),
@@ -466,8 +470,9 @@ class StudyTrackApp extends StatelessWidget {
           borderSide: const BorderSide(color: AppColors.danger, width: 1.5),
         ),
         labelStyle: AppTextStyles.label.copyWith(color: AppColors.inkSecondary),
-        hintStyle:
-            AppTextStyles.bodyMediumSecondary.copyWith(color: AppColors.inkMuted),
+        hintStyle: AppTextStyles.bodyMediumSecondary.copyWith(
+          color: AppColors.inkMuted,
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
@@ -528,8 +533,9 @@ class StudyTrackApp extends StatelessWidget {
         selectedColor: AppColors.signalSubtle,
         disabledColor: AppColors.surfaceElevatedLight,
         labelStyle: AppTextStyles.label.copyWith(color: AppColors.inkPrimary),
-        secondaryLabelStyle:
-            AppTextStyles.label.copyWith(color: AppColors.inkPrimary),
+        secondaryLabelStyle: AppTextStyles.label.copyWith(
+          color: AppColors.inkPrimary,
+        ),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSpacing.pillRadius),
           side: const BorderSide(color: AppColors.borderLight, width: 0.5),
@@ -560,17 +566,29 @@ class StudyTrackApp extends StatelessWidget {
 
     return base.copyWith(
       textTheme: baseTextTheme.copyWith(
-        displayLarge: AppTextStyles.displayLarge.copyWith(color: AppColors.inkPrimary),
-        displayMedium: AppTextStyles.displayMedium.copyWith(color: AppColors.inkPrimary),
+        displayLarge: AppTextStyles.displayLarge.copyWith(
+          color: AppColors.inkPrimary,
+        ),
+        displayMedium: AppTextStyles.displayMedium.copyWith(
+          color: AppColors.inkPrimary,
+        ),
         headlineLarge: AppTextStyles.headingLargeLight,
         headlineMedium: AppTextStyles.headingMediumLight,
         headlineSmall: AppTextStyles.headingSmallLight,
         titleLarge: AppTextStyles.headingSmallLight,
         titleMedium: AppTextStyles.label.copyWith(color: AppColors.inkPrimary),
-        titleSmall: AppTextStyles.labelSecondary.copyWith(color: AppColors.inkSecondary),
-        bodyLarge: AppTextStyles.bodyLarge.copyWith(color: AppColors.inkPrimary),
-        bodyMedium: AppTextStyles.bodyMedium.copyWith(color: AppColors.inkPrimary),
-        bodySmall: AppTextStyles.bodySmall.copyWith(color: AppColors.inkPrimary),
+        titleSmall: AppTextStyles.labelSecondary.copyWith(
+          color: AppColors.inkSecondary,
+        ),
+        bodyLarge: AppTextStyles.bodyLarge.copyWith(
+          color: AppColors.inkPrimary,
+        ),
+        bodyMedium: AppTextStyles.bodyMedium.copyWith(
+          color: AppColors.inkPrimary,
+        ),
+        bodySmall: AppTextStyles.bodySmall.copyWith(
+          color: AppColors.inkPrimary,
+        ),
         labelLarge: AppTextStyles.button.copyWith(color: AppColors.inkPrimary),
         labelMedium: AppTextStyles.label.copyWith(color: AppColors.inkPrimary),
         labelSmall: AppTextStyles.caption.copyWith(color: AppColors.inkMuted),

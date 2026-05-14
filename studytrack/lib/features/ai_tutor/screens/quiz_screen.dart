@@ -282,7 +282,9 @@ class _QuizScreenState extends State<QuizScreen> {
                     _currentIndex == _questions.length - 1
                         ? 'See Results'
                         : 'Next Question',
-                    style: AppTextStyles.button.copyWith(color: AppColors.parchment),
+                    style: AppTextStyles.button.copyWith(
+                      color: AppColors.parchment,
+                    ),
                   ),
                 ),
               ),
@@ -384,7 +386,9 @@ class _OptionCard extends StatelessWidget {
             Expanded(
               child: Text(
                 text,
-                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.parchment),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.parchment,
+                ),
               ),
             ),
             if (trailing != null) Icon(trailing, color: border),
@@ -426,8 +430,10 @@ class _ResultsViewState extends State<_ResultsView> {
 
   String _message() {
     if (widget.score == widget.total) return "Perfect! You've mastered this 🏆";
-    if (widget.score >= widget.total * 0.8) return 'Excellent work! Almost there ⭐';
-    if (widget.score >= widget.total * 0.6) return 'Good effort! A bit more practice 📚';
+    if (widget.score >= widget.total * 0.8)
+      return 'Excellent work! Almost there ⭐';
+    if (widget.score >= widget.total * 0.6)
+      return 'Good effort! A bit more practice 📚';
     return "Keep studying — you'll get there 💪";
   }
 

@@ -124,8 +124,8 @@ class BentoTile extends StatelessWidget {
     this.onTap,
     this.padding = const EdgeInsets.all(AppSpacing.cardPadding),
     this.borderRadius,
-  })  : borderColor = AppColors.borderDarkSoft,
-        backgroundColor = AppColors.cardDarkAlt;
+  }) : borderColor = AppColors.borderDarkSoft,
+       backgroundColor = AppColors.cardDarkAlt;
 
   final Widget child;
   final int flex;
@@ -139,10 +139,11 @@ class BentoTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isLight = Theme.of(context).brightness == Brightness.light;
     final radius = borderRadius ?? BorderRadius.circular(AppSpacing.cardRadius);
-    final bg = backgroundColor ??
+    final bg =
+        backgroundColor ??
         (isLight ? AppColors.surfaceLight : AppColors.surfaceDark);
-    final border = borderColor ??
-        (isLight ? AppColors.borderLight : AppColors.borderDark);
+    final border =
+        borderColor ?? (isLight ? AppColors.borderLight : AppColors.borderDark);
 
     final content = Container(
       decoration: BoxDecoration(

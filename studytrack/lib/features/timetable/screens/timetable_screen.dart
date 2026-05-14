@@ -72,7 +72,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
     final provider = context.read<TimetableProvider>();
     final selectedDate = _dateForSelectedDay();
     provider.setSelectedDate(selectedDate);
-    final result = await provider.loadTimetable(userId);
+    final result = await provider.loadTimetable();
     if (!mounted || result.success) return;
     SnackbarHelper.show(context, result.message, type: AppSnackbarType.error);
   }
@@ -253,8 +253,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
                             ),
                             color: selected ? AppColors.signalMuted : surfaceBg,
                             border: Border.all(
-                              color:
-                                  selected ? AppColors.signal : borderColor,
+                              color: selected ? AppColors.signal : borderColor,
                               width: 0.5,
                             ),
                           ),
@@ -339,22 +338,21 @@ class _TimetableScreenState extends State<TimetableScreen> {
     required Color surfaceBg,
     required Color borderColor,
     required List<Widget> children,
-  }) =>
-      Container(
-        decoration: BoxDecoration(
-          color: surfaceBg,
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          border: Border.all(color: borderColor, width: 0.5),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: ExpansionTile(
-          initiallyExpanded: true,
-          title: Text(title, style: AppTextStyles.label.copyWith(color: fg)),
-          iconColor: fg,
-          collapsedIconColor: mutedFg,
-          children: children,
-        ),
-      );
+  }) => Container(
+    decoration: BoxDecoration(
+      color: surfaceBg,
+      borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+      border: Border.all(color: borderColor, width: 0.5),
+    ),
+    clipBehavior: Clip.antiAlias,
+    child: ExpansionTile(
+      initiallyExpanded: true,
+      title: Text(title, style: AppTextStyles.label.copyWith(color: fg)),
+      iconColor: fg,
+      collapsedIconColor: mutedFg,
+      children: children,
+    ),
+  );
 
   Widget _buildSectionHeader(
     String title,
@@ -363,58 +361,56 @@ class _TimetableScreenState extends State<TimetableScreen> {
     Color mutedFg,
     Color surfaceBg,
     Color borderColor,
-  ) =>
-      Row(
-        children: [
-          Text(
-            title.toUpperCase(),
-            style: AppTextStyles.overline.copyWith(color: fg),
-          ),
-          const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppSpacing.sm,
-              vertical: AppSpacing.xxs,
-            ),
-            decoration: BoxDecoration(
-              color: surfaceBg,
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: borderColor, width: 0.5),
-            ),
-            child: Text(
-              '$count',
-              style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
-            ),
-          ),
-        ],
-      );
+  ) => Row(
+    children: [
+      Text(
+        title.toUpperCase(),
+        style: AppTextStyles.overline.copyWith(color: fg),
+      ),
+      const Spacer(),
+      Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: AppSpacing.xxs,
+        ),
+        decoration: BoxDecoration(
+          color: surfaceBg,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: borderColor, width: 0.5),
+        ),
+        child: Text(
+          '$count',
+          style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
+        ),
+      ),
+    ],
+  );
 
   Widget _buildEmptyTile(
     String message,
     Color mutedFg,
     Color surfaceBg,
     Color borderColor,
-  ) =>
-      Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.md,
-          0,
-          AppSpacing.md,
-          AppSpacing.md,
-        ),
-        child: Container(
-          padding: const EdgeInsets.all(AppSpacing.sm),
-          decoration: BoxDecoration(
-            color: surfaceBg,
-            borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-            border: Border.all(color: borderColor, width: 0.5),
-          ),
-          child: Text(
-            message,
-            style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
-          ),
-        ),
-      );
+  ) => Padding(
+    padding: const EdgeInsets.fromLTRB(
+      AppSpacing.md,
+      0,
+      AppSpacing.md,
+      AppSpacing.md,
+    ),
+    child: Container(
+      padding: const EdgeInsets.all(AppSpacing.sm),
+      decoration: BoxDecoration(
+        color: surfaceBg,
+        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
+        border: Border.all(color: borderColor, width: 0.5),
+      ),
+      child: Text(
+        message,
+        style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
+      ),
+    ),
+  );
 
   Widget _buildClassCard(ClassSlotModel slot) {
     final color = _safeColor(slot.color);
@@ -783,8 +779,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     };
 
     if (!mounted) return;
-    Navigator.of(context)
-        .pop(_ScheduleSubmission(isClass: false, payload: payload));
+    Navigator.of(
+      context,
+    ).pop(_ScheduleSubmission(isClass: false, payload: payload));
   }
 
   void _showSnack(String message) {
@@ -861,9 +858,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
                       ),
                     )
                   : Text(
-                      widget.editClassData == null
-                          ? 'SAVE'
-                          : 'UPDATE CLASS',
+                      widget.editClassData == null ? 'SAVE' : 'UPDATE CLASS',
                     ),
             ),
           ),
@@ -1049,8 +1044,7 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
       return DropdownButtonFormField<String>(
         initialValue: _selectedTopicId,
         dropdownColor: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
-        decoration:
-            const InputDecoration(labelText: 'Linked topic (optional)'),
+        decoration: const InputDecoration(labelText: 'Linked topic (optional)'),
         items: provider.topics
             .map(
               (topic) => DropdownMenuItem<String>(

@@ -310,8 +310,9 @@ class _BottomNavBar extends StatelessWidget {
                     width: selected ? 14 : 0,
                     decoration: BoxDecoration(
                       color: AppColors.signal,
-                      borderRadius:
-                          BorderRadius.circular(AppSpacing.pillRadius),
+                      borderRadius: BorderRadius.circular(
+                        AppSpacing.pillRadius,
+                      ),
                     ),
                   ),
                 ],

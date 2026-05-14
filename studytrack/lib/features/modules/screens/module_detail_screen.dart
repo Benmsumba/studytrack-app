@@ -139,7 +139,9 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
-                style: AppTextStyles.bodyMedium.copyWith(color: AppColors.parchment),
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.parchment,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Topic name',
                   hintStyle: AppTextStyles.bodyMedium.copyWith(
@@ -244,7 +246,10 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
                       color: moduleColor.withValues(alpha: 0.12),
-                      border: Border.all(color: moduleColor.withValues(alpha: 0.3), width: 0.5),
+                      border: Border.all(
+                        color: moduleColor.withValues(alpha: 0.3),
+                        width: 0.5,
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

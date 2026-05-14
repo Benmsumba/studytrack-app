@@ -205,74 +205,74 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
       body: SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-            child: Row(
-              children: [
-                Text(
-                  'Notifications',
-                  style: AppTextStyles.headingLarge.copyWith(fontSize: 28),
-                ),
-                const Spacer(),
-                TextButton(
-                  onPressed: _loadNotifications,
-                  child: Text(
-                    'Refresh',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.accent,
-                      fontWeight: FontWeight.w600,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+              child: Row(
+                children: [
+                  Text(
+                    'Notifications',
+                    style: AppTextStyles.headingLarge.copyWith(fontSize: 28),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: _loadNotifications,
+                    child: Text(
+                      'Refresh',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.accent,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              color: AppColors.accent,
-              backgroundColor: AppColors.surfaceDark,
-              onRefresh: _loadNotifications,
-              child: _isLoading
-                  ? AppStateView.loadingList(itemCount: 4, itemHeight: 88)
-                  : _loadError != null
-                  ? AppStateView.error(
-                      title: 'Notifications unavailable',
-                      message: _loadError!,
-                      onRetry: _loadNotifications,
-                    )
-                  : _items.isEmpty
-                  ? AppStateView.empty(
-                      icon: Icons.notifications_none_rounded,
-                      title: 'No new notifications',
-                      message:
-                          'You’re all caught up. New reminders will appear here.',
-                    )
-                  : ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: _items.length,
-                      itemBuilder: (context, index) {
-                        final item = _items[index];
-                        return _NotificationTile(
-                          key: ValueKey('${item.title}_$index'),
-                          title: item.title,
-                          body: item.body,
-                          timeLabel: item.timeLabel,
-                          icon: item.icon,
-                          iconColor: item.iconColor,
-                          unread: item.unread,
-                          index: index,
-                        );
-                      },
-                    ),
+            Expanded(
+              child: RefreshIndicator(
+                color: AppColors.accent,
+                backgroundColor: AppColors.surfaceDark,
+                onRefresh: _loadNotifications,
+                child: _isLoading
+                    ? AppStateView.loadingList(itemCount: 4, itemHeight: 88)
+                    : _loadError != null
+                    ? AppStateView.error(
+                        title: 'Notifications unavailable',
+                        message: _loadError!,
+                        onRetry: _loadNotifications,
+                      )
+                    : _items.isEmpty
+                    ? AppStateView.empty(
+                        icon: Icons.notifications_none_rounded,
+                        title: 'No new notifications',
+                        message:
+                            'You’re all caught up. New reminders will appear here.',
+                      )
+                    : ListView.builder(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: _items.length,
+                        itemBuilder: (context, index) {
+                          final item = _items[index];
+                          return _NotificationTile(
+                            key: ValueKey('${item.title}_$index'),
+                            title: item.title,
+                            body: item.body,
+                            timeLabel: item.timeLabel,
+                            icon: item.icon,
+                            iconColor: item.iconColor,
+                            unread: item.unread,
+                            index: index,
+                          );
+                        },
+                      ),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -297,7 +297,12 @@ class _NotificationTileData {
 
 class _NotificationTile extends StatefulWidget {
   const _NotificationTile({
-    required this.title, required this.body, required this.timeLabel, required this.icon, required this.iconColor, super.key,
+    required this.title,
+    required this.body,
+    required this.timeLabel,
+    required this.icon,
+    required this.iconColor,
+    super.key,
     this.unread = false,
     this.index = 0,
   });
@@ -382,7 +387,9 @@ class _NotificationTileState extends State<_NotificationTile>
                       Expanded(
                         child: Text(
                           widget.title,
-                          style: AppTextStyles.headingSmall.copyWith(fontSize: 14),
+                          style: AppTextStyles.headingSmall.copyWith(
+                            fontSize: 14,
+                          ),
                         ),
                       ),
                       if (widget.unread)
