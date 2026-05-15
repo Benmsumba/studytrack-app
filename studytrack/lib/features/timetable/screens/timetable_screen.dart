@@ -1,7 +1,7 @@
 import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -17,6 +17,11 @@ import '../../../models/class_slot_model.dart';
 import '../../../models/study_session_model.dart';
 import '../controllers/timetable_provider.dart';
 import '../controllers/topic_module_provider.dart';
+
+const int _startHour = 8;
+const int _endHour = 17;
+const double _hourHeight = 64.0;
+const double _timeAxisWidth = 48.0;
 
 class TimetableScreen extends StatefulWidget {
   const TimetableScreen({super.key});
@@ -88,12 +93,6 @@ class _TimetableScreenState extends State<TimetableScreen> {
       .where((item) => item.dayOfWeek == _selectedDay)
       .toList();
 
-  String _displayTitleForSelectedDay() {
-    final today = DateTime.now().weekday;
-    if (_selectedDay == today) return "Today's Schedule";
-    return '${_dayLabels[_selectedDay - 1]} Schedule';
-  }
-
   Color _safeColor(String? colorHex) {
     if (colorHex == null || colorHex.isEmpty) return AppColors.signal;
     final sanitized = colorHex.replaceAll('#', '');
@@ -112,12 +111,10 @@ class _TimetableScreenState extends State<TimetableScreen> {
   }
 
   Future<void> _showAddScheduleBottomSheet() async {
-    final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
     final submission = await showModalBottomSheet<_ScheduleSubmission>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isLight ? AppColors.paperWhite : AppColors.surfaceDark,
+      backgroundColor: const Color(0xFF1A1A2E),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -128,12 +125,10 @@ class _TimetableScreenState extends State<TimetableScreen> {
   }
 
   Future<void> _showEditClassBottomSheet(ClassSlotModel slot) async {
-    final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
     final submission = await showModalBottomSheet<_ScheduleSubmission>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: isLight ? AppColors.paperWhite : AppColors.surfaceDark,
+      backgroundColor: const Color(0xFF1A1A2E),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -173,403 +168,326 @@ class _TimetableScreenState extends State<TimetableScreen> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
-    final fg = isLight ? AppColors.inkPrimary : AppColors.parchment;
-    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
-    final surfaceBg = isLight ? AppColors.surfaceLight : AppColors.cardDark;
-    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
-
-    return Scaffold(
-      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
-      body: Consumer<TimetableProvider>(
-        builder: (context, provider, _) {
-          final classesForDay = _classesForDay(provider);
-          final studySessions = provider.studySessions;
-
-          if (provider.isLoading) {
-            return AppStateView.loadingList(itemCount: 4, itemHeight: 110);
-          }
-
-          return RefreshIndicator(
-            color: AppColors.signal,
-            backgroundColor: surfaceBg,
-            onRefresh: _loadData,
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(
-                AppSpacing.screenHorizontal,
-                AppSpacing.xs,
-                AppSpacing.screenHorizontal,
-                120,
-              ),
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _displayTitleForSelectedDay(),
-                        style: isLight
-                            ? AppTextStyles.headingSmallLight
-                            : AppTextStyles.headingSmall,
-                      ),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        Haptics.light();
-                        _showAddScheduleBottomSheet();
-                      },
-                      icon: const Icon(Icons.add_rounded, size: 16),
-                      label: const Text('ADD'),
-                    ),
-                  ],
+  Widget _buildDayTabs() {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+      ),
+      child: Row(
+        children: List.generate(7, (i) {
+          final dayIndex = i + 1;
+          final selected = _selectedDay == dayIndex;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () {
+                Haptics.selection();
+                setState(() => _selectedDay = dayIndex);
+                _loadData();
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: selected
+                    ? BoxDecoration(
+                        color: const Color(0xFF4F46E5),
+                        borderRadius: BorderRadius.circular(10),
+                      )
+                    : null,
+                child: Text(
+                  days[i],
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: selected ? Colors.white : Colors.white60,
+                    fontSize: 12,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
+                  ),
                 ),
-                const SizedBox(height: AppSpacing.sm),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Color _slotColor(ClassSlotModel slot) {
+    if (slot.color != null && slot.color!.isNotEmpty) {
+      try {
+        final hex = slot.color!.replaceAll('#', '');
+        return Color(int.parse('FF$hex', radix: 16));
+      } catch (_) {}
+    }
+    final name = slot.subjectName.toLowerCase();
+    if (name.contains('study') || name.contains('session')) {
+      return const Color(0xFF10B981);
+    }
+    if (name.contains('cs') || name.contains('prep') || name.contains('lab')) {
+      return const Color(0xFF7C3AED);
+    }
+    return const Color(0xFF3B82F6);
+  }
+
+  Widget _buildEventBlock(ClassSlotModel slot) {
+    final startParts = slot.startTime.split(':');
+    final endParts = slot.endTime.split(':');
+    final startHour =
+        int.parse(startParts[0]) +
+        int.parse(startParts.length > 1 ? startParts[1] : '0') / 60.0;
+    final endHour =
+        int.parse(endParts[0]) +
+        int.parse(endParts.length > 1 ? endParts[1] : '0') / 60.0;
+    final top = (startHour - _startHour) * _hourHeight;
+    final height = (endHour - startHour) * _hourHeight;
+    if (top < 0 || height <= 0) return const SizedBox.shrink();
+
+    final blockColor = _slotColor(slot);
+    final displayStart =
+        '${startParts[0]}:${startParts.length > 1 ? startParts[1] : '00'}';
+    final displayEnd =
+        '${endParts[0]}:${endParts.length > 1 ? endParts[1] : '00'}';
+
+    return Positioned(
+      top: top,
+      left: 4,
+      right: 4,
+      height: height - 4,
+      child: GestureDetector(
+        onTap: () => _showEditClassBottomSheet(slot),
+        onLongPress: () => _confirmDeleteSlot(slot),
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: blockColor.withValues(alpha: 0.8),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: blockColor, width: 1.5),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                slot.subjectName,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (height > 60) ...[
+                const SizedBox(height: 2),
+                Text(
+                  '($displayStart-$displayEnd)',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontSize: 10,
+                  ),
+                ),
+                if (slot.room != null)
+                  Text(
+                    '- ${slot.room}',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      fontSize: 10,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteSlot(ClassSlotModel slot) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        title: const Text(
+          'Delete Class',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'Delete "${slot.subjectName}"?',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: Color(0xFFEF4444)),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await _deleteClassSlot(slot.id);
+    }
+  }
+
+  Widget _buildTimeGrid() {
+    return Consumer<TimetableProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading) {
+          return const Center(
+            child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
+          );
+        }
+
+        final slots = provider.classSlots
+            .where((s) => s.dayOfWeek == _selectedDay)
+            .toList();
+        final totalHeight = (_endHour - _startHour) * _hourHeight;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: SizedBox(
+            height: totalHeight + 32,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Time axis
                 SizedBox(
-                  height: 44,
-                  child: ListView.separated(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _dayLabels.length,
-                    separatorBuilder: (_, _) =>
-                        const SizedBox(width: AppSpacing.xs),
-                    itemBuilder: (context, index) {
-                      final day = index + 1;
-                      final selected = day == _selectedDay;
-                      return GestureDetector(
-                        onTap: () {
-                          Haptics.selection();
-                          setState(() => _selectedDay = day);
-                          _loadData();
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 220),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md,
-                          ),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(
-                              AppSpacing.cardRadius,
-                            ),
-                            color: selected ? AppColors.signalMuted : surfaceBg,
-                            border: Border.all(
-                              color: selected ? AppColors.signal : borderColor,
-                              width: 0.5,
-                            ),
-                          ),
-                          alignment: Alignment.center,
+                  width: _timeAxisWidth,
+                  height: totalHeight,
+                  child: Column(
+                    children: List.generate(_endHour - _startHour, (i) {
+                      final hour = _startHour + i;
+                      return SizedBox(
+                        height: _hourHeight,
+                        child: Align(
+                          alignment: Alignment.topLeft,
                           child: Text(
-                            _dayLabels[index].toUpperCase(),
-                            style: AppTextStyles.overline.copyWith(
-                              color: selected ? AppColors.signal : mutedFg,
+                            '${hour.toString().padLeft(2, '0')}:00',
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 11,
                             ),
                           ),
                         ),
                       );
-                    },
+                    }),
                   ),
                 ),
-                const SizedBox(height: AppSpacing.md),
-                _buildSectionHeader(
-                  'Classes',
-                  classesForDay.length,
-                  fg,
-                  mutedFg,
-                  surfaceBg,
-                  borderColor,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                _buildExpansionCard(
-                  title: 'Class Timetable',
-                  fg: fg,
-                  mutedFg: mutedFg,
-                  surfaceBg: surfaceBg,
-                  borderColor: borderColor,
-                  children: classesForDay.isEmpty
-                      ? [
-                          _buildEmptyTile(
-                            'No classes scheduled for this day.',
-                            mutedFg,
-                            surfaceBg,
-                            borderColor,
+                // Events column
+                Expanded(
+                  child: Stack(
+                    children: [
+                      // Grid lines
+                      Column(
+                        children: List.generate(
+                          _endHour - _startHour,
+                          (i) => Container(
+                            height: _hourHeight,
+                            decoration: BoxDecoration(
+                              border: Border(
+                                top: BorderSide(
+                                  color: Colors.white.withValues(alpha: 0.06),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
                           ),
-                        ]
-                      : classesForDay.map(_buildClassCard).toList(),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                _buildSectionHeader(
-                  'Study Sessions',
-                  studySessions.length,
-                  fg,
-                  mutedFg,
-                  surfaceBg,
-                  borderColor,
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                _buildExpansionCard(
-                  title: 'Planned Sessions',
-                  fg: fg,
-                  mutedFg: mutedFg,
-                  surfaceBg: surfaceBg,
-                  borderColor: borderColor,
-                  children: studySessions.isEmpty
-                      ? [
-                          _buildEmptyTile(
-                            'Nothing scheduled. Tap ADD to create one.',
-                            mutedFg,
-                            surfaceBg,
-                            borderColor,
+                        ),
+                      ),
+                      // Event blocks
+                      if (slots.isEmpty)
+                        Center(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 80),
+                            child: Text(
+                              'No classes scheduled for ${_dayLabels[_selectedDay - 1]}',
+                              style: const TextStyle(
+                                color: Colors.white38,
+                                fontSize: 14,
+                              ),
+                            ),
                           ),
-                        ]
-                      : studySessions.map(_buildStudySessionCard).toList(),
+                        )
+                      else
+                        ...slots.map((slot) => _buildEventBlock(slot)),
+                    ],
+                  ),
                 ),
               ],
             ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildExpansionCard({
-    required String title,
-    required Color fg,
-    required Color mutedFg,
-    required Color surfaceBg,
-    required Color borderColor,
-    required List<Widget> children,
-  }) => Container(
-    decoration: BoxDecoration(
-      color: surfaceBg,
-      borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-      border: Border.all(color: borderColor, width: 0.5),
-    ),
-    clipBehavior: Clip.antiAlias,
-    child: ExpansionTile(
-      initiallyExpanded: true,
-      title: Text(title, style: AppTextStyles.label.copyWith(color: fg)),
-      iconColor: fg,
-      collapsedIconColor: mutedFg,
-      children: children,
-    ),
-  );
-
-  Widget _buildSectionHeader(
-    String title,
-    int count,
-    Color fg,
-    Color mutedFg,
-    Color surfaceBg,
-    Color borderColor,
-  ) => Row(
-    children: [
-      Text(
-        title.toUpperCase(),
-        style: AppTextStyles.overline.copyWith(color: fg),
-      ),
-      const Spacer(),
-      Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.sm,
-          vertical: AppSpacing.xxs,
-        ),
-        decoration: BoxDecoration(
-          color: surfaceBg,
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: borderColor, width: 0.5),
-        ),
-        child: Text(
-          '$count',
-          style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
-        ),
-      ),
-    ],
-  );
-
-  Widget _buildEmptyTile(
-    String message,
-    Color mutedFg,
-    Color surfaceBg,
-    Color borderColor,
-  ) => Padding(
-    padding: const EdgeInsets.fromLTRB(
-      AppSpacing.md,
-      0,
-      AppSpacing.md,
-      AppSpacing.md,
-    ),
-    child: Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: surfaceBg,
-        borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-        border: Border.all(color: borderColor, width: 0.5),
-      ),
-      child: Text(
-        message,
-        style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
-      ),
-    ),
-  );
-
-  Widget _buildClassCard(ClassSlotModel slot) {
-    final color = _safeColor(slot.color);
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final surfaceBg = isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
-    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
-    final fg = isLight ? AppColors.inkPrimary : AppColors.parchment;
-    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
-
-    return Slidable(
-      key: ValueKey(slot.id),
-      startActionPane: ActionPane(
-        motion: const DrawerMotion(),
-        children: [
-          SlidableAction(
-            onPressed: (_) => _showEditClassBottomSheet(slot),
-            backgroundColor: AppColors.signal,
-            foregroundColor: AppColors.parchment,
-            icon: Icons.edit_rounded,
-            label: 'Edit',
           ),
-        ],
-      ),
-      endActionPane: ActionPane(
-        motion: const DrawerMotion(),
-        children: [
-          SlidableAction(
-            onPressed: (_) => _deleteClassSlot(slot.id),
-            backgroundColor: AppColors.danger,
-            foregroundColor: AppColors.parchment,
-            icon: Icons.delete_outline_rounded,
-            label: 'Delete',
-          ),
-        ],
-      ),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(
-          AppSpacing.sm,
-          0,
-          AppSpacing.sm,
-          AppSpacing.sm,
-        ),
-        decoration: BoxDecoration(
-          color: surfaceBg,
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          border: Border.all(color: borderColor, width: 0.5),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Row(
-          children: [
-            Container(width: 4, height: 84, color: color),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      slot.subjectName,
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: fg,
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text(
-                      '${slot.startTime} - ${slot.endTime}',
-                      style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
-                    ),
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text(
-                      '${slot.room ?? 'Room TBA'} • '
-                      '${slot.lecturer ?? 'Lecturer TBA'}',
-                      style: AppTextStyles.caption.copyWith(color: mutedFg),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStudySessionCard(StudySessionModel session) {
-    final status = session.status.toLowerCase();
-    final badgeColor = switch (status) {
-      'completed' => AppColors.success,
-      'missed' => AppColors.danger,
-      _ => AppColors.warning,
-    };
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final surfaceBg = isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
-    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
-    final fg = isLight ? AppColors.inkPrimary : AppColors.parchment;
-    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
-
-    return GestureDetector(
-      onTap: () {
-        Haptics.selection();
-        final topicId = session.topicId;
-        if (!mounted) return;
-        if (topicId != null && topicId.isNotEmpty) {
-          context.push('/topics/$topicId');
-        }
+        );
       },
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(
-          AppSpacing.sm,
-          0,
-          AppSpacing.sm,
-          AppSpacing.sm,
-        ),
-        padding: const EdgeInsets.all(AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: surfaceBg,
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          border: Border.all(color: borderColor, width: 0.5),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    session.title,
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: fg,
-                    ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.obsidian,
+      body: ClipRRect(
+        borderRadius: BorderRadius.circular(0),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  child: Column(
+                    children: const [
+                      Text(
+                        'StudyTrack',
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Weekly Timetable',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: AppSpacing.xxs),
-                  Text(
-                    '${session.startTime ?? '--:--'} - '
-                    '${session.endTime ?? '--:--'}',
-                    style: AppTextStyles.bodySmall.copyWith(color: mutedFg),
-                  ),
-                ],
-              ),
+                ),
+                // Day tab row
+                _buildDayTabs(),
+                const SizedBox(height: 8),
+                // Time grid
+                Expanded(child: _buildTimeGrid()),
+              ],
             ),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.sm,
-                vertical: AppSpacing.xxs,
-              ),
-              decoration: BoxDecoration(
-                color: badgeColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: badgeColor, width: 0.5),
-              ),
-              child: Text(
-                status.toUpperCase(),
-                style: AppTextStyles.overline.copyWith(color: badgeColor),
-              ),
-            ),
-          ],
+          ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Haptics.light();
+          _showAddScheduleBottomSheet();
+        },
+        backgroundColor: const Color(0xFF4F46E5),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
       ),
     );
   }
@@ -790,9 +708,8 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
-    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
+    final borderColor = AppColors.borderDark;
+    final mutedFg = AppColors.parchmentMuted;
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
@@ -937,10 +854,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
 
   Widget _buildDayDropdown() {
     const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final isLight = Theme.of(context).brightness == Brightness.light;
     return DropdownButtonFormField<int>(
       initialValue: _classDay,
-      dropdownColor: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
+      dropdownColor: AppColors.surfaceDark,
       decoration: const InputDecoration(labelText: 'Day'),
       items: List.generate(
         7,
@@ -956,10 +872,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
   }
 
   Widget _buildDatePicker() {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
-    final surfaceBg = isLight ? AppColors.surfaceLight : AppColors.cardDark;
-    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
+    final borderColor = AppColors.borderDark;
+    final surfaceBg = AppColors.cardDark;
+    final mutedFg = AppColors.parchmentMuted;
 
     return InkWell(
       onTap: () {
@@ -998,11 +913,10 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
     required TimeOfDay? value,
     required VoidCallback onTap,
   }) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    final borderColor = isLight ? AppColors.borderLight : AppColors.borderDark;
-    final surfaceBg = isLight ? AppColors.surfaceLight : AppColors.cardDark;
-    final mutedFg = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
-    final activeFg = isLight ? AppColors.inkPrimary : AppColors.parchment;
+    final borderColor = AppColors.borderDark;
+    final surfaceBg = AppColors.cardDark;
+    final mutedFg = AppColors.parchmentMuted;
+    final activeFg = AppColors.parchment;
 
     return InkWell(
       onTap: () {
@@ -1040,10 +954,9 @@ class _AddScheduleBottomSheetState extends State<_AddScheduleBottomSheet>
 
   Widget _buildTopicDropdown() => Consumer<TopicModuleProvider>(
     builder: (context, provider, _) {
-      final isLight = Theme.of(context).brightness == Brightness.light;
       return DropdownButtonFormField<String>(
         initialValue: _selectedTopicId,
-        dropdownColor: isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
+        dropdownColor: AppColors.surfaceDark,
         decoration: const InputDecoration(labelText: 'Linked topic (optional)'),
         items: provider.topics
             .map(

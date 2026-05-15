@@ -12,29 +12,49 @@ class MainShell extends StatelessWidget {
 
   final StatefulNavigationShell navigationShell;
 
-  static const _titles = ['Timetable', 'Modules', 'Progress', 'Group'];
+  // Titles indexed by BRANCH index (6 branches total).
+  // Branch 0=dashboard, 1=timetable (no nav tab), 2=modules, 3=progress, 4=groups, 5=profile
+  static const _titles = [
+    '',
+    'Timetable',
+    'Modules',
+    'Progress',
+    'Group',
+    'Profile',
+  ];
 
-  // Context-aware Action Capsule configuration per branch.
-  // null entries hide the capsule on that screen.
+  // Capsules indexed by BRANCH index.
   static const _capsules = <_CapsuleSpec?>[
+    null, // dashboard - no capsule
     _CapsuleSpec('Start Session', Icons.play_arrow_rounded, '/study-session'),
     _CapsuleSpec('Start Session', Icons.play_arrow_rounded, '/study-session'),
+    null,
     null,
     null,
   ];
+
+  // Maps nav bar tap index → branch index (skip timetable branch=1)
+  static const _navToBranch = [0, 2, 3, 4, 5];
+
+  // Maps branch index → nav bar selection index (-1 if not in nav)
+  static int _branchToNav(int branchIndex) {
+    const map = {0: 0, 2: 1, 3: 2, 4: 3, 5: 4};
+    return map[branchIndex] ?? 0;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isLight = theme.brightness == Brightness.light;
-    final currentIndex = navigationShell.currentIndex;
+    final currentIndex = navigationShell.currentIndex; // branch index
+    final navIndex = _branchToNav(currentIndex); // nav bar selection
     final capsule = _capsules[currentIndex];
     final showCapsule = capsule != null;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     final navBottom = bottomInset + AppSpacing.md;
     final shellBottomPadding = showCapsule ? navBottom + 116 : navBottom + 84;
 
-    final headerActions = currentIndex == 2
+    final headerActions = currentIndex == 3
         ? [
             TextButton.icon(
               onPressed: () => context.push('/weekly-wrapped'),
@@ -54,18 +74,19 @@ class MainShell extends StatelessWidget {
         children: [
           Column(
             children: [
-              SafeArea(
-                bottom: false,
-                child: _Header(
-                  title: _titles[currentIndex],
-                  onProfileTap: () => context.go('/profile'),
-                  onNotificationTap: () => context.push('/notifications'),
-                  onSettingsTap: () => context.push('/settings'),
-                  onVoiceNotesTap: () => context.push('/voice-notes'),
-                  onAnalyticsTap: () => context.push('/analytics'),
-                  actions: headerActions,
+              if (currentIndex > 0)
+                SafeArea(
+                  bottom: false,
+                  child: _Header(
+                    title: _titles[currentIndex],
+                    onProfileTap: () => context.go('/profile'),
+                    onNotificationTap: () => context.push('/notifications'),
+                    onSettingsTap: () => context.push('/settings'),
+                    onVoiceNotesTap: () => context.push('/voice-notes'),
+                    onAnalyticsTap: () => context.push('/analytics'),
+                    actions: headerActions,
+                  ),
                 ),
-              ),
               Expanded(
                 child: Padding(
                   padding: EdgeInsets.only(bottom: shellBottomPadding),
@@ -92,11 +113,14 @@ class MainShell extends StatelessWidget {
             right: AppSpacing.screenHorizontal,
             bottom: navBottom,
             child: _BottomNavBar(
-              currentIndex: currentIndex,
-              onTap: (index) => navigationShell.goBranch(
-                index,
-                initialLocation: index == currentIndex,
-              ),
+              currentIndex: navIndex,
+              onTap: (tapIndex) {
+                final branchIndex = _navToBranch[tapIndex];
+                navigationShell.goBranch(
+                  branchIndex,
+                  initialLocation: branchIndex == currentIndex,
+                );
+              },
             ),
           ),
         ],
@@ -240,10 +264,11 @@ class _BottomNavBar extends StatelessWidget {
   final ValueChanged<int> onTap;
 
   static const _items = [
-    (Icons.calendar_month_rounded, 'Timetable'),
+    (Icons.home_rounded, 'Home'),
     (Icons.menu_book_rounded, 'Modules'),
     (Icons.auto_graph_rounded, 'Progress'),
     (Icons.groups_rounded, 'Group'),
+    (Icons.person_rounded, 'Profile'),
   ];
 
   @override
