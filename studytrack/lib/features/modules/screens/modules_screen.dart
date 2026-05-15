@@ -1,9 +1,10 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
 import '../../../core/repositories/module_repository.dart';
 import '../../../core/repositories/topic_repository.dart';
@@ -171,118 +172,187 @@ class _ModulesScreenState extends State<ModulesScreen> {
     );
   }
 
+  Widget _buildLoadingGrid() {
+    return AppStateView.loadingGrid(itemCount: 4, childAspectRatio: 0.78);
+  }
+
+  Widget _buildGrid() {
+    if (_loadError != null) {
+      return Center(
+        child: AppStateView.error(
+          title: 'Modules unavailable',
+          message: _loadError!,
+          onRetry: _loadModules,
+        ),
+      );
+    }
+
+    if (_filteredModules.isEmpty) {
+      return Center(
+        child: AppStateView.empty(
+          icon: Icons.layers_outlined,
+          title: _query.trim().isEmpty ? 'No modules yet' : 'No matches found',
+          message: _query.trim().isEmpty
+              ? 'Add your first module to start tracking your coursework.'
+              : 'Try a different search term or clear the filter.',
+          actionLabel: _query.trim().isEmpty ? 'Add Module' : null,
+          onAction: _query.trim().isEmpty ? _showAddOrEditModuleSheet : null,
+        ),
+      );
+    }
+
+    return GridView.builder(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 120),
+      itemCount: _filteredModules.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+        childAspectRatio: 0.78,
+      ),
+      itemBuilder: (context, index) {
+        final module = _filteredModules[index];
+        final topics = _topicsByModule[module.id] ?? const <TopicModel>[];
+        final stats = _ModuleStats.fromTopics(topics);
+
+        return GestureDetector(
+          onLongPress: () {
+            Haptics.medium();
+            _showCardOptions(module);
+          },
+          onTap: () {
+            Haptics.light();
+            context.push('/modules/${module.id}');
+          },
+          child: _ModuleCard(module: module, stats: stats),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
     return Scaffold(
-      backgroundColor:
-          isLight ? AppColors.paperWhite : AppColors.obsidian,
-      body: _isLoading
-          ? AppStateView.loadingGrid(itemCount: 4, childAspectRatio: 0.78)
-          : RefreshIndicator(
-              color: AppColors.signal,
-              backgroundColor:
-                  isLight ? AppColors.surfaceLight : AppColors.surfaceDark,
-              onRefresh: _loadModules,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.screenHorizontal,
-                  AppSpacing.xs,
-                  AppSpacing.screenHorizontal,
-                  120,
-                ),
+      backgroundColor: AppColors.obsidian,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header row
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: Row(
                 children: [
-                  // Search — inherits from theme's InputDecorationTheme.
-                  // No inline overrides: hairline border + signal focus ring.
-                  TextField(
-                    controller: _searchController,
-                    decoration: const InputDecoration(
-                      hintText: 'Search modules',
-                      prefixIcon: Icon(Icons.search_rounded),
+                  IconButton(
+                    onPressed: () => context.pop(),
+                    icon: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Colors.white,
+                      size: 24,
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        _query = value;
-                      });
-                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
-                  const SizedBox(height: AppSpacing.sm),
-                  FilledButton.icon(
-                    onPressed: () {
-                      Haptics.light();
-                      _showAddOrEditModuleSheet();
-                    },
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: Text('ADD MODULE'.toUpperCase()),
-                    style: FilledButton.styleFrom(
-                      minimumSize: const Size.fromHeight(48),
-                      textStyle: AppTextStyles.overline.copyWith(
-                        color: AppColors.parchment,
-                      ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => context.push('/profile'),
+                    icon: const Icon(
+                      Icons.account_circle_outlined,
+                      color: Colors.white,
+                      size: 28,
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                if (_loadError != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 36),
-                    child: AppStateView.error(
-                      title: 'Modules unavailable',
-                      message: _loadError!,
-                      onRetry: _loadModules,
-                    ),
-                  )
-                else if (_filteredModules.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 36),
-                    child: AppStateView.empty(
-                      icon: Icons.layers_outlined,
-                      title: _query.trim().isEmpty
-                          ? 'No modules yet'
-                          : 'No matches found',
-                      message: _query.trim().isEmpty
-                          ? 'Add your first module to start tracking your coursework.'
-                          : 'Try a different search term or clear the filter.',
-                      actionLabel: _query.trim().isEmpty ? 'Add Module' : null,
-                      onAction: _query.trim().isEmpty
-                          ? _showAddOrEditModuleSheet
-                          : null,
-                    ),
-                  )
-                else
-                  GridView.builder(
-                    itemCount: _filteredModules.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                          childAspectRatio: 0.78,
-                        ),
-                    itemBuilder: (context, index) {
-                      final module = _filteredModules[index];
-                      final topics =
-                          _topicsByModule[module.id] ?? const <TopicModel>[];
-                      final stats = _ModuleStats.fromTopics(topics);
-
-                      return GestureDetector(
-                        onLongPress: () {
-                          Haptics.medium();
-                          _showCardOptions(module);
-                        },
-                        onTap: () {
-                          Haptics.light();
-                          context.push('/modules/${module.id}');
-                        },
-                        child: _ModuleCard(module: module, stats: stats),
-                      );
-                    },
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ],
               ),
             ),
+            // Title
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                'Modules List',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Glass search bar
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (v) => setState(() => _query = v),
+                    style: const TextStyle(color: Colors.white, fontSize: 15),
+                    decoration: InputDecoration(
+                      hintText: 'Search modules...',
+                      hintStyle: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.38),
+                      ),
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: Colors.white54,
+                        size: 20,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.07),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.15),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF4F46E5),
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Grid or empty/loading state
+            Expanded(
+              child: _isLoading
+                  ? _buildLoadingGrid()
+                  : RefreshIndicator(
+                      color: AppColors.emeraldAccent,
+                      onRefresh: _loadModules,
+                      child: _buildGrid(),
+                    ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Haptics.light();
+          _showAddOrEditModuleSheet();
+        },
+        backgroundColor: const Color(0xFF10B981),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 28),
+      ),
     );
   }
 }
@@ -305,100 +375,106 @@ class _ModuleCard extends StatelessWidget {
     return Color(int.parse('FF$sanitized', radix: 16));
   }
 
+  IconData _moduleIcon() {
+    final name = module.name.toLowerCase();
+    if (name.contains('anatomy')) return Icons.biotech_rounded;
+    if (name.contains('data') || name.contains('struct')) {
+      return Icons.storage_rounded;
+    }
+    if (name.contains('physio')) return Icons.favorite_rounded;
+    if (name.contains('bio') || name.contains('chem')) {
+      return Icons.science_rounded;
+    }
+    if (name.contains('pharma')) return Icons.medication_rounded;
+    if (name.contains('network') || name.contains('computer')) {
+      return Icons.cloud_rounded;
+    }
+    if (name.contains('neuro')) return Icons.psychology_rounded;
+    return Icons.menu_book_rounded;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isLight = theme.brightness == Brightness.light;
     final subjectColor = _parseColor();
-    final surface =
-        isLight ? AppColors.surfaceLight : AppColors.surfaceDark;
-    final border = isLight ? AppColors.borderLight : AppColors.borderDark;
-    final fg = isLight ? AppColors.inkPrimary : AppColors.parchment;
-    final fgSecondary =
-        isLight ? AppColors.inkSecondary : AppColors.parchmentSecondary;
-    final fgMuted = isLight ? AppColors.inkMuted : AppColors.parchmentMuted;
+    final percent = (stats.studiedProgress * 100).round();
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-      child: Container(
-        decoration: BoxDecoration(
-          color: surface,
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          // 0.5px hairline border — no shadow, no gradient.
-          border: Border.all(color: border, width: 0.5),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Subject colour as a thin left edge stripe — a wax-seal accent,
-            // not a wash of colour.
-            Container(width: 3, color: subjectColor),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Module name — Instrument Sans, tight tracking
-                    Text(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xCC1A1A2E),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: subjectColor.withValues(alpha: 0.4),
+              width: 1.5,
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: subjectColor.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: subjectColor.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    child: Icon(_moduleIcon(), color: subjectColor, size: 18),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
                       module.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: (isLight
-                              ? AppTextStyles.headingSmallLight
-                              : AppTextStyles.headingSmall)
-                          .copyWith(fontSize: 18),
                     ),
-                    const SizedBox(height: 6),
-                    // Micro-copy in expanded all-caps tracking
-                    Text(
-                      '${stats.totalTopics} TOPICS',
-                      style: AppTextStyles.overline.copyWith(color: fgMuted),
-                    ),
-                    const SizedBox(height: 12),
-                    // Mastery bar — signal ochre, not neon green
-                    LinearProgressIndicator(
-                      value: stats.mastery,
-                      minHeight: 4,
-                      backgroundColor: border,
-                      color: AppColors.signal,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '${(stats.mastery * 100).round()}% rated 7+',
-                      style: AppTextStyles.caption.copyWith(color: fgSecondary),
-                    ),
-                    const Spacer(),
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 28,
-                          height: 28,
-                          child: CircularProgressIndicator(
-                            value: stats.studiedProgress,
-                            backgroundColor: border,
-                            color: AppColors.signal,
-                            strokeWidth: 2.5,
-                          ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              // Large circular arc ring centered
+              Center(
+                child: SizedBox(
+                  width: 90,
+                  height: 90,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CustomPaint(
+                        painter: _ModuleRingPainter(
+                          progress: stats.studiedProgress,
+                          color: subjectColor,
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            '${stats.studiedTopics}/${stats.totalTopics} studied',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: fg,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                        size: const Size(90, 90),
+                      ),
+                      Text(
+                        '$percent%',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              const Spacer(),
+            ],
+          ),
         ),
       ),
     );
@@ -420,6 +496,7 @@ class _ModuleStats {
       mastery: mastered / topics.length,
     );
   }
+
   const _ModuleStats({
     required this.totalTopics,
     required this.studiedTopics,
@@ -522,12 +599,7 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
     final viewInsets = MediaQuery.of(context).viewInsets;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.screenHorizontal,
-        AppSpacing.md,
-        AppSpacing.screenHorizontal,
-        viewInsets.bottom + AppSpacing.lg,
-      ),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, viewInsets.bottom + 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -591,16 +663,23 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
               },
             ),
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
               onPressed: _isSaving ? null : _save,
               child: _isSaving
-                  ? const SizedBox(width: 18, height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.parchment))
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.parchment,
+                      ),
+                    )
                   : Text(
-                      (widget.module == null ? 'Add Module' : 'Save Changes').toUpperCase(),
+                      (widget.module == null ? 'Add Module' : 'Save Changes')
+                          .toUpperCase(),
                     ),
             ),
           ),
@@ -608,4 +687,47 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
       ),
     );
   }
+}
+
+class _ModuleRingPainter extends CustomPainter {
+  const _ModuleRingPainter({required this.progress, required this.color});
+
+  final double progress;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const pi = 3.14159265359;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - 10) / 2;
+    // Track
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      2 * pi,
+      false,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.1)
+        ..strokeWidth = 8
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+    if (progress <= 0) return;
+    // Arc
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      2 * pi * progress.clamp(0, 1),
+      false,
+      Paint()
+        ..color = color
+        ..strokeWidth = 8
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ModuleRingPainter old) =>
+      old.progress != progress || old.color != color;
 }

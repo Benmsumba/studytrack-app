@@ -15,8 +15,8 @@ class GlassCard extends StatelessWidget {
     this.margin,
     this.borderRadius = AppSpacing.cardRadius,
     this.borderColors,
-    this.borderWidth = 0.5,
-    this.blurSigma = 30,
+    this.borderWidth = 1.0,
+    this.blurSigma = 10,
     this.enableGlow = false,
     this.glowColor,
     this.backgroundColor,
@@ -40,44 +40,28 @@ class GlassCard extends StatelessWidget {
     final radius = BorderRadius.circular(borderRadius);
     final innerRadius = math.max(0, borderRadius - borderWidth).toDouble();
     final innerBorderRadius = BorderRadius.circular(innerRadius);
-    // Single tonal hairline border — materiality comes from the subtle contrast
-    // between the card surface and its border, not from glow or shadow.
-    final colors = borderColors ??
-        const [AppColors.borderDark, AppColors.borderDarkSoft];
+
+    // Stitch spec: 10 % white border on the glass overlay.
+    final borderColor = borderColors != null
+        ? borderColors!.first
+        : AppColors.glassBorderWhite;
 
     Widget card = Container(
       margin: margin,
-      // enableGlow kept as a parameter for backwards compatibility but ignored:
-      // shadows are replaced by 0.5px hairline borders per Quiet Luxury spec.
-      decoration: BoxDecoration(borderRadius: radius),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          borderRadius: radius,
-          gradient: LinearGradient(
-            colors: colors,
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Padding(
-          padding: EdgeInsets.all(borderWidth),
-          child: ClipRRect(
-            borderRadius: innerBorderRadius,
-            child: ClipRect(
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
-                child: Container(
-                  decoration: BoxDecoration(
-                    borderRadius: innerBorderRadius,
-                    color: backgroundColor ?? AppColors.glassDark,
-                    border: Border.all(
-                      color: AppColors.borderSoft.withValues(alpha: 0.72),
-                    ),
-                  ),
-                  padding: padding,
-                  child: child,
-                ),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: ClipRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blurSigma, sigmaY: blurSigma),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                // Semi-transparent so the blurred content shows through.
+                color: backgroundColor ?? AppColors.glassDark,
+                border: Border.all(color: borderColor, width: borderWidth),
               ),
+              padding: padding,
+              child: child,
             ),
           ),
         ),

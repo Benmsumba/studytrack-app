@@ -724,7 +724,9 @@ class _TopicDetailScreenState extends State<TopicDetailScreen> {
                 height: 34,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.signalMuted : AppColors.surfaceDark,
+                  color: selected
+                      ? AppColors.signalMuted
+                      : AppColors.surfaceDark,
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
                     color: selected ? AppColors.signal : AppColors.borderDark,

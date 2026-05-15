@@ -28,7 +28,6 @@ class AppBottomNav extends StatelessWidget {
         vertical: AppSpacing.xs,
       ),
       borderRadius: 28,
-      gradientBorder: false,
       blurSigma: palette.isDark ? 22 : 26,
       glowColor: palette.brandPrimary,
       child: Row(

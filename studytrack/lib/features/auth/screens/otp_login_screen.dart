@@ -1,11 +1,13 @@
+import 'dart:async';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
-import '../../../core/constants/app_colors.dart';
-import '../../../core/constants/app_spacing.dart';
-import '../../../core/constants/app_text_styles.dart';
+import '../../../core/utils/snackbar_helper.dart';
 import '../../../core/utils/validators.dart';
 import '../controllers/auth_provider.dart';
 
@@ -18,20 +20,39 @@ class OtpLoginScreen extends StatefulWidget {
 
 class _OtpLoginScreenState extends State<OtpLoginScreen> {
   final _emailController = TextEditingController();
-  final _otpController = TextEditingController();
   final _emailFormKey = GlobalKey<FormState>();
-  final _otpFormKey = GlobalKey<FormState>();
 
   // Two-step: first collect email, then collect code.
   bool _codeSent = false;
   bool _loading = false;
   String? _errorMessage;
 
+  // OTP digit boxes state
+  String _otpValue = '';
+  final FocusNode _otpFocusNode = FocusNode();
+
+  // Countdown timer
+  int _resendSeconds = 60;
+  Timer? _resendTimer;
+
   @override
   void dispose() {
     _emailController.dispose();
-    _otpController.dispose();
+    _otpFocusNode.dispose();
+    _resendTimer?.cancel();
     super.dispose();
+  }
+
+  void _startResendTimer() {
+    _resendSeconds = 60;
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted || _resendSeconds <= 0) {
+        t.cancel();
+        return;
+      }
+      setState(() => _resendSeconds--);
+    });
   }
 
   Future<void> _sendCode() async {
@@ -50,14 +71,21 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
     setState(() => _loading = false);
 
     if (result.success) {
-      setState(() => _codeSent = true);
+      setState(() {
+        _codeSent = true;
+        _otpValue = '';
+      });
+      _startResendTimer();
     } else {
       setState(() => _errorMessage = result.message);
     }
   }
 
   Future<void> _verifyCode() async {
-    if (!_otpFormKey.currentState!.validate()) return;
+    if (_otpValue.length < 6) {
+      setState(() => _errorMessage = 'Enter the 6-digit code.');
+      return;
+    }
     FocusScope.of(context).unfocus();
 
     setState(() {
@@ -68,7 +96,7 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
     final auth = context.read<AuthProvider>();
     final result = await auth.verifyOtpCode(
       email: _emailController.text.trim(),
-      otp: _otpController.text.trim(),
+      otp: _otpValue,
     );
 
     if (!mounted) return;
@@ -81,351 +109,460 @@ class _OtpLoginScreenState extends State<OtpLoginScreen> {
     }
   }
 
-  void _goBack() {
-    if (_codeSent) {
-      setState(() {
-        _codeSent = false;
-        _otpController.clear();
-        _errorMessage = null;
-      });
-    } else {
-      context.pop();
-    }
+  Future<void> _resendCode() async {
+    setState(() {
+      _otpValue = '';
+      _errorMessage = null;
+    });
+    await _sendCode();
+  }
+
+  Widget _buildOtpBoxes() {
+    return GestureDetector(
+      onTap: () => _otpFocusNode.requestFocus(),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Hidden input
+          Opacity(
+            opacity: 0,
+            child: SizedBox(
+              width: 1,
+              height: 1,
+              child: TextField(
+                focusNode: _otpFocusNode,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(6),
+                ],
+                onChanged: (v) => setState(() => _otpValue = v),
+                autofocus: true,
+              ),
+            ),
+          ),
+          // 6 visual boxes
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(6, (i) {
+              final char = i < _otpValue.length ? _otpValue[i] : '';
+              final isActive = i == _otpValue.length && _otpFocusNode.hasFocus;
+              return Container(
+                width: 48,
+                height: 58,
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.07),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isActive
+                        ? const Color(0xFF4F46E5)
+                        : Colors.white.withValues(alpha: 0.2),
+                    width: isActive ? 2 : 1,
+                  ),
+                  boxShadow: isActive
+                      ? [
+                          const BoxShadow(
+                            color: Color(0x554F46E5),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ]
+                      : null,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  char,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
     return Scaffold(
-    backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
-    body: SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.screenHorizontal,
-          vertical: AppSpacing.screenVertical,
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF0D0A1A), Color(0xFF1E0F55), Color(0xFF071A12)],
+            stops: [0.0, 0.5, 1.0],
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Back button
-            IconButton(
-              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.parchment),
-              onPressed: _goBack,
-              padding: EdgeInsets.zero,
-              constraints: const BoxConstraints(),
-            ),
-            const SizedBox(height: AppSpacing.xl),
-
-            // Header
-            _buildHeader(),
-            const SizedBox(height: AppSpacing.xxxl),
-
-            // Body
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _codeSent
-                  ? _OtpStep(
-                      key: const ValueKey('otp'),
-                      formKey: _otpFormKey,
-                      otpController: _otpController,
-                      email: _emailController.text.trim(),
-                      loading: _loading,
-                      errorMessage: _errorMessage,
-                      onVerify: _verifyCode,
-                      onResend: () {
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Back button row
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    onPressed: () {
+                      if (_codeSent) {
                         setState(() {
                           _codeSent = false;
-                          _otpController.clear();
+                          _otpValue = '';
+                          _errorMessage = null;
+                          _resendTimer?.cancel();
                         });
-                      },
-                    )
-                  : _EmailStep(
-                      key: const ValueKey('email'),
-                      formKey: _emailFormKey,
-                      emailController: _emailController,
-                      loading: _loading,
-                      errorMessage: _errorMessage,
-                      onSend: _sendCode,
+                      } else {
+                        context.pop();
+                      }
+                    },
+                    icon: const Icon(
+                      Icons.arrow_back_rounded,
+                      color: Colors.white,
                     ),
-            ),
-
-            const SizedBox(height: AppSpacing.xl),
-
-            // Back to password login
-            Center(
-              child: TextButton(
-                onPressed: () => context.go('/login'),
-                child: Text(
-                  'Sign in with password instead',
-                  style: AppTextStyles.bodyMediumSecondary.copyWith(
-                    color: AppColors.signal,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ),
-              ),
+                const SizedBox(height: 16),
+                // Logo + App name
+                Column(
+                      children: [
+                        const Icon(
+                          Icons.auto_stories_rounded,
+                          color: Color(0xFF818CF8),
+                          size: 26,
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'StudyTrack',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    )
+                    .animate()
+                    .fadeIn(duration: 500.ms)
+                    .scale(
+                      begin: const Offset(0.8, 0.8),
+                      end: const Offset(1, 1),
+                      duration: 500.ms,
+                    ),
+                const SizedBox(height: 28),
+
+                if (!_codeSent) _buildEmailStep() else _buildOtpStep(),
+
+                const SizedBox(height: 16),
+                // Back to password login
+                GestureDetector(
+                  onTap: () => context.go('/login'),
+                  child: Text(
+                    'Sign in with password instead',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildHeader() => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Animated icon
-      Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.signal,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.signalLight, width: 0.5),
-            ),
-            child: const Icon(
-              Icons.mark_email_unread_rounded,
-              color: AppColors.parchment,
-              size: 28,
-            ),
-          )
-          .animate()
-          .fadeIn(duration: 400.ms)
-          .scale(begin: const Offset(0.8, 0.8), duration: 400.ms),
-      const SizedBox(height: AppSpacing.lg),
-      Text(
-        _codeSent ? 'Check your inbox' : 'Sign in with email',
-        style: AppTextStyles.headingLarge,
-      ).animate().fadeIn(delay: 100.ms, duration: 350.ms),
-      const SizedBox(height: AppSpacing.sm),
-      Text(
-        _codeSent
-            ? 'We sent a 6-digit code to ${_emailController.text.trim()}.'
-            : "Enter your email and we'll send you a one-time code. No password needed.",
-        style: AppTextStyles.bodyMediumSecondary,
-      ).animate().fadeIn(delay: 180.ms, duration: 350.ms),
-    ],
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Step 1 — email input
-// ---------------------------------------------------------------------------
-
-class _EmailStep extends StatelessWidget {
-  const _EmailStep({
-    required this.formKey,
-    required this.emailController,
-    required this.loading,
-    required this.errorMessage,
-    required this.onSend,
-    super.key,
-  });
-
-  final GlobalKey<FormState> formKey;
-  final TextEditingController emailController;
-  final bool loading;
-  final String? errorMessage;
-  final VoidCallback onSend;
-
-  @override
-  Widget build(BuildContext context) => Form(
-    key: formKey,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
+  Widget _buildEmailStep() {
+    return Column(
       children: [
-        TextFormField(
-          controller: emailController,
-          keyboardType: TextInputType.emailAddress,
-          textInputAction: TextInputAction.done,
-          onFieldSubmitted: (_) => onSend(),
-          validator: Validators.email,
-          style: AppTextStyles.bodyMedium.copyWith(
-            color: AppColors.textPrimary,
-          ),
-          decoration: _inputDecoration(
-            label: 'Email address',
-            icon: Icons.email_outlined,
-          ),
-        ),
-        if (errorMessage != null) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            errorMessage!,
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.danger),
-          ),
-        ],
-        const SizedBox(height: AppSpacing.xl),
-        _GradientButton(
-          label: 'Send code',
-          loading: loading,
-          onTap: loading ? null : onSend,
-        ),
+        // Glass card
+        ClipRRect(
+              borderRadius: BorderRadius.circular(24),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: const Color(0xCC1A1A2E),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0x1AFFFFFF)),
+                  ),
+                  child: Form(
+                    key: _emailFormKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Text(
+                          'Enter your email',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "We'll send you a one-time code. No password needed.",
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 13,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 20),
+                        TextFormField(
+                          controller: _emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) =>
+                              _loading ? null : _sendCode(),
+                          validator: Validators.email,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Email address',
+                            hintStyle: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.38),
+                            ),
+                            prefixIcon: const Icon(
+                              Icons.email_outlined,
+                              color: Colors.white54,
+                              size: 20,
+                            ),
+                            filled: true,
+                            fillColor: Colors.white.withValues(alpha: 0.07),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.15),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: BorderSide(
+                                color: Colors.white.withValues(alpha: 0.15),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF4F46E5),
+                                width: 1.5,
+                              ),
+                            ),
+                            errorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFEF4444),
+                              ),
+                            ),
+                            focusedErrorBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFEF4444),
+                                width: 1.5,
+                              ),
+                            ),
+                            errorStyle: const TextStyle(
+                              color: Color(0xFFEF4444),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ),
+                        if (_errorMessage != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            _errorMessage!,
+                            style: const TextStyle(
+                              color: Color(0xFFEF4444),
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+                        GestureDetector(
+                          onTap: _loading ? null : _sendCode,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 200),
+                            opacity: _loading ? 0.6 : 1.0,
+                            child: Container(
+                              height: 54,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF4F46E5),
+                                    Color(0xFF6366F1),
+                                  ],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              alignment: Alignment.center,
+                              child: _loading
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Text(
+                                      'Send Code',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            )
+            .animate()
+            .fadeIn(duration: 600.ms, delay: 200.ms)
+            .slideY(begin: 0.12, end: 0, duration: 600.ms),
       ],
-    ),
-  );
-}
+    );
+  }
 
-// ---------------------------------------------------------------------------
-// Step 2 — OTP input
-// ---------------------------------------------------------------------------
-
-class _OtpStep extends StatelessWidget {
-  const _OtpStep({
-    required this.formKey,
-    required this.otpController,
-    required this.email,
-    required this.loading,
-    required this.errorMessage,
-    required this.onVerify,
-    required this.onResend,
-    super.key,
-  });
-
-  final GlobalKey<FormState> formKey;
-  final TextEditingController otpController;
-  final String email;
-  final bool loading;
-  final String? errorMessage;
-  final VoidCallback onVerify;
-  final VoidCallback onResend;
-
-  @override
-  Widget build(BuildContext context) => Form(
-    key: formKey,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        TextFormField(
-          controller: otpController,
-          keyboardType: TextInputType.number,
-          textInputAction: TextInputAction.done,
-          inputFormatters: [
-            FilteringTextInputFormatter.digitsOnly,
-            LengthLimitingTextInputFormatter(6),
-          ],
-          onFieldSubmitted: (_) => onVerify(),
-          validator: (v) {
-            if (v == null || v.trim().isEmpty) return 'Enter the 6-digit code.';
-            if (v.trim().length < 6) return 'Code must be 6 digits.';
-            return null;
-          },
-          style: AppTextStyles.headingMedium.copyWith(
-            color: AppColors.textPrimary,
-            letterSpacing: 8,
-          ),
-          textAlign: TextAlign.center,
-          decoration: _inputDecoration(
-            label: '6-digit code',
-            icon: Icons.pin_rounded,
-          ),
-          autofocus: true,
-        ),
-        if (errorMessage != null) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            errorMessage!,
-            style: AppTextStyles.bodySmall.copyWith(color: AppColors.danger),
-            textAlign: TextAlign.center,
-          ),
-        ],
-        const SizedBox(height: AppSpacing.xl),
-        _GradientButton(
-          label: 'Verify & sign in',
-          loading: loading,
-          onTap: loading ? null : onVerify,
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Center(
-          child: TextButton(
-            onPressed: loading ? null : onResend,
-            child: Text(
-              "Didn't receive it? Resend code",
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textMuted,
+  Widget _buildOtpStep() {
+    return ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xCC1A1A2E),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: const Color(0x1AFFFFFF)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'OTP Verification',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Enter the 6-digit code sent to ${_emailController.text.trim()}',
+                    style: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.6),
+                      fontSize: 13,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  _buildOtpBoxes(),
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 10),
+                    Text(
+                      _errorMessage!,
+                      style: const TextStyle(
+                        color: Color(0xFFEF4444),
+                        fontSize: 12,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  // Timer / Resend
+                  Center(
+                    child: _resendSeconds > 0
+                        ? Text(
+                            '⏱ Resend Code in 0:${_resendSeconds.toString().padLeft(2, '0')}',
+                            style: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              fontSize: 13,
+                            ),
+                          )
+                        : GestureDetector(
+                            onTap: _loading ? null : _resendCode,
+                            child: const Text(
+                              'Resend Code',
+                              style: TextStyle(
+                                color: Color(0xFF818CF8),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 32),
+                  GestureDetector(
+                    onTap: _loading ? null : _verifyCode,
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: _loading ? 0.6 : 1.0,
+                      child: Container(
+                        height: 54,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        alignment: Alignment.center,
+                        child: _loading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text(
+                                'Verify',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Shared helpers
-// ---------------------------------------------------------------------------
-
-InputDecoration _inputDecoration({
-  required String label,
-  required IconData icon,
-}) => InputDecoration(
-  labelText: label,
-  hintText: label,
-  prefixIcon: Icon(icon, color: AppColors.signal, size: 20),
-  filled: true,
-  fillColor: AppColors.cardDark,
-  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-  border: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.border),
-  ),
-  enabledBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.border),
-  ),
-  focusedBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.signal),
-  ),
-  errorBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.danger),
-  ),
-  focusedErrorBorder: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(12),
-    borderSide: const BorderSide(color: AppColors.danger),
-  ),
-  labelStyle: AppTextStyles.bodyMedium.copyWith(color: AppColors.textMuted),
-);
-
-class _GradientButton extends StatelessWidget {
-  const _GradientButton({
-    required this.label,
-    required this.loading,
-    required this.onTap,
-  });
-  final String label;
-  final bool loading;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) => GestureDetector(
-    onTap: onTap,
-    child: AnimatedOpacity(
-      duration: const Duration(milliseconds: 200),
-      opacity: onTap == null ? 0.7 : 1,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: AppColors.signal,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Center(
-          child: loading
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.parchment,
-                  ),
-                )
-              : Text(
-                  label,
-                  style: AppTextStyles.button.copyWith(color: AppColors.parchment),
-                ),
-        ),
-      ),
-    ),
-  );
+        )
+        .animate()
+        .fadeIn(duration: 600.ms, delay: 100.ms)
+        .slideY(begin: 0.12, end: 0, duration: 600.ms);
+  }
 }
