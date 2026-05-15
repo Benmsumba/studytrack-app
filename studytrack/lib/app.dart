@@ -21,6 +21,7 @@ import 'features/groups/screens/group_chat_screen.dart';
 import 'features/groups/screens/group_detail_screen.dart';
 import 'features/groups/screens/groups_screen.dart';
 import 'features/groups/screens/topic_chat_screen.dart';
+import 'features/home/screens/home_screen.dart';
 import 'features/home/screens/main_shell.dart';
 import 'features/modules/screens/module_detail_screen.dart';
 import 'features/modules/screens/modules_screen.dart';
@@ -60,11 +61,11 @@ String? resolveAppRedirect({
   }
 
   if (onboardingComplete && location == '/onboarding') {
-    return '/home/timetable';
+    return '/home/dashboard';
   }
 
   if (location == '/home') {
-    return '/home/timetable';
+    return '/home/dashboard';
   }
 
   return null;
@@ -651,11 +652,19 @@ class StudyTrackApp extends StatelessWidget {
         path: '/onboarding',
         builder: (context, state) => const OnboardingFlow(),
       ),
-      GoRoute(path: '/home', redirect: (context, state) => '/home/timetable'),
+      GoRoute(path: '/home', redirect: (context, state) => '/home/dashboard'),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             MainShell(navigationShell: navigationShell),
         branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home/dashboard',
+                builder: (context, state) => const HomeScreen(),
+              ),
+            ],
+          ),
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -685,6 +694,14 @@ class StudyTrackApp extends StatelessWidget {
               GoRoute(
                 path: '/home/groups',
                 builder: (context, state) => const GroupsScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home/profile',
+                builder: (context, state) => const ProfileScreen(),
               ),
             ],
           ),
