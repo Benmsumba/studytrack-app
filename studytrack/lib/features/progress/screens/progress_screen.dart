@@ -1,7 +1,6 @@
-import 'package:fl_chart/fl_chart.dart';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/repositories/module_repository.dart';
@@ -12,7 +11,6 @@ import '../../../core/utils/service_locator.dart';
 import '../../../models/module_model.dart';
 import '../../../models/study_session_model.dart';
 import '../../../models/topic_model.dart';
-import '../../../models/topic_rating_history_model.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -25,12 +23,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
   bool _isLoading = true;
   List<ModuleModel> _modules = [];
   List<TopicModel> _topics = [];
-  TopicModel? _selectedTopic;
 
-  int _topicsMastered = 0;
   int _currentStreak = 0;
   int _weeklySessions = 0;
-  double _averageRating = 0;
 
   final Map<int, int> _weeklyTopicCounts = {};
   final Map<String, int> _heatmapCounts = {};
@@ -82,20 +77,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
     );
     final allTopics = topicResult.fold((_) => <TopicModel>[], (t) => t);
 
-    // All stats computed client-side — zero additional queries.
-    final ratings = allTopics
-        .where((t) => t.currentRating != null)
-        .map((t) => t.currentRating!)
-        .toList();
-
-    final topicsMastered = allTopics
-        .where((t) => (t.currentRating ?? 0) >= 7)
-        .length;
-
-    final averageRating = ratings.isEmpty
-        ? 0.0
-        : ratings.reduce((a, b) => a + b) / ratings.length;
-
     final currentStreak =
         (resolvedProfile?['streak_count'] as num?)?.toInt() ?? 0;
 
@@ -134,13 +115,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
     setState(() {
       _modules = resolvedModules;
       _topics = allTopics;
-      _selectedTopic = allTopics.isEmpty
-          ? null
-          : (_selectedTopic ?? allTopics.first);
-      _topicsMastered = topicsMastered;
       _currentStreak = currentStreak;
       _weeklySessions = weeklySessions;
-      _averageRating = averageRating;
       _weeklyTopicCounts
         ..clear()
         ..addAll(weeklyTopicCounts);
@@ -163,670 +139,429 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return '$year-$month-$day';
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final isLight = Theme.of(context).brightness == Brightness.light;
-    return Scaffold(
-      backgroundColor: isLight ? AppColors.paperWhite : AppColors.obsidian,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          'Analytics',
-          style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
-        ),
-        actions: [
-          TextButton.icon(
-            onPressed: () => context.push('/weekly-wrapped'),
-            icon: const Icon(
-              Icons.auto_awesome,
-              size: 16,
-              color: AppColors.signal,
-            ),
-            label: const Text(
-              'See Wrapped',
-              style: TextStyle(color: AppColors.signal),
-            ),
-          ),
-        ],
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : RefreshIndicator(
-              color: AppColors.signal,
-              onRefresh: _loadProgress,
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-                children: [
-                  _buildQuickStats(),
-                  const SizedBox(height: 16),
-                  _buildWeeklyBarChart(),
-                  const SizedBox(height: 16),
-                  _buildRadarChart(),
-                  const SizedBox(height: 16),
-                  _buildHeatmap(),
-                  const SizedBox(height: 16),
-                  _buildTopicRatingHistory(),
-                  const SizedBox(height: 16),
-                  _buildModuleDonuts(),
-                ],
-              ),
-            ),
-    );
-  }
-
-  Widget _buildQuickStats() => GridView.count(
-    shrinkWrap: true,
-    physics: const NeverScrollableScrollPhysics(),
-    crossAxisCount: 2,
-    crossAxisSpacing: 12,
-    mainAxisSpacing: 12,
-    childAspectRatio: 1.5,
-    children: [
-      _statCard('Topics Mastered', '$_topicsMastered', Icons.school_rounded),
-      _statCard(
-        'Current Streak',
-        '$_currentStreak',
-        Icons.local_fire_department,
-      ),
-      _statCard(
-        "This Week's Sessions",
-        '$_weeklySessions',
-        Icons.menu_book_rounded,
-      ),
-      _statCard(
-        'Average Rating',
-        _averageRating.toStringAsFixed(1),
-        Icons.star_rounded,
-      ),
-    ],
-  );
-
-  Widget _statCard(String label, String value, IconData icon) => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      color: AppColors.cardDark,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.border),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, color: AppColors.accent, size: 16),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                label,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.inter(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const Spacer(),
-        Text(
-          value,
-          style: GoogleFonts.outfit(
-            color: AppColors.parchment,
-            fontSize: 26,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget _buildSectionShell(
-    String title,
-    Widget child, {
-    double? fixedHeight,
-  }) => Container(
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: AppColors.cardDark,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: AppColors.border),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 12),
-        if (fixedHeight != null)
-          SizedBox(height: fixedHeight, child: child)
-        else
-          child,
-      ],
-    ),
-  );
-
-  Widget _buildWeeklyBarChart() {
-    final maxValue = _weeklyTopicCounts.values.fold<int>(
-      0,
-      (a, b) => a > b ? a : b,
-    );
-
-    return _buildSectionShell(
-      'Weekly Performance (Topics Studied)',
-      BarChart(
-        BarChartData(
-          maxY: (maxValue + 1).toDouble(),
-          borderData: FlBorderData(show: false),
-          gridData: const FlGridData(drawVerticalLine: false),
-          barTouchData: BarTouchData(
-            enabled: true,
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipItem: (group, groupIndex, rod, rodIndex) =>
-                  BarTooltipItem(
-                    '${rod.toY.toInt()} topics',
-                    GoogleFonts.inter(
-                      color: AppColors.parchment,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-            ),
-          ),
-          barGroups: List.generate(7, (index) {
-            final value = (_weeklyTopicCounts[index] ?? 0).toDouble();
-            final color =
-                Color.lerp(AppColors.deepViolet, AppColors.cyan, index / 6) ??
-                AppColors.deepViolet;
-            return BarChartGroupData(
-              x: index,
-              barRods: [
-                BarChartRodData(
-                  toY: value,
-                  width: 16,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(8),
-                  ),
-                  color: color,
-                ),
-              ],
-            );
-          }),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 26,
-                getTitlesWidget: (value, meta) => Text(
-                  value.toInt().toString(),
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  const labels = [
-                    'Mon',
-                    'Tue',
-                    'Wed',
-                    'Thu',
-                    'Fri',
-                    'Sat',
-                    'Sun',
-                  ];
-                  final index = value.toInt();
-                  if (index < 0 || index >= labels.length) {
-                    return const SizedBox.shrink();
-                  }
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      labels[index],
-                      style: GoogleFonts.inter(
-                        fontSize: 10,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-        ),
-      ),
-      fixedHeight: 220,
-    );
-  }
-
-  Widget _buildRadarChart() {
-    if (_modules.isEmpty) {
-      return _buildSectionShell(
-        'Subject Radar Chart',
-        Center(
-          child: Text(
-            'Add modules to view your radar chart.',
-            style: GoogleFonts.inter(color: AppColors.textSecondary),
-          ),
-        ),
-        fixedHeight: 180,
-      );
-    }
-
-    final radarModules = _modules.take(6).toList();
-    final entries = radarModules.map((module) {
-      final moduleTopics = _topics
-          .where(
-            (topic) =>
-                topic.moduleId == module.id && topic.currentRating != null,
-          )
-          .toList();
-      if (moduleTopics.isEmpty) {
-        return const RadarEntry(value: 0);
-      }
-      final avg =
-          moduleTopics
-              .map((topic) => topic.currentRating!.toDouble())
-              .reduce((a, b) => a + b) /
-          moduleTopics.length;
-      return RadarEntry(value: avg);
-    }).toList();
-
-    return _buildSectionShell(
-      'Subject Radar Chart',
-      RadarChart(
-        RadarChartData(
-          dataSets: [
-            RadarDataSet(
-              fillColor: AppColors.deepViolet.withValues(alpha: 0.35),
-              borderColor: AppColors.cyan,
-              borderWidth: 2,
-              entryRadius: 3,
-              dataEntries: entries,
-            ),
-          ],
-          radarShape: RadarShape.polygon,
-          ticksTextStyle: GoogleFonts.inter(
-            color: AppColors.textMuted,
-            fontSize: 10,
-          ),
-          tickCount: 5,
-          titlePositionPercentageOffset: 0.2,
-          tickBorderData: BorderSide(
-            color: AppColors.border.withValues(alpha: 0.55),
-          ),
-          gridBorderData: BorderSide(
-            color: AppColors.border.withValues(alpha: 0.7),
-          ),
-          getTitle: (index, angle) {
-            if (index < 0 || index >= radarModules.length) {
-              return const RadarChartTitle(text: '');
-            }
-            return RadarChartTitle(
-              text: radarModules[index].name,
-              angle: angle,
-            );
-          },
-        ),
-      ),
-      fixedHeight: 260,
-    );
+  String _dateStr(DateTime d) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return '${months[d.month - 1]} ${d.day}';
   }
 
   Widget _buildHeatmap() {
     final now = DateTime.now();
-    final startDate = now.subtract(const Duration(days: 83));
-    final monthLabels = <String>[];
-    var lastMonth = -1;
+    const weeks = 12;
 
-    for (var week = 0; week < 12; week++) {
-      final date = startDate.add(Duration(days: week * 7));
-      if (date.month != lastMonth) {
-        monthLabels.add(_monthShort(date.month));
-        lastMonth = date.month;
-      } else {
-        monthLabels.add('');
-      }
-    }
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xCC1A1A2E),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0x1AFFFFFF)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'Activity Heatmap',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'High activity (5+ hrs)',
+                      style: TextStyle(color: Colors.white70, fontSize: 11),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: List.generate(weeks, (w) {
+                  return Expanded(
+                    child: Column(
+                      children: List.generate(7, (d) {
+                        final date = now.subtract(
+                          Duration(days: (weeks - 1 - w) * 7 + (6 - d)),
+                        );
+                        final key =
+                            '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+                        final count = _heatmapCounts[key] ?? 0;
+                        final intensity = (count / 5.0).clamp(0.0, 1.0);
+                        return Container(
+                          margin: const EdgeInsets.all(1),
+                          width: double.infinity,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: count == 0
+                                ? Colors.white.withValues(alpha: 0.05)
+                                : Color.lerp(
+                                    const Color(0xFF312E81),
+                                    const Color(0xFFA78BFA),
+                                    intensity,
+                                  )!,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        );
+                      }),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
-    return _buildSectionShell(
-      'Study Consistency (12 Weeks)',
-      Column(
+  Widget _buildStreakCard() {
+    final streakStart = DateTime.now().subtract(
+      Duration(days: _currentStreak > 0 ? _currentStreak - 1 : 0),
+    );
+    final motivational = _currentStreak >= 30
+        ? "You're unstoppable! Keep the momentum."
+        : _currentStreak >= 7
+        ? "Great consistency! Keep going."
+        : "Every day counts. Build your streak!";
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF4338CA), Color(0xFF6D28D9)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: List.generate(
-              12,
-              (index) => Expanded(
-                child: Text(
-                  monthLabels[index],
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.inter(
-                    fontSize: 10,
-                    color: AppColors.textMuted,
-                  ),
-                ),
-              ),
+          Text(
+            '$_currentStreak Day Streak',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           Row(
+            children: [
+              const Text('🔥 ', style: TextStyle(fontSize: 14)),
+              Text(
+                '${_dateStr(streakStart)} - ${_dateStr(DateTime.now())}',
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            motivational,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeeklyHoursCard() {
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    // _weeklyTopicCounts uses 0-indexed keys (0=Mon..6=Sun)
+    final values = List.generate(
+      7,
+      (i) => (_weeklyTopicCounts[i] ?? 0).toDouble(),
+    );
+    final maxVal =
+        values.reduce((a, b) => a > b ? a : b).clamp(1.0, double.infinity);
+    final totalHours = values.fold(0.0, (a, b) => a + b);
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xCC1A1A2E),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0x1AFFFFFF)),
+          ),
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: List.generate(12, (weekIndex) {
-              final weekStart = startDate.add(Duration(days: weekIndex * 7));
-              return Expanded(
-                child: Column(
-                  children: List.generate(7, (dayIndex) {
-                    final date = weekStart.add(Duration(days: dayIndex));
-                    final count = _heatmapCounts[_dateKey(date)] ?? 0;
-                    return Container(
-                      margin: const EdgeInsets.all(1.5),
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: _heatmapColor(count),
-                        borderRadius: BorderRadius.circular(2),
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'Study Hours per Week',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    'This Week: ${totalHours.toStringAsFixed(0)} Sessions',
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                height: 100,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: List.generate(7, (i) {
+                    final val = values[i];
+                    final barH = maxVal > 0 ? (val / maxVal) * 80 : 0.0;
+                    return Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          if (val > 0)
+                            Text(
+                              '${val.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                color: Colors.white60,
+                                fontSize: 10,
+                              ),
+                            ),
+                          const SizedBox(height: 4),
+                          Container(
+                            height: barH.clamp(4.0, 80.0),
+                            margin:
+                                const EdgeInsets.symmetric(horizontal: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            days[i],
+                            style: const TextStyle(
+                              color: Colors.white38,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }),
                 ),
-              );
-            }),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Color _heatmapColor(int count) {
-    if (count <= 0) return Colors.grey.withValues(alpha: 0.25);
-    if (count == 1) return AppColors.deepViolet.withValues(alpha: 0.45);
-    return AppColors.deepViolet;
-  }
+  Widget _buildModuleCompletionRow() {
+    final displayModules = _modules.take(3).toList();
+    if (displayModules.isEmpty) return const SizedBox.shrink();
 
-  String _monthShort(int month) {
-    const labels = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return labels[month - 1];
-  }
+    return Row(
+      children: displayModules.asMap().entries.map((entry) {
+        final module = entry.value;
+        final moduleTopics =
+            _topics.where((t) => t.moduleId == module.id).toList();
+        final mastered =
+            moduleTopics.where((t) => (t.currentRating ?? 0) >= 7).length;
+        final total = moduleTopics.length;
+        final progress = total > 0 ? mastered / total : 0.0;
+        final percent = (progress * 100).round();
 
-  Widget _buildTopicRatingHistory() => _buildSectionShell(
-    'Topic Rating History',
-    _topics.isEmpty
-        ? Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Text(
-              'Add topics to unlock rating trends.',
-              style: GoogleFonts.inter(color: AppColors.textSecondary),
+        return Expanded(
+          child: Container(
+            margin: EdgeInsets.only(left: entry.key > 0 ? 8 : 0),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xCC1A1A2E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0x1AFFFFFF)),
             ),
-          )
-        : Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceDark,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<TopicModel>(
-                    value: _selectedTopic,
-                    dropdownColor: AppColors.surfaceDark,
-                    isExpanded: true,
-                    style: GoogleFonts.inter(color: Colors.white),
-                    items: _topics
-                        .map(
-                          (topic) => DropdownMenuItem<TopicModel>(
-                            value: topic,
-                            child: Text(topic.name),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (next) {
-                      if (next == null) return;
-                      setState(() => _selectedTopic = next);
-                    },
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 220,
-                child: _selectedTopic == null
-                    ? const SizedBox.shrink()
-                    : _TopicLineChart(topic: _selectedTopic!),
-              ),
-            ],
-          ),
-  );
-
-  Widget _buildModuleDonuts() => _buildSectionShell(
-    'Module Progress Donut Charts',
-    _modules.isEmpty
-        ? Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: Text(
-              'Create modules to view progress donuts.',
-              style: GoogleFonts.inter(color: AppColors.textSecondary),
-            ),
-          )
-        : SizedBox(
-            height: 160,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _modules.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 14),
-              itemBuilder: (context, index) {
-                final module = _modules[index];
-                final moduleTopics = _topics
-                    .where((topic) => topic.moduleId == module.id)
-                    .toList();
-                final masteredCount = moduleTopics
-                    .where((topic) => (topic.currentRating ?? 0) >= 7)
-                    .length;
-                final percentage = moduleTopics.isEmpty
-                    ? 0.0
-                    : masteredCount * 100 / moduleTopics.length;
-
-                return _ModuleDonutCard(
-                  moduleName: module.name,
-                  color: module.subjectColor,
-                  percentage: percentage,
-                );
-              },
-            ),
-          ),
-  );
-}
-
-class _TopicLineChart extends StatelessWidget {
-  const _TopicLineChart({required this.topic});
-
-  final TopicModel topic;
-
-  @override
-  Widget build(BuildContext context) =>
-      FutureBuilder<List<TopicRatingHistoryModel>>(
-        future: getIt<TopicRepository>()
-            .getTopicRatingHistory(topic.id)
-            .then((r) => r.fold((_) => [], (h) => h)),
-        builder: (context, snapshot) {
-          final history = snapshot.data ?? [];
-          if (history.isEmpty) {
-            return Center(
-              child: Text(
-                'No ratings yet for this topic.',
-                style: GoogleFonts.inter(color: AppColors.textSecondary),
-              ),
-            );
-          }
-
-          final points = history
-              .asMap()
-              .entries
-              .map(
-                (entry) =>
-                    FlSpot(entry.key.toDouble(), entry.value.rating.toDouble()),
-              )
-              .toList();
-
-          return LineChart(
-            LineChartData(
-              minY: 0,
-              maxY: 10,
-              borderData: FlBorderData(show: false),
-              gridData: const FlGridData(drawVerticalLine: false),
-              lineTouchData: const LineTouchData(enabled: true),
-              titlesData: FlTitlesData(
-                topTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                rightTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                bottomTitles: const AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    reservedSize: 28,
-                    getTitlesWidget: (value, meta) => Text(
-                      value.toInt().toString(),
-                      style: GoogleFonts.inter(
-                        color: AppColors.textMuted,
-                        fontSize: 10,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              lineBarsData: [
-                LineChartBarData(
-                  spots: points,
-                  isCurved: true,
-                  color: AppColors.cyan,
-                  barWidth: 3,
-                  dotData: FlDotData(
-                    show: true,
-                    getDotPainter: (spot, percent, barData, index) =>
-                        FlDotCirclePainter(
-                          radius: 3,
-                          color: AppColors.deepViolet,
-                          strokeWidth: 1,
-                          strokeColor: AppColors.parchment,
-                        ),
-                  ),
-                  belowBarData: BarAreaData(
-                    show: true,
-                    color: AppColors.deepViolet.withValues(alpha: 0.2),
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-}
-
-class _ModuleDonutCard extends StatelessWidget {
-  const _ModuleDonutCard({
-    required this.moduleName,
-    required this.color,
-    required this.percentage,
-  });
-
-  final String moduleName;
-  final Color color;
-  final double percentage;
-
-  @override
-  Widget build(BuildContext context) {
-    final clampedPercentage = percentage.clamp(0, 100).toDouble();
-
-    return Container(
-      width: 128,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceDark,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        children: [
-          SizedBox(
-            width: 86,
-            height: 86,
-            child: Stack(
-              alignment: Alignment.center,
+            child: Column(
               children: [
-                PieChart(
-                  PieChartData(
-                    sectionsSpace: 0,
-                    centerSpaceRadius: 25,
-                    sections: [
-                      PieChartSectionData(
-                        value: clampedPercentage,
-                        color: color,
-                        title: '',
-                        radius: 14,
+                Align(
+                  alignment: Alignment.topRight,
+                  child: Icon(
+                    Icons.more_vert_rounded,
+                    color: Colors.white38,
+                    size: 16,
+                  ),
+                ),
+                SizedBox(
+                  width: 70,
+                  height: 70,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      CustomPaint(
+                        painter: _ModuleRingPainter(
+                          progress: progress,
+                          color: const Color(0xFF6366F1),
+                        ),
+                        size: const Size(70, 70),
                       ),
-                      PieChartSectionData(
-                        value: 100 - clampedPercentage,
-                        color: Colors.grey.withValues(alpha: 0.25),
-                        title: '',
-                        radius: 14,
+                      Text(
+                        '$percent%',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ],
                   ),
                 ),
+                const SizedBox(height: 8),
                 Text(
-                  '${clampedPercentage.round()}%',
-                  style: GoogleFonts.outfit(
+                  module.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    fontSize: 16,
                   ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                LinearProgressIndicator(
+                  value: progress,
+                  backgroundColor: Colors.white.withValues(alpha: 0.1),
+                  valueColor: const AlwaysStoppedAnimation(Color(0xFF6366F1)),
+                  minHeight: 3,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$mastered/$total topics mastered',
+                  style: const TextStyle(color: Colors.white38, fontSize: 9),
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            moduleName,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-            ),
-          ),
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.obsidian,
+      body: _isLoading
+          ? const Center(
+              child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
+            )
+          : RefreshIndicator(
+              color: const Color(0xFF4F46E5),
+              onRefresh: _loadProgress,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 40),
+                child: SafeArea(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      const Center(
+                        child: Text(
+                          'StudyTrack',
+                          style: TextStyle(
+                            color: Color(0xFF818CF8),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        'Progress & Insights',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      _buildHeatmap(),
+                      const SizedBox(height: 16),
+                      _buildStreakCard(),
+                      const SizedBox(height: 16),
+                      _buildWeeklyHoursCard(),
+                      const SizedBox(height: 16),
+                      _buildModuleCompletionRow(),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+}
+
+class _ModuleRingPainter extends CustomPainter {
+  const _ModuleRingPainter({required this.progress, required this.color});
+
+  final double progress;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const pi = 3.14159265359;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - 10) / 2;
+    // Track
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      2 * pi,
+      false,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.1)
+        ..strokeWidth = 8
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+    if (progress <= 0) return;
+    // Arc
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      2 * pi * progress.clamp(0, 1),
+      false,
+      Paint()
+        ..color = color
+        ..strokeWidth = 8
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_ModuleRingPainter old) =>
+      old.progress != progress || old.color != color;
 }

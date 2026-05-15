@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
@@ -218,6 +219,15 @@ class _StudySessionScreenState extends State<StudySessionScreen>
     unawaited(_persistSessionState());
   }
 
+  // _pauseResume is used by the UI buttons
+  void _pauseResume() {
+    if (_isRunning) {
+      _pauseTimer();
+    } else {
+      _startTimer();
+    }
+  }
+
   void _resetTimer() {
     _timer?.cancel();
     setState(() {
@@ -227,6 +237,11 @@ class _StudySessionScreenState extends State<StudySessionScreen>
       _remainingSeconds = _totalSeconds;
     });
     unawaited(_clearSessionState());
+  }
+
+  // _stopSession is used by the Stop button
+  void _stopSession() {
+    _resetTimer();
   }
 
   void _startBreak() {
@@ -470,165 +485,159 @@ class _StudySessionScreenState extends State<StudySessionScreen>
     );
   }
 
+  Widget _glowBlob(double size, Color color) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      gradient: RadialGradient(
+        colors: [color, Colors.transparent],
+      ),
+    ),
+  );
+
+  Widget _buildTimerCircle() {
+    final progress = _totalSeconds > 0
+        ? (_totalSeconds - _remainingSeconds) / _totalSeconds
+        : 0.0;
+    final minutes = _remainingSeconds ~/ 60;
+    final seconds = _remainingSeconds % 60;
+    final timeStr =
+        '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+
+    return SizedBox(
+      width: 260,
+      height: 260,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Glass circle background
+          ClipOval(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+              child: Container(
+                width: 260,
+                height: 260,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white.withValues(alpha: 0.06),
+                  border: Border.all(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    width: 1,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Emerald arc ring
+          CustomPaint(
+            painter: _TimerRingPainter(
+              progress: progress.clamp(0.0, 1.0),
+              color: const Color(0xFF10B981),
+            ),
+            size: const Size(260, 260),
+          ),
+          // Time text
+          Text(
+            timeStr,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 48,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -1,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final progress = _totalSeconds == 0
-        ? 0.0
-        : _remainingSeconds / _totalSeconds;
-    final minutes = (_remainingSeconds ~/ 60).toString().padLeft(2, '0');
-    final seconds = (_remainingSeconds % 60).toString().padLeft(2, '0');
-
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: Text(
-          _isBreakMode ? 'Break Time' : 'Study Session',
-          style: AppTextStyles.headingSmall.copyWith(
-            color: AppColors.textPrimary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
+      backgroundColor: AppColors.obsidian,
       body: Stack(
-        alignment: Alignment.topCenter,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          // Background glow blobs
+          Positioned(
+            top: -50,
+            right: -50,
+            child: _glowBlob(200, const Color(0x2210B981)),
+          ),
+          Positioned(
+            bottom: 100,
+            left: -80,
+            child: _glowBlob(250, const Color(0x224F46E5)),
+          ),
+          // Main content
+          SafeArea(
             child: Column(
               children: [
-                Text(
-                  _topicName,
-                  textAlign: TextAlign.center,
-                  style: AppTextStyles.headingLarge.copyWith(
-                    color: AppColors.textPrimary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
+                // Topic label
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+                  child: Text(
+                    'Topic: $_topicName',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  _isBreakMode ? 'Recharge for 5 minutes' : 'Deep focus mode',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                SizedBox(
-                  width: 260,
-                  height: 260,
-                  child: Stack(
-                    alignment: Alignment.center,
+                // Duration chips
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: Wrap(
+                    spacing: 8,
+                    alignment: WrapAlignment.center,
                     children: [
-                      TweenAnimationBuilder<double>(
-                        duration: const Duration(milliseconds: 400),
-                        tween: Tween<double>(begin: 0, end: progress),
-                        builder: (context, value, _) => SizedBox(
-                          width: 240,
-                          height: 240,
-                          child: CircularProgressIndicator(
-                            value: value,
-                            strokeWidth: 12,
-                            color: _isBreakMode
-                                ? AppColors.accent
-                                : AppColors.primary,
-                            backgroundColor: AppColors.border,
+                      for (final minutes in [15, 20, 25, 30, 45])
+                        GestureDetector(
+                          onTap: () => _setStudyDuration(minutes),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 180),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _studyDurationMinutes == minutes &&
+                                      !_isBreakMode
+                                  ? const Color(0xFF4F46E5).withValues(
+                                      alpha: 0.3,
+                                    )
+                                  : Colors.white.withValues(alpha: 0.07),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _studyDurationMinutes == minutes &&
+                                        !_isBreakMode
+                                    ? const Color(0xFF4F46E5)
+                                    : Colors.white.withValues(alpha: 0.15),
+                              ),
+                            ),
+                            child: Text(
+                              '$minutes min',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '$minutes:$seconds',
-                            style: AppTextStyles.displayMedium.copyWith(
-                              color: AppColors.textPrimary,
-                              fontSize: 46,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          Text(
-                            _isRunning ? 'In progress' : 'Paused',
-                            style: AppTextStyles.caption.copyWith(
-                              color: AppColors.textSecondary,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  alignment: WrapAlignment.center,
-                  children: [
-                    for (final minutes in [15, 20, 25, 30, 45])
-                      ChoiceChip(
-                        label: Text('$minutes min'),
-                        selected:
-                            _studyDurationMinutes == minutes && !_isBreakMode,
-                        onSelected: (_) => _setStudyDuration(minutes),
-                        selectedColor: AppColors.primary.withValues(
-                          alpha: 0.25,
-                        ),
-                        labelStyle: AppTextStyles.bodyMedium.copyWith(
-                          color: AppColors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        backgroundColor: AppColors.cardDark,
-                        side: const BorderSide(color: AppColors.border),
-                      ),
-                  ],
+                // Large timer circle (centered, takes remaining space)
+                Expanded(
+                  child: Center(child: _buildTimerCircle()),
                 ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: _resetTimer,
-                        icon: const Icon(Icons.replay),
-                        label: const Text('Reset'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.textPrimary,
-                          side: const BorderSide(color: AppColors.border),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _isRunning ? _pauseTimer : _startTimer,
-                        icon: Icon(_isRunning ? Icons.pause : Icons.play_arrow),
-                        label: Text(_isRunning ? 'Pause' : 'Start'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton.icon(
-                    onPressed: _startBreak,
-                    icon: const Icon(Icons.free_breakfast_outlined),
-                    label: const Text('Take a break (5 min)'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppColors.accent,
-                    ),
-                  ),
-                ),
+                // Status label
                 if (_isCompleting)
                   const Padding(
-                    padding: EdgeInsets.only(top: 6),
+                    padding: EdgeInsets.only(bottom: 8),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -649,22 +658,187 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                       ],
                     ),
                   ),
+                // Break button
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                  child: GestureDetector(
+                    onTap: _startBreak,
+                    child: Text(
+                      _isBreakMode
+                          ? 'Break mode active (5 min)'
+                          : 'Take a break (5 min)',
+                      style: TextStyle(
+                        color: AppColors.accent.withValues(alpha: 0.8),
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+                // Control buttons
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+                  child: Row(
+                    children: [
+                      // Pause/Resume
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _isCompleting ? null : _pauseResume,
+                          child: Container(
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E40AF).withValues(
+                                alpha: 0.7,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFF3B82F6).withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  _isRunning
+                                      ? Icons.pause_rounded
+                                      : Icons.play_arrow_rounded,
+                                  color: const Color(0xFF93C5FD),
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _isRunning ? 'Pause' : 'Resume',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Stop
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: _isCompleting ? null : _stopSession,
+                          child: Container(
+                            height: 60,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF991B1B).withValues(
+                                alpha: 0.7,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: const Color(0xFFEF4444).withValues(
+                                  alpha: 0.4,
+                                ),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.stop_rounded,
+                                  color: Color(0xFFFCA5A5),
+                                  size: 22,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Stop',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
-          ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            numberOfParticles: 20,
-            gravity: 0.2,
-            colors: const [
-              AppColors.primary,
-              AppColors.accent,
-              AppColors.success,
-            ],
+          // Confetti
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              numberOfParticles: 20,
+              gravity: 0.2,
+              colors: const [
+                AppColors.primary,
+                AppColors.accent,
+                AppColors.success,
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+}
+
+class _TimerRingPainter extends CustomPainter {
+  const _TimerRingPainter({required this.progress, required this.color});
+
+  final double progress;
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const pi = 3.14159265359;
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - 20) / 2;
+    // Track
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      2 * pi,
+      false,
+      Paint()
+        ..color = Colors.white.withValues(alpha: 0.08)
+        ..strokeWidth = 12
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+    if (progress <= 0) return;
+    // Glow effect — draw thicker, dimmer arc first
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      2 * pi * progress,
+      false,
+      Paint()
+        ..color = color.withValues(alpha: 0.3)
+        ..strokeWidth = 20
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+    );
+    // Main arc
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -pi / 2,
+      2 * pi * progress,
+      false,
+      Paint()
+        ..color = color
+        ..strokeWidth = 12
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_TimerRingPainter old) => old.progress != progress;
 }
