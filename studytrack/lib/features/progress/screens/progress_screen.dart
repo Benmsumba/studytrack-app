@@ -141,8 +141,18 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   String _dateStr(DateTime d) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[d.month - 1]} ${d.day}';
   }
@@ -290,8 +300,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
       7,
       (i) => (_weeklyTopicCounts[i] ?? 0).toDouble(),
     );
-    final maxVal =
-        values.reduce((a, b) => a > b ? a : b).clamp(1.0, double.infinity);
+    final maxVal = values
+        .reduce((a, b) => a > b ? a : b)
+        .clamp(1.0, double.infinity);
     final totalHours = values.fold(0.0, (a, b) => a + b);
 
     return ClipRRect(
@@ -348,8 +359,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                           const SizedBox(height: 4),
                           Container(
                             height: barH.clamp(4.0, 80.0),
-                            margin:
-                                const EdgeInsets.symmetric(horizontal: 3),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
                             decoration: BoxDecoration(
                               color: const Color(0xFF6366F1),
                               borderRadius: BorderRadius.circular(4),
@@ -383,10 +393,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return Row(
       children: displayModules.asMap().entries.map((entry) {
         final module = entry.value;
-        final moduleTopics =
-            _topics.where((t) => t.moduleId == module.id).toList();
-        final mastered =
-            moduleTopics.where((t) => (t.currentRating ?? 0) >= 7).length;
+        final moduleTopics = _topics
+            .where((t) => t.moduleId == module.id)
+            .toList();
+        final mastered = moduleTopics
+            .where((t) => (t.currentRating ?? 0) >= 7)
+            .length;
         final total = moduleTopics.length;
         final progress = total > 0 ? mastered / total : 0.0;
         final percent = (progress * 100).round();

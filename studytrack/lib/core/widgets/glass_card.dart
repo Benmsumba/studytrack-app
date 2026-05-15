@@ -58,10 +58,7 @@ class GlassCard extends StatelessWidget {
                 borderRadius: radius,
                 // Semi-transparent so the blurred content shows through.
                 color: backgroundColor ?? AppColors.glassDark,
-                border: Border.all(
-                  color: borderColor,
-                  width: borderWidth,
-                ),
+                border: Border.all(color: borderColor, width: borderWidth),
               ),
               padding: padding,
               child: child,

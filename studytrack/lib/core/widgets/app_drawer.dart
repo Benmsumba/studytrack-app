@@ -49,7 +49,10 @@ class AppDrawer extends StatelessWidget {
                       ),
                       const Spacer(),
                       IconButton(
-                        icon: const Icon(Icons.close_rounded, color: Colors.white),
+                        icon: const Icon(
+                          Icons.close_rounded,
+                          color: Colors.white,
+                        ),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                     ],
@@ -110,7 +113,10 @@ class AppDrawer extends StatelessWidget {
                 // Menu items
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     children: [
                       _buildDrawerItem(
                         context,
@@ -152,7 +158,9 @@ class AppDrawer extends StatelessWidget {
                         onTap: () {
                           Navigator.of(context).pop();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Feedback coming soon')),
+                            const SnackBar(
+                              content: Text('Feedback coming soon'),
+                            ),
                           );
                         },
                       ),
@@ -207,8 +215,8 @@ class AppDrawer extends StatelessWidget {
                   color: isDanger
                       ? const Color(0xFFEF4444)
                       : isActive
-                          ? AppColors.indigoPrimary
-                          : Colors.white,
+                      ? AppColors.indigoPrimary
+                      : Colors.white,
                 ),
                 const SizedBox(width: 12),
                 Text(

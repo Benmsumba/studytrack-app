@@ -14,7 +14,14 @@ class MainShell extends StatelessWidget {
 
   // Titles indexed by BRANCH index (6 branches total).
   // Branch 0=dashboard, 1=timetable (no nav tab), 2=modules, 3=progress, 4=groups, 5=profile
-  static const _titles = ['', 'Timetable', 'Modules', 'Progress', 'Group', 'Profile'];
+  static const _titles = [
+    '',
+    'Timetable',
+    'Modules',
+    'Progress',
+    'Group',
+    'Profile',
+  ];
 
   // Capsules indexed by BRANCH index.
   static const _capsules = <_CapsuleSpec?>[

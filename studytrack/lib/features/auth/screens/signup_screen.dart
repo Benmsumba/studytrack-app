@@ -36,7 +36,11 @@ class _SignupScreenState extends State<SignupScreen> {
       final result = await auth.signInWithGoogle();
       if (!mounted) return;
       if (!result.success) {
-        SnackbarHelper.show(context, result.message, type: AppSnackbarType.error);
+        SnackbarHelper.show(
+          context,
+          result.message,
+          type: AppSnackbarType.error,
+        );
       }
     } catch (_) {}
   }
@@ -55,7 +59,11 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     if (!_acceptedTerms) {
-      SnackbarHelper.show(context, 'Please accept terms and conditions.', type: AppSnackbarType.warning);
+      SnackbarHelper.show(
+        context,
+        'Please accept terms and conditions.',
+        type: AppSnackbarType.warning,
+      );
       return;
     }
 
@@ -118,168 +126,448 @@ class _SignupScreenState extends State<SignupScreen> {
                     // Back button
                     IconButton(
                       onPressed: () => context.pop(),
-                      icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                      icon: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: Colors.white,
+                      ),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
                     const SizedBox(height: 20),
                     // Title
                     const Text(
-                      'Sign Up',
-                      style: TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w800),
-                    ).animate().fadeIn(duration: 500.ms).slideY(begin: 0.2, end: 0, duration: 500.ms),
+                          'Sign Up',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 36,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        )
+                        .animate()
+                        .fadeIn(duration: 500.ms)
+                        .slideY(begin: 0.2, end: 0, duration: 500.ms),
                     const SizedBox(height: 24),
                     // Glass card with form
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(24),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                        child: Container(
-                          padding: const EdgeInsets.all(24),
-                          decoration: BoxDecoration(
-                            color: const Color(0xCC1A1A2E),
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(color: const Color(0x1AFFFFFF)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              // Full Name
-                              TextFormField(
-                                controller: _nameController,
-                                validator: Validators.requiredField,
-                                style: const TextStyle(color: Colors.white, fontSize: 15),
-                                decoration: InputDecoration(
-                                  hintText: 'Full Name',
-                                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.38)),
-                                  prefixIcon: const Icon(Icons.person_outline, color: Colors.white54, size: 20),
-                                  filled: true,
-                                  fillColor: Colors.white.withValues(alpha: 0.07),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15))),
-                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15))),
-                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 1.5)),
-                                  errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFEF4444))),
-                                  focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5)),
-                                  errorStyle: const TextStyle(color: Color(0xFFEF4444), fontSize: 11),
+                          borderRadius: BorderRadius.circular(24),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              padding: const EdgeInsets.all(24),
+                              decoration: BoxDecoration(
+                                color: const Color(0xCC1A1A2E),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: const Color(0x1AFFFFFF),
                                 ),
                               ),
-                              const SizedBox(height: 14),
-                              // Email
-                              TextFormField(
-                                controller: _emailController,
-                                keyboardType: TextInputType.emailAddress,
-                                validator: Validators.email,
-                                style: const TextStyle(color: Colors.white, fontSize: 15),
-                                decoration: InputDecoration(
-                                  hintText: 'Email Address',
-                                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.38)),
-                                  prefixIcon: const Icon(Icons.email_outlined, color: Colors.white54, size: 20),
-                                  filled: true,
-                                  fillColor: Colors.white.withValues(alpha: 0.07),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15))),
-                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15))),
-                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 1.5)),
-                                  errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFEF4444))),
-                                  focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5)),
-                                  errorStyle: const TextStyle(color: Color(0xFFEF4444), fontSize: 11),
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-                              // Password
-                              TextFormField(
-                                controller: _passwordController,
-                                obscureText: _obscurePassword,
-                                validator: Validators.password,
-                                onChanged: (_) => setState(() {}),
-                                style: const TextStyle(color: Colors.white, fontSize: 15),
-                                decoration: InputDecoration(
-                                  hintText: 'Password',
-                                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.38)),
-                                  prefixIcon: const Icon(Icons.lock_outline, color: Colors.white54, size: 20),
-                                  suffixIcon: IconButton(
-                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                                    icon: Icon(_obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded, color: Colors.white54, size: 20),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white.withValues(alpha: 0.07),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15))),
-                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15))),
-                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 1.5)),
-                                  errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFEF4444))),
-                                  focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5)),
-                                  errorStyle: const TextStyle(color: Color(0xFFEF4444), fontSize: 11),
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-                              // Confirm Password
-                              TextFormField(
-                                controller: _confirmPasswordController,
-                                obscureText: _obscureConfirmPassword,
-                                validator: (value) => Validators.confirmPassword(value, _passwordController.text),
-                                style: const TextStyle(color: Colors.white, fontSize: 15),
-                                decoration: InputDecoration(
-                                  hintText: 'Confirm Password',
-                                  hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.38)),
-                                  prefixIcon: const Icon(Icons.lock_outline, color: Colors.white54, size: 20),
-                                  suffixIcon: IconButton(
-                                    onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
-                                    icon: Icon(_obscureConfirmPassword ? Icons.visibility_off_rounded : Icons.visibility_rounded, color: Colors.white54, size: 20),
-                                  ),
-                                  filled: true,
-                                  fillColor: Colors.white.withValues(alpha: 0.07),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15))),
-                                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.15))),
-                                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFF4F46E5), width: 1.5)),
-                                  errorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFEF4444))),
-                                  focusedErrorBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: const BorderSide(color: Color(0xFFEF4444), width: 1.5)),
-                                  errorStyle: const TextStyle(color: Color(0xFFEF4444), fontSize: 11),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              // Create Account gradient button
-                              GestureDetector(
-                                onTap: auth.isLoading ? null : _onCreateAccountTap,
-                                child: AnimatedOpacity(
-                                  duration: const Duration(milliseconds: 200),
-                                  opacity: auth.isLoading ? 0.6 : 1.0,
-                                  child: Container(
-                                    height: 54,
-                                    decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFF4F46E5), Color(0xFF6366F1)],
-                                        begin: Alignment.centerLeft,
-                                        end: Alignment.centerRight,
-                                      ),
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                    alignment: Alignment.center,
-                                    child: auth.isLoading
-                                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                        : const Text('Create Account', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              // Log in link
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
-                                  Text('Already have an account? ', style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14)),
+                                  // Full Name
+                                  TextFormField(
+                                    controller: _nameController,
+                                    validator: Validators.requiredField,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Full Name',
+                                      hintStyle: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.38,
+                                        ),
+                                      ),
+                                      prefixIcon: const Icon(
+                                        Icons.person_outline,
+                                        color: Colors.white54,
+                                        size: 20,
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.white.withValues(
+                                        alpha: 0.07,
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 16,
+                                          ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFF4F46E5),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      errorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFEF4444),
+                                        ),
+                                      ),
+                                      focusedErrorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFEF4444),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      errorStyle: const TextStyle(
+                                        color: Color(0xFFEF4444),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  // Email
+                                  TextFormField(
+                                    controller: _emailController,
+                                    keyboardType: TextInputType.emailAddress,
+                                    validator: Validators.email,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Email Address',
+                                      hintStyle: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.38,
+                                        ),
+                                      ),
+                                      prefixIcon: const Icon(
+                                        Icons.email_outlined,
+                                        color: Colors.white54,
+                                        size: 20,
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.white.withValues(
+                                        alpha: 0.07,
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 16,
+                                          ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFF4F46E5),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      errorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFEF4444),
+                                        ),
+                                      ),
+                                      focusedErrorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFEF4444),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      errorStyle: const TextStyle(
+                                        color: Color(0xFFEF4444),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  // Password
+                                  TextFormField(
+                                    controller: _passwordController,
+                                    obscureText: _obscurePassword,
+                                    validator: Validators.password,
+                                    onChanged: (_) => setState(() {}),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Password',
+                                      hintStyle: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.38,
+                                        ),
+                                      ),
+                                      prefixIcon: const Icon(
+                                        Icons.lock_outline,
+                                        color: Colors.white54,
+                                        size: 20,
+                                      ),
+                                      suffixIcon: IconButton(
+                                        onPressed: () => setState(
+                                          () => _obscurePassword =
+                                              !_obscurePassword,
+                                        ),
+                                        icon: Icon(
+                                          _obscurePassword
+                                              ? Icons.visibility_off_rounded
+                                              : Icons.visibility_rounded,
+                                          color: Colors.white54,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.white.withValues(
+                                        alpha: 0.07,
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 16,
+                                          ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFF4F46E5),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      errorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFEF4444),
+                                        ),
+                                      ),
+                                      focusedErrorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFEF4444),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      errorStyle: const TextStyle(
+                                        color: Color(0xFFEF4444),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  // Confirm Password
+                                  TextFormField(
+                                    controller: _confirmPasswordController,
+                                    obscureText: _obscureConfirmPassword,
+                                    validator: (value) =>
+                                        Validators.confirmPassword(
+                                          value,
+                                          _passwordController.text,
+                                        ),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                    ),
+                                    decoration: InputDecoration(
+                                      hintText: 'Confirm Password',
+                                      hintStyle: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.38,
+                                        ),
+                                      ),
+                                      prefixIcon: const Icon(
+                                        Icons.lock_outline,
+                                        color: Colors.white54,
+                                        size: 20,
+                                      ),
+                                      suffixIcon: IconButton(
+                                        onPressed: () => setState(
+                                          () => _obscureConfirmPassword =
+                                              !_obscureConfirmPassword,
+                                        ),
+                                        icon: Icon(
+                                          _obscureConfirmPassword
+                                              ? Icons.visibility_off_rounded
+                                              : Icons.visibility_rounded,
+                                          color: Colors.white54,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      filled: true,
+                                      fillColor: Colors.white.withValues(
+                                        alpha: 0.07,
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 16,
+                                          ),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                        ),
+                                      ),
+                                      enabledBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: BorderSide(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.15,
+                                          ),
+                                        ),
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFF4F46E5),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      errorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFEF4444),
+                                        ),
+                                      ),
+                                      focusedErrorBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        borderSide: const BorderSide(
+                                          color: Color(0xFFEF4444),
+                                          width: 1.5,
+                                        ),
+                                      ),
+                                      errorStyle: const TextStyle(
+                                        color: Color(0xFFEF4444),
+                                        fontSize: 11,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Create Account gradient button
                                   GestureDetector(
-                                    onTap: () => context.go('/login'),
-                                    child: const Text('Log In', style: TextStyle(color: Color(0xFF818CF8), fontSize: 14, fontWeight: FontWeight.w700)),
+                                    onTap: auth.isLoading
+                                        ? null
+                                        : _onCreateAccountTap,
+                                    child: AnimatedOpacity(
+                                      duration: const Duration(
+                                        milliseconds: 200,
+                                      ),
+                                      opacity: auth.isLoading ? 0.6 : 1.0,
+                                      child: Container(
+                                        height: 54,
+                                        decoration: BoxDecoration(
+                                          gradient: const LinearGradient(
+                                            colors: [
+                                              Color(0xFF4F46E5),
+                                              Color(0xFF6366F1),
+                                            ],
+                                            begin: Alignment.centerLeft,
+                                            end: Alignment.centerRight,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
+                                        ),
+                                        alignment: Alignment.center,
+                                        child: auth.isLoading
+                                            ? const SizedBox(
+                                                width: 20,
+                                                height: 20,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Colors.white,
+                                                    ),
+                                              )
+                                            : const Text(
+                                                'Create Account',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  // Log in link
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        'Already have an account? ',
+                                        style: TextStyle(
+                                          color: Colors.white.withValues(
+                                            alpha: 0.6,
+                                          ),
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () => context.go('/login'),
+                                        child: const Text(
+                                          'Log In',
+                                          style: TextStyle(
+                                            color: Color(0xFF818CF8),
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                            ],
+                            ),
                           ),
-                        ),
-                      ),
-                    ).animate().fadeIn(duration: 650.ms, delay: 150.ms).slideY(begin: 0.14, end: 0, duration: 650.ms),
+                        )
+                        .animate()
+                        .fadeIn(duration: 650.ms, delay: 150.ms)
+                        .slideY(begin: 0.14, end: 0, duration: 650.ms),
                     const SizedBox(height: 24),
                   ],
                 ),

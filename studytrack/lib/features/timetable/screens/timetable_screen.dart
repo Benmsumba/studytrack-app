@@ -204,8 +204,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
                   style: TextStyle(
                     color: selected ? Colors.white : Colors.white60,
                     fontSize: 12,
-                    fontWeight:
-                        selected ? FontWeight.w700 : FontWeight.w400,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                   ),
                 ),
               ),
@@ -227,9 +226,7 @@ class _TimetableScreenState extends State<TimetableScreen> {
     if (name.contains('study') || name.contains('session')) {
       return const Color(0xFF10B981);
     }
-    if (name.contains('cs') ||
-        name.contains('prep') ||
-        name.contains('lab')) {
+    if (name.contains('cs') || name.contains('prep') || name.contains('lab')) {
       return const Color(0xFF7C3AED);
     }
     return const Color(0xFF3B82F6);
@@ -238,9 +235,11 @@ class _TimetableScreenState extends State<TimetableScreen> {
   Widget _buildEventBlock(ClassSlotModel slot) {
     final startParts = slot.startTime.split(':');
     final endParts = slot.endTime.split(':');
-    final startHour = int.parse(startParts[0]) +
+    final startHour =
+        int.parse(startParts[0]) +
         int.parse(startParts.length > 1 ? startParts[1] : '0') / 60.0;
-    final endHour = int.parse(endParts[0]) +
+    final endHour =
+        int.parse(endParts[0]) +
         int.parse(endParts.length > 1 ? endParts[1] : '0') / 60.0;
     final top = (startHour - _startHour) * _hourHeight;
     final height = (endHour - startHour) * _hourHeight;
@@ -323,7 +322,10 @@ class _TimetableScreenState extends State<TimetableScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),

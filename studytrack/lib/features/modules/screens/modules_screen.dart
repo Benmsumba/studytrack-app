@@ -196,8 +196,7 @@ class _ModulesScreenState extends State<ModulesScreen> {
               ? 'Add your first module to start tracking your coursework.'
               : 'Try a different search term or clear the filter.',
           actionLabel: _query.trim().isEmpty ? 'Add Module' : null,
-          onAction:
-              _query.trim().isEmpty ? _showAddOrEditModuleSheet : null,
+          onAction: _query.trim().isEmpty ? _showAddOrEditModuleSheet : null,
         ),
       );
     }
@@ -600,12 +599,7 @@ class _AddModuleBottomSheetState extends State<_AddModuleBottomSheet> {
     final viewInsets = MediaQuery.of(context).viewInsets;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        20,
-        16,
-        20,
-        viewInsets.bottom + 24,
-      ),
+      padding: EdgeInsets.fromLTRB(20, 16, 20, viewInsets.bottom + 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

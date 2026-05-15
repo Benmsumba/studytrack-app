@@ -490,9 +490,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
     height: size,
     decoration: BoxDecoration(
       shape: BoxShape.circle,
-      gradient: RadialGradient(
-        colors: [color, Colors.transparent],
-      ),
+      gradient: RadialGradient(colors: [color, Colors.transparent]),
     ),
   );
 
@@ -603,15 +601,17 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                               vertical: 7,
                             ),
                             decoration: BoxDecoration(
-                              color: _studyDurationMinutes == minutes &&
+                              color:
+                                  _studyDurationMinutes == minutes &&
                                       !_isBreakMode
-                                  ? const Color(0xFF4F46E5).withValues(
-                                      alpha: 0.3,
-                                    )
+                                  ? const Color(
+                                      0xFF4F46E5,
+                                    ).withValues(alpha: 0.3)
                                   : Colors.white.withValues(alpha: 0.07),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: _studyDurationMinutes == minutes &&
+                                color:
+                                    _studyDurationMinutes == minutes &&
                                         !_isBreakMode
                                     ? const Color(0xFF4F46E5)
                                     : Colors.white.withValues(alpha: 0.15),
@@ -631,9 +631,7 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                   ),
                 ),
                 // Large timer circle (centered, takes remaining space)
-                Expanded(
-                  child: Center(child: _buildTimerCircle()),
-                ),
+                Expanded(child: Center(child: _buildTimerCircle())),
                 // Status label
                 if (_isCompleting)
                   const Padding(
@@ -687,14 +685,14 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                           child: Container(
                             height: 60,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E40AF).withValues(
-                                alpha: 0.7,
-                              ),
+                              color: const Color(
+                                0xFF1E40AF,
+                              ).withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: const Color(0xFF3B82F6).withValues(
-                                  alpha: 0.4,
-                                ),
+                                color: const Color(
+                                  0xFF3B82F6,
+                                ).withValues(alpha: 0.4),
                               ),
                             ),
                             child: Row(
@@ -729,14 +727,14 @@ class _StudySessionScreenState extends State<StudySessionScreen>
                           child: Container(
                             height: 60,
                             decoration: BoxDecoration(
-                              color: const Color(0xFF991B1B).withValues(
-                                alpha: 0.7,
-                              ),
+                              color: const Color(
+                                0xFF991B1B,
+                              ).withValues(alpha: 0.7),
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: const Color(0xFFEF4444).withValues(
-                                  alpha: 0.4,
-                                ),
+                                color: const Color(
+                                  0xFFEF4444,
+                                ).withValues(alpha: 0.4),
                               ),
                             ),
                             child: const Row(

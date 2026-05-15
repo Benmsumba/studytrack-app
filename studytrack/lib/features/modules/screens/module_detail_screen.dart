@@ -303,7 +303,10 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
               children: [
                 IconButton(
                   onPressed: () => context.pop(),
-                  icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+                  icon: const Icon(
+                    Icons.arrow_back_rounded,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(width: 4),
                 Expanded(
@@ -384,9 +387,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
           Expanded(
             child: _isLoading
                 ? const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFF4F46E5),
-                    ),
+                    child: CircularProgressIndicator(color: Color(0xFF4F46E5)),
                   )
                 : _loadError != null
                 ? Center(
@@ -401,8 +402,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                     child: AppStateView.empty(
                       icon: Icons.layers_outlined,
                       title: 'Module not found',
-                      message:
-                          'This module may have been removed or renamed.',
+                      message: 'This module may have been removed or renamed.',
                     ),
                   )
                 : RefreshIndicator(
@@ -440,8 +440,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                                   motion: const ScrollMotion(),
                                   children: [
                                     SlidableAction(
-                                      onPressed: (_) =>
-                                          _deleteTopic(topic.id),
+                                      onPressed: (_) => _deleteTopic(topic.id),
                                       backgroundColor: AppColors.danger,
                                       icon: Icons.delete_rounded,
                                       label: 'Delete',
@@ -452,8 +451,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                                   topic: topic,
                                   onTap: () =>
                                       context.push('/topics/${topic.id}'),
-                                  onToggle: () =>
-                                      _showRateTopicSheet(topic),
+                                  onToggle: () => _showRateTopicSheet(topic),
                                 ),
                               );
                             },
